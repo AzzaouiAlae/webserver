@@ -1,7 +1,6 @@
 #include "Parsing.hpp"
 #include "../TokensTypes/TokensTypes.hpp"
 
-
 Parsing::Parsing(std::vector<std::string>& tokens): ASTroot("ASTroot"), tokens(tokens)
 {
 	currentNode = NULL;
@@ -42,6 +41,4 @@ void Parsing::ParseConfigFile()
 		}
 		AST<std::string> node("");
 	}
-	
-	
 }
