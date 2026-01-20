@@ -8,42 +8,48 @@ Validation::Validation(std::vector<std::string> inputData)
 
 void    Validation::CreateMap()
 {
-    _map["server"] = IsValidServer;
-    _map["listen"] = IsValidListen;
-    _map["root"] = IsValidRoot;
-    _map["index"] = IsValidIndex;
-    _map["server_name"] = IsValidServerName;
-    _map["location"] = IsValidLocation;
+    _map["server"] = &Validation::IsValidServer;
+    _map["listen"] = &Validation::IsValidListen;
+    _map["root"] = &Validation::IsValidRoot;
+    _map["index"] = &Validation::IsValidIndex;
+    _map["server_name"] = &Validation::IsValidServerName;
+    _map["location"] = &Validation::IsValidLocation;
     
 }
 
 bool    Validation::IsValidServer()
 {
     this->_brackets++;
+	return false;
 }
 
 bool    Validation::IsValidListen()
 {
+	return false;
 
 }
 
 bool    Validation::IsValidIndex()
-{
+{	
+	return false;
 
 }
 
 bool    Validation::IsValidRoot()
 {
+	return false;
 
 }
 
 bool    Validation::IsValidServerName()
 {
+	return false;
 
 }
 
 bool    Validation::IsValidLocation()
 {
+	return false;
 
 }
 
@@ -51,13 +57,13 @@ bool    Validation::CheckValidation()
 {
     CreateMap();
 
-    while( _idx++ < this->_data.size())
+    while( _idx++ < (int)_data.size())
     {
-        Map::iterator it = this->_map.find(_data[_idx]);
+        Map::iterator it = _map.find(_data[_idx]);
         if ( it == _map.end() || !(this->*it->second)() )
             return (false);
     }
-    if ( this->_brackets != 0)
+    if ( _brackets != 0)
         return (false);
     return true;
 }

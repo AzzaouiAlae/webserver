@@ -1,5 +1,7 @@
 #include "AbstractSyntaxTree/AST.hpp"
 #include "Validation/Validation.hpp"
+#include <algorithm> 
+#include <vector>
 
 void print(std::string value, int lvl)
 {
@@ -60,15 +62,27 @@ void test()
 int main()
 {
 	// test();
-	std::string	 str[] = {"server", "{", "listen", "0.0.....0.0", 
-						":", "80", ";", "root", "/app", ";",
-			 			"index", "index.php", 
-						"index.html", ";" };
-	std::vector<std::string>vec;
-	for (size_t i = 0; i < 14; i++)
-		vec.push_back(str[i]);
-
-	Validation valid(vec);
+	std::string s[]  = {
+		"server", 
+		"{", 
+		"listen", 
+		"0.0.....0.0", 
+		":", 
+		"80", 
+		";", 
+		"root", 
+		"/app", 
+		";", 
+		"index", 
+		"index.php", 
+		"index.html", 
+		";" 
+	};
+	
+	std::vector<std::string> str;
+	for(int i = 0; i < 14; i++)
+		str.push_back(s[i]);
+	Validation valid(str);
 }
 
 /*
