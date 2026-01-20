@@ -4,7 +4,8 @@
 
 enum NodeType
 {
-
+	Server,
+	
 };
 
 template <typename content>
