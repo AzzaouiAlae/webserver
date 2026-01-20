@@ -9,7 +9,8 @@ class Validation {
         int _idx;
         int _brackets;
         std::vector<std::string> _data;
-        std::map<std::string, bool (Validation::*)() >_map;
+        typedef std::map<std::string, bool (Validation::*)() >Map;
+        Map _map;
 
         void    CreateMap();
         bool    IsValidServer();

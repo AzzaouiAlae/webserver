@@ -3,10 +3,10 @@
         {
             "type": "cppbuild",
             "label": "C/C++: gcc build active file",
-            "command": "make",
+            "command": "make re",
             "args": [],
             "options": {
-                "cwd": "${fileDirname}"
+                "cwd": "${workspaceFolder}"
             },
             "problemMatcher": [
                 "$gcc"
