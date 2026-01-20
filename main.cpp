@@ -1,4 +1,5 @@
 #include "AbstractSyntaxTree/AST.hpp"
+#include "Validation/Validation.hpp"
 
 void print(std::string value, int lvl)
 {
@@ -59,7 +60,8 @@ void test()
 int main()
 {
 	// test();
-	// std::vector<st>
+	std::vector<std::string>str = {"server", "{", "listen", "0.0.....0.0", ":", "80", ";", "root", "/app", ";", "index", "index.php", "index.html", ";" };
+	Validation valid(str);
 }
 
 /*
@@ -70,7 +72,6 @@ int main()
 		0.0.....0.0
 		:
 		80
-		-
 		;
         root /app;
         index index.php index.html;
