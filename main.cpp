@@ -7,7 +7,7 @@ void print(std::string value, int lvl)
 	std::cout << value << "\n";
 }
 
-int main()
+void test()
 {
 	AST<std::string> ASTroot("ASTroot");
 
@@ -54,6 +54,12 @@ int main()
 	ASTroot.AddChild(srv3);
 
 	ASTroot.PreorderTraversal(print);
+}
+
+int main()
+{
+	// test();
+	// std::vector<st>
 }
 
 /*
