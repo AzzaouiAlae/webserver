@@ -7,7 +7,7 @@ Tokenizing::Tokenizing(std::string filepath): _filepath(filepath)
 
 void Tokenizing::openConfFile()
 {
-    _file.open(_filepath);
+    _file.open(_filepath.c_str());
     if (!_file.is_open())
     {
         Error::printError("The ConfigFile Can't Open");
@@ -22,7 +22,8 @@ const std::vector<std::string>& Tokenizing::get_tokens() const
 
 void Tokenizing::split_tokens()
 {
-    while (std::getline(std::cin))
+	std::string line;
+    while (std::getline(std::cin, line))
     {
         /* code */
     }

@@ -1,7 +1,7 @@
 #ifndef VALIDATION_HPP
 #define VALIDATION_HPP
 
-#include "AbstractSyntaxTree/AST.hpp"
+#include "../AbstractSyntaxTree/AST.hpp"
 #include "map"
 
 class Validation {

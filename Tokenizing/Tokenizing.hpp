@@ -4,6 +4,8 @@
 #include <vector>
 #include <fstream>
 #include "../ErrorHandling/Error.hpp"
+#include <stdlib.h>
+#include <string>
 
 enum TOKENS
 {
@@ -16,8 +18,8 @@ enum TOKENS
 	CLIENT_MAX_BODY_SIZE,
 	LOCATION,
 
-	ROOT,
-	INDEX,
+	
+	
 	METHODS,
 	AUTOINDEX,
 	RETURN,
