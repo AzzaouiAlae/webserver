@@ -1,12 +1,9 @@
 #pragma once
 #include <iostream>
+#include "../AbstractSyntaxTree/AST.hpp"
 
 class TokensTypes
 {
-	std::string tokens;
 public:
-	TokensTypes(std::string tokens)
-	{
-
-	}
+	static NodeType GetNodeType(std::vector<std::string>& tokens, int idx);
 };
