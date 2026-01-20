@@ -4,6 +4,12 @@
 
 enum NodeType
 {
+	server,
+	listen,
+	root,
+	index,
+	server_name,
+	location
 
 };
 
