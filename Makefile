@@ -2,7 +2,7 @@ SRC = main.cpp TokensTypes/TokensTypes.cpp Tokenizing/Tokenizing.cpp Parsing/Par
 OBJ = main.o TokensTypes/TokensTypes.o Tokenizing/Tokenizing.o Parsing/Parsing.o
 CXX = c++
 CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98 
-NAME = websrv
+NAME = websrv.out
 
 all : $(NAME)
 
