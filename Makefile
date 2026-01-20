@@ -10,10 +10,10 @@ $(NAME): $(OBJ)
 	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 
 clean :
-	rm $(OBJ)
+	-rm $(OBJ)
 
 fclean : clean
-	rm $(NAME)
+	-rm $(NAME)
 
 re : fclean $(NAME)
 
