@@ -18,9 +18,7 @@ int main()
 	AST<std::string> srv3("Srv3");
 	srv3.SetNext(srv2);
 
-	ASTroot.AddChild(srv1);
-	ASTroot.AddChild(srv2);
-	ASTroot.AddChild(srv3);
+	
 
 	AST<std::string> listen("listen");
 	listen.AddArgument("80");
@@ -42,7 +40,7 @@ int main()
 	AST<std::string> retur("return");
 	retur.AddArgument("200");
 	retur.AddArgument("index.html");
-	location.AddChild(location);
+	location.AddChild(retur);
 
 	srv1.AddChild(listen);
 	srv1.AddChild(root);
@@ -51,7 +49,11 @@ int main()
 	srv1.AddChild(location);
 
 
-	ASTroot.PostorderTraversal(print);
+	ASTroot.AddChild(srv1);
+	ASTroot.AddChild(srv2);
+	ASTroot.AddChild(srv3);
+
+	ASTroot.PreorderTraversal(print);
 }
 
 /*

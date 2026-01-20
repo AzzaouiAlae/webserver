@@ -19,11 +19,11 @@ class AST
 	void PreorderTraversal(AST<content> root, void (*f)(content, int), int level = 0)
 	{
 		f(root.Value, level);
-		for (int i = 0; i < root.Arguments.size(); i++)
+		for (int i = 0; i < (int)root.Arguments.size(); i++)
 		{
 			f(root.Arguments[i], level);
 		}
-		for (int i = 0; i < root.Children.size(); i++)
+		for (int i = 0; i < (int)root.Children.size(); i++)
 		{
 			PreorderTraversal(root.Children[i], f, level + 1);
 		}
