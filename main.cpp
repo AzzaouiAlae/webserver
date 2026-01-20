@@ -58,14 +58,29 @@ int main()
 
 /*
 
-	server {
-		listen 80;
+	server 
+	{
+		listen 
+		0.0.....0.0
+		:
+		80
+		-
+		;
         root /app;
         index index.php index.html;
         server_name nginx;
 
         location / {
-			return 200 index.html
+			return 200 index.html;
         }
 	}
+*/
+
+
+/*
+map<string, f()>
+
+listent
+root
+
 */
