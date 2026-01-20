@@ -60,8 +60,15 @@ void test()
 int main()
 {
 	// test();
-	std::vector<std::string>str = {"server", "{", "listen", "0.0.....0.0", ":", "80", ";", "root", "/app", ";", "index", "index.php", "index.html", ";" };
-	Validation valid(str);
+	std::string	 str[] = {"server", "{", "listen", "0.0.....0.0", 
+						":", "80", ";", "root", "/app", ";",
+			 			"index", "index.php", 
+						"index.html", ";" };
+	std::vector<std::string>vec;
+	for (size_t i = 0; i < 14; i++)
+		vec.push_back(str[i]);
+
+	Validation valid(vec);
 }
 
 /*

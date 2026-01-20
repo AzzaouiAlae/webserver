@@ -3,7 +3,7 @@
 // {"server", "{", "listen", "0.0.....0.0", ":", "80", ";", "root", "/app", ";", "index", "index.php", "index.html", ";" };
 
 Validation::Validation(std::vector<std::string> inputData)
-    : _data(inputData), _idx(0) {}
+    :  _idx(0), _data(inputData) {}
 
 
 void    Validation::CreateMap()
@@ -19,7 +19,7 @@ void    Validation::CreateMap()
 
 bool    Validation::IsValidServer()
 {
-
+    this->_brackets++;
 }
 
 bool    Validation::IsValidListen()
@@ -53,8 +53,11 @@ bool    Validation::CheckValidation()
 
     while( _idx++ < this->_data.size())
     {
-        this->_map[_data[_idx]];
+        Map::iterator it = this->_map.find(_data[_idx]);
+        if ( it == _map.end() || !(this->*it->second)() )
+            return (false);
     }
-
+    if ( this->_brackets != 0)
+        return (false);
     return true;
 }
