@@ -4,8 +4,13 @@
 
 enum NodeType
 {
-	Server,
-	
+	server,
+	listen,
+	root,
+	index,
+	server_name,
+	location
+
 };
 
 template <typename content>

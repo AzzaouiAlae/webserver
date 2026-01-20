@@ -1,4 +1,5 @@
 #include "AbstractSyntaxTree/AST.hpp"
+#include "Validation/Validation.hpp"
 
 void print(std::string value, int lvl)
 {
@@ -7,7 +8,7 @@ void print(std::string value, int lvl)
 	std::cout << value << "\n";
 }
 
-int main()
+void test()
 {
 	AST<std::string> ASTroot("ASTroot");
 
@@ -56,6 +57,13 @@ int main()
 	ASTroot.PreorderTraversal(print);
 }
 
+int main()
+{
+	// test();
+	std::vector<std::string>str = {"server", "{", "listen", "0.0.....0.0", ":", "80", ";", "root", "/app", ";", "index", "index.php", "index.html", ";" };
+	Validation valid(str);
+}
+
 /*
 
 	server 
@@ -64,7 +72,6 @@ int main()
 		0.0.....0.0
 		:
 		80
-		-
 		;
         root /app;
         index index.php index.html;
