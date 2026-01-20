@@ -41,4 +41,9 @@
 *.dwo
 
 websrv.out
-alaeMain.cpp
+mainAlae.cpp
+mainOussama.cpp
+mainIlyass.cpp
+Makefile.alae
+Makefile.oussama
+Makefile.ilyass
