@@ -10,7 +10,6 @@ enum NodeType
 	index,
 	server_name,
 	location
-
 };
 
 template <typename content>

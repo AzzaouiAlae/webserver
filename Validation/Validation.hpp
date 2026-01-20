@@ -1,7 +1,7 @@
 #ifndef VALIDATION_HPP
 #define VALIDATION_HPP
 
-#include "AbstractSyntaxTree/AST.hpp"
+#include "../AbstractSyntaxTree/AST.hpp"
 #include "map"
 
 class Validation {
@@ -9,7 +9,8 @@ class Validation {
         int _idx;
         int _brackets;
         std::vector<std::string> _data;
-        std::map<std::string, bool (Validation::*)() >_map;
+        typedef std::map<std::string, bool (Validation::*)() >Map;
+        Map _map;
 
         void    CreateMap();
         bool    IsValidServer();
