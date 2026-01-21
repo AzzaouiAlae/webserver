@@ -15,6 +15,7 @@ class Tokenizing
 	std::vector<std::string> _tokens;
 	std::ifstream _file;
 	void openConfFile();
+	void trim(std::string& str);
 public:
 	Tokenizing(std::string filepath);
 	const std::vector<std::string>& get_tokens() const;
