@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../AbstractSyntaxTree/AST.hpp"
+#include "../Headers.hpp"
 
 class Parsing 
 {
