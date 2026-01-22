@@ -38,7 +38,6 @@ void    Validation::IsValidListen()
 void    Validation::IsValidIndex()
 {	
 	
-
 }
 
 void    Validation::IsValidRoot()
