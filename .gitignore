@@ -40,10 +40,11 @@
 # debug information files
 *.dwo
 
-websrv.out
+
 mainAlae.cpp
 mainOussama.cpp
 mainIlyass.cpp
 Makefile.alae
 Makefile.oussama
 Makefile.ilyass
+.vscode

@@ -1,69 +1,94 @@
-#include "Validation.hpp"
+#include "../Headers.hpp"
 
-// {"server", "{", "listen", "0.0.....0.0", ":", "80", ";", "root", "/app", ";", "index", "index.php", "index.html", ";" };
 
 Validation::Validation(std::vector<std::string> inputData)
     :  _idx(0), _data(inputData) {}
 
+// {"server", "{", "listen", "0.0.....0.0", ":", "80", ";", "root", "/app", ";", "index", "index.php", "index.html", ";" };
 
 void    Validation::CreateMap()
 {
     _map["server"] = &Validation::IsValidServer;
     _map["listen"] = &Validation::IsValidListen;
     _map["root"] = &Validation::IsValidRoot;
-    _map["index"] = &Validation::IsValidIndex;
-    _map["server_name"] = &Validation::IsValidServerName;
-    _map["location"] = &Validation::IsValidLocation;
+    // _map["index"] = &Validation::IsValidIndex;
+    // _map["server_name"] = &Validation::IsValidServerName;
+    // _map["location"] = &Validation::IsValidLocation;
     
 }
 
-bool    Validation::IsValidServer()
+void    Validation::IsValidServer()
 {
-    this->_brackets++;
-	return false;
+    std::cout << _data[_idx] << "    " ;
+    if ( _brackets != 0 || _data[++_idx] != "{" )
+       Error::ErrorAndExit("Invalid Syntax");
+
+    _brackets++;
+    _idx++;
+    
+    ScopValidation();
 }
 
-bool    Validation::IsValidListen()
+void    Validation::IsValidListen()
 {
-	return false;
-
+    std::cout << _data[_idx] << "    " ;
+    _idx++;
 }
 
-bool    Validation::IsValidIndex()
+void    Validation::IsValidIndex()
 {	
-	return false;
+	
 
 }
 
-bool    Validation::IsValidRoot()
+void    Validation::IsValidRoot()
 {
-	return false;
-
+    std::cout << _data[_idx] << "    " ;
+    _idx++;
 }
 
-bool    Validation::IsValidServerName()
+void    Validation::IsValidServerName()
 {
-	return false;
 
 }
 
-bool    Validation::IsValidLocation()
+void    Validation::IsValidLocation()
 {
-	return false;
 
 }
 
-bool    Validation::CheckValidation()
+// {"server", "{", "listen", "0.0.....0.0", ":", "80", ";", "root", "/app", ";", "index", "index.php", "index.html", ";" };
+
+// server {
+//     location {
+
+//     }
+// }
+
+void    Validation::CheckValidation()
 {
     CreateMap();
+    ScopValidation();
+}
 
-    while( _idx++ < (int)_data.size())
+void    Validation::ScopValidation()
+{
+    while( _idx < (int)_data.size() )
     {
+        std::string s = _data[0];
+        if ( s == "}" )
+        {
+            if ( _brackets == 0 )
+                Error::ErrorAndExit("Invalid Syntax");
+            else
+                return ;
+        }
         Map::iterator it = _map.find(_data[_idx]);
-        if ( it == _map.end() || !(this->*it->second)() )
-            return (false);
+        if ( it == _map.end() )
+            Error::ErrorAndExit("Invalid Syntax");
+        (this->*it->second)();
     }
     if ( _brackets != 0)
-        return (false);
-    return true;
+        exit(1);
+    
 }
