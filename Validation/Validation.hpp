@@ -10,14 +10,21 @@ class Validation {
         typedef std::map<std::string, void (Validation::*)() >Map;
         Map _map;
 
-        void    CreateMap();
-        void    IsValidServer();
-        void    IsValidListen();
-        void    IsValidIndex();
-        void    IsValidRoot();
-        void    IsValidServerName();
-        void    IsValidLocation();
-        void    ScopValidation();
+        void            CreateMap();
+        void            IsValidServer();
+        void            IsValidIndex();
+        void            IsValidRoot();
+        void            IsValidLocation();
+        void            ScopValidation();
+        
+        void            IsValidServerName();
+        bool            IsSeparator();
+
+        void            IsValidListen();
+        void            IpAndPort();
+        void            PortOnly();
+        void            ValidIP();
+        long long       ConvertToNumber(std::string num);
 
     public:
     std::vector<std::string> _data;

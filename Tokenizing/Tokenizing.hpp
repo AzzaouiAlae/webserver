@@ -1,13 +1,6 @@
 #pragma once
 
-#include <iostream>
-#include <vector>
-#include <fstream>
-#include <string>
-#include <stdlib.h>
-#include <string>
-#include "../ErrorHandling/Error.hpp"
-
+#include "../Headers.hpp"
 
 class Tokenizing
 {
