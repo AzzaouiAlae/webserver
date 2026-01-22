@@ -26,8 +26,8 @@ void Error::printError(std::string custoMessage)
     std::cout << _REDCOLOR  << _BOLD <<  "Error :\n	" << custoMessage << _RESETCOLOR << std::endl;
 }
 
-void Error::ErrorAndExit(std::string custoMessage)
+void Error::ThrowError(std::string custoMessage)
 {
-    std::cout << _REDCOLOR  << _BOLD <<  "Error :\n	" << custoMessage << _RESETCOLOR << std::endl;
-    exit(1);
+    throw std::runtime_error(custoMessage);
 }
+
