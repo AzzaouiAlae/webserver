@@ -20,30 +20,54 @@ const std::vector<std::string>& Tokenizing::get_tokens() const
     return (_tokens);
 }
 
+
+void Tokenizing::trim(std::string &str)
+{
+    size_t i  = 0;
+    while (i < str.size() && (str[i] == ' '  || (str[i] >= 9 && str[i] <= 13)))
+        i++;
+    str.erase(0,i);
+    
+    i = str.size();
+    while (i > 0 && (str[i - 1] == ' '  || (str[i - 1] >= 9 && str[i - 1] <= 13)))
+        i--;
+    
+    str.erase(i);
+}
+
+char Tokenizing::shearch_delimiter(std::string& str, std::string delimiters)
+{   
+    size_t pos = 0;
+    size_t spos = str.find(delimiters[0]);
+    char delimiter = '\0';
+    for (size_t i = 0; i < delimiters.size(); i++)
+    {
+        pos = str.find(delimiters[i]);
+        if (pos != std::string::npos && pos <= spos)
+        {
+            spos = pos;
+            delimiter = str[spos];
+        }
+    }
+    return (delimiter);
+}
+
 void Tokenizing::split_tokens()
 {
     std::string word;
-    std::string line;
-    
+    char c = '\0';
     while (_file >> word)
     {
-        _tokens.push_back(word);
-        if (word == "listen")
+        while ((c = shearch_delimiter(word, ":;{}")) && c != '\0')
         {
-            if (std::getline(_file, line, ':'))
-                _tokens.push_back(line);
-            if (std::getline(_file, line, ';'))
-                _tokens.push_back(line);
+            size_t pos = word.find(c);
+            if (pos > 0)
+                _tokens.push_back(word.substr(0, pos));
+            _tokens.push_back(word.substr(pos, 1));
+            word.erase(0, pos + 1);
         }
+        if (word.size() > 0)
+            _tokens.push_back(word);
     }
 }
 
-// int main(int argc, char const *argv[])
-// {
-//     Tokenizing con("Tokenizing/Config");
-
-//     con.split_tokens();
-//     for (std::vector<std::string>::const_iterator it = con.get_tokens().begin(); it != con.get_tokens().end(); ++it)
-//         std::cout << *it;
-//     return 0;
-// }
