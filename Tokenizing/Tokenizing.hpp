@@ -1,12 +1,7 @@
 #pragma once
 
-#include <iostream>
-#include <vector>
-#include <fstream>
-#include <string>
-#include "../ErrorHandling/Error.hpp"
-#include <stdlib.h>
-#include <string>
+#include "../Headers.hpp"
+
 
 
 class Tokenizing

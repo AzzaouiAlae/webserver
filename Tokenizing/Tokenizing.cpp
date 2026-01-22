@@ -36,7 +36,6 @@ void Tokenizing::split_tokens()
                 _tokens.push_back(line);
         }
     }
-    
 }
 
 // int main(int argc, char const *argv[])

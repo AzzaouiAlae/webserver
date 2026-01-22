@@ -4,9 +4,14 @@
 #include <map>
 #include <vector>
 #include <algorithm>
-
+#include <stdlib.h>
+#include <string>
+#include <fstream>
+#include <cstdlib>
 
 #include "AbstractSyntaxTree/AST.hpp"
 #include "Validation/Validation.hpp"
 #include "ErrorHandling/Error.hpp"
 #include "Singleton/Singleton.hpp"
+#include "Tokenizing/Tokenizing.hpp"
+
