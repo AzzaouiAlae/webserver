@@ -35,35 +35,39 @@ void Tokenizing::trim(std::string &str)
     str.erase(i);
 }
 
+char shearch_delimiter(std::string& str, std::string delimiters)
+{   
+    size_t pos = 0;
+    size_t spos = str.find(delimiters[0]);
+    char delimiter = '\0';
+    for (size_t i = 0; i < delimiters.size(); i++)
+    {
+        pos = str.find(delimiters[i]);
+        if (pos != std::string::npos && pos <= spos)
+        {
+            spos = pos;
+            delimiter = str[spos];
+        }
+    }
+    return (delimiter);
+}
+
 void Tokenizing::split_tokens()
 {
     std::string word;
-    std::string line;
-    
+    char c = '\0';
     while (_file >> word)
     {
-        _tokens.push_back(word);
-        if (word == "listen")
+        while ((c = shearch_delimiter(word, ":;{}")) && c != '\0')
         {
-            if (std::getline(_file, line))
-            {
-                trim(line);
-                size_t pos = line.find(":");
-                if (pos != std::string::npos)
-                {
-                    _tokens.push_back(std::substr(0, pos));
-                    _t
-                }
-            }
-                _tokens.push_back(line);
-            if (std::getline(_file, line, ';'))
-                _tokens.push_back(line);
-            // std::ltr
-            //     line.substr(std::)
+            size_t pos = word.find(c);
+            if (pos > 0)
+                _tokens.push_back(word.substr(0, pos));
+            _tokens.push_back(word.substr(pos, 1));
+            word.erase(0, pos + 1);
         }
+        if (word.size() > 0)
+            _tokens.push_back(word);
     }
-    std::string str("          oussa ama kdkkd djjd            ");
-    trim(str);
-    std::cout << "|" << str << "|" << std::endl;
 }
 

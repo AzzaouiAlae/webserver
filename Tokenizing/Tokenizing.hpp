@@ -4,9 +4,9 @@
 #include <vector>
 #include <fstream>
 #include <string>
-#include "../ErrorHandling/Error.hpp"
 #include <stdlib.h>
 #include <string>
+#include "../ErrorHandling/Error.hpp"
 
 
 class Tokenizing
