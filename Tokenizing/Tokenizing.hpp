@@ -16,7 +16,8 @@ class Tokenizing
 	std::ifstream _file;
 	void openConfFile();
 	void trim(std::string& str);
-public:
+	char shearch_delimiter(std::string& str, std::string delimiters);
+	public:
 	Tokenizing(std::string filepath);
 	const std::vector<std::string>& get_tokens() const;
 	void split_tokens();
