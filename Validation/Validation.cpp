@@ -38,7 +38,6 @@ void    Validation::IsValidListen()
 void    Validation::IsValidIndex()
 {	
 	
-
 }
 
 void    Validation::IsValidRoot()
@@ -75,7 +74,7 @@ void    Validation::ScopValidation()
 {
     while( _idx < (int)_data.size() )
     {
-        std::string s = _data[0];
+        std::string s = _data[_idx];
         if ( s == "}" )
         {
             if ( _brackets == 0 )

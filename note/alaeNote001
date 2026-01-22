@@ -1,4 +1,4 @@
-SRC := $(shell find . -name "*.cpp" | grep -v "./main.cpp")
+SRC := $(shell find . -name "*.cpp" | grep -v "./main.cpp" | grep -v ".*Test.cpp")
 OBJ = $(SRC:%.cpp=%.o)
 CXX = c++
 CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98 
