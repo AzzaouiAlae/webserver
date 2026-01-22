@@ -1,6 +1,6 @@
 SRC = main.cpp TokensTypes/TokensTypes.cpp Tokenizing/Tokenizing.cpp Parsing/Parsing.cpp Validation/Validation.cpp ErrorHandling/Error.cpp
 OBJ = main.o TokensTypes/TokensTypes.o Tokenizing/Tokenizing.o Parsing/Parsing.o Validation/Validation.o ErrorHandling/Error.o
-CXX = c++
+CXX = g++
 CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98 
 NAME = websrv.out
 

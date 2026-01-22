@@ -1,29 +1,27 @@
-#ifndef VALIDATION_HPP
-#define VALIDATION_HPP
+#pragma once
 
-#include "../AbstractSyntaxTree/AST.hpp"
-#include "map"
+#include "../Headers.hpp"
 
 class Validation {
     private:
         int _idx;
         int _brackets;
-        std::vector<std::string> _data;
-        typedef std::map<std::string, bool (Validation::*)() >Map;
+        
+        typedef std::map<std::string, void (Validation::*)() >Map;
         Map _map;
 
         void    CreateMap();
-        bool    IsValidServer();
-        bool    IsValidListen();
-        bool    IsValidIndex();
-        bool    IsValidRoot();
-        bool    IsValidServerName();
-        bool    IsValidLocation();
+        void    IsValidServer();
+        void    IsValidListen();
+        void    IsValidIndex();
+        void    IsValidRoot();
+        void    IsValidServerName();
+        void    IsValidLocation();
+        void    ScopValidation();
 
     public:
+    std::vector<std::string> _data;
         Validation(std::vector<std::string> inputData);
-        bool    CheckValidation();
+        void    CheckValidation();
 
 };
-
-#endif

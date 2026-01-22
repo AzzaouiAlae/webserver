@@ -1,8 +1,8 @@
-SRC := $(shell find . -name "*.cpp" | grep -v "./main.cpp" | grep -v ".*Test.cpp")
-OBJ = $(SRC:%.cpp=%.o)
+SRC = ../Unity-master/src/unity.c ParsingTest.cpp ../../Parsing/Parsing.cpp ../../TokensTypes/TokensTypes.cpp
+OBJ = ../Unity-master/src/unity.o ParsingTest.o ../../Parsing/Parsing.o ../../TokensTypes/TokensTypes.o
 CXX = c++
 CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98 
-NAME = websrv.out
+NAME = a.out
 
 all : $(NAME)
 
