@@ -170,7 +170,7 @@ void TestConfigFile1()
     tab.push_back("}");
 
 	//act
-	Tokenizing ConfigFIle1("/home/oel-bann/Desktop/webserver/conf/invalide1.conf");
+	Tokenizing ConfigFIle1("./conf/invalide1.conf");
 	ConfigFIle1.split_tokens();
 	std::vector<std::string> mytab = ConfigFIle1.get_tokens();
 	
@@ -307,7 +307,7 @@ void TestConfigFile2()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIle2("/home/oel-bann/Desktop/webserver/conf/invalide2.conf");
+    Tokenizing ConfigFIle2("./conf/invalide2.conf");
     ConfigFIle2.split_tokens();
     std::vector<std::string> mytab = ConfigFIle2.get_tokens();
 
@@ -379,7 +379,7 @@ void TestConfigFile3()
     tab.push_back("{");
     tab.push_back("retun");
     tab.push_back("index.html");
-    tab.push_back(";");
+    tab.push_back(";"); 
     tab.push_back("}");
 
     tab.push_back("location");
@@ -539,16 +539,19 @@ void TestConfigFile3()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIle3("/home/oel-bann/Desktop/webserver/conf/invalide3.conf");
+    Tokenizing ConfigFIle3("./conf/invalide3.conf");
     ConfigFIle3.split_tokens();
     std::vector<std::string> mytab = ConfigFIle3.get_tokens();
 
     // assert
     std::vector<std::string>::iterator exp = tab.begin();
+	
     for (std::vector<std::string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
     {
+		
         TEST_ASSERT_EQUAL_STRING((*exp).c_str(), (*str).c_str());
         exp++;
+		
     }
 }
 
@@ -715,15 +718,21 @@ void TestConfigFileValide1()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIleValide1("/home/oel-bann/Desktop/webserver/conf/valide1.conf");
+    Tokenizing ConfigFIleValide1("./conf/valide1.conf");
     ConfigFIleValide1.split_tokens();
     std::vector<std::string> mytab = ConfigFIleValide1.get_tokens();
 
     // assert
     std::vector<std::string>::iterator exp = tab.begin();
-    for (std::vector<std::string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
+    int i = 0;
+	for (std::vector<std::string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
     {
+		if ((*exp) != (*str))
+		{
+			std::cerr << i << " ";
+		}
         TEST_ASSERT_EQUAL_STRING((*exp).c_str(), (*str).c_str());
+		i++;
         exp++;
     }
 }
@@ -832,7 +841,7 @@ void TestConfigFileValide2()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIleValide2("/home/oel-bann/Desktop/webserver/conf/valide2.conf");
+    Tokenizing ConfigFIleValide2("./conf/valide2.conf");
     ConfigFIleValide2.split_tokens();
     std::vector<std::string> mytab = ConfigFIleValide2.get_tokens();
 
@@ -995,7 +1004,7 @@ void TestConfigFileValide3()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIleValide3("/home/oel-bann/Desktop/webserver/conf/valide3.conf");
+    Tokenizing ConfigFIleValide3("./conf/valide3.conf");
     ConfigFIleValide3.split_tokens();
     std::vector<std::string> mytab = ConfigFIleValide3.get_tokens();
 

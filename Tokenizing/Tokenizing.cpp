@@ -35,7 +35,7 @@ void Tokenizing::trim(std::string &str)
     str.erase(i);
 }
 
-char shearch_delimiter(std::string& str, std::string delimiters)
+char Tokenizing::shearch_delimiter(std::string& str, std::string delimiters)
 {   
     size_t pos = 0;
     size_t spos = str.find(delimiters[0]);
