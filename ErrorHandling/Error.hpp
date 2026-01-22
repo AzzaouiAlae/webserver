@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include <iostream>
+#include "../Headers.hpp"
 
 class Error
 {
@@ -28,4 +28,6 @@ private:
     Error();
 public:
     static void printError(std::string custoMessage);
+    static void ErrorAndExit(std::string custoMessage);
+
 };

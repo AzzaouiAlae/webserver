@@ -9,6 +9,7 @@
 			"type": "cppdbg",
 			"request": "launch",
 			"program": "${workspaceFolder}/websrv.out",
+			"miDebuggerPath": "/usr/bin/gdb",
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",

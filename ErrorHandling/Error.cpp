@@ -26,3 +26,8 @@ void Error::printError(std::string custoMessage)
     std::cout << _REDCOLOR  << _BOLD <<  "Error :\n	" << custoMessage << std::endl;
 }
 
+void Error::ErrorAndExit(std::string custoMessage)
+{
+    std::cout << _REDCOLOR  << _BOLD <<  "Error :\n	" << custoMessage << std::endl;
+    exit(1);
+}
