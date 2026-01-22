@@ -90,5 +90,5 @@ void    Validation::ScopValidation()
     }
     if ( _brackets != 0)
         exit(1);
-    
+
 }
