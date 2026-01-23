@@ -4,19 +4,32 @@
 
 class Validation {
     private:
-        int _idx;
-        int _brackets;
+        int     _idx;
+        bool    _duplicateServer_Root;
+        bool    _duplicateServer_Index;
+        bool    _duplicateLocation_Root;
+        bool    _duplicateLocation_Index;
+        int     _level;
+        std::vector<std::string> _data;
         
         typedef std::map<std::string, void (Validation::*)() >Map;
         Map _map;
 
         void            CreateMap();
-        void            IsValidServer();
-        void            IsValidIndex();
-        void            IsValidRoot();
-        void            IsValidLocation();
         void            ScopValidation();
         
+        void            IsValidServer();
+        void            ResetServerSeting();
+        
+        void            IsValidLocation();
+        void            ResetLocationSeting();
+
+        void            IsValidIndex();
+        void            CkeckDuplicationIndex(std::string msg);
+        
+        void            IsValidRoot();
+        void            CkeckDuplicationRoot(std::string msg);
+
         void            IsValidServerName();
         bool            IsSeparator();
 
@@ -27,7 +40,7 @@ class Validation {
         long long       ConvertToNumber(std::string num);
 
     public:
-    std::vector<std::string> _data;
+    
         Validation(std::vector<std::string> inputData);
         void    CheckValidation();
 
