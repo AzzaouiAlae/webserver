@@ -1,9 +1,22 @@
 #include "../Headers.hpp"
 
 Validation::Validation(std::vector<std::string> inputData)
-    :  _idx(0), _duplicateServer_Root(false), _duplicateServer_Index(false),
-    _duplicateLocation_Root(false), _duplicateLocation_Index(false),
-    _level(0), _data(inputData) {}
+    :  _idx(0), _level(0), _data(inputData) 
+{
+    createUsedMap();
+}
+
+void    Validation::createUsedMap()
+{
+    _used["Server"] = false;
+    _used["Listen"] = false;
+    _used["Server_name"] = false;
+    _used["RootServer"] = false;
+    _used["IndexServer"] = false;
+    _used["Location"] = false;
+    _used["RootLocation"] = false;
+    _used["IndexLocation"] = false;
+}
 
 void    Validation::CreateMap()
 {
@@ -16,23 +29,28 @@ void    Validation::CreateMap()
     
 }
 
+void Validation::CheckExistance(std::pair<std::string, bool> used)
+{
+    if (used.first !=  "IndexLocation" && used.first !=  "RootLocation" && used.second == false)
+       Error::ThrowError("Invalid Syntax : (Missing Element in Server)");
+}
+
 void    Validation::ResetServerSeting()
 {
-    _duplicateServer_Index = false;
-    _duplicateServer_Root = false;
+    std::for_each(_used.begin(), _used.end(), CheckExistance);
 
+    _used["RootServer"] = false;
+    _used["IndexServer"] = false;
 }
 void    Validation::ResetLocationSeting()
 {
-    _duplicateLocation_Index = false;
-    _duplicateLocation_Root = false;
-
+    _used["RootLocation"] = false;
+    _used["IndexLocation"] = false;
 }
-
 
 void    Validation::IsValidServer()
 {
-    //std::cout << _data[_idx] << "    \n" ;
+    _used["Server"] = true;
     _idx++;
     if ( _level != 0 || _data[_idx] != "{" )
        Error::ThrowError("Invalid Syntax");
@@ -47,7 +65,7 @@ void    Validation::IsValidServer()
 
 void    Validation::IsValidLocation()
 {
-    //std::cout << _data[_idx] << "    \n" ;
+    _used["Location"] = true;
     _idx++;
     if ( _level != 1 || IsSeparator() )
        Error::ThrowError("Invalid Syntax");
@@ -77,7 +95,6 @@ long long   Validation::ConvertToNumber(std::string num)
 void Validation::PortOnly()
 {
     long long port = ConvertToNumber(_data[_idx]);
-    //std::cout << _data[_idx] << "    \nport =="  << port;
     
     if ( port < 0 || port > 65535 )
         Error::ThrowError("Invalid Syntax ( Port Number Out Of Range )");
@@ -114,16 +131,15 @@ void    Validation::ValidIP()
 void Validation::IpAndPort()
 {
     ValidIP();
-    //std::cout << _data[_idx] << "    \n" ;
     _idx++;
     PortOnly();
 }
 
 void    Validation::IsValidListen()
 {
-    if ( _level == 2)
-        Error::ThrowError("Invalid Syntax : (Invslid Scoop)");
-    //std::cout << _data[_idx] << "    \n" ;
+    _used["Listen"] = true;
+    if ( _level != 1)
+        Error::ThrowError("Invalid Syntax : (Invalid Scoop)");
     _idx++;
 
     if (  _idx + 1 < (int)_data.size() )
@@ -150,9 +166,9 @@ bool Validation::IsSeparator()
 
 void    Validation::IsValidServerName()
 {
-    if ( _level == 2)
-        Error::ThrowError("Invalid Syntax : (Invslid Scoop)");
-    //std::cout << _data[_idx] << "    \n" ;
+    _used["Server_name"] = true;
+    if ( _level != 1)
+        Error::ThrowError("Invalid Syntax : (Invalid Scoop)");
     _idx++;
 
     if ( _data[_idx] == ";" )
@@ -163,32 +179,34 @@ void    Validation::IsValidServerName()
         _idx++;
 }
 
-void    Validation::CkeckDuplicationRoot(std::string msg)
+void    Validation::CkeckDuplication(bool& first, bool& second, std::string msg)
 {
-    if ( _level == 1)
+    if ( _level == 1 )
     {
-        if ( _duplicateServer_Root == true )
+        if (first  == true )
             Error::ThrowError(msg);
         else
-            _duplicateServer_Root = true;
+            first = true;
         return ;
     }
     else if (_level == 2)
     {
-        if ( _duplicateLocation_Root == true )
+        if (second  == true )
             Error::ThrowError(msg);
         else
-            _duplicateLocation_Root = true;
+            second = true;
         return ;
     }
     else
-        Error::ThrowError("Invalid Syntax : (Invslid Scoop)");
+        Error::ThrowError("Invalid Syntax : (Invalid Scoop)");
 }
 
 void    Validation::IsValidRoot()
 {
-	CkeckDuplicationRoot("Invalid Syntax : (Duplication In Root Path)");
-    //std::cout << _data[_idx] << "    \n" ;
+    if ( _level == 0) {
+        Error::ThrowError("Invalid Syntax : (Invalid Scoop)");
+    };
+	CkeckDuplication( _used["RootServer"], _used["RootLocation"], "Invalid Syntax : (Duplication In Root Path)");
     _idx++;
 
     if ( IsSeparator() )
@@ -197,33 +215,14 @@ void    Validation::IsValidRoot()
     if (  _data[_idx] == ";" )
         _idx++;
 }
-void    Validation::CkeckDuplicationIndex(std::string msg)
-{
-    if ( _level == 1)
-    {
-        if ( _duplicateServer_Index == true )
-            Error::ThrowError(msg);
-        else
-            _duplicateServer_Index = true;
-        return ;
-    }
-    else if (_level == 2)
-    {
-        if ( _duplicateLocation_Index == true )
-            Error::ThrowError(msg);
-        else
-            _duplicateLocation_Index = true;
-        return ;
-    }
-    else
-        Error::ThrowError("Invalid Syntax : (Invslid Scoop)");
-}
 
 void    Validation::IsValidIndex()
-{	
-	CkeckDuplicationIndex("Invalid Syntax : (Duplication In Index File)");
-    
-    //std::cout << _data[_idx] << "    \n" ;
+{
+    if ( _level == 0 ) {
+        Error::ThrowError("Invalid Syntax : (Invalid Scoop)");
+    }
+
+	CkeckDuplication(_used["IndexServer"], _used["IndexLocation"], "Invalid Syntax : (Duplication In Index File)");
     _idx++;
 
     if ( _data[_idx] == ";" )
@@ -239,14 +238,8 @@ void    Validation::IsValidIndex()
 
 }
 
-void    Validation::CheckValidation()
-{
-    CreateMap();
-    ScopValidation();
-}
-
 void    Validation::ScopValidation()
-{
+{    
     while( _idx < (int)_data.size() )
     {
         if (  _data[this->_idx] == "}" )
@@ -261,11 +254,17 @@ void    Validation::ScopValidation()
             }
         }
         Map::iterator it = _map.find(_data[_idx]);
-        if ( it == _map.end() || ( it->first != "server" && _level == 0 ) )
+        if ( it == _map.end() )
             Error::ThrowError("Invalid Syntax");
         (this->*it->second)();
     }
-    if ( _level != 0)
+    if ( _level != 0 )
         Error::ThrowError("Invalid Syntax");
 
+}
+
+void    Validation::CheckValidation()
+{
+    CreateMap();
+    ScopValidation();
 }

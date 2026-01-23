@@ -5,17 +5,16 @@
 class Validation {
     private:
         int     _idx;
-        bool    _duplicateServer_Root;
-        bool    _duplicateServer_Index;
-        bool    _duplicateLocation_Root;
-        bool    _duplicateLocation_Index;
         int     _level;
+        std::map<std::string, bool> _used;
         std::vector<std::string> _data;
         
         typedef std::map<std::string, void (Validation::*)() >Map;
         Map _map;
-
+        
+        static void     CheckExistance(std::pair<std::string, bool>);
         void            CreateMap();
+        void            createUsedMap();
         void            ScopValidation();
         
         void            IsValidServer();
@@ -25,10 +24,8 @@ class Validation {
         void            ResetLocationSeting();
 
         void            IsValidIndex();
-        void            CkeckDuplicationIndex(std::string msg);
-        
         void            IsValidRoot();
-        void            CkeckDuplicationRoot(std::string msg);
+        void            CkeckDuplication(bool& first, bool& second, std::string msg);
 
         void            IsValidServerName();
         bool            IsSeparator();
