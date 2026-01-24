@@ -265,6 +265,7 @@ void    Validation::IsValidIndex()
 
 }
 
+//      AUTOINDEX
 void    Validation::IsValidAutoindex()
 {
     CheckLevelAndDuplication(_useServer["Autoindex"], _useLocation["Autoindex"], "Autoindex");
@@ -284,6 +285,7 @@ void    Validation::IsValidAutoindex()
 //         Error::ThrowError("Invalid Syntax : ( Invalid Redirection URL In return )");
 // }
 
+//      RETURN
 void    Validation::IsValidReturn()
 {
     CheckLevelAndDuplication(_useServer["Return"], _useLocation["Return"], "Return");
@@ -295,9 +297,9 @@ void    Validation::IsValidReturn()
 
     if ( !IsSeparator() )
         _idx++;
+
     if ( _data[_idx] == ";" )
         _idx++;
-
 }
 
 void    Validation::CheckValidation()
