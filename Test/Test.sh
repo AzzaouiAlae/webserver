@@ -4,13 +4,22 @@
 
 ROOT_DIR="$(pwd)"
 
+find ../ \( \
+		-name "*.html" -o \
+		-name "*.gcno" -o \
+		-name "*.gcda" -o \
+		-name "*.js"   -o \
+		-name "*.css" \
+	\) -delete
+
 find . -type f -name "Makefile" | while read makefile; do
     DIR=$(dirname "$makefile")
     echo "▶ Building in: $DIR"
     cd "$DIR"
-    make re > /dev/null 2>&1
-	echo execute $DIR/a.out
-	./a.out
+	mkdir coverage 2> /dev/null
+    make re
+	# echo execute $DIR/a.out
+	# ./a.out
 	echo -----------
     cd "$ROOT_DIR"
 done
