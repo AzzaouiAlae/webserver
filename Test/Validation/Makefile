@@ -1,5 +1,7 @@
-SRC = ../Unity-master/src/unity.c ValidationTest.cpp ../../Parsing/Parsing.cpp ../../TokensTypes/TokensTypes.cpp 
-OBJ = ../Unity-master/src/unity.o ValidationTest.o ../../Parsing/Parsing.o ../../TokensTypes/TokensTypes.o
+SRC = ../Unity-master/src/unity.c ValidationTest.cpp ../../Parsing/Parsing.cpp ../../TokensTypes/TokensTypes.cpp\
+		../../Validation/Validation.cpp ../../Tokenizing/Tokenizing.cpp ../../ErrorHandling/Error.cpp
+OBJ = $(SRC:.cpp=.o)
+OBJ := $(OBJ:.c=.o)
 CXX = c++
 CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98 
 NAME = a.out

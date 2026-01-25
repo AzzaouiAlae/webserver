@@ -1,48 +1,132 @@
 #include "../Headers.hpp"
 
 Validation::Validation(std::vector<std::string> inputData)
-    :  _idx(0), _brackets(0), _data(inputData) {}
+    :  _idx(0), _level(0), _data(inputData) 
+{
+    CreateMap();
+    createServerdMap();
+    createLocationMap();
+}
+
+void    Validation::createLocationMap()
+{
+    _useLocation["Location"] = false;
+    _useLocation["Root"] = false;
+    _useLocation["Index"] = false;
+    _useLocation["Autoindex"] = false;
+    _useLocation["Return"] = false;
+
+}
+
+void    Validation::createServerdMap()
+{
+    _useServer["Server"] = false;
+    _useServer["Listen"] = false;
+    _useServer["Server_name"] = false;
+    _useServer["Root"] = false;
+    _useServer["Index"] = false;
+    _useServer["Autoindex"] = false;
+    _useServer["Return"] = false;
+}
 
 void    Validation::CreateMap()
 {
     _map["server"] = &Validation::IsValidServer;
     _map["listen"] = &Validation::IsValidListen;
     _map["server_name"] = &Validation::IsValidServerName;
-    // _map["root"] = &Validation::IsValidRoot;
-    // _map["index"] = &Validation::IsValidIndex;
-    // _map["location"] = &Validation::IsValidLocation;
+    _map["root"] = &Validation::IsValidRoot;
+    _map["index"] = &Validation::IsValidIndex;
+    _map["location"] = &Validation::IsValidLocation;
+    _map["autoindex"] = &Validation::IsValidAutoindex;
+    _map["return"] = &Validation::IsValidReturn;
+    // _map["error_pages"] = &Validation::;
+    // _map["client_max_body_size"] = &Validation::;
     
 }
 
+bool    SkipedOptions(std::string option)
+{
+    if ( option == "Return" || option == "Autoindex" )
+        return ( true );
+    return ( false );
+}
+
+void Validation::CheckExistance(std::pair<std::string, bool> used)
+{
+    if (!SkipedOptions( used.first ) && used.second == false )
+        Error::ThrowError("Invalid Syntax : (Missing Element in Server)");
+}
+
+void     Validation::CheckLevelAndDuplication(bool& first, bool& second, std::string msg)
+{
+    if ( _level == 0) {
+        Error::ThrowError("Invalid Syntax : (Element out of scope)");
+    };
+	CkeckDuplication(first, second, "Invalid Syntax : ( Duplication In " + msg +" )");
+    _idx++;
+}
+
+void    Validation::ResetServerSeting()
+{
+    std::for_each(_useServer.begin(), _useServer.end(), CheckExistance);
+
+    _useServer["Root"] = false;
+    _useServer["Index"] = false;
+}
+void    Validation::ResetLocationSeting()
+{
+    _useLocation["Root"] = false;
+    _useLocation["Index"] = false;
+}
+
+//      SERVER
 void    Validation::IsValidServer()
 {
-    std::cout << _data[_idx] << "    \n" ;
+    _useServer["Server"] = true;
     _idx++;
-    if ( _brackets != 0 || _data[_idx] != "{" )
+    if ( _level != 0 || _data[_idx] != "{" )
        Error::ThrowError("Invalid Syntax");
     else
-        _brackets++;
+        _level++;
     _idx++;
     
-    ScopValidation();
+    CheckValidation();
+    ResetServerSeting();
 }
 
-long long   Validation::ConvertToNumber(std::string num)
+//      LOCATION
+void    Validation::IsValidLocation()
+{
+    _useLocation["Location"] = true;
+    _idx++;
+    if ( _level != 1 || IsSeparator() )
+       Error::ThrowError("Invalid Syntax : (Invalid Location)");
+    _idx++;
+    if ( _data[_idx] != "{" )
+       Error::ThrowError("Invalid Syntax : (missing '{' In location )");
+    else
+        _level++;
+    _idx++;
+    
+    CheckValidation();
+    ResetLocationSeting();
+}
+
+long   Validation::ConvertToNumber(std::string num)
 {
     char* endptr;
     errno = 0;
 
-    long long port = std::strtoll(num.c_str(), &endptr, 10);
+    long port = std::strtoll(num.c_str(), &endptr, 10);
 
-    if ( errno != 0 || *endptr != '\0' || num[0] == '+' )
+    if ( num[0] == '+' || errno != 0 || *endptr != '\0' )
         Error::ThrowError("Invalid Syntax ( Number Not Valid )");
     return ( port );
 }
 
 void Validation::PortOnly()
 {
-    long long port = ConvertToNumber(_data[_idx]);
-    std::cout << _data[_idx] << "    \nport =="  << port;
+    long port = ConvertToNumber(_data[_idx]);
     
     if ( port < 0 || port > 65535 )
         Error::ThrowError("Invalid Syntax ( Port Number Out Of Range )");
@@ -52,7 +136,7 @@ void Validation::PortOnly()
 
 void    Validation::ValidIP()
 {
-    long long Ip = 0;
+    long Ip = 0;
     size_t countPoint = 0;
     size_t start = 0;
     size_t pos  = 0;
@@ -79,14 +163,16 @@ void    Validation::ValidIP()
 void Validation::IpAndPort()
 {
     ValidIP();
-    std::cout << _data[_idx] << "    \n" ;
     _idx++;
     PortOnly();
 }
 
+//     LISTEN
 void    Validation::IsValidListen()
 {
-    std::cout << _data[_idx] << "    \n" ;
+    _useServer["Listen"] = true;
+    if ( _level != 1)
+        Error::ThrowError("Invalid Syntax : (Element out of scope)");
     _idx++;
 
     if (  _idx + 1 < (int)_data.size() )
@@ -111,9 +197,12 @@ bool Validation::IsSeparator()
     return ( false );
 }
 
+//      SEVERNAME
 void    Validation::IsValidServerName()
 {
-    std::cout << _data[_idx] << "    \n" ;
+    _useServer["Server_name"] = true;
+    if ( _level != 1)
+        Error::ThrowError("Invalid Syntax : (Element out of scope)");
     _idx++;
 
     if ( _data[_idx] == ";" )
@@ -124,41 +213,106 @@ void    Validation::IsValidServerName()
         _idx++;
 }
 
-void    Validation::IsValidIndex()
-{	
-	
+void    Validation::CkeckDuplication(bool& first, bool& second, std::string msg)
+{
+    if ( _level == 1 )
+    {
+        if (first  == true )
+            Error::ThrowError(msg);
+        else
+            first = true;
+        return ;
+    }
+    else if (_level == 2)
+    {
+        if (second  == true )
+            Error::ThrowError(msg);
+        else
+            second = true;
+        return ;
+    }
+    else
+        Error::ThrowError("Invalid Syntax : (Element out of scope)");
 }
 
+//      ROOT
 void    Validation::IsValidRoot()
 {
-    std::cout << _data[_idx] << "    \n" ;
+    CheckLevelAndDuplication(_useServer["Root"], _useLocation["Root"], "Root"); 
+
+    if ( IsSeparator() )
+        Error::ThrowError("Invalid Syntax : (Root Has Invalid Path)");
     _idx++;
+    if (  _data[_idx] == ";" )
+        _idx++;
 }
 
-void    Validation::IsValidLocation()
+//      INDEX
+void    Validation::IsValidIndex()
 {
+    CheckLevelAndDuplication(_useServer["Index"], _useLocation["Index"], "Index");
+
+    if ( _data[_idx] == ";" )
+        Error::ThrowError("Invalid Syntax : (Index Must Have a Name)");
+    while ( _idx < (int)_data.size() && !IsSeparator() )
+    {
+        if ( _data[_idx].find("/") != std::string::npos)
+            Error::ThrowError("Invalid Syntax : (Index Is An Absolute Path)");
+        _idx++;
+    }
+    if (  _data[_idx] == ";" )
+        _idx++;
 
 }
 
+//      AUTOINDEX
+void    Validation::IsValidAutoindex()
+{
+    CheckLevelAndDuplication(_useServer["Autoindex"], _useLocation["Autoindex"], "Autoindex");
+    
+    if ( IsSeparator() || (_data[_idx] != "off" && _data[_idx] != "on") )
+        Error::ThrowError("Invalid Syntax : (autoindex Has Invalid option )");
+    _idx++;
+    if ( _data[_idx] == ";" )
+        _idx++;
+}
 
+// void    Validation::CheckURL()
+// {
+//     if ( _data[_idx].find("http://") == 0 || _data[_idx].find("https://") == 0 || _data[_idx][0] == '/' )
+//         _idx++;
+//     else
+//         Error::ThrowError("Invalid Syntax : ( Invalid Redirection URL In return )");
+// }
+
+//      RETURN
+void    Validation::IsValidReturn()
+{
+    CheckLevelAndDuplication(_useServer["Return"], _useLocation["Return"], "Return");
+
+    long errorCode = ConvertToNumber( _data[_idx]);
+    if ( errorCode != 301 && errorCode != 302 )
+        Error::ThrowError("Invalid Syntax : ( Invalid Redirection Code In return )");
+    _idx++;
+
+    if ( !IsSeparator() )
+        _idx++;
+
+    if ( _data[_idx] == ";" )
+        _idx++;
+}
 
 void    Validation::CheckValidation()
-{
-    CreateMap();
-    ScopValidation();
-}
-
-void    Validation::ScopValidation()
-{
+{    
     while( _idx < (int)_data.size() )
     {
         if (  _data[this->_idx] == "}" )
         {
-            if ( _brackets == 0 )
+            if ( _level == 0 )
                 Error::ThrowError("Invalid Syntax");
             else
             {
-                _brackets--;
+                _level--;
                 _idx++;
                 return ;
             }
@@ -168,7 +322,7 @@ void    Validation::ScopValidation()
             Error::ThrowError("Invalid Syntax");
         (this->*it->second)();
     }
-    if ( _brackets != 0)
+    if ( _level != 0 )
         Error::ThrowError("Invalid Syntax");
 
 }
