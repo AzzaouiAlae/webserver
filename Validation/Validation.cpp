@@ -17,8 +17,7 @@ void    Validation::CreateLocationMap()
     _useLocation["Index"] = false;
     _useLocation["Autoindex"] = false;
     _useLocation["Return"] = false;
-    _useLocation["Error_page"] = false;
-
+    _useLocation["ClientMaxBodySize"] = false;
 }
 
 void    Validation::CreateServerdMap()
@@ -30,7 +29,7 @@ void    Validation::CreateServerdMap()
     _useServer["Index"] = false;
     _useServer["Autoindex"] = false;
     _useServer["Return"] = false;
-    _useServer["Error_page"] = false;
+    _useServer["ClientMaxBodySize"] = false;
 }
 
 void    Validation::CreateSkipedData()
@@ -39,7 +38,7 @@ void    Validation::CreateSkipedData()
     {
         _skiped.push_back("Return");
         _skiped.push_back("Autoindex");
-        _skiped.push_back("Error_page");
+        _skiped.push_back("ClientMaxBodySize");
     }
 
 }
@@ -55,7 +54,7 @@ void    Validation::CreateMap()
     _map["autoindex"] = &Validation::IsValidAutoindex;
     _map["return"] = &Validation::IsValidReturn;
     _map["error_page"] = &Validation::IsErrorPage;
-    // _map["client_max_body_size"] = &Validation::;
+    _map["client_max_body_size"] = &Validation::IsClientMaxBodySize;
     
 }
 
@@ -104,7 +103,9 @@ void    Validation::IsValidServer()
     else
         _level++;
     _idx++;
-    
+    // Singleton::ASTroot.AddChild(AST<std::string>("server"));
+    // int idx = Singleton::ASTroot.GetChildren().size() - 1;
+    // currentServer = &(Singleton::ASTroot.GetChildren())[idx];
     CheckValidation();
     ResetServerSeting();
 }
@@ -313,8 +314,8 @@ void    Validation::IsErrorPage()
 {
     bool error_code = false;
     bool error_file = false;
-    CheckLevelAndDuplication(_useServer["Error_page"], _useLocation["Error_page"], "Error_page");
 
+    _idx++;
     while ( _idx < (int)_data.size() && !IsSeparator() )
     {
         try
@@ -339,6 +340,42 @@ void    Validation::IsErrorPage()
     if ( error_code == false || error_file == false )
         Error::ThrowError("Invalid Syntax : ( Invalid Error Code Or File In Error_page )");
     if ( _data[_idx] == ";" )
+        _idx++;
+
+}
+
+bool IsByteSizeUnit( std::string data )
+{
+    switch (data[data.size() -1])
+    {
+        case 'k':
+            return true;
+        case 'K':
+            return true;
+        case 'm':
+            return true;
+        case 'M':
+            return true;
+        case 'g':
+            return true;
+        case 'G':
+            return true;
+        default:
+            return false;
+    }
+    return false;
+}
+
+void    Validation::IsClientMaxBodySize()
+{
+    CheckLevelAndDuplication(_useServer["ClientMaxBodySize"], _useLocation["ClientMaxBodySize"], "ClientMaxBodySize");
+    
+    ConvertToNumber(_data[_idx].substr(0, _data[_idx].size() - 1));
+    if (!IsSeparator() && IsByteSizeUnit(_data[_idx]) == true )
+        _idx++;
+    else
+        Error::ThrowError("Invalid Syntax : ( Client_max_body_size Not Valid )");
+    if ( _data[_idx] == ";")
         _idx++;
 
 }

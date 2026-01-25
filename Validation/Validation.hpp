@@ -10,6 +10,7 @@ class Validation {
         std::map<std::string, bool> _useLocation;
         static std::vector<std::string> _skiped;
         std::vector<std::string> _data;
+        // AST<std::string>* currentServer;
         
         typedef std::map<std::string, void (Validation::*)() >Map;
         Map _map;
@@ -28,6 +29,7 @@ class Validation {
         void            IsValidLocation();
         void            ResetLocationSeting();
         
+        void            IsClientMaxBodySize();
         
         void            IsValidIndex();
         void            IsValidRoot();
