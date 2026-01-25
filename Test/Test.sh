@@ -12,6 +12,8 @@ find ../ \( \
 		-name "*.css" \
 	\) -delete
 
+export PATH=/app/Test:$PATH
+
 find . -type f -name "Makefile" | while read makefile; do
     DIR=$(dirname "$makefile")
     echo "▶ Building in: $DIR"
