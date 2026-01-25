@@ -40,6 +40,11 @@
 # debug information files
 *.dwo
 
+*.html
+*.gcno
+*.js
+*.css
+*.gcda
 
 mainAlae.cpp
 mainOussama.cpp
