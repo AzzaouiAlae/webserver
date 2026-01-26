@@ -2,7 +2,7 @@ SRC = ../Unity-master/src/unity.c ParsingTest.cpp ../../Parsing/Parsing.cpp ../.
 OBJ = $(SRC:.cpp=.o)
 OBJ := $(OBJ:.c=.o)
 CXX = c++
-CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98 --coverage
+CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98
 NAME = a.out
 
 all : $(NAME)
@@ -40,6 +40,7 @@ fclean : clean
 	-@rm $(NAME)
 
 cov: CXXFLAGS += -O0 -fprofile-arcs -ftest-coverage
+
 cov: fclean $(NAME) coverage 
 
 re : fclean $(NAME)
