@@ -1,11 +1,11 @@
-SRC = $(CURDIR)/../Unity-master/src/unity.c $(CURDIR)/../../Tokenizing/Tokenizing.cpp $(CURDIR)/../../ErrorHandling/Error.cpp TokenizingTest.cpp
+SRC = ../Unity-master/src/unity.c ../../Tokenizing/Tokenizing.cpp ../../ErrorHandling/Error.cpp TokenizingTest.cpp
 OBJ = $(SRC:.cpp=.o)
 OBJ := $(OBJ:.c=.o)
 CXX = c++
-CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98 --coverage
+CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98
 NAME = a.out
 
-all : $(NAME) coverage
+all : $(NAME)
 
 coverage : 
 	-./a.out
@@ -39,6 +39,9 @@ clean :
 fclean : clean
 	-@rm $(NAME)
 
-re : fclean all
+cov: CXXFLAGS += -O0 -fprofile-arcs -ftest-coverage
+cov: fclean $(NAME) coverage 
+
+re : fclean $(NAME)
 
 .PHONY: all clean fclean re coverage rm_coverage
