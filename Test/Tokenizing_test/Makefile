@@ -5,7 +5,7 @@ CXX = c++
 CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98 --coverage
 NAME = a.out
 
-all : $(NAME) coverage
+all : $(NAME)
 
 coverage : 
 	-./a.out
@@ -39,6 +39,9 @@ clean :
 fclean : clean
 	-@rm $(NAME)
 
-re : fclean all
+cov: CXXFLAGS += -O0 -fprofile-arcs -ftest-coverage
+cov: fclean $(NAME) coverage 
+
+re : fclean $(NAME)
 
 .PHONY: all clean fclean re coverage rm_coverage
