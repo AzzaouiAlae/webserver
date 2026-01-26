@@ -18,6 +18,7 @@ void    Validation::CreateLocationMap()
     _useLocation["Autoindex"] = false;
     _useLocation["Return"] = false;
     _useLocation["ClientMaxBodySize"] = false;
+    _useLocation["AllowMethods"] = false;
 }
 
 void    Validation::CreateServerdMap()
@@ -30,6 +31,7 @@ void    Validation::CreateServerdMap()
     _useServer["Autoindex"] = false;
     _useServer["Return"] = false;
     _useServer["ClientMaxBodySize"] = false;
+    _useServer["AllowMethods"] = false;
 }
 
 void    Validation::CreateSkipedData()
@@ -37,8 +39,12 @@ void    Validation::CreateSkipedData()
     if (_skiped.empty() )
     {
         _skiped.push_back("Return");
+        _skiped.push_back("Root");
+        _skiped.push_back("Index");
+        _skiped.push_back("Autoindex");
         _skiped.push_back("Autoindex");
         _skiped.push_back("ClientMaxBodySize");
+        _skiped.push_back("AllowMethods");
     }
 
 }
@@ -55,6 +61,7 @@ void    Validation::CreateMap()
     _map["return"] = &Validation::IsValidReturn;
     _map["error_page"] = &Validation::IsErrorPage;
     _map["client_max_body_size"] = &Validation::IsClientMaxBodySize;
+    _map["allow_methods"] = &Validation::IsValidAllowMethods;    
     
 }
 
@@ -344,26 +351,9 @@ void    Validation::IsErrorPage()
 
 }
 
-bool IsByteSizeUnit( std::string data )
+bool Validation::IsByteSizeUnit( std::string& data )
 {
-    switch (data[data.size() -1])
-    {
-        case 'k':
-            return true;
-        case 'K':
-            return true;
-        case 'm':
-            return true;
-        case 'M':
-            return true;
-        case 'g':
-            return true;
-        case 'G':
-            return true;
-        default:
-            return false;
-    }
-    return false;
+    return (strchr("KkMmGg", data[data.size() - 1]));
 }
 
 void    Validation::IsClientMaxBodySize()
@@ -378,6 +368,30 @@ void    Validation::IsClientMaxBodySize()
     if ( _data[_idx] == ";")
         _idx++;
 
+}
+
+bool Validation::IsAllowedMethods(std::string& method)
+{
+    if ( method == "GET" || method == "POST" || method == "DELETE" )
+        return ( true );
+    return ( false );
+}
+
+void    Validation::IsValidAllowMethods()
+{
+    CheckLevelAndDuplication(_useServer["AllowMethods"], _useLocation["AllowMethods"], "AllowMethods");
+
+    if ( _data[_idx] == ";" )
+        _idx++;
+    while ( _idx < (int)_data.size() && !IsSeparator()  )
+    {
+        if ( IsAllowedMethods(_data[_idx]) == false )
+            Error::ThrowError("Invalid Syntax : ( Invalid Method In allow_methods )");
+        _idx++;
+    }
+
+    if ( _data[_idx] == ";" )
+        _idx++;
 }
 
 void    Validation::CheckValidation()

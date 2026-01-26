@@ -19,18 +19,19 @@ class Validation {
         static bool     SkipedOptions(std::string option);
 
         void            CreateMap();
+        bool            IsByteSizeUnit( std::string& data );
         void            CreateServerdMap();
         void            CreateLocationMap();
         void            CreateSkipedData();
         
         void            IsValidServer();
         void            ResetServerSeting();
-        
+
         void            IsValidLocation();
         void            ResetLocationSeting();
-        
+
         void            IsClientMaxBodySize();
-        
+
         void            IsValidIndex();
         void            IsValidRoot();
         void            IsValidAutoindex();
@@ -42,6 +43,9 @@ class Validation {
         bool            IsSeparator();
 
         void            IsErrorPage();
+
+        void            IsValidAllowMethods();
+        bool            IsAllowedMethods(std::string& method);
 
         void            IsValidListen();
         void            IpAndPort();

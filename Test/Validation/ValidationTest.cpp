@@ -664,6 +664,232 @@ void Test41()
 	}
 }
 
+void Test42()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid37.conf");
+    file.split_tokens();
+    Validation valid(file.get_tokens());
+	try
+	{
+	    valid.CheckValidation();
+	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+	    TEST_PASS();
+	}
+}
+
+void Test43()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid38.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test44()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid39.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test45()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid40.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test46()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid41.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test47()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid42.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test48()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid43.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test49()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid44.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test50()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid45.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test51()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid46.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test52()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid47.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test53()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid48.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test54()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid49.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test55()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid50.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+
+
 int main()
 {
 	// VALID
@@ -710,6 +936,20 @@ int main()
 	RUN_TEST(Test39);
 	RUN_TEST(Test40);
 	RUN_TEST(Test41);
+	RUN_TEST(Test42);
+	RUN_TEST(Test43);
+	RUN_TEST(Test44);
+	RUN_TEST(Test45);
+	RUN_TEST(Test46);
+	RUN_TEST(Test47);
+	RUN_TEST(Test48);
+	RUN_TEST(Test49);
+	RUN_TEST(Test50);
+	RUN_TEST(Test51);
+	RUN_TEST(Test52);
+	RUN_TEST(Test53);
+	RUN_TEST(Test54);
+	RUN_TEST(Test55);
 
 
 	return (UnityEnd());
