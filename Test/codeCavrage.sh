@@ -16,12 +16,13 @@ export PATH=/app/Test:$PATH
 
 find /app/Test -type f -name "Makefile" | while read makefile; do
     DIR=$(dirname "$makefile")
-    echo "▶ Building in: $DIR"
-    cd "$DIR"
-	mkdir coverage 2> /dev/null
-    make re
-	# echo execute $DIR/a.out
-	# ./a.out
-	echo -----------
-    cd "$ROOT_DIR"
+	if [ "$DIR" != "/app/Test" ]; then
+		echo "▶ Building in: $DIR"
+		cd "$DIR"
+		mkdir coverage 2> /dev/null
+		make cov
+		chmod -R 777 coverage
+		echo -----------
+		cd "$ROOT_DIR"
+	fi
 done

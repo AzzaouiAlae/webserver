@@ -1,10 +1,8 @@
-
-SRC = $(CURDIR)/../Unity-master/src/unity.c ValidationTest.cpp $(CURDIR)/../../Parsing/Parsing.cpp $(CURDIR)/../../TokensTypes/TokensTypes.cpp\
-		$(CURDIR)/../../Validation/Validation.cpp $(CURDIR)/../../Tokenizing/Tokenizing.cpp $(CURDIR)/../../ErrorHandling/Error.cpp
+SRC = ../Unity-master/src/unity.c ParsingTest.cpp ../../Parsing/Parsing.cpp ../../TokensTypes/TokensTypes.cpp
 OBJ = $(SRC:.cpp=.o)
 OBJ := $(OBJ:.c=.o)
 CXX = c++
-CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98
+CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98 --coverage
 NAME = a.out
 
 all : $(NAME)
@@ -41,9 +39,9 @@ clean :
 fclean : clean
 	-@rm $(NAME)
 
-re : fclean $(NAME)
-
 cov: CXXFLAGS += -O0 -fprofile-arcs -ftest-coverage
 cov: fclean $(NAME) coverage 
+
+re : fclean $(NAME)
 
 .PHONY: all clean fclean re coverage rm_coverage
