@@ -6,11 +6,14 @@ ROOT_DIR="$(pwd)"
 
 find ../ \( \
 		-name "*.html" -o \
+		-name "*.gcov" -o \
 		-name "*.gcno" -o \
 		-name "*.gcda" -o \
 		-name "*.js"   -o \
 		-name "*.css" \
 	\) -delete
+
+export PATH="$HOME/.local/bin:$PATH"
 
 find . -type f -name "Makefile" | while read makefile; do
     DIR=$(dirname "$makefile")
