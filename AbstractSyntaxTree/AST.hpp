@@ -77,7 +77,7 @@ public:
 		Arguments.push_back(value);
 	}
 
-	std::vector<AST<content> > GetChildren()
+	std::vector<AST<content> >& GetChildren()
 	{
 		return Children;
 	}

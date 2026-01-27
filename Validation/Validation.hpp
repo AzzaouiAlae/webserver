@@ -8,15 +8,16 @@ class Validation {
         int     _level;
         std::map<std::string, bool> _useServer;
         std::map<std::string, bool> _useLocation;
-        static std::vector<std::string> _skiped;
         std::vector<std::string> _data;
-        // AST<std::string>* currentServer;
+        
+        static std::vector<std::string> _skiped;
         
         typedef std::map<std::string, void (Validation::*)() >Map;
         Map _map;
         
         static void     CheckExistance(std::pair<std::string, bool>);
         static bool     SkipedOptions(std::string option);
+        void            AddDirective( std::string value );
 
         void            CreateMap();
         bool            IsByteSizeUnit( std::string& data );

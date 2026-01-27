@@ -1,6 +1,14 @@
 #include "../Headers.hpp"
 std::vector<std::string> Validation::_skiped;
 
+void    Validation::AddDirective( std::string value )
+{
+    if ( _level == 1 )
+        Parsing::AddDirective(*(Parsing::currentServer), value);
+    else if ( _level == 2 )
+        Parsing::AddDirective(*(Parsing::currentLocation), value);
+}
+
 Validation::Validation(std::vector<std::string> inputData)
     :  _idx(0), _level(0), _data(inputData) 
 {
@@ -111,9 +119,7 @@ void    Validation::IsValidServer()
     else
         _level++;
     _idx++;
-    // Singleton::ASTroot.AddChild(AST<std::string>("server"));
-    // int idx = Singleton::ASTroot.GetChildren().size() - 1;
-    // currentServer = &(Singleton::ASTroot.GetChildren())[idx];
+    Parsing::AddServer();
     CheckValidation();
     ResetServerSeting();
 }
@@ -131,7 +137,7 @@ void    Validation::IsValidLocation()
     else
         _level++;
     _idx++;
-    
+    Parsing::AddLocation(*(Parsing::currentServer));
     CheckValidation();
     ResetLocationSeting();
 }
@@ -155,6 +161,7 @@ void Validation::PortOnly()
     if ( port < 0 || port > 65535 )
         Error::ThrowError("Invalid Syntax ( Port Number Out Of Range )");
 
+    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
     _idx++;
 }
 
@@ -181,6 +188,7 @@ void    Validation::ValidIP()
             Error::ThrowError("Invalid Syntax ( IP Adress: Number Out Of Range )");
     if ( countPoint != 3 )
         Error::ThrowError("Invalid Syntax ( IP Address Not Valid )");
+    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
     _idx++;
 }
 
@@ -197,6 +205,7 @@ void    Validation::IsValidListen()
     _useServer["Listen"] = true;
     if ( _level != 1)
         Error::ThrowError("Invalid Syntax : (Element out of scope)");
+    Validation::AddDirective("listen");
     _idx++;
 
     if (  _idx + 1 < (int)_data.size() )
@@ -227,12 +236,13 @@ void    Validation::IsValidServerName()
     _useServer["Server_name"] = true;
     if ( _level != 1)
         Error::ThrowError("Invalid Syntax : (Element out of scope)");
+    Validation::AddDirective("server_name");
     _idx++;
 
     if ( _data[_idx] == ";" )
         Error::ThrowError("Invalid Syntax : (server_name Must Have a Name)");
     while ( _idx < (int)_data.size() && !IsSeparator() )
-        _idx++;
+        Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
     if (  _data[_idx] == ";" )
         _idx++;
 }
@@ -264,8 +274,10 @@ void    Validation::IsValidRoot()
 {
     CheckLevelAndDuplication(_useServer["Root"], _useLocation["Root"], "Root"); 
 
+    Validation::AddDirective("root");
     if ( IsSeparator() )
         Error::ThrowError("Invalid Syntax : (Root Has Invalid Path)");
+    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
     _idx++;
     if (  _data[_idx] == ";" )
         _idx++;
@@ -276,13 +288,15 @@ void    Validation::IsValidIndex()
 {
     CheckLevelAndDuplication(_useServer["Index"], _useLocation["Index"], "Index");
 
+    Validation::AddDirective("index");
     if ( _data[_idx] == ";" )
         Error::ThrowError("Invalid Syntax : (Index Must Have a Name)");
     while ( _idx < (int)_data.size() && !IsSeparator() )
     {
         if ( _data[_idx].find("/") != std::string::npos)
             Error::ThrowError("Invalid Syntax : (Index Is An Absolute Path)");
-        _idx++;
+        
+        Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
     }
     if (  _data[_idx] == ";" )
         _idx++;
@@ -294,8 +308,10 @@ void    Validation::IsValidAutoindex()
 {
     CheckLevelAndDuplication(_useServer["Autoindex"], _useLocation["Autoindex"], "Autoindex");
     
+    Validation::AddDirective("autoindex");
     if ( IsSeparator() || (_data[_idx] != "off" && _data[_idx] != "on") )
         Error::ThrowError("Invalid Syntax : (autoindex Has Invalid option )");
+    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
     _idx++;
     if ( _data[_idx] == ";" )
         _idx++;
@@ -306,9 +322,12 @@ void    Validation::IsValidReturn()
 {
     CheckLevelAndDuplication(_useServer["Return"], _useLocation["Return"], "Return");
 
+    Validation::AddDirective("return");
     long redirectCode = ConvertToNumber( _data[_idx]);
     if ( redirectCode != 301 && redirectCode != 302 )
         Error::ThrowError("Invalid Syntax : ( Invalid Redirection Code In return )");
+    
+    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
     _idx++;
 
     if ( !IsSeparator() )
@@ -318,11 +337,13 @@ void    Validation::IsValidReturn()
         _idx++;
 }
 
+//    ERRORPAGE
 void    Validation::IsErrorPage()
 {
     bool error_code = false;
     bool error_file = false;
 
+    Validation::AddDirective("error_page");
     _idx++;
     while ( _idx < (int)_data.size() && !IsSeparator() )
     {
@@ -331,7 +352,7 @@ void    Validation::IsErrorPage()
             long errorCode = ConvertToNumber( _data[_idx]);
             if ( (errorCode >= 400 && errorCode <= 404) || (errorCode >= 500 && errorCode <= 504) )
             {
-                _idx++;
+               Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
                 error_code = true;
             }
             else
@@ -340,7 +361,7 @@ void    Validation::IsErrorPage()
         }
         catch(const std::exception& e)
         {
-            _idx++;
+            Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
             error_file = true;
             break;
         }
@@ -357,13 +378,16 @@ bool Validation::IsByteSizeUnit( std::string& data )
     return (strchr("KkMmGg", data[data.size() - 1]));
 }
 
+//     CLIENTMAXBODYSIZE
 void    Validation::IsClientMaxBodySize()
 {
     CheckLevelAndDuplication(_useServer["ClientMaxBodySize"], _useLocation["ClientMaxBodySize"], "ClientMaxBodySize");
     
+    Validation::AddDirective("client_max_body_size");
+
     ConvertToNumber(_data[_idx].substr(0, _data[_idx].size() - 1));
     if (!IsSeparator() && IsByteSizeUnit(_data[_idx]) == true )
-        _idx++;
+        Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
     else
         Error::ThrowError("Invalid Syntax : ( Client_max_body_size Not Valid )");
     if ( _data[_idx] == ";")
@@ -378,34 +402,39 @@ bool Validation::IsAllowedMethods(std::string& method)
     return ( false );
 }
 
+//     ALLOWMETHODS
 void    Validation::IsValidAllowMethods()
 {
     CheckLevelAndDuplication(_useServer["AllowMethods"], _useLocation["AllowMethods"], "AllowMethods");
 
+    Validation::AddDirective("allow_methods");
     if ( _data[_idx] == ";" )
         _idx++;
     while ( _idx < (int)_data.size() && !IsSeparator()  )
     {
         if ( IsAllowedMethods(_data[_idx]) == false )
             Error::ThrowError("Invalid Syntax : ( Invalid Method In allow_methods )");
-        _idx++;
+        Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
     }
 
     if ( _data[_idx] == ";" )
         _idx++;
 }
 
+//      CGIPASS
 void    Validation::IsValidCGIPass()
 {
     if ( _level != 2)
         Error::ThrowError("Invalid Syntax : (Element out of scope)");
+    
+    Validation::AddDirective("cgi_pass");    
     _idx++;
 
     if ( _data[_idx].find(".") != 0 )
         Error::ThrowError("Invalid Syntax : (CgiPass Must Have an extension)");
-    _idx++;
+    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
     if ( !IsSeparator() )
-        _idx++;
+        Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
     else
         Error::ThrowError("Invalid Syntax : (CgiPass Must Have a Path)");
     if ( _data[_idx] == ";" )
