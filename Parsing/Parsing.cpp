@@ -1,32 +1,29 @@
-#include "Parsing.hpp"
+# include "../Headers.hpp"
 
 AST<std::string>* Parsing::currentServer;
 AST<std::string>* Parsing::currentLocation;
 AST<std::string>* Parsing::currentDirective;
 std::vector<std::string>* Parsing::currentDirecAgs;
 
-AST<std::string>& Parsing::AddServer()
+void Parsing::AddServer()
 {
 	AST<std::string>& root = Singleton::GetASTroot();
 
 	root.AddChild("server");
 	int idx = root.GetChildren().size() - 1;
 	currentServer = &((root.GetChildren())[idx]);
-	return *currentServer;
 }
-AST<std::string>& Parsing::AddLocation(AST<std::string>& server)
+void Parsing::AddLocation(AST<std::string>& server)
 {
 	server.AddChild("location");
 	int idx = server.GetChildren().size() - 1;
 	currentLocation = &((server.GetChildren())[idx]);
-	return *currentLocation;
 }
-AST<std::string>& Parsing::AddDirective(AST<std::string>& node, std::string value)
+void Parsing::AddDirective(AST<std::string>& node, std::string value)
 {
 	node.AddChild(value);
 	int idx = node.GetChildren().size() - 1;
 	currentDirective = &((node.GetChildren())[idx]);
-	return *currentDirective;
 }
 void Parsing::AddArg(AST<std::string>& node, std::string arg)
 {

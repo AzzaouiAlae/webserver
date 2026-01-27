@@ -15,6 +15,7 @@ class AST
 		f(root.Value, level);
 		for (int i = 0; i < (int)root.Arguments.size(); i++)
 		{
+			// std::cout << "--";
 			f(root.Arguments[i], level);
 		}
 		for (int i = 0; i < (int)root.Children.size(); i++)
@@ -77,7 +78,7 @@ public:
 		Arguments.push_back(value);
 	}
 
-	std::vector<AST<content> > GetChildren()
+	std::vector<AST<content> >& GetChildren()
 	{
 		return Children;
 	}
