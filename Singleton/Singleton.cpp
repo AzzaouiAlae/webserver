@@ -6,7 +6,7 @@ Singleton::Map& Singleton::GetEnv()
 
     return env;
 }
-// static AST<std::string> ASTroot;
+
 
 AST<std::string>& Singleton::GetASTroot()
 {

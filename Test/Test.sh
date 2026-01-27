@@ -6,6 +6,7 @@ ROOT_DIR="$(pwd)"
 
 find ../ \( \
 		-name "*.html" -o \
+		-name "*.gcov" -o \
 		-name "*.gcno" -o \
 		-name "*.gcda" -o \
 		-name "*.js"   -o \
