@@ -2,21 +2,9 @@
 
 #include "../Headers.hpp"
 
-
-enum NodeType
-{
-	e_server,
-	e_listen,
-	e_root,
-	e_index,
-	e_server_name,
-	e_location
-};
-
 template <typename content>
 class AST
 {
-	NodeType type;
 	content Value;
 	std::vector<AST<content> > Children;
 	std::vector<content> Arguments;
@@ -92,6 +80,11 @@ public:
 	std::vector<AST<content> > GetChildren()
 	{
 		return Children;
+	}
+
+	std::vector<content> GetArguments()
+	{
+		return Arguments;
 	}
 
 	content GetValue()
