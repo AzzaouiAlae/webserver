@@ -31,3 +31,20 @@ void Parsing::AddArg(AST<std::string>& node, std::string arg)
 {
 	node.AddArgument(arg);
 }
+
+void find(std::string str, int lvl)
+{
+
+}
+
+std::vector<std::string> Parsing::GetDirecAgs(AST<std::string>& node, std::string& direcName)
+{
+	std::vector<std::string> strs;
+	currentDirecAgs = &strs;
+	node.InorderTraversal(find);
+	return strs;
+}
+std::vector<AST<std::string>> Parsing::GetNode(AST<std::string>& node, std::string& nodeName)
+{
+
+}
