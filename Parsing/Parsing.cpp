@@ -1,44 +1,33 @@
 #include "Parsing.hpp"
-#include "../TokensTypes/TokensTypes.hpp"
 
-Parsing::Parsing(std::vector<std::string>& tokens): ASTroot("ASTroot"), tokens(tokens)
+AST<std::string>* Parsing::currentServer;
+AST<std::string>* Parsing::currentLocation;
+AST<std::string>* Parsing::currentDirective;
+
+AST<std::string>& Parsing::AddServer()
 {
-	currentNode = NULL;
+	AST<std::string>& root = Singleton::GetASTroot();
+
+	root.AddChild("server");
+	int idx = root.GetChildren().size() - 1;
+	currentServer = &((root.GetChildren())[idx]);
+	return *currentServer;
 }
-
-AST<std::string>& Parsing::GetRoot()
+AST<std::string>& Parsing::AddLocation(AST<std::string>& server)
 {
-	return ASTroot;
+	server.AddChild("location");
+	int idx = server.GetChildren().size() - 1;
+	currentLocation = &((server.GetChildren())[idx]);
+	return *currentLocation;
 }
-
-void Parsing::AddServerType(std::vector<std::string>& tokens, int idx)
+AST<std::string>& Parsing::AddDirective(AST<std::string>& node, std::string value)
 {
-	currentNode->AddChild(tokens[idx]);
+	node.AddChild(value);
+	int idx = node.GetChildren().size() - 1;
+	currentDirective = &((node.GetChildren())[idx]);
+	return *currentDirective;
 }
-
-void Parsing::ParseConfigFile()
+void Parsing::AddArg(AST<std::string>& node, std::string arg)
 {
-	NodeType type;
-	currentNode = &ASTroot;
-	for(int i = 0; i < (int)tokens.size(); i++)
-	{
-		type = TokensTypes::GetNodeType(tokens, i);
-		switch (type)
-		{
-		case server:
-			AddServerType(tokens, i);
-			break;
-		case listen:
-			break;
-		case root:
-			break;
-		case index:
-			break;
-		case server_name:
-			break;
-		case location:
-			break;
-		}
-		AST<std::string> node("");
-	}
+	node.AddArgument(arg);
 }
