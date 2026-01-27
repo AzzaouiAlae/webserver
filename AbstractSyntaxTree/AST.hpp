@@ -15,6 +15,7 @@ class AST
 		f(root.Value, level);
 		for (int i = 0; i < (int)root.Arguments.size(); i++)
 		{
+			// std::cout << "--";
 			f(root.Arguments[i], level);
 		}
 		for (int i = 0; i < (int)root.Children.size(); i++)
