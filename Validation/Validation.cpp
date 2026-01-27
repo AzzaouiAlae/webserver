@@ -1,24 +1,27 @@
 #include "../Headers.hpp"
+std::vector<std::string> Validation::_skiped;
 
 Validation::Validation(std::vector<std::string> inputData)
     :  _idx(0), _level(0), _data(inputData) 
 {
     CreateMap();
-    createServerdMap();
-    createLocationMap();
+    CreateServerdMap();
+    CreateLocationMap();
+    CreateSkipedData();
 }
 
-void    Validation::createLocationMap()
+void    Validation::CreateLocationMap()
 {
     _useLocation["Location"] = false;
     _useLocation["Root"] = false;
     _useLocation["Index"] = false;
     _useLocation["Autoindex"] = false;
     _useLocation["Return"] = false;
-
+    _useLocation["ClientMaxBodySize"] = false;
+    _useLocation["AllowMethods"] = false;
 }
 
-void    Validation::createServerdMap()
+void    Validation::CreateServerdMap()
 {
     _useServer["Server"] = false;
     _useServer["Listen"] = false;
@@ -27,6 +30,23 @@ void    Validation::createServerdMap()
     _useServer["Index"] = false;
     _useServer["Autoindex"] = false;
     _useServer["Return"] = false;
+    _useServer["ClientMaxBodySize"] = false;
+    _useServer["AllowMethods"] = false;
+}
+
+void    Validation::CreateSkipedData()
+{
+    if (_skiped.empty() )
+    {
+        _skiped.push_back("Return");
+        _skiped.push_back("Root");
+        _skiped.push_back("Index");
+        _skiped.push_back("Autoindex");
+        _skiped.push_back("Autoindex");
+        _skiped.push_back("ClientMaxBodySize");
+        _skiped.push_back("AllowMethods");
+    }
+
 }
 
 void    Validation::CreateMap()
@@ -39,14 +59,15 @@ void    Validation::CreateMap()
     _map["location"] = &Validation::IsValidLocation;
     _map["autoindex"] = &Validation::IsValidAutoindex;
     _map["return"] = &Validation::IsValidReturn;
-    // _map["error_pages"] = &Validation::;
-    // _map["client_max_body_size"] = &Validation::;
+    _map["error_page"] = &Validation::IsErrorPage;
+    _map["client_max_body_size"] = &Validation::IsClientMaxBodySize;
+    _map["allow_methods"] = &Validation::IsValidAllowMethods;    
     
 }
 
-bool    SkipedOptions(std::string option)
+bool    Validation::SkipedOptions(std::string option)
 {
-    if ( option == "Return" || option == "Autoindex" )
+    if ( std::find(_skiped.begin(), _skiped.end(), option ) != _skiped.end() )
         return ( true );
     return ( false );
 }
@@ -89,7 +110,9 @@ void    Validation::IsValidServer()
     else
         _level++;
     _idx++;
-    
+    // Singleton::ASTroot.AddChild(AST<std::string>("server"));
+    // int idx = Singleton::ASTroot.GetChildren().size() - 1;
+    // currentServer = &(Singleton::ASTroot.GetChildren())[idx];
     CheckValidation();
     ResetServerSeting();
 }
@@ -277,26 +300,95 @@ void    Validation::IsValidAutoindex()
         _idx++;
 }
 
-// void    Validation::CheckURL()
-// {
-//     if ( _data[_idx].find("http://") == 0 || _data[_idx].find("https://") == 0 || _data[_idx][0] == '/' )
-//         _idx++;
-//     else
-//         Error::ThrowError("Invalid Syntax : ( Invalid Redirection URL In return )");
-// }
-
 //      RETURN
 void    Validation::IsValidReturn()
 {
     CheckLevelAndDuplication(_useServer["Return"], _useLocation["Return"], "Return");
 
-    long errorCode = ConvertToNumber( _data[_idx]);
-    if ( errorCode != 301 && errorCode != 302 )
+    long redirectCode = ConvertToNumber( _data[_idx]);
+    if ( redirectCode != 301 && redirectCode != 302 )
         Error::ThrowError("Invalid Syntax : ( Invalid Redirection Code In return )");
     _idx++;
 
     if ( !IsSeparator() )
         _idx++;
+
+    if ( _data[_idx] == ";" )
+        _idx++;
+}
+
+void    Validation::IsErrorPage()
+{
+    bool error_code = false;
+    bool error_file = false;
+
+    _idx++;
+    while ( _idx < (int)_data.size() && !IsSeparator() )
+    {
+        try
+        {
+            long errorCode = ConvertToNumber( _data[_idx]);
+            if ( (errorCode >= 400 && errorCode <= 404) || (errorCode >= 500 && errorCode <= 504) )
+            {
+                _idx++;
+                error_code = true;
+            }
+            else
+                break;
+
+        }
+        catch(const std::exception& e)
+        {
+            _idx++;
+            error_file = true;
+            break;
+        }
+    }
+    if ( error_code == false || error_file == false )
+        Error::ThrowError("Invalid Syntax : ( Invalid Error Code Or File In Error_page )");
+    if ( _data[_idx] == ";" )
+        _idx++;
+
+}
+
+bool Validation::IsByteSizeUnit( std::string& data )
+{
+    return (strchr("KkMmGg", data[data.size() - 1]));
+}
+
+void    Validation::IsClientMaxBodySize()
+{
+    CheckLevelAndDuplication(_useServer["ClientMaxBodySize"], _useLocation["ClientMaxBodySize"], "ClientMaxBodySize");
+    
+    ConvertToNumber(_data[_idx].substr(0, _data[_idx].size() - 1));
+    if (!IsSeparator() && IsByteSizeUnit(_data[_idx]) == true )
+        _idx++;
+    else
+        Error::ThrowError("Invalid Syntax : ( Client_max_body_size Not Valid )");
+    if ( _data[_idx] == ";")
+        _idx++;
+
+}
+
+bool Validation::IsAllowedMethods(std::string& method)
+{
+    if ( method == "GET" || method == "POST" || method == "DELETE" )
+        return ( true );
+    return ( false );
+}
+
+void    Validation::IsValidAllowMethods()
+{
+    CheckLevelAndDuplication(_useServer["AllowMethods"], _useLocation["AllowMethods"], "AllowMethods");
+
+    if ( _data[_idx] == ";" )
+        _idx++;
+    while ( _idx < (int)_data.size() && !IsSeparator()  )
+    {
+        if ( IsAllowedMethods(_data[_idx]) == false )
+            Error::ThrowError("Invalid Syntax : ( Invalid Method In allow_methods )");
+        _idx++;
+    }
 
     if ( _data[_idx] == ";" )
         _idx++;
