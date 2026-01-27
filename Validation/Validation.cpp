@@ -61,7 +61,8 @@ void    Validation::CreateMap()
     _map["return"] = &Validation::IsValidReturn;
     _map["error_page"] = &Validation::IsErrorPage;
     _map["client_max_body_size"] = &Validation::IsClientMaxBodySize;
-    _map["allow_methods"] = &Validation::IsValidAllowMethods;    
+    _map["allow_methods"] = &Validation::IsValidAllowMethods;
+    _map["cgi_pass"] = &Validation::IsValidCGIPass;
     
 }
 
@@ -390,6 +391,23 @@ void    Validation::IsValidAllowMethods()
         _idx++;
     }
 
+    if ( _data[_idx] == ";" )
+        _idx++;
+}
+
+void    Validation::IsValidCGIPass()
+{
+    if ( _level != 2)
+        Error::ThrowError("Invalid Syntax : (Element out of scope)");
+    _idx++;
+
+    if ( _data[_idx].find(".") != 0 )
+        Error::ThrowError("Invalid Syntax : (CgiPass Must Have an extension)");
+    _idx++;
+    if ( !IsSeparator() )
+        _idx++;
+    else
+        Error::ThrowError("Invalid Syntax : (CgiPass Must Have a Path)");
     if ( _data[_idx] == ";" )
         _idx++;
 }

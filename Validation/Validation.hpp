@@ -43,6 +43,7 @@ class Validation {
         bool            IsSeparator();
 
         void            IsErrorPage();
+        void            IsValidCGIPass();
 
         void            IsValidAllowMethods();
         bool            IsAllowedMethods(std::string& method);
