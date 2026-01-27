@@ -40,13 +40,13 @@ class AST
 	void InorderTraversal(AST<content> root, void (*f)(content, int), int level = 0)
 	{
 		bool visited = false;
-		for (int i = 0; i < root.Children.size(); i++)
+		for (int i = 0; i < (int)root.Children.size(); i++)
 		{
-			if (visited == false && root.Children.size() / 2 <= i)
+			if (visited == false && (int)(root.Children.size() / 2) <= i)
 			{
 				visited = true;
 				f(root.Value, level);
-				for (int i = 0; i < root.Arguments.size(); i++)
+				for (int i = 0; i < (int)root.Arguments.size(); i++)
 				{
 					f(root.Arguments[i], level);
 				}
