@@ -1,6 +1,6 @@
 #include "Singleton.hpp"
 
-Singleton::Map Singleton::GetEnv()
+Singleton::Map& Singleton::GetEnv()
 {
     static Map env;
 

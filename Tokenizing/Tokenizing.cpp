@@ -10,8 +10,7 @@ void Tokenizing::openConfFile()
     _file.open(_filepath.c_str());
     if (!_file.is_open())
     {
-        Error::printError("The ConfigFile Can't Open");
-        exit(1);
+        Error::ThrowError("The ConfigFile Can't Open");
     }
 }
 
