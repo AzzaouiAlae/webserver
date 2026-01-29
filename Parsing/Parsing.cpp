@@ -51,3 +51,81 @@ std::vector<std::string> Parsing::GetDirecAgs(AST<std::string>& node, std::strin
 
 	
 // }
+bool isServer(vector<string>& strs, string& host, string& port)
+{
+	if ((int)strs.size() == 2)
+	{
+		if (strs[0] == host && port == strs[1])
+		{
+			return true;
+		}
+	}
+	else if ((int)strs.size() == 1)
+	{
+		if (port == strs[0])
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+AST<std::string>& Parsing::GetServerByHost(string host, string port)
+{
+	AST<std::string>& ASTroot = Singleton::GetASTroot();
+
+	std::vector<AST<string> >& servers = ASTroot.GetChildren();
+	for(int i = 0; i < (int)servers.size(); i++)
+	{
+		if (servers[i].GetValue() == "listen")
+		{
+			if (isServer(servers[i].GetArguments(), host, port))
+				return servers[i];
+		}
+	}
+	Error::ThrowError("Error: GetServerByHost\n");
+	return ASTroot;
+}
+
+
+
+AST<std::string>& Parsing::GetLocationByPath(AST<std::string>& server, string& path)
+{
+	int len = 0, j;
+	AST<std::string> *loc = NULL, *location = NULL;
+	string str;
+
+	for(int i = 0; i < (int)server.GetChildren().size(); i++)
+	{
+		if ((server.GetChildren())[i].GetValue() == "location")
+		{
+			loc = &(server.GetChildren())[i];
+			str = (loc->GetArguments())[0];
+			for(j = 0; j < (int)str.size() && str[j] == path[j]; j++);
+			if (j > len)
+			{
+				location = loc;
+				len = j;
+			}
+		}
+	}
+	if (location == NULL)
+		Error::ThrowError("Error: GetLocationByPath\n");
+	return *location;
+}
+
+string Parsing::GetRoot(AST<std::string>& node)
+{
+	vector<AST<std::string> >& ch = node.GetChildren();
+	for (int i = 0; i < (int)ch.size(); i++)
+	{
+		if (ch[i].GetValue() == "root")
+		{
+			return (ch[i].GetArguments())[0];
+		}
+	}
+	return "";
+}
+
+
+// server h;

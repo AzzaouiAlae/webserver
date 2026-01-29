@@ -1,5 +1,4 @@
 #pragma once
-
 #include "../Headers.hpp"
 
 class Parsing 
@@ -16,4 +15,7 @@ public:
 	static void AddLocation(AST<std::string>& server);
 	static void AddDirective(AST<std::string>& node, std::string value);
 	static void AddArg(AST<std::string>& node, std::string arg);
+	static AST<std::string>& GetServerByHost(string host, string port);
+	static AST<std::string>& GetLocationByPath(AST<std::string>& server, string& path);
+	static string GetRoot(AST<std::string>& node);
 }; 

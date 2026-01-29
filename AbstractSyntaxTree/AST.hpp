@@ -8,7 +8,6 @@ class AST
 	content Value;
 	std::vector<AST<content> > Children;
 	std::vector<content> Arguments;
-	AST *Next;
 
 	void PreorderTraversal(AST<content> root, void (*f)(content, int), int level = 0)
 	{
@@ -60,7 +59,7 @@ class AST
 public:
 	AST(content value) : Value(value)
 	{
-		Next = NULL;
+		
 	}
 
 	void AddChild(content value)
@@ -83,7 +82,7 @@ public:
 		return Children;
 	}
 
-	std::vector<content> GetArguments()
+	std::vector<content>& GetArguments()
 	{
 		return Arguments;
 	}
@@ -113,13 +112,4 @@ public:
 		InorderTraversal(*this, f);
 	}
 
-	void SetNext(AST<content> &sibling)
-	{
-		Next = &sibling;
-	}
-
-	AST<content> GetNext()
-	{
-		return Next;
-	}
 };

@@ -1,39 +1,46 @@
 #include "Multiplexer.hpp"
+#include "../Routing/Routing.hpp"
+#include "../Fd/Fd.hpp"
 
 void Multiplexer::MainLoop()
 {
 	vector<int> &sockets = Singleton::GetSockets(), ClientsSock;
-	int sockIdx = 0, ClientIdx = 0, len;
+	vector<Fd> fds;
+	for(int i = 0; i < (int)sockets.size(); i++)
+	{
+		fds.push_back(sockets[i]);
+	}
+	int len, fdIdx = 0, clientSock;
 	char buff[BUFF_SIZE + 1];
 	memset(buff, 0, BUFF_SIZE + 1);
 	while(true)
 	{
-		int clientSock = accept4(sockets[sockIdx], NULL, NULL, SOCK_CLOEXEC | SOCK_NONBLOCK);
-		sockIdx++;
-		if (sockIdx == sockets.size())
-			sockIdx = 0;
-		if (clientSock != -1)
+		if (fds[fdIdx].type == Fd::eSocket)
 		{
-			// should create a request object
-			ClientsSock.push_back(clientSock);
-		}
-		memset(buff, 0, BUFF_SIZE );
-		if ((len = recv(ClientsSock[ClientIdx], buff, BUFF_SIZE, SOCK_NONBLOCK)) != -1)
-		{
-			//should send the buffer to request obj to add it to the request buffer
-			//when the HTTP header complete start add on the body (body is a seperate string) 
-			cout << buff << "\n";
-			if (len < BUFF_SIZE)
+			clientSock = accept4(fds[fdIdx], NULL, NULL, SOCK_CLOEXEC | SOCK_NONBLOCK);
+			if (clientSock != -1)
 			{
-				// is read request complete ??
-				// if the request method and has /n/r
-				// if post check the request 
-				// Get request --> prosses this request --> send respense
-				// request obj most has a (enum status) and (long time) 
+				fds.push_back(Fd(clientSock, Fd::eClient, Fd::eRequest));
 			}
 		}
-		ClientIdx++;
-		if (ClientIdx == ClientsSock.size())
-			ClientIdx = 0;
+		else
+		{
+			memset(buff, 0, BUFF_SIZE);
+			if ((len = recv(fds[fdIdx], buff, BUFF_SIZE, SOCK_NONBLOCK)) != -1)
+			{
+				fds[fdIdx].req.AddBuffer(buff);
+				cout << buff << "\n";
+				if (len < BUFF_SIZE)
+				{
+					if (fds[fdIdx].req.isComplete())
+					{
+						fds[fdIdx].routing.CreateResponse(fds[fdIdx].req);
+					}
+				}
+			}
+		}
+		fdIdx++;
+		if (fdIdx == (int)fds.size())
+			fdIdx = 0;
 	}
 }
