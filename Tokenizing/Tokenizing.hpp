@@ -10,7 +10,7 @@ class Tokenizing
 	void openConfFile();
 	void trim(std::string& str);
 	char shearch_delimiter(std::string& str, std::string delimiters);
-	public:
+public:
 	Tokenizing(std::string filepath);
 	const std::vector<std::string>& get_tokens() const;
 	void split_tokens();

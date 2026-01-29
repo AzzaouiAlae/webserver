@@ -7,9 +7,12 @@
 #include <algorithm>
 #include <stdlib.h>
 #include <string>
-#include <string.h>
+#include <cstring>
 #include <fstream>
 #include <cstdlib>
+#include <unistd.h>
+#include <cctype>
+using namespace std;
 
 #include "AbstractSyntaxTree/AST.hpp"
 #include "Validation/Validation.hpp"
@@ -17,3 +20,8 @@
 #include "Singleton/Singleton.hpp"
 #include "Tokenizing/Tokenizing.hpp"
 #include "Parsing/Parsing.hpp"
+#include "Socket/socket.hpp"
+#include "utility/Utility.hpp"
+#include "Multiplexer/Multiplexer.hpp"
+
+#define DEFAULT_CONF "conf/engineX.conf"
