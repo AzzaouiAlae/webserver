@@ -8,7 +8,6 @@ class Tokenizing
 	std::vector<std::string> _tokens;
 	std::ifstream _file;
 	void openConfFile();
-	void trim(std::string& str);
 	char shearch_delimiter(std::string& str, std::string delimiters);
 public:
 	Tokenizing(std::string filepath);

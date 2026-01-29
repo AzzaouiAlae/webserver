@@ -20,21 +20,6 @@ const std::vector<std::string>& Tokenizing::get_tokens() const
     return (_tokens);
 }
 
-
-void Tokenizing::trim(std::string &str)
-{
-    size_t i  = 0;
-    while (i < str.size() && (str[i] == ' '  || (str[i] >= 9 && str[i] <= 13)))
-        i++;
-    str.erase(0,i);
-    
-    i = str.size();
-    while (i > 0 && (str[i - 1] == ' '  || (str[i - 1] >= 9 && str[i - 1] <= 13)))
-        i--;
-    
-    str.erase(i);
-}
-
 char Tokenizing::shearch_delimiter(std::string& str, std::string delimiters)
 {   
     size_t pos = 0;

@@ -27,3 +27,10 @@ void Utility::trim(std::string &s, bool (*f)(char ch))
 	ltrim(s, f);
 	rtrim(s, f);
 }
+
+long Utility::CurrentTime()
+{
+	timeval time;
+	gettimeofday(&time, NULL);
+	return time.tv_sec * USEC + time.tv_usec;
+}

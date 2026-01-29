@@ -14,6 +14,10 @@
 #include <cctype>
 using namespace std;
 
+#define USEC 1000000
+
+#include "utility/Utility.hpp"
+#include "Multiplexer/Multiplexer.hpp"
 #include "AbstractSyntaxTree/AST.hpp"
 #include "Validation/Validation.hpp"
 #include "ErrorHandling/Error.hpp"
@@ -21,7 +25,9 @@ using namespace std;
 #include "Tokenizing/Tokenizing.hpp"
 #include "Parsing/Parsing.hpp"
 #include "Socket/socket.hpp"
-#include "utility/Utility.hpp"
+#include "request/request.hpp"
 #include "Multiplexer/Multiplexer.hpp"
+
+
 
 #define DEFAULT_CONF "conf/engineX.conf"

@@ -1,5 +1,7 @@
 #pragma once
 #include "../Headers.hpp"
+#include <sys/time.h>
+
 
 class Utility
 {
@@ -9,4 +11,5 @@ public:
 	static void ltrim(std::string &s, bool (*f)(char ch));
 	static void rtrim(std::string &s, bool (*f)(char ch));
 	static void trim(std::string &s, bool (*f)(char ch));
+	static long CurrentTime();
 };
