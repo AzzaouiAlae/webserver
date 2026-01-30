@@ -77,11 +77,16 @@ AST<std::string>& Parsing::GetServerByHost(string host, string port)
 	std::vector<AST<string> >& servers = ASTroot.GetChildren();
 	for(int i = 0; i < (int)servers.size(); i++)
 	{
-		if (servers[i].GetValue() == "listen")
+		std::vector<AST<string> >& srvCh = servers[i].GetChildren();
+		for(int j = 0; j < (int)srvCh.size(); j++)
 		{
-			if (isServer(servers[i].GetArguments(), host, port))
-				return servers[i];
+			if (srvCh[i].GetValue() == "listen")
+			{
+				if (isServer(srvCh[i].GetArguments(), host, port))
+					return servers[i];
+			}
 		}
+		
 	}
 	Error::ThrowError("Error: GetServerByHost\n");
 	return ASTroot;
@@ -120,6 +125,19 @@ string Parsing::GetRoot(AST<std::string>& node)
 	for (int i = 0; i < (int)ch.size(); i++)
 	{
 		if (ch[i].GetValue() == "root")
+		{
+			return (ch[i].GetArguments())[0];
+		}
+	}
+	return "";
+}
+
+string Parsing::GetIndex(AST<std::string>& node)
+{
+	vector<AST<std::string> >& ch = node.GetChildren();
+	for (int i = 0; i < (int)ch.size(); i++)
+	{
+		if (ch[i].GetValue() == "index")
 		{
 			return (ch[i].GetArguments())[0];
 		}

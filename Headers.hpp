@@ -12,6 +12,10 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <cctype>
+#include <fcntl.h>
+#include <sstream>
+
+#include <sys/stat.h>
 using namespace std;
 
 #define USEC 1000000

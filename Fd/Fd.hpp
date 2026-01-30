@@ -24,4 +24,5 @@ public:
 	Fd(int fd, Types type = eSocket, Status status = eNone);
 	operator int() const;
 	bool isTimeOut();
+	void UpdateTime();
 };

@@ -1,6 +1,38 @@
 #include "../Headers.hpp"
 std::vector<std::string> Validation::_skiped;
 
+void Validation::CreateMimeMap()
+{
+    std::map<std::string, std::string>& mime = Singleton::GetMime();
+
+    // text/html
+    mime["html"]  = "text/html";
+    mime["htm"]   = "text/html";
+    mime["shtml"] = "text/html";
+
+    // text/css
+    mime["css"]   = "text/css";
+
+    // text/xml
+    mime["xml"]   = "text/xml";
+
+    // image/gif
+    mime["gif"]   = "image/gif";
+
+    // image/jpeg
+    mime["jpeg"]  = "image/jpeg";
+    mime["jpg"]   = "image/jpeg";
+
+    // application/javascript
+    mime["js"]    = "application/javascript";
+
+    // application/atom+xml
+    mime["atom"]  = "application/atom+xml";
+
+    // application/rss+xml
+    mime["rss"]   = "application/rss+xml";
+}
+
 void    Validation::AddDirective( std::string value )
 {
     if ( _level == 1 )
@@ -103,6 +135,7 @@ void    Validation::ResetServerSeting()
     _useServer["Root"] = false;
     _useServer["Index"] = false;
 }
+
 void    Validation::ResetLocationSeting()
 {
     _useLocation["Root"] = false;
@@ -131,6 +164,7 @@ void    Validation::IsValidLocation()
     _idx++;
     if ( _level != 1 || IsSeparator() )
        Error::ThrowError("Invalid Syntax : (Invalid Location)");
+	string &s = _data[_idx];
     _idx++;
     if ( _data[_idx] != "{" )
        Error::ThrowError("Invalid Syntax : (missing '{' In location )");
@@ -138,6 +172,7 @@ void    Validation::IsValidLocation()
         _level++;
     _idx++;
     Parsing::AddLocation(*(Parsing::currentServer));
+	Parsing::currentLocation->AddArgument(s);
     CheckValidation();
     ResetLocationSeting();
 }
@@ -211,9 +246,20 @@ void    Validation::IsValidListen()
     if (  _idx + 1 < (int)_data.size() )
     {
         if (_data[_idx + 1] == ":" )
-            IpAndPort();
+		{
+			Socket::AddSocket(_data[_idx], _data[_idx + 2]);
+			Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
+			Parsing::AddArg(*(Parsing::currentDirective), _data[_idx + 2]);
+            // IpAndPort();
+			_idx += 2;
+		}
         else if ( _data[_idx + 1] == ";"  )
-            PortOnly();
+		{
+			Socket::AddSocket("", _data[_idx]);
+			Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
+            // PortOnly();
+			_idx++;
+		}
         else
             Error::ThrowError("Invalid Syntax");
         _idx++;

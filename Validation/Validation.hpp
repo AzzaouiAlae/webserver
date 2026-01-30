@@ -59,5 +59,5 @@ class Validation {
     
         Validation(std::vector<std::string> inputData);
         void    CheckValidation();
-
+		static void CreateMimeMap();
 };
