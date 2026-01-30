@@ -6,7 +6,7 @@
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/01/30 18:39:07 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/01/30 19:50:50 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,8 +32,17 @@
 
 map<string, string> Request::_reqDirectives = 
 {
-    {"Content-Type",   "CONTENT_TYPE"},
-    {"Content-Length", "CONTENT_LENGTH"},
+    {"Content-Type"   ,     "CONTENT_TYPE"},
+    {"Content-Length" ,     "CONTENT_LENGTH"},
+    {"Host"           ,     "HTTP_HOST"},
+    {"User-Agent"     ,     "HTTP_USER_AGENT"},
+    {"Accept"         ,     "HTTP_ACCEPT"},
+    {"Accept-Language",     "HTTP_ACCEPT_LANGUAGE"},
+    {"Accept-Encoding",     "HTTP_ACCEPT_ENCODING"},
+    {"Connection"     ,     "HTTP_CONNECTION"},
+    {"Cookie"         ,     "HTTP_COOKIE"},
+    {"Referer"        ,     "HTTP_REFERER"},
+    {"Origin"         ,     "HTTP_ORIGIN"}
 };
 
 Request::Request()
@@ -41,18 +50,27 @@ Request::Request()
     _fist_buff = true;
 }
 
-
-void Request::fill_directives()
+void Request::parsHttpStandard(string httpStandard)
 {
-    _reqDirectives
-}
+    stringstream ss(httpStandard);
+    string method, path, httpv;
+    string extra;
 
+    if (!(ss >> method >> path >> httpv) || (ss >> extra))
+        Error::ThrowError("The HttpStandard is Invalid");
+    if (_Handlers.find(method) == _Handlers.end())
+        Error::ThrowError("The method Not Found");
+    if (httpv)
+}
 void Request::ParseHeader(istringstream iss)
 {
-    
-    istringstream lineStream;
     string line;
-    while (getline(iss, line))
+
+    if (getline(iss, line))
+        parsHttpStandard(line);
+    else
+        Error::ThrowError("Empty Request");
+    while (getline(iss, line) && !line.empty())
     {
         if (getline(iss, line))
     }
@@ -82,7 +100,6 @@ void Request::ParseRequest(string request_buff)
     if (_fist_buff)
     {
         istringstream iss(request_buff);
-        ParseTheFirst2Line()
         _fist_buff = false;
     }
 

@@ -12,4 +12,7 @@ public:
 	static void rtrim(std::string &s, bool (*f)(char ch));
 	static void trim(std::string &s, bool (*f)(char ch));
 	static long CurrentTime();
+	static string GetFileExtension(string filename);
+	static bool isNotDot(char ch);
+	static long getFileSize(const std::string &path);
 };

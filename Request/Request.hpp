@@ -6,7 +6,7 @@
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:48 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/01/30 18:35:58 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/01/30 19:11:35 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ class Request
 	string	_body;
 	string	_request;
 	void ParseHeader(istringstream iss);
+	void parsHttpStandard(string httpStandard);
 	void handleGet(std::string);
     void handlePost(std::string);
     void handleDelete(std::string);

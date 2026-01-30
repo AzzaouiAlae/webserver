@@ -18,4 +18,5 @@ public:
 	static AST<std::string>& GetServerByHost(string host, string port);
 	static AST<std::string>& GetLocationByPath(AST<std::string>& server, string& path);
 	static string GetRoot(AST<std::string>& node);
+	static string GetIndex(AST<std::string>& node);
 }; 
