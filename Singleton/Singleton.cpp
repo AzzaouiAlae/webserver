@@ -1,8 +1,9 @@
 #include "Singleton.hpp"
 
-Singleton::Map& Singleton::GetEnv()
+AST<std::string>& Singleton::GetASTroot()
 {
-    static Map env;
+    static AST<std::string> ASTroot("ASTroot");
 
-    return env;
+    return ASTroot;
 }
+

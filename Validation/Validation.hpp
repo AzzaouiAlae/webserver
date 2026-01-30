@@ -8,34 +8,44 @@ class Validation {
         int     _level;
         std::map<std::string, bool> _useServer;
         std::map<std::string, bool> _useLocation;
+        static std::vector<std::string> _skiped;
         std::vector<std::string> _data;
+        // AST<std::string>* currentServer;
         
         typedef std::map<std::string, void (Validation::*)() >Map;
         Map _map;
         
         static void     CheckExistance(std::pair<std::string, bool>);
+        static bool     SkipedOptions(std::string option);
+
         void            CreateMap();
-        void            createServerdMap();
-        void            createLocationMap();
+        bool            IsByteSizeUnit( std::string& data );
+        void            CreateServerdMap();
+        void            CreateLocationMap();
+        void            CreateSkipedData();
         
         void            IsValidServer();
         void            ResetServerSeting();
-        
+
         void            IsValidLocation();
         void            ResetLocationSeting();
-        
-        void            IsValidReturn();
-        void            CheckURL();
-        
+
+        void            IsClientMaxBodySize();
+
         void            IsValidIndex();
         void            IsValidRoot();
         void            IsValidAutoindex();
         void            CkeckDuplication(bool& first, bool& second, std::string msg);
         void            CheckLevelAndDuplication(bool& first, bool& second, std::string msg);
-
+        
+        void            IsValidReturn();
         void            IsValidServerName();
         bool            IsSeparator();
 
+        void            IsErrorPage();
+
+        void            IsValidAllowMethods();
+        bool            IsAllowedMethods(std::string& method);
 
         void            IsValidListen();
         void            IpAndPort();

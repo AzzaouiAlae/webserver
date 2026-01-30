@@ -4,13 +4,13 @@
 
 class Parsing 
 {
-	AST<std::string> ASTroot;
-	AST<std::string>* currentNode;
-	std::vector<std::string>& tokens;
-	void AddServerType(std::vector<std::string>& tokens, int idx);
 public:
-	Parsing(std::vector<std::string>& tokens);
-	AST<std::string>& GetRoot();
-	void ParseConfigFile();
-	
-};
+	static AST<std::string>* currentServer;
+	static AST<std::string>* currentLocation;
+	static AST<std::string>* currentDirective;
+	Parsing();
+	static AST<std::string>& AddServer();
+	static AST<std::string>& AddLocation(AST<std::string>& server);
+	static AST<std::string>& AddDirective(AST<std::string>& node, std::string value);
+	static void AddArg(AST<std::string>& node, std::string arg);
+}; 
