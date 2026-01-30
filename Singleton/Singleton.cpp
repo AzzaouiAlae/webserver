@@ -7,3 +7,9 @@ AST<std::string>& Singleton::GetASTroot()
     return ASTroot;
 }
 
+vector<int>& Singleton::GetSockets()
+{
+	static vector<int> sockts;
+
+	return sockts;
+}

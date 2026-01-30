@@ -887,7 +887,87 @@ void Test55()
 		TEST_PASS();
 	}
 }
+//  create more tests as needed till invalid is 55	
 
+void Test56()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid51.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test57()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid52.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test58()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid53.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test59()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid54.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
+
+void Test60()
+{
+	Tokenizing file("ConfigFilesTESTS/invalid55.conf");
+	file.split_tokens();
+	Validation valid(file.get_tokens());
+	try
+	{
+		valid.CheckValidation();
+		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
+	}
+	catch (const std::exception& e)
+	{
+		TEST_PASS();
+	}
+}
 
 
 int main()
@@ -950,6 +1030,11 @@ int main()
 	RUN_TEST(Test53);
 	RUN_TEST(Test54);
 	RUN_TEST(Test55);
+	RUN_TEST(Test56);
+	RUN_TEST(Test57);
+	RUN_TEST(Test58);
+	RUN_TEST(Test59);
+	RUN_TEST(Test60);
 
 
 	return (UnityEnd());

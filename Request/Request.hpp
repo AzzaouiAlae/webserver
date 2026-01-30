@@ -6,18 +6,37 @@
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:48 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/01/27 20:09:38 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/01/30 18:35:58 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
+#pragma once
+#include "iostream"
+using namespace std;
+
 #include "../Headers.hpp"
+
 class Request
 {
-private:
-    Request();
-    std::string body;
+	map<string, string> _env;
+	static map<string, string> _reqDirectives;
+	map<string, void (Request::*)(string)> _Handlers;
+	bool	_fist_buff;
+	string	_method;
+	string	_host;
+	string	_path;
+	string	_port;
+	string	_query_s;
+	string	_content_len;
+	string	_content_type;
+	string	_body;
+	string	_request;
+	void ParseHeader(istringstream iss);
+	void handleGet(std::string);
+    void handlePost(std::string);
+    void handleDelete(std::string);
 public:
-    Request(std::string request);
+    Request();
+	void ParseRequest(string request_buff);
+	bool isComplete(char *request);
 };
-
-// /n/r
