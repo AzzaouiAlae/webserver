@@ -5,6 +5,7 @@ class Singleton
 {
 
 public:
-	static AST<std::string>& GetASTroot();
+	static AST<string>& GetASTroot();
 	static vector<int>& GetSockets();
+	static map<string, string>& GetMime();
 };

@@ -13,3 +13,11 @@ vector<int>& Singleton::GetSockets()
 
 	return sockts;
 }
+
+
+map<string, string> &Singleton::GetMime()
+{
+	static map<string, string> mime;
+
+	return mime;
+}

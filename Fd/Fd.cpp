@@ -21,3 +21,8 @@ bool Fd::isTimeOut()
 		return true;
 	return false;
 }
+
+void Fd::UpdateTime()
+{
+	time = Utility::CurrentTime();
+}

@@ -21,7 +21,7 @@ void request::ParseRequest()
 	strtok(NULL, "\n");
 	strtok(NULL, " ");
 	host = strtok(NULL, ":");
-	port = strtok(NULL, "\n");
+	port = strtok(NULL, "\r");
 }
 
 bool request::isComplete()

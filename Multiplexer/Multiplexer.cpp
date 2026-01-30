@@ -17,7 +17,7 @@ void Multiplexer::MainLoop()
 	{
 		if (fds[fdIdx].type == Fd::eSocket)
 		{
-			clientSock = accept4(fds[fdIdx], NULL, NULL, SOCK_CLOEXEC | SOCK_NONBLOCK);
+			clientSock = accept4(fds[fdIdx], NULL, NULL, 0);
 			if (clientSock != -1)
 			{
 				fds.push_back(Fd(clientSock, Fd::eClient, Fd::eRequest));
@@ -26,10 +26,21 @@ void Multiplexer::MainLoop()
 		else
 		{
 			memset(buff, 0, BUFF_SIZE);
-			if ((len = recv(fds[fdIdx], buff, BUFF_SIZE, SOCK_NONBLOCK)) != -1)
+			if (fds[fdIdx].routing.ReadyToSend())
 			{
-				fds[fdIdx].req.AddBuffer(buff);
+				int len = fds[fdIdx].routing.SendResponse(fds[fdIdx]);
+				if (len > 0)
+					fds[fdIdx].UpdateTime();
+				else if (fds[fdIdx].isTimeOut())
+				{
+					fds.erase(fds.begin() + fdIdx);
+					fdIdx--;
+				}
+			}
+			else if ((len = recv(fds[fdIdx], buff, BUFF_SIZE, 0)) != -1)
+			{
 				cout << buff << "\n";
+				fds[fdIdx].req.AddBuffer(buff);
 				if (len < BUFF_SIZE)
 				{
 					if (fds[fdIdx].req.isComplete())
