@@ -6,14 +6,14 @@
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/01/30 19:50:50 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/05 22:29:18 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Request.hpp"
 
 
-//GET / HTTP/1.1
+//GET /index.php HTTP/1.1
 //Host: localhost:8080
 //Connection: keep-alive
 //Cache-Control: max-age=0
@@ -50,6 +50,41 @@ Request::Request()
     _fist_buff = true;
 }
 
+bool Request::parsPath(string path)
+{
+    size_t pos = path.find('?', pos);
+
+    if (path[0] != '/')
+        return(false);
+    _env["REQUEST_URI"] = path;
+    if (pos != string::npos)
+    {
+        _env["SCRIPT_NAME"] = path.substr(0, pos);
+        _env["QUERY_STRING"] = path.substr(pos + 1);
+    }
+    else
+    {
+        _env["SCRIPT_NAME"] = path;
+        _env["QUERY_STRING"] = "";
+    } 
+    return(true);
+}
+/*
+ char* token = strtok(str, "[");
+ token = strtok(str, "]");
+*/
+void Request::parsHost(string Host)
+{
+    size_t pos = 0;
+
+    if (Host.find(':') != string::npos)
+    {
+        _env["SERVER_NAME"] = Host.substr(0, Host.find(':'));
+        _env["SERVER_PORT"] = Host.substr(Host.find(':') + 1);
+        if ()
+    }
+}
+
 void Request::parsHttpStandard(string httpStandard)
 {
     stringstream ss(httpStandard);
@@ -57,14 +92,22 @@ void Request::parsHttpStandard(string httpStandard)
     string extra;
 
     if (!(ss >> method >> path >> httpv) || (ss >> extra))
-        Error::ThrowError("The HttpStandard is Invalid");
+        Error::ThrowError("The Request HttpStandard is Invalid");
     if (_Handlers.find(method) == _Handlers.end())
-        Error::ThrowError("The method Not Found");
-    if (httpv)
+        Error::ThrowError("The Request method Not Found");
+    if (!(httpv == "HTTP/1.1" || httpv == "HTTP/1.0"))
+        Error::ThrowError("The Request Protocol version Invalid");
+    if (parsPath(path))
+        Error::ThrowError("The Request Path Invalid");
+    _env["REQUEST_METHOD"] = method;
+    _env["SERVER_PROTOCOL"] = httpv;
 }
+
 void Request::ParseHeader(istringstream iss)
 {
     string line;
+    string key;
+    string value;
 
     if (getline(iss, line))
         parsHttpStandard(line);
@@ -72,7 +115,15 @@ void Request::ParseHeader(istringstream iss)
         Error::ThrowError("Empty Request");
     while (getline(iss, line) && !line.empty())
     {
-        if (getline(iss, line))
+        if (line.find(':') != string::npos)
+        {
+            key = line.substr(0, line.find(':'));
+            value = line.substr(line.find(':') + 1);
+        }
+        if (_reqDirectives.find(key) != _reqDirectives.end())
+            _env[_reqDirectives[key]] = value;
+        if (key == "Host")
+            parsHost(value);
     }
     
     line.str()
