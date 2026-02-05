@@ -25,7 +25,7 @@ void Test1()
 	int sizeExp = 1;
 
 	//act
-	SockStatus status = Socket::AddSocket(host, port);
+	SockStatus status = SocketIO::AddSocket(host, port);
 
 	//assert
 	TEST_ASSERT_EQUAL_INT32(statusExp, status);
@@ -42,7 +42,7 @@ void Test2()
 	int sizeExp = 1;
 
 	//act
-	SockStatus status = Socket::AddSocket(host, port);
+	SockStatus status = SocketIO::AddSocket(host, port);
 
 	//assert
 	TEST_ASSERT_EQUAL_INT32(statusExp, status);
@@ -59,7 +59,7 @@ void Test3()
 	int sizeExp = 0;
 
 	//act
-	SockStatus status = Socket::AddSocket(host, port);
+	SockStatus status = SocketIO::AddSocket(host, port);
 
 	//assert
 	TEST_ASSERT_EQUAL_INT32(statusExp, status);
@@ -76,8 +76,8 @@ void Test4()
 	int sizeExp = 1;
 
 	//act
-	SockStatus status = Socket::AddSocket(host, port);
-	status = Socket::AddSocket(host, port);
+	SockStatus status = SocketIO::AddSocket(host, port);
+	status = SocketIO::AddSocket(host, port);
 
 	//assert
 	TEST_ASSERT_EQUAL_INT32(statusExp, status);
@@ -94,7 +94,7 @@ void Test5()
 	int sizeExp = 1;
 
 	//act
-	SockStatus status = Socket::AddSocket(host, port);
+	SockStatus status = SocketIO::AddSocket(host, port);
 
 	//assert
 	TEST_ASSERT_EQUAL_INT32(statusExp, status);
@@ -111,7 +111,7 @@ void Test6()
 	int sizeExp = 0;
 
 	//act
-	SockStatus status = Socket::AddSocket(host, port);
+	SockStatus status = SocketIO::AddSocket(host, port);
 
 	//assert
 	TEST_ASSERT_EQUAL_INT32(statusExp, status);
@@ -129,7 +129,7 @@ void Test7()
 	int sizeExp = 0;
 
 	//act
-	SockStatus status = Socket::AddSocket(host, port);
+	SockStatus status = SocketIO::AddSocket(host, port);
 
 	//assert
 	TEST_ASSERT_EQUAL_INT32(statusExp, status);
@@ -146,7 +146,7 @@ void Test8()
 	int sizeExp = 0;
 
 	//act
-	SockStatus status = Socket::AddSocket(host, port);
+	SockStatus status = SocketIO::AddSocket(host, port);
 
 	//assert
 	TEST_ASSERT_EQUAL_INT32(statusExp, status);

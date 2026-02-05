@@ -46,8 +46,8 @@ void Routing::CreadHeader(string type, int size)
 	stringstream ss;
 	
 	ss << "HTTP/1.1 200 OK\r\n"
-		"Content-Type: " << type << "\r\n" <<
-		"Content-Length: " << size << "\r\n" <<
+		"Content-Type: " << type << "\r\n"
+		"Content-Length: " << size << "\r\n"
 		"Connection: close\r\n"
 		"\r\n";
 
