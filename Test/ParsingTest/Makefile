@@ -1,4 +1,4 @@
-SRC = ../Unity-master/src/unity.c ParsingTest.cpp ../../Parsing/Parsing.cpp ../../TokensTypes/TokensTypes.cpp
+SRC = ../Unity-master/src/unity.c ParsingTest.cpp $(shell find ../../ -name "*.cpp" | grep -v "main" | grep -v ".*Test.cpp")
 OBJ = $(SRC:.cpp=.o)
 OBJ := $(OBJ:.c=.o)
 CXX = c++

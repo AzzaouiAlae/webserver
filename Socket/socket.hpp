@@ -12,12 +12,12 @@ enum SockStatus
 	eCanNotBindAnySocket
 };
 
-class Socket
+class SocketIO
 {
 	static bool isValidePort(string &port);
 	static bool BindAddrInfo(addrinfo *rp, int *sock, int *optVal);
 	static bool CreateAddrInfo(string &host, string& port, addrinfo *hints, addrinfo **result);
 public:
-	Socket();
+	SocketIO();
 	static SockStatus AddSocket(string host, string port);
 };
