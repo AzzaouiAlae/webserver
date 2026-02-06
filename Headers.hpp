@@ -31,6 +31,7 @@ using namespace std;
 #include "Socket/socket.hpp"
 #include "request/request.hpp"
 #include "Multiplexer/Multiplexer.hpp"
+#include "Path/Path.hpp"
 
 
 
