@@ -56,7 +56,7 @@ class Validation {
         long            ConvertToNumber(std::string num);
 
     public:
-    
+        static void parseListen(string str, string& port, string& host);
         Validation(std::vector<std::string> inputData);
         void    CheckValidation();
 		static void CreateMimeMap();

@@ -6,13 +6,13 @@
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:48 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/04 02:55:04 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/07 23:50:14 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
-#include "iostream"
-using namespace std;
+
+#define MAXHEADERSIZE  8192
 
 #include "../Headers.hpp"
 
@@ -21,7 +21,7 @@ class Request
 	map<string, string> _env;
 	static map<string, string> _reqDirectives;
 	map<string, void (Request::*)(string)> _Handlers;
-	bool	_fist_buff;
+	bool	_headerparsed;
 	string	_method;
 	string	_host;
 	string	_path;
@@ -31,7 +31,9 @@ class Request
 	string	_content_type;
 	string	_body;
 	string	_request;
-	void ParseHeader(istringstream iss);
+	int 	_pos;
+	void initReqDirectives();
+	bool ParseHeader();
 	void parsHttpStandard(string httpStandard);
 	bool parsPath(string path);
 	void parsHost(string Host);
@@ -39,7 +41,9 @@ class Request
     void handlePost(string);
     void handleDelete(string);
 public:
+	bool getFullLine (string &line);
+	string	_headerbuff;
     Request();
-	void ParseRequest(string request_buff);
+	bool ParseRequest(string request_buff);
 	bool isComplete(char *request);
 };

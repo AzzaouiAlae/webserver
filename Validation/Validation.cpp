@@ -89,6 +89,8 @@ void    Validation::CreateSkipedData()
 
 }
 
+
+
 void    Validation::CreateMap()
 {
     _map["server"] = &Validation::IsValidServer;
@@ -234,6 +236,20 @@ void Validation::IpAndPort()
     PortOnly();
 }
 
+void Validation::parseListen(string str, string& port, string& host)
+{
+	const char *s1 = strrchr(str.c_str(), ':');
+	
+	if (s1 != NULL)
+	{
+		host = str.c_str();
+		host = host.substr(0, (s1 - str.c_str()));
+		port = s1 + 1;
+		return;
+	}
+	port = str;
+}
+
 //     LISTEN
 void    Validation::IsValidListen()
 {
@@ -242,27 +258,21 @@ void    Validation::IsValidListen()
         Error::ThrowError("Invalid Syntax : (Element out of scope)");
     Validation::AddDirective("listen");
     _idx++;
-
     if (  _idx + 1 < (int)_data.size() )
     {
-        if (_data[_idx + 1] == ":" )
+		string port, host;
+		parseListen(_data[_idx], port, host);
+		SocketIO::AddSocket(host, port);
+        if (host != "")
 		{
-			Socket::AddSocket(_data[_idx], _data[_idx + 2]);
-			Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
-			Parsing::AddArg(*(Parsing::currentDirective), _data[_idx + 2]);
-            // IpAndPort();
-			_idx += 2;
+			Parsing::AddArg(*(Parsing::currentDirective), host);
+			Parsing::AddArg(*(Parsing::currentDirective), port);
 		}
         else if ( _data[_idx + 1] == ";"  )
-		{
-			Socket::AddSocket("", _data[_idx]);
-			Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
-            // PortOnly();
-			_idx++;
-		}
+			Parsing::AddArg(*(Parsing::currentDirective), port);
         else
             Error::ThrowError("Invalid Syntax");
-        _idx++;
+        _idx += 2;
     }
     else
         Error::ThrowError("Invalid Syntax");
@@ -511,3 +521,14 @@ void    Validation::CheckValidation()
         Error::ThrowError("Invalid Syntax");
 
 }
+
+
+///
+
+// 
+
+
+
+// server }
+// listen 500
+// }

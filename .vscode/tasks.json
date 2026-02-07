@@ -3,7 +3,7 @@
         {
             "type": "cppbuild",
             "label": "C/C++: gcc build active file",
-            "command": "make -f Makefile.ilyass debug",
+            "command": "make -f Makefile.oussama re",
             "args": [],
             "options": {
                 "cwd": "${workspaceFolder}"
