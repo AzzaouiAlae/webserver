@@ -1,5 +1,5 @@
 
-SRC = ../Unity-master/src/unity.c SocketTest.cpp ../../Socket/socket.cpp ../../Singleton/Singleton.cpp
+SRC = ../Unity-master/src/unity.c SocketTest.cpp $(shell find ../../ -name "*.cpp" | grep -v "main" | grep -v ".*Test.cpp")
 OBJ = $(SRC:.cpp=.o)
 OBJ := $(OBJ:.c=.o)
 CXX = c++

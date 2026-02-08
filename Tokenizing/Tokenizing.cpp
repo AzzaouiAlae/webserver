@@ -43,7 +43,7 @@ void Tokenizing::split_tokens()
     char c = '\0';
     while (_file >> word)
     {
-        while ((c = shearch_delimiter(word, ":;{}")) && c != '\0')
+        while ((c = shearch_delimiter(word, ";{}")) && c != '\0')
         {
             size_t pos = word.find(c);
             if (pos > 0)

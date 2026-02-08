@@ -1,6 +1,6 @@
 #include "../Headers.hpp"
 
-bool Socket::isValidePort(string &port)
+bool SocketIO::isValidePort(string &port)
 {
 	if (isdigit(port[0]))
 	{
@@ -18,7 +18,7 @@ bool Socket::isValidePort(string &port)
 	return true;
 }
 
-bool Socket::CreateAddrInfo(string &host, string &port, addrinfo *hints, addrinfo **result)
+bool SocketIO::CreateAddrInfo(string &host, string &port, addrinfo *hints, addrinfo **result)
 {
 	Utility::ltrim(port, Utility::isNotZero);
 	Utility::trim(host, Utility::isNotSquareBracket);
@@ -38,7 +38,7 @@ bool Socket::CreateAddrInfo(string &host, string &port, addrinfo *hints, addrinf
 	return true;
 }
 
-bool Socket::BindAddrInfo(addrinfo *rp, int *sock, int *optVal)
+bool SocketIO::BindAddrInfo(addrinfo *rp, int *sock, int *optVal)
 {
 	*sock = socket(rp->ai_family, rp->ai_socktype | SOCK_CLOEXEC | SOCK_NONBLOCK, rp->ai_protocol);
 	if (*sock == -1)
@@ -61,7 +61,7 @@ bool Socket::BindAddrInfo(addrinfo *rp, int *sock, int *optVal)
 	return true;
 }
 
-SockStatus Socket::AddSocket(string host, string port)
+SockStatus SocketIO::AddSocket(string host, string port)
 {
 	vector<int> &sockets = Singleton::GetSockets();
 	int sock, optVal = 1;
