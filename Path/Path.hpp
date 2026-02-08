@@ -21,6 +21,7 @@ class Path {
         std::string     AttachPath(std::string rootPath, std::string addPath);
         std::string     LocationFullPath( AST<std::string>& currLocationNode );
         void            AttachIndex(AST<std::string>& currSrvNode, AST<std::string>& currLocationNode, std::string path, std::string type);
+        void            fillLocationInfo(AST<std::string> & locaNode, vector<string> vlocaArgPath);
 
     public:
         Path(AST<std::string>& node, std::string path);

@@ -163,7 +163,7 @@ void    Validation::IsValidLocation()
 {
     _useLocation["Location"] = true;
     _idx++;
-    if ( _level != 1 || IsSeparator() )
+    if ( _level != 1 || IsSeparator() || _data[_idx][0] != '/'  )
        Error::ThrowError("Invalid Syntax : (Invalid Location)");
 	string &s = _data[_idx];
     _idx++;

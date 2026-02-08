@@ -36,7 +36,7 @@ std::string     Path::AttachPath(std::string rootPath, std::string addPath)
 
 std::string     Path::LocationFullPath( AST<std::string>& currLocationNode )
 {
-    _locaArgPath = currLocationNode.GetArguments()[0];
+    
     _locaRootPath = SearchInTree( currLocationNode, "root");
     if ( _locaRootPath.empty() )
         _locaFullPath = AttachPath(_srvRootPath, _locaArgPath);
@@ -58,25 +58,111 @@ void    Path::AttachIndex(AST<std::string>& currSrvNode, AST<std::string>& currL
 
 }
 
+void    CkeckPath(vector<string>& strs)
+{
+    if ( strs.empty() || strs.size() == 1 )
+        return ;
+
+    for (int i = 0; i < (int)strs.size(); i++)
+    {
+        if ( strs[i] == ".." )
+        {
+            strs.erase(strs.begin() + i);
+            if ( i > 0)
+                strs.erase(strs.begin() + (i - 1));
+            i = -1;
+        }
+    }
+}
+
+void parsePath(vector<string>& strs, string& str,const string& sep)
+{
+
+    char *s = strtok((char *)str.c_str(), sep.c_str());
+    if (s == NULL)
+        return;
+    strs.push_back(s);
+    while (true)
+    {
+        s = strtok(NULL, sep.c_str());
+        if (s == NULL)
+            break;
+        strs.push_back(s);
+    }
+    CkeckPath(strs);
+
+}
+
+int vectorCmp(vector<string>& reqPath, vector<string>&  locationPath)
+{
+    if (locationPath.size() > reqPath.size())
+        return 0;
+    if ( locationPath.size() == 0 )
+        return 1;
+    int i;
+    for(i = 0; i < (int)reqPath.size(); i++)
+    {
+        if (reqPath[i] != locationPath[i])
+        {
+            if (i < (int)locationPath.size())
+                return 0;
+            return i + 1;
+        }
+    }
+    return i + 1;
+}
+
+
+/*
+    prev = /a/b
+    curr =  /a
+    target = /a/b 
+
+
+    location /a/b {
+        root /var/www/html;
+    }
+    location /a {
+        root /var/www/html;
+    }
+    location /a/b/c {
+        root /var/www/html;
+    }
+
+*/
+void        Path::fillLocationInfo(AST<std::string> & locaNode, vector<string> vLocaArgPath)
+{
+    _locaArgPath.clear();
+    for (size_t i = 0; i < vLocaArgPath.size(); i++)
+        _locaArgPath += "/" + vLocaArgPath[i];
+    
+    LocationFullPath( locaNode);
+    _locaIndex = SearchInTree(locaNode, "index");
+    _targetPathWithIndex = AttachPath(_locaFullPath, _locaIndex);
+    _targetPath = _locaFullPath;
+    _requestPathNode = &locaNode;
+}
+
 std::string     Path::CreatePath()
 {
-    std::string prevlocaPath;
+    int lastSize = 0;
     vector<AST<std::string> >& child = _srvNode.GetChildren();
-
+    vector<string> vReqPath, vLocaArgPath;
+    parsePath(vReqPath, _requestPath, "/");
     for (int i = 0; i < (int)child.size(); i++)
     {
         if ( child[i].GetValue() == "location" )
         {
-            LocationFullPath( child[i]);
-            int posFoundInrequest = _requestPath.find(_locaFullPath);
-            int posFoundInlocaPath = _locaFullPath.find(_requestPath);
-            if ( (posFoundInrequest == 0 ||  posFoundInlocaPath == 0) && _locaFullPath.size() > prevlocaPath.size() )
+            vLocaArgPath.clear();
+            _locaArgPath = child[i].GetArguments()[0];
+            if ( _locaArgPath[_locaArgPath.size() - 1] != '/' )
+                _locaArgPath += "/";
+            parsePath(vLocaArgPath, _locaArgPath, "/");
+            int pos = vectorCmp(vReqPath, vLocaArgPath);
+            if ( pos > lastSize)
             {
-                _locaIndex = SearchInTree(child[i], "index");
-                _targetPathWithIndex = AttachPath(_locaFullPath, _locaIndex);
-                _targetPath = _locaFullPath;
-                _requestPathNode = &child[i];
-                prevlocaPath = _locaFullPath;
+                lastSize = pos;
+                fillLocationInfo(child[i], vLocaArgPath);
             }
         }
     }
@@ -119,20 +205,3 @@ std::string Path::getLocationPath()
 
 
 
-/*
-    prev = /a/b
-    curr =  /a
-    target = /a/b 
-
-
-    location /a/b {
-        root /var/www/html;
-    }
-    location /a {
-        root /var/www/html;
-    }
-    location /a/b/c {
-        root /var/www/html;
-    }
-
-*/
