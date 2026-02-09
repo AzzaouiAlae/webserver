@@ -40,14 +40,22 @@ void Multiplexer::MainLoop()
 			else if ((len = recv(fds[fdIdx], buff, BUFF_SIZE, 0)) != -1)
 			{
 				cout << buff << "\n";
-				fds[fdIdx].req.AddBuffer(buff);
-				if (len < BUFF_SIZE)
+
+				if (fds[fdIdx].req.isComplete(buff))
 				{
-					if (fds[fdIdx].req.isComplete())
+					std::cout << "Parsing of The Request is Complete\n";
+					for (map<string, string>::iterator it = fds[fdIdx].req.getrequestenv().begin(); it != fds[fdIdx].req.getrequestenv().end(); it++)
 					{
-						fds[fdIdx].routing.CreateResponse(fds[fdIdx].req);
+						cout << "|" << it->first << ":" << it->second << "|" << endl;
 					}
 				}
+				// if (len < BUFF_SIZE)
+				// {
+				// 	if (fds[fdIdx].req.isComplete())
+				// 	{
+				// 		fds[fdIdx].routing.CreateResponse(fds[fdIdx].req);
+				// 	}
+				// }
 			}
 		}
 		fdIdx++;

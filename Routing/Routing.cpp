@@ -2,28 +2,28 @@
 
 void Routing::CreatePath()
 {
-	AST<std::string> *loc;
-	AST<std::string> *srv;
-	try {
-		srv = &Parsing::GetServerByHost(req->host, req->port);
-		loc = &Parsing::GetLocationByPath(*srv, req->path);
-	} catch (exception &e) {
-		return;
-	}
-	string rootPtah = Parsing::GetRoot(*loc);
-	if (rootPtah == "")
-		rootPtah = Parsing::GetRoot(*srv);
+	// AST<std::string> *loc;
+	// AST<std::string> *srv;
+	// try {
+	// 	srv = &Parsing::GetServerByHost(req->host, req->port);
+	// 	loc = &Parsing::GetLocationByPath(*srv, req->path);
+	// } catch (exception &e) {
+	// 	return;
+	// }
+	// string rootPtah = Parsing::GetRoot(*loc);
+	// if (rootPtah == "")
+	// 	rootPtah = Parsing::GetRoot(*srv);
 
-	string index = Parsing::GetIndex(*loc);
-	if (index == "")
-		index = Parsing::GetIndex(*srv);
+	// string index = Parsing::GetIndex(*loc);
+	// if (index == "")
+	// 	index = Parsing::GetIndex(*srv);
 
 	
-	if (Utility::GetFileExtension(req->path) == "")
-		path = rootPtah +  "/" + req->path + "/" + index;
-	else 
-		path = rootPtah +  "/" + req->path;
-	created = true;
+	// if (Utility::GetFileExtension(req->path) == "")
+	// 	path = rootPtah +  "/" + req->path + "/" + index;
+	// else 
+	// 	path = rootPtah +  "/" + req->path;
+	// created = true;
 }
 
 int Routing::SendResponse(int sock, int size)
@@ -54,22 +54,22 @@ void Routing::CreadHeader(string type, int size)
 	header = ss.str();
 }
 
-void Routing::CreateResponse(request& req)
+void Routing::CreateResponse(Request& req)
 {
 	this->req = &req;
 	CreatePath();
-	if (req.method == "GET")
-	{
-		if (created)
-		{
-			pathFD = open(path.c_str(), O_RDONLY | O_NONBLOCK);
-			int size = Utility::getFileSize(path);
-			string extension = Utility::GetFileExtension(path);
-			string type = (Singleton::GetMime())[extension];
-			CreadHeader(type, size);
-			isReadyToSend = true;
-		}
-	}
+	// if (req.method == "GET")
+	// {
+	// 	if (created)
+	// 	{
+	// 		pathFD = open(path.c_str(), O_RDONLY | O_NONBLOCK);
+	// 		int size = Utility::getFileSize(path);
+	// 		string extension = Utility::GetFileExtension(path);
+	// 		string type = (Singleton::GetMime())[extension];
+	// 		CreadHeader(type, size);
+	// 		isReadyToSend = true;
+	// 	}
+	// }
 }
 
 bool Routing::isResponseSend()

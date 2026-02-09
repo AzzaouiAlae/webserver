@@ -8,7 +8,7 @@ class Routing
 	bool isReadyToSend;
 	bool created;
 	string path;
-	request* req;
+	Request* req;
 	string header;
 	int pathFD;
 public:
@@ -17,7 +17,7 @@ public:
 	bool isCreated();
 	void CreatePath();
 	int SendResponse(int sock, int size = 1024);
-	void CreateResponse(request& req);
+	void CreateResponse(Request& req);
 	void CreadHeader(string type, int size);
 	bool ReadyToSend();
 };

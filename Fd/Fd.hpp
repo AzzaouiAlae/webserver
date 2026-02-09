@@ -18,7 +18,7 @@ public:
 	Types type;
 	Status status;
 	long time;
-	request req;
+	Request req;
 	Routing routing;
 	
 	Fd(int fd, Types type = eSocket, Status status = eNone);
