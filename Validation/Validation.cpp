@@ -1,4 +1,5 @@
-#include "../Headers.hpp"
+#include "Validation.hpp"
+
 std::vector<std::string> Validation::_skiped;
 
 void Validation::CreateMimeMap()
@@ -170,7 +171,7 @@ void    Validation::IsValidLocation()
 {
     _useLocation["Location"] = true;
     _idx++;
-    if ( _level != 1 || IsSeparator() )
+    if ( _level != 1 || IsSeparator() || _data[_idx][0] != '/'  )
        Error::ThrowError("Invalid Syntax : (Invalid Location)");
 	string &s = _data[_idx];
     _idx++;
