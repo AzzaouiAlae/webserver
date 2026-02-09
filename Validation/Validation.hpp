@@ -54,6 +54,7 @@ class Validation {
         void            PortOnly();
         void            ValidIP();
         long            ConvertToNumber(std::string num);
+		void IsValidTypes();
 
     public:
     

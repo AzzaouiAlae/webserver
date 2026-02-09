@@ -33,6 +33,21 @@ void Validation::CreateMimeMap()
     mime["rss"]   = "application/rss+xml";
 }
 
+void Validation::IsValidTypes()
+{
+	if (_idx != 0)
+	{
+		//err
+	}
+	_idx++;
+	if (_data[_idx] != "{")
+	{
+	//err
+	}
+	_idx++;
+	
+}
+
 void    Validation::AddDirective( std::string value )
 {
     if ( _level == 1 )
@@ -105,6 +120,7 @@ void    Validation::CreateMap()
     _map["client_max_body_size"] = &Validation::IsClientMaxBodySize;
     _map["allow_methods"] = &Validation::IsValidAllowMethods;
     _map["cgi_pass"] = &Validation::IsValidCGIPass;
+	_map["types"] = &Validation::IsValidTypes;
     
 }
 
