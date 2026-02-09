@@ -278,7 +278,7 @@ void    Validation::IsValidListen()
     {
 		string port, host;
 		parseListen(_data[_idx], port, host);
-		SocketIO::AddSocket(host, port);
+		// SocketIO::AddSocket(host, port);
         if (host != "")
 		{
 			Parsing::AddArg(*(Parsing::currentDirective), host);
@@ -292,7 +292,6 @@ void    Validation::IsValidListen()
     }
     else
         Error::ThrowError("Invalid Syntax");
-
 }
 
 bool Validation::IsSeparator()

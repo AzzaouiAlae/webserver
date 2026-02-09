@@ -3,9 +3,10 @@
 
 class AFd 
 {
+protected:
 	int fd;
 public:
 	AFd(int fd);
-	// void 
+	virtual void Handle() = 0;
 	operator int() const ;
 };

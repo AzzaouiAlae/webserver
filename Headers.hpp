@@ -14,8 +14,16 @@
 #include <cctype>
 #include <fcntl.h>
 #include <sstream>
-
 #include <sys/stat.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/sendfile.h>
+#include <netinet/tcp.h>
+#include <sys/stat.h>
+
+
 using namespace std;
 
 #define USEC 1000000
@@ -28,7 +36,6 @@ using namespace std;
 #include "Singleton/Singleton.hpp"
 #include "Tokenizing/Tokenizing.hpp"
 #include "Parsing/Parsing.hpp"
-#include "Socket/socket.hpp"
 #include "request/request.hpp"
 #include "Multiplexer/Multiplexer.hpp"
 
