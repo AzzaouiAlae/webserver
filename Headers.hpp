@@ -6,6 +6,8 @@
 #include <set>
 #include <algorithm>
 #include <stdlib.h>
+#include <climits>
+#include <limits>
 #include <string>
 #include <cstring>
 #include <fstream>

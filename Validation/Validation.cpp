@@ -4,33 +4,41 @@ std::vector<std::string> Validation::_skiped;
 void Validation::CreateMimeMap()
 {
     std::map<std::string, std::string>& mime = Singleton::GetMime();
+    bool ismaintype = false;
+    string maintype = "";
 
-    // text/html
-    mime["html"]  = "text/html";
-    mime["htm"]   = "text/html";
-    mime["shtml"] = "text/html";
+    while (++_idx < (int)_data.size() && _data[_idx] != "}")
+    {
+        ismaintype = true;
+        maintype = "";
+        for (; _data[_idx] != ";"; _idx++)
+        {
+            if (!ismaintype)
+                mime[_data[_idx]] = maintype;
+            else if (ismaintype && _data[_idx].find('/') == string::npos)
+                Error::ThrowError("Invalid Syntax");
+            else
+            {
+                maintype = _data[_idx];
+                ismaintype = false;
+            }
+        }
+    }
 
-    // text/css
-    mime["css"]   = "text/css";
+    for (map<string, string>::iterator it = mime.begin(); it != mime.end(); it++)
+	{
+		cout << "|" << it->first << ":" << it->second << "|" << endl;
+	}
+}
 
-    // text/xml
-    mime["xml"]   = "text/xml";
-
-    // image/gif
-    mime["gif"]   = "image/gif";
-
-    // image/jpeg
-    mime["jpeg"]  = "image/jpeg";
-    mime["jpg"]   = "image/jpeg";
-
-    // application/javascript
-    mime["js"]    = "application/javascript";
-
-    // application/atom+xml
-    mime["atom"]  = "application/atom+xml";
-
-    // application/rss+xml
-    mime["rss"]   = "application/rss+xml";
+void    Validation::IsValidTypes()
+{
+    if ( _level != 0 || _data[++_idx] != "{" )
+       Error::ThrowError("Invalid Syntax");
+    else
+        _level++;
+    CreateMimeMap();
+    CheckValidation();
 }
 
 void    Validation::AddDirective( std::string value )
@@ -86,10 +94,7 @@ void    Validation::CreateSkipedData()
         _skiped.push_back("ClientMaxBodySize");
         _skiped.push_back("AllowMethods");
     }
-
 }
-
-
 
 void    Validation::CreateMap()
 {
@@ -105,6 +110,7 @@ void    Validation::CreateMap()
     _map["client_max_body_size"] = &Validation::IsClientMaxBodySize;
     _map["allow_methods"] = &Validation::IsValidAllowMethods;
     _map["cgi_pass"] = &Validation::IsValidCGIPass;
+    _map["types"] = &Validation::IsValidTypes;
     
 }
 

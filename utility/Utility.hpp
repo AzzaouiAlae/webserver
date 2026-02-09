@@ -15,5 +15,5 @@ public:
 	static string GetFileExtension(string filename);
 	static bool isNotDot(char ch);
 	static long getFileSize(const std::string &path);
-	bool parseInt(std::string str);
+	static bool strtosize_t(const std::string& s, size_t& out);
 };
