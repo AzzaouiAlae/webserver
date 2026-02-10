@@ -4,7 +4,6 @@
 
 class Routing 
 {
-	string header;
 	Path path;
 	Request request;
 	bool RequestComplete;

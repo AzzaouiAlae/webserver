@@ -4,7 +4,7 @@
 
 class Path {
     private:
-        AST<std::string>& _srvNode;
+        AST<std::string> *_srvNode;
         AST<std::string>  *_requestPathNode;
         std::string _requestPath;
 
@@ -24,8 +24,8 @@ class Path {
         void            fillLocationInfo(AST<std::string> & locaNode, vector<string> vlocaArgPath);
         void            CheckPathExist(std::string& path);
     public:
-        Path(AST<std::string>& node, std::string path);
-        std::string CreatePath();
+        Path();
+        std::string CreatePath(AST<std::string> *node, std::string path);
         AST<std::string>& getRequestNode();
         std::string getFullPathWithIndex();
         std::string getLocationIndex();

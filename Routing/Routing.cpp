@@ -23,3 +23,8 @@ Path &Routing::GetPath()
 {
 	return path;
 }
+
+void Routing::CreatePath()
+{
+	
+}
