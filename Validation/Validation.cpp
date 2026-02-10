@@ -165,7 +165,7 @@ void Validation::IsValidServer()
 	Parsing::AddServer();
 	CheckValidation();
 	ResetServerSeting();
-	IsValidVirtualServer();
+	// IsValidVirtualServer();
 }
 
 void Validation::IsValidVirtualServer()
@@ -540,8 +540,8 @@ void Validation::CheckValidation()
 	}
 	if (_level != 0)
 		Error::ThrowError("Invalid Syntax");
-	if (Singleton::GetServers().size() == 0) {
-		Error::ThrowError("Can't bind to any server");
-	}
+	// if (Singleton::GetServers().size() == 0) {
+	// 	Error::ThrowError("Can't bind to any server");
+	// }
 }
 

@@ -1,16 +1,24 @@
 #include "Path.hpp"
 
-Path::Path()
+Path::Path() : _CGI(false)
 {}
 
-vector<string> Path::SearchInTree(AST<std::string>& node, std::string value)
+void    Path::initData(AST<std::string> *node, std::string path)
+{
+	_srvNode = node;
+	_requestPath = path;
+	_srvRootPath = SearchInTree((*_srvNode), "root")[0];
+    _srvIndex = SearchInTree((*_srvNode), "index")[0];
+}
+
+vector<string> Path::SearchInTree(AST<std::string>& node, std::string value )
 {
 	vector<AST<std::string> >& ch = node.GetChildren();
-	for (int i = 0; i < (int)ch.size(); i++)
+	for (int pos = 0; pos < (int)ch.size(); pos++)
 	{
-		if (ch[i].GetValue() == value)
+		if (ch[pos].GetValue() == value)
 		{
-			return (ch[i].GetArguments());
+			return (ch[pos].GetArguments());
 		}
 	}
 	return vector<string>(1, "");
@@ -144,48 +152,112 @@ void        Path::fillLocationInfo(AST<std::string> & locaNode, vector<string> v
     _requestPathNode = &locaNode;
 }
 
-std::string Path::getErrorPage404Path(AST<std::string> & srvNode, string srvPath)
+std::string Path::getErrorPagePath(AST<std::string> & srvNode, string srvPath, string errorCode)
 {
-    vector<string> errorpages = SearchInTree(srvNode, "error_page");
-    if ( !errorpages.empty() && find(errorpages.begin(), errorpages.end(), "404") != errorpages.end() )
-        return AttachPath(srvPath, errorpages[errorpages.size() - 1]);
-    return "./404.html";
-    
+    vector<AST<std::string> >& ch = srvNode.GetChildren();
+
+    for (int pos = 0; pos < (int)ch.size(); pos++)
+	{
+	    if (ch[pos].GetValue() == "error_page")
+	    {
+	    	vector<string> errorpages = ch[pos].GetArguments();
+            if ( !errorpages.empty() && find(errorpages.begin(), errorpages.end(), errorCode) != errorpages.end() )
+                return ( AttachPath(srvPath, errorpages[errorpages.size() - 1]) );
+	    }
+    }
+
+    return ( "./" + errorCode + ".html");
 }
 
-void    Path::CheckPathExist(std::string& path)
+void    Path::IsDirectory(struct stat info, string& path)
+{
+    if (S_ISDIR(info.st_mode))
+    {
+        if (!(info.st_mode & S_IRUSR) || !(info.st_mode & S_IXUSR))
+        {
+            path = getErrorPagePath((*_srvNode), _srvRootPath, "403");
+            _pathType = Error;
+            return ;
+        }
+        _pathType = Dir;
+    }
+}
+
+void    Path::IsFile(struct stat info, string& path)
+{
+    if ( S_ISREG(info.st_mode) )
+    {
+        int fd = open(path.c_str(), O_RDONLY);
+        if (fd < 0)
+        {
+            path = getErrorPagePath((*_srvNode), _srvRootPath, "403");
+            _pathType = Error;
+            return ;
+        }
+        close(fd);
+        _pathType = File;
+    }
+}
+
+void    Path::CheckPathExist(string& path)
 {
     struct stat info;
     if ( stat(path.c_str(), &info) != 0 )
     {
         Error::errorType = NotFound;
-        path = getErrorPage404Path((*_srvNode), _srvRootPath);
+        path = getErrorPagePath((*_srvNode), _srvRootPath, "404");
     }
+    IsDirectory(info, path);
+    IsFile(info, path);
+}
+
+void    Path::HandleRequestPath(vector<string>& vecReqPath)
+{
+    parsePath(vecReqPath, _requestPath, "/");
+    _requestPath.clear();
+    append_with_sep(_requestPath, vecReqPath, "/");
+}
+
+void    Path::HandleLocationArgPath( vector<string>& vLocaArgPath, string locationArg )
+{
+    vLocaArgPath.clear();
+    _locaArgPath = locationArg;
+    if ( _locaArgPath[_locaArgPath.size() - 1] != '/' )
+        _locaArgPath += "/";
+    parsePath(vLocaArgPath, _locaArgPath, "/");
+}
+
+void    Path::HandleSRVPath()
+{
+    std::cout << "'" << _requestPath << "'\n";
+    if ( _requestPath.empty() )
+        _FullPath = AttachPath(_srvRootPath, _srvIndex);
+    _FullPath = AttachPath(_srvRootPath, _requestPath);
+    _requestPathNode = &(*_srvNode);
+}
+
+bool    IsSuranded(string str, char begin, char end)
+{
+    if ( str[0] == begin && str[str.size() - 1] == end )
+        return ( true );
+    return ( false );
 }
 
 std::string     Path::CreatePath(AST<std::string> *node, std::string path)
 {
-	_srvNode = node;
-	_requestPath = path;
-	_srvRootPath = SearchInTree((*_srvNode), "root")[0];
-    _srvIndex = SearchInTree((*_srvNode), "index")[0];
+    initData(node, path);
 
     int lastSize = 0;
     vector<AST<std::string> >& child = (*_srvNode).GetChildren();
     vector<string> vReqPath, vLocaArgPath;
-    parsePath(vReqPath, _requestPath, "/");
-    _requestPath.clear();
-    append_with_sep(_requestPath, vReqPath, "/");
+    HandleRequestPath(vReqPath);
     for (int i = 0; i < (int)child.size(); i++)
     {
         if ( child[i].GetValue() == "location" )
         {
-            vLocaArgPath.clear();
-            _locaArgPath = child[i].GetArguments()[0];
-            if ( _locaArgPath[_locaArgPath.size() - 1] != '/' )
-                _locaArgPath += "/";
-            parsePath(vLocaArgPath, _locaArgPath, "/");
+            HandleLocationArgPath(vLocaArgPath, child[i].GetArguments()[0]);
             int pos = vectorCmp(vReqPath, vLocaArgPath);
+            bool isCgi = for_each(vLocaArgPath.begin(), vLocaArgPath,end(), IsSuranded);
             if ( pos > lastSize )
             {
                 lastSize = pos;
@@ -194,13 +266,8 @@ std::string     Path::CreatePath(AST<std::string> *node, std::string path)
         }
     }
     if ( _FullPath.empty() )
-    {
-        std::cout << "'" << _requestPath << "'\n";
-        if ( _requestPath.empty() )
-            _FullPath = AttachPath(_srvRootPath, _srvIndex);
-        _FullPath = AttachPath(_srvRootPath, _requestPath);
-        _requestPathNode = &(*_srvNode);
-    }
+        HandleSRVPath();
+    cout << "full path befor check existance: <" << _FullPath << ">\n";
     CheckPathExist(_FullPath);
     return ( _FullPath );
 }
@@ -209,7 +276,6 @@ AST<std::string>&   Path::getRequestNode()
 {
     return ( *_requestPathNode );
 }
-
 
 std::string     Path::getLocationIndex()
 {

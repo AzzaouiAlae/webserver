@@ -2,34 +2,42 @@
 
 #include "../Headers.hpp"
 
+enum PathType {
+    Error,
+    Dir,
+    File
+};
+
 class Path {
     private:
-        AST<std::string> *_srvNode;
-        AST<std::string>  *_requestPathNode;
-        std::string _requestPath;
+        AST<string> *_srvNode;
+        AST<string> *_requestPathNode;
+        string      _requestPath;
+        string      _srvRootPath, _srvIndex;
+        string      _locaRootPath, _locaArgPath, _locaIndex;
+        string      _FullPath;
+        PathType    _pathType;
+        bool        _CGI;
 
-        std::string     _srvRootPath;
-        std::string     _locaArgPath;
-        std::string     _locaRootPath;
-        std::string     _FullPath;
-        std::string     _targetPath;
-        std::string     _srvIndex;
-        std::string     _locaIndex;
-
-        vector<string>  SearchInTree(AST<std::string>& node, std::string value);
-        std::string     AttachPath(std::string rootPath, std::string addPath);
-        std::string     FullPath( AST<std::string>& currLocationNode );
-        std::string     AttachIndex( AST<std::string>& currLocationNode, std::string path, std::string type);
-        std::string     getErrorPage404Path(AST<std::string> & srvNode, std::string srvPath);
-        void            fillLocationInfo(AST<std::string> & locaNode, vector<string> vlocaArgPath);
-        void            CheckPathExist(std::string& path);
+        void            initData(AST<string> *node, string path);
+        vector<string>  SearchInTree(AST<std::string>& node, std::string value );
+        string          AttachPath(string rootPath, string addPath);
+        string          FullPath( AST<string>& currLocationNode );
+        string          AttachIndex( AST<string>& currLocationNode, string path, string type);
+        string          getErrorPagePath(AST<std::string> & srvNode, string srvPath, string errorCode);
+        void            fillLocationInfo(AST<string> & locaNode, vector<string> vlocaArgPath);
+        void            CheckPathExist(string& path);
+        void            IsDirectory(struct stat info, string& path);
+        void            IsFile(struct stat info, string& path);
+        void            HandleSRVPath();
+        void            HandleRequestPath(vector<string>& vReqPath);
+        void            HandleLocationArgPath( vector<string>& vLocaArgPath, string locationArg );
     public:
         Path();
-        std::string CreatePath(AST<std::string> *node, std::string path);
-        AST<std::string>& getRequestNode();
-        std::string getFullPathWithIndex();
-        std::string getLocationIndex();
-        std::string getServerIndex();
-        std::string getServerPath();
-        std::string getFullPath();
+        string          CreatePath(AST<string> *node, string path);
+        AST<string>&    getRequestNode();
+        string          getLocationIndex();
+        string          getServerIndex();
+        string          getServerPath();
+        string          getFullPath();
 };

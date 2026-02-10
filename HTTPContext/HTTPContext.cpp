@@ -71,7 +71,6 @@ void HTTPContext::GetMethod(SocketIO *sock)
 {
 	(void)sock;
 	Routing &r = sock->GetRouter();
-
-	
+(void)r	;
 }
 
