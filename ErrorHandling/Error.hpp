@@ -14,6 +14,16 @@
 
 #include "../Headers.hpp"
 
+enum ErrorType
+{
+    non,
+    NotFound,
+    BadRequest,
+    Forbidden,
+    InternalServerError,
+
+};
+
 class Error
 {
 private:
@@ -25,8 +35,10 @@ private:
     static std::string _CYANCOLOR   ;
     static std::string _BOLD        ;
     static std::string _RESETCOLOR  ;
+
     Error();
 public:
+    static ErrorType errorType;
     static void printError(std::string custoMessage);
     static void ThrowError(std::string custoMessage);
 

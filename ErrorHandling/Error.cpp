@@ -31,3 +31,5 @@ void Error::ThrowError(std::string custoMessage)
     throw std::runtime_error(custoMessage);
 }
 
+ErrorType Error::errorType;
+
