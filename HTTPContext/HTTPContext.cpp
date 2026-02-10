@@ -70,6 +70,8 @@ void HTTPContext::HandleResponse(SocketIO *sock)
 void HTTPContext::GetMethod(SocketIO *sock) 
 {
 	(void)sock;
+	Routing &r = sock->GetRouter();
+
 	
 }
 
