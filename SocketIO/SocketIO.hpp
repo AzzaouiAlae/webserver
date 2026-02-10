@@ -1,7 +1,7 @@
 #pragma once 
 
 #include "../Headers.hpp"
-#include "../AFd/AFd.hpp"
+#include "../Routing/Routing.hpp"
 #define CLOSE_TIME 10
 
 using namespace std;
@@ -12,7 +12,7 @@ enum IOState {
 	eSocket = 4,
 };
 
-class SocketIO : AFd {
+class SocketIO : public AFd {
 	static long CurrentTime();
 	static vector<pair<int, int> > pipePool;
 	bool pipeInitialized;
@@ -20,6 +20,7 @@ class SocketIO : AFd {
 	int SendBuffToPipe(void *buff, int size);
 	int SendPipeToSock();
 	int status;
+	Routing router;
 public:
 	int pipefd[2];
 	SocketIO(int fd);
@@ -34,4 +35,5 @@ public:
 	int SocketToSocketWrite(int socket, int size = 64 * 1024);
 	void Handle();
 	static void CloseSockFD(int fd);
+	Routing &GetRouter();
 };

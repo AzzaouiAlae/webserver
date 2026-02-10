@@ -60,3 +60,28 @@ long Utility::getFileSize(const std::string &path)
         return st.st_size;
     return -1;
 }
+
+
+bool Utility::strtosize_t(const std::string& s, size_t& out)
+{
+    if (s.empty())
+        return false;
+
+    size_t result = 0;
+
+    for (size_t i = 0; i < s.size(); i++)
+    {
+        if (!isdigit(s[i]))
+            return false;
+
+        size_t digit = s[i] - '0';
+
+        if (result > (SIZE_MAX - digit) / 10)
+            return false;
+
+        result = result * 10 + digit;
+    }
+
+    out = result;
+    return true;
+}

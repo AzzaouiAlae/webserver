@@ -1017,7 +1017,35 @@ void TestConfigFileValide3()
     }
 }
 
+void TestInvalidFile()
+{
+    try
+    {
+        Tokenizing ConfigFIleValide3("./conf/invalid.conf");
+    }
+    catch(const std::exception& e)
+    {
+        Error::printError(e.what());
+    }
+    
+   
+}
 
+
+
+void TestEmptyFile()
+{
+    try
+    {
+        Tokenizing ConfigFIleValide3("./conf/emptyfile.conf");
+    }
+    catch(const std::exception& e)
+    {
+        Error::printError(e.what());
+    }
+    
+   
+}
 
 int main()
 {
@@ -1027,6 +1055,8 @@ int main()
     RUN_TEST(TestConfigFileValide1);
     RUN_TEST(TestConfigFileValide2);
     RUN_TEST(TestConfigFileValide3);
+    RUN_TEST(TestInvalidFile);
+    RUN_TEST(TestEmptyFile);
     
 
 	return (UnityEnd());

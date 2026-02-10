@@ -1,14 +1,14 @@
 #pragma once 
 
 #include "../Headers.hpp"
-#include "../AFd/AFd.hpp"
 
 using namespace std;
 
-class Socket : AFd  {
+class Socket : public AFd  {
 	static int inetPassiveSocket(const char *host, const char *service, int type, 
 		bool doListen, int backlog);
 public:
+	int acceptedSocket;
 	static int errorNumber;
 	static int inetConnect(const string& host, const string& service, int type);
 	static int inetListen(const string& host, const string& service, int backlog);
@@ -22,5 +22,9 @@ public:
 	static void getLocalName(int sock, string &host, string &port);
 	static void getRemoteName(int sock, string &host, string &port);
 	static int getSocketType(int sock);
+	static string getIpByHost(const string& host, const string &port, int type = AF_INET);
+	static void AddSocket(string &host, string &port);
+	static void FindServer(string &host, string &port);
 	void Handle();
+	Socket(int sock);
 };

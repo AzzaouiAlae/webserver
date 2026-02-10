@@ -1,7 +1,5 @@
 #pragma once
 #include "../Headers.hpp"
-#include <sys/time.h>
-
 
 class Utility
 {
@@ -15,4 +13,5 @@ public:
 	static string GetFileExtension(string filename);
 	static bool isNotDot(char ch);
 	static long getFileSize(const std::string &path);
+	static bool strtosize_t(const std::string& s, size_t& out);
 };

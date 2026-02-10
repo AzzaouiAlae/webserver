@@ -2,6 +2,7 @@
 
 #include "../Headers.hpp"
 
+
 class Validation {
     private:
         int     _idx;
@@ -20,11 +21,14 @@ class Validation {
         void            AddDirective( std::string value );
 
         void            CreateMap();
+        void            CreateMimeMap();
         bool            IsByteSizeUnit( std::string& data );
         void            CreateServerdMap();
         void            CreateLocationMap();
         void            CreateSkipedData();
         
+        void            IsValidTypes();
+
         void            IsValidServer();
         void            ResetServerSeting();
 
@@ -54,11 +58,11 @@ class Validation {
         void            PortOnly();
         void            ValidIP();
         long            ConvertToNumber(std::string num);
-		void IsValidTypes();
+
+		void IsValidVirtualServer();
 
     public:
-    
+        static void parseListen(string str, string& port, string& host);
         Validation(std::vector<std::string> inputData);
         void    CheckValidation();
-		static void CreateMimeMap();
 };

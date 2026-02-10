@@ -6,7 +6,7 @@ vector<pair<int, int> > SocketIO::pipePool;
 
 void SocketIO::Handle()
 {
-	
+	context->Handle(this);
 }
 
 void SocketIO::SetStateByFd(int fd)
@@ -204,7 +204,7 @@ int SocketIO::SocketToSocketWrite(int socket, int size)
 	return len;
 }
 
-SocketIO::SocketIO(int fd):AFd(fd), pipeInitialized(false), pendingInPipe(0), status(0)
+SocketIO::SocketIO(int fd): AFd(fd, "SocketIO"), pipeInitialized(false), pendingInPipe(0), status(0)
 {
 	if (pipePool.size() > 0)
 	{
@@ -230,4 +230,9 @@ SocketIO::~SocketIO()
 		close(pipefd[0]);
 		close(pipefd[1]);
 	}
+}
+
+Routing &SocketIO::GetRouter()
+{
+	return router;
 }

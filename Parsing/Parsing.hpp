@@ -9,14 +9,16 @@ public:
 	static AST<std::string>* currentLocation;
 	static AST<std::string>* currentDirective;
 	Parsing();
-	static std::vector<std::string> GetDirecAgs(AST<std::string>& node, std::string& direcName);
-	static std::vector<AST<std::string> > GetNode(AST<std::string>& node, std::string& nodeName);
 	static void AddServer();
 	static void AddLocation(AST<std::string>& server);
 	static void AddDirective(AST<std::string>& node, std::string value);
 	static void AddArg(AST<std::string>& node, std::string arg);
-	static AST<std::string>& GetServerByHost(string host, string port);
-	static AST<std::string>& GetLocationByPath(AST<std::string>& server, string& path);
-	static string GetRoot(AST<std::string>& node);
-	static string GetIndex(AST<std::string>& node);
+	static bool IsduplicatedListen(string &host, vector<AST<string> > &srvChildren);
+
+	static void GetHosts(vector<string > &hosts, vector<AST<string> > &srvChildren);
+	static string GetServerName(AST<string>& server);
+	static AST<string>* GetServerByName(const string &srvName, int &start);
+	static bool IsDuplicatedServer(const string &srvName, const string &host);
+	static bool IsDuplicatedServer(const string &srvName, const string &host, vector<AST<string> > &srvs);
+	static AST<string>* GetServerByName(const string &srvName, int &start, vector<AST<string> > &srvs);
 }; 
