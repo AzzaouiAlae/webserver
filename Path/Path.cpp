@@ -2,21 +2,21 @@
 
 Path::Path(AST<std::string>& node, std::string path) : _srvNode(node), _requestPath(path)
 {
-        _srvRootPath = SearchInTree(_srvNode, "root");
-        _srvIndex = SearchInTree(_srvNode, "index");
+        _srvRootPath = SearchInTree(_srvNode, "root")[0];
+        _srvIndex = SearchInTree(_srvNode, "index")[0];
 }
 
-std::string Path::SearchInTree(AST<std::string>& node, std::string value)
+vector<string> Path::SearchInTree(AST<std::string>& node, std::string value)
 {
 	vector<AST<std::string> >& ch = node.GetChildren();
 	for (int i = 0; i < (int)ch.size(); i++)
 	{
 		if (ch[i].GetValue() == value)
 		{
-			return (ch[i].GetArguments())[0];
+			return (ch[i].GetArguments());
 		}
 	}
-	return "";
+	return vector<string>(1, "");
 }
 
 std::string     Path::AttachPath(std::string rootPath, std::string addPath)
@@ -44,7 +44,7 @@ bool IsIndexPath(string requestPath, string locArgPath)
 
 std::string     Path::FullPath( AST<std::string>& currNode )
 {
-    _locaRootPath = SearchInTree( currNode, "root");
+    _locaRootPath = SearchInTree( currNode, "root")[0];
     string rootPath, locationPath;
     if ( _locaRootPath.empty() )
         rootPath = _srvRootPath;
@@ -63,7 +63,7 @@ std::string     Path::FullPath( AST<std::string>& currNode )
 std::string    Path::AttachIndex( AST<std::string>& currLocationNode, std::string path, std::string type )
 {
     string pathWithIndex;
-    _locaIndex = SearchInTree(currLocationNode, "index");
+    _locaIndex = SearchInTree(currLocationNode, "index")[0];
 
     if ( type == "server" )
         pathWithIndex = AttachPath(path, _srvIndex);
@@ -147,6 +147,25 @@ void        Path::fillLocationInfo(AST<std::string> & locaNode, vector<string> v
     _requestPathNode = &locaNode;
 }
 
+std::string Path::getErrorPage404Path(AST<std::string> & srvNode, string srvPath)
+{
+    vector<string> errorpages = SearchInTree(srvNode, "error_page");
+    if ( !errorpages.empty() && find(errorpages.begin(), errorpages.end(), "404") != errorpages.end() )
+        return AttachPath(srvPath, errorpages[errorpages.size() - 1]);
+    return "./404.html";
+    
+}
+
+void    Path::CheckPathExist(std::string& path)
+{
+    struct stat info;
+    if ( stat(path.c_str(), &info) != 0 )
+    {
+        Error::errorType = NotFound;
+        path = getErrorPage404Path(_srvNode, _srvRootPath);
+    }
+}
+
 std::string     Path::CreatePath()
 {
     int lastSize = 0;
@@ -180,7 +199,7 @@ std::string     Path::CreatePath()
         _FullPath = AttachPath(_srvRootPath, _requestPath);
         _requestPathNode = &_srvNode;
     }
-    Error::errorType = NotFound;
+    CheckPathExist(_FullPath);
     return ( _FullPath );
 }
 

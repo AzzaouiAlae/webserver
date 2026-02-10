@@ -16,12 +16,13 @@ class Path {
         std::string     _srvIndex;
         std::string     _locaIndex;
 
-        std::string     SearchInTree(AST<std::string>& node, std::string value);
+        vector<string>  SearchInTree(AST<std::string>& node, std::string value);
         std::string     AttachPath(std::string rootPath, std::string addPath);
         std::string     FullPath( AST<std::string>& currLocationNode );
         std::string     AttachIndex( AST<std::string>& currLocationNode, std::string path, std::string type);
+        std::string     getErrorPage404Path(AST<std::string> & srvNode, std::string srvPath);
         void            fillLocationInfo(AST<std::string> & locaNode, vector<string> vlocaArgPath);
-
+        void            CheckPathExist(std::string& path);
     public:
         Path(AST<std::string>& node, std::string path);
         std::string CreatePath();
