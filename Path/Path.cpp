@@ -2,21 +2,21 @@
 
 Path::Path(AST<std::string>& node, std::string path) : _srvNode(node), _requestPath(path)
 {
-        _srvRootPath = SearchInTree(_srvNode, "root");
-        _srvIndex = SearchInTree(_srvNode, "index");
+        _srvRootPath = SearchInTree(_srvNode, "root")[0];
+        _srvIndex = SearchInTree(_srvNode, "index")[0];
 }
 
-std::string Path::SearchInTree(AST<std::string>& node, std::string value)
+vector<string> Path::SearchInTree(AST<std::string>& node, std::string value)
 {
 	vector<AST<std::string> >& ch = node.GetChildren();
 	for (int i = 0; i < (int)ch.size(); i++)
 	{
 		if (ch[i].GetValue() == value)
 		{
-			return (ch[i].GetArguments())[0];
+			return (ch[i].GetArguments());
 		}
 	}
-	return "";
+	return vector<string>(1, "");
 }
 
 std::string     Path::AttachPath(std::string rootPath, std::string addPath)
@@ -34,28 +34,42 @@ std::string     Path::AttachPath(std::string rootPath, std::string addPath)
         return rootPath + addPath;
 }
 
-std::string     Path::LocationFullPath( AST<std::string>& currLocationNode )
+bool IsIndexPath(string requestPath, string locArgPath)
 {
-    
-    _locaRootPath = SearchInTree( currLocationNode, "root");
+    std::cout << "{" << requestPath << "     " << locArgPath << "}\n";
+    if ( requestPath == locArgPath )
+        return ( true );
+    return ( false );
+}
+
+std::string     Path::FullPath( AST<std::string>& currNode )
+{
+    _locaRootPath = SearchInTree( currNode, "root")[0];
+    string rootPath, locationPath;
     if ( _locaRootPath.empty() )
-        _locaFullPath = AttachPath(_srvRootPath, _locaArgPath);
+        rootPath = _srvRootPath;
     else
-        _locaFullPath = AttachPath(_locaRootPath, _locaArgPath);
-    return _locaFullPath;
+        rootPath = _locaRootPath;
+    if ( IsIndexPath( _requestPath, _locaArgPath ) == true )
+        locationPath = AttachIndex( currNode, _requestPath, "location" );
+    else
+        locationPath = _requestPath;
+    _FullPath = AttachPath(rootPath, locationPath) ;
+    std::cout << "<" << rootPath << "        " << locationPath << ">\n";
+    return _FullPath;
 }
 
 
-void    Path::AttachIndex(AST<std::string>& currSrvNode, AST<std::string>& currLocationNode, std::string path, std::string type)
+std::string    Path::AttachIndex( AST<std::string>& currLocationNode, std::string path, std::string type )
 {
-    _srvIndex = SearchInTree(currSrvNode, "index");
-    _locaIndex = SearchInTree(currLocationNode, "index");
+    string pathWithIndex;
+    _locaIndex = SearchInTree(currLocationNode, "index")[0];
 
     if ( type == "server" )
-        _targetPathWithIndex = AttachPath(path, _srvIndex);
+        pathWithIndex = AttachPath(path, _srvIndex);
     else if ( type == "location" )
-        _targetPathWithIndex = AttachPath(path, _locaIndex);
-
+        pathWithIndex = AttachPath(path, _locaIndex);
+    return ( pathWithIndex );
 }
 
 void    CkeckPath(vector<string>& strs)
@@ -112,35 +126,44 @@ int vectorCmp(vector<string>& reqPath, vector<string>&  locationPath)
     return i + 1;
 }
 
+void    append_with_sep(string& result, std::vector<string>& vec, string sep)
+{
+    if (vec.empty() )
+        return ;
+    vector<string>::iterator it = vec.begin() ;
 
-/*
-    prev = /a/b
-    curr =  /a
-    target = /a/b 
+    result += *it;
+    ++it;
+    for ( ; it != vec.end(); ++it)
+        result += (sep + *it);
+}
 
-
-    location /a/b {
-        root /var/www/html;
-    }
-    location /a {
-        root /var/www/html;
-    }
-    location /a/b/c {
-        root /var/www/html;
-    }
-
-*/
 void        Path::fillLocationInfo(AST<std::string> & locaNode, vector<string> vLocaArgPath)
 {
     _locaArgPath.clear();
-    for (size_t i = 0; i < vLocaArgPath.size(); i++)
-        _locaArgPath += "/" + vLocaArgPath[i];
-    
-    LocationFullPath( locaNode);
-    _locaIndex = SearchInTree(locaNode, "index");
-    _targetPathWithIndex = AttachPath(_locaFullPath, _locaIndex);
-    _targetPath = _locaFullPath;
+    append_with_sep(_locaArgPath, vLocaArgPath, "/");
+
+    FullPath( locaNode);
     _requestPathNode = &locaNode;
+}
+
+std::string Path::getErrorPage404Path(AST<std::string> & srvNode, string srvPath)
+{
+    vector<string> errorpages = SearchInTree(srvNode, "error_page");
+    if ( !errorpages.empty() && find(errorpages.begin(), errorpages.end(), "404") != errorpages.end() )
+        return AttachPath(srvPath, errorpages[errorpages.size() - 1]);
+    return "./404.html";
+    
+}
+
+void    Path::CheckPathExist(std::string& path)
+{
+    struct stat info;
+    if ( stat(path.c_str(), &info) != 0 )
+    {
+        Error::errorType = NotFound;
+        path = getErrorPage404Path(_srvNode, _srvRootPath);
+    }
 }
 
 std::string     Path::CreatePath()
@@ -149,6 +172,8 @@ std::string     Path::CreatePath()
     vector<AST<std::string> >& child = _srvNode.GetChildren();
     vector<string> vReqPath, vLocaArgPath;
     parsePath(vReqPath, _requestPath, "/");
+    _requestPath.clear();
+    append_with_sep(_requestPath, vReqPath, "/");
     for (int i = 0; i < (int)child.size(); i++)
     {
         if ( child[i].GetValue() == "location" )
@@ -159,48 +184,47 @@ std::string     Path::CreatePath()
                 _locaArgPath += "/";
             parsePath(vLocaArgPath, _locaArgPath, "/");
             int pos = vectorCmp(vReqPath, vLocaArgPath);
-            if ( pos > lastSize)
+            if ( pos > lastSize )
             {
                 lastSize = pos;
                 fillLocationInfo(child[i], vLocaArgPath);
             }
         }
     }
-    if ( _targetPath.empty() )
+    if ( _FullPath.empty() )
     {
-        
-        _targetPathWithIndex = AttachPath(_srvRootPath, _srvIndex);
-        _targetPath = _srvRootPath;
+        std::cout << "'" << _requestPath << "'\n";
+        if ( _requestPath.empty() )
+            _FullPath = AttachPath(_srvRootPath, _srvIndex);
+        _FullPath = AttachPath(_srvRootPath, _requestPath);
         _requestPathNode = &_srvNode;
     }
-    return _targetPath;
+    CheckPathExist(_FullPath);
+    return ( _FullPath );
 }
 
 AST<std::string>&   Path::getRequestNode()
 {
-    return *_requestPathNode;
+    return ( *_requestPathNode );
 }
 
-std::string     Path::getFullPathWithIndex()
-{
-    return _targetPathWithIndex;
-}
+
 std::string     Path::getLocationIndex()
 {
-    return _locaIndex;
+    return ( _locaIndex );
 }
 std::string     Path::getServerIndex()
 {
-    return _srvIndex;
+    return ( _srvIndex );
 }
 
 std::string Path::getServerPath()
 {
-    return _srvRootPath;
+    return ( _srvRootPath );
 }
-std::string Path::getLocationPath()
+std::string Path::getFullPath()
 {
-    return _targetPath;
+    return ( _FullPath );
 }
 
 
