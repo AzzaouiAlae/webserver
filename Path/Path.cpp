@@ -1,10 +1,7 @@
 #include "Path.hpp"
 
-Path::Path(AST<std::string>& node, std::string path) : _srvNode(node), _requestPath(path)
-{
-        _srvRootPath = SearchInTree(_srvNode, "root")[0];
-        _srvIndex = SearchInTree(_srvNode, "index")[0];
-}
+Path::Path()
+{}
 
 vector<string> Path::SearchInTree(AST<std::string>& node, std::string value)
 {
@@ -162,14 +159,19 @@ void    Path::CheckPathExist(std::string& path)
     if ( stat(path.c_str(), &info) != 0 )
     {
         Error::errorType = NotFound;
-        path = getErrorPage404Path(_srvNode, _srvRootPath);
+        path = getErrorPage404Path((*_srvNode), _srvRootPath);
     }
 }
 
-std::string     Path::CreatePath()
+std::string     Path::CreatePath(AST<std::string> *node, std::string path)
 {
+	_srvNode = node;
+	_requestPath = path;
+	_srvRootPath = SearchInTree((*_srvNode), "root")[0];
+    _srvIndex = SearchInTree((*_srvNode), "index")[0];
+
     int lastSize = 0;
-    vector<AST<std::string> >& child = _srvNode.GetChildren();
+    vector<AST<std::string> >& child = (*_srvNode).GetChildren();
     vector<string> vReqPath, vLocaArgPath;
     parsePath(vReqPath, _requestPath, "/");
     _requestPath.clear();
@@ -197,7 +199,7 @@ std::string     Path::CreatePath()
         if ( _requestPath.empty() )
             _FullPath = AttachPath(_srvRootPath, _srvIndex);
         _FullPath = AttachPath(_srvRootPath, _requestPath);
-        _requestPathNode = &_srvNode;
+        _requestPathNode = &(*_srvNode);
     }
     CheckPathExist(_FullPath);
     return ( _FullPath );

@@ -2,6 +2,7 @@
 
 #include "../Headers.hpp"
 
+
 class Validation {
     private:
         int     _idx;
@@ -57,6 +58,8 @@ class Validation {
         void            PortOnly();
         void            ValidIP();
         long            ConvertToNumber(std::string num);
+
+		void IsValidVirtualServer();
 
     public:
         static void parseListen(string str, string& port, string& host);

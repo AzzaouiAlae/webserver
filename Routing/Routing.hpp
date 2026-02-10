@@ -4,21 +4,15 @@
 
 class Routing 
 {
-	bool sended;
-	bool isReadyToSend;
-	bool created;
-	string path;
-	Request* req;
-	string header;
-	int pathFD;
+	Path path;
+	Request request;
+	bool RequestComplete;
 public:
+	Request &GetRequest();
+	Path &GetPath();
 	Routing();
-	bool isResponseSend();
-	bool isCreated();
+	bool isRequestComplete();
+	void SetRequestComplete();
 	void CreatePath();
-	int SendResponse(int sock, int size = 1024);
-	void CreateResponse(Request& req);
-	void CreadHeader(string type, int size);
-	bool ReadyToSend();
 };
 

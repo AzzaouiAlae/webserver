@@ -57,9 +57,9 @@ class AST
 	}
 
 public:
-	AST(content value) : Value(value)
+	AST(content value)
 	{
-		
+		Value = value;
 	}
 
 	void AddChild(content value)
@@ -92,9 +92,9 @@ public:
 		return Value;
 	}
 
-	content SetValue()
+	void SetValue(content val)
 	{
-		return Value;
+		Value = val;
 	}
 
 	void PreorderTraversal(void (*f)(content, int))

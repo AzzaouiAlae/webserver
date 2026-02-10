@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 		token.split_tokens();
 		Validation valid(token.get_tokens());
 		valid.CheckValidation();
-		Validation::CreateMimeMap();
+		
 		m.MainLoop();
 	} catch (const std::exception& e) {
 		cerr << e.what() << "\n";
