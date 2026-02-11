@@ -28,8 +28,11 @@ string Routing::CreatePath(vector<AST<string> > *servers)
 {
 	if (strPath != "")
 		return strPath;
-
-	srv = Parsing::GetServerByHost(*servers, request.getHost() + ":" + request.getport());
+	string h = request.getHost().substr(1);
+	int st = 0;
+	srv =  Parsing::GetServerByName(h, st, *servers);
+	if (srv == NULL)
+		srv = Parsing::GetServerByHost(*servers, h);
 	path.CreatePath(srv, request.getPath());
 	strPath = path.getFullPath();
 	return strPath;

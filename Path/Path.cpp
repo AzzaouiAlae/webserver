@@ -36,7 +36,7 @@ std::string     Path::AttachPath(std::string rootPath, std::string addPath)
 
 bool IsIndexPath(string requestPath, string locArgPath)
 {
-    std::cout << "{" << requestPath << "     " << locArgPath << "}\n";
+    // std::cout << "{" << requestPath << "     " << locArgPath << "}\n";
     if ( requestPath == locArgPath )
         return ( true );
     return ( false );
@@ -55,7 +55,7 @@ std::string     Path::FullPath( AST<std::string>& currNode )
     else
         locationPath = _requestPath;
     _FullPath = AttachPath(rootPath, locationPath) ;
-    std::cout << "<" << rootPath << "        " << locationPath << ">\n";
+    // std::cout << "<" << rootPath << "        " << locationPath << ">\n";
     return _FullPath;
 }
 
@@ -198,7 +198,7 @@ std::string     Path::CreatePath(AST<std::string> *node, std::string path)
     }
     if ( _FullPath.empty() )
     {
-        std::cout << "'" << _requestPath << "'\n";
+        // std::cout << "'" << _requestPath << "'\n";
         if ( _requestPath.empty() )
             _FullPath = AttachPath(_srvRootPath, _srvIndex);
         _FullPath = AttachPath(_srvRootPath, _requestPath);

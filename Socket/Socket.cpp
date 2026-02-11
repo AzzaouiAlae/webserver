@@ -81,6 +81,7 @@ int Socket::inetPassiveSocket(const char *host, const char *service, int type,
 		if (bind(sock, rp->ai_addr, rp->ai_addrlen) == 0)
 			break;
 		close(sock);
+		rp->ai_next = NULL;
 	}
 	freeaddrinfo(result);
 	if (doListen && rp != NULL)
@@ -238,20 +239,19 @@ string Socket::getIpByHost(const string &host, const string &port, int type)
 
 void Socket::AddSocket(string &host, string &port)
 {
-	string hostToFind = getIpByHost(host, port);
 	int sock = inetListen(host.c_str(), port.c_str(), 100);
 	vector<AFd *> &fds = Singleton::GetFds();
 	map<int, vector<AST<string> > > &servers = Singleton::GetServers();
 
 	if (sock != -1)
 	{
-		cout << hostToFind << " is "<< host << ":" << port  << " --> " << getLocalName(sock) << endl;
 		AFd *NewFd = new Socket(sock);
 		NewFd->context = new HTTPContext();
 		fds.push_back(NewFd);
 		vector<AST<string> > myVector;
 		myVector.push_back(*Parsing::currentServer);
 		servers[sock] = myVector;
+		cout << "Socket with host: " << host << ":" << port << " created, fd: " << sock << endl;
 	}
 	else {
 		FindServer(host, port);
@@ -285,6 +285,7 @@ void Socket::FindServer(string &host, string &port)
 			string srvName = Parsing::GetServerName(*Parsing::currentServer);
 			if (!Parsing::IsDuplicatedServer(srvName, hst, it->second)) {
 				it->second.push_back(*Parsing::currentServer);
+				cout << "Host: " << host << ":" << port << " is added as virtual server with socket fd: " << (*it).first << endl;
 			}
 			else {
 				cerr << "webserver: warning, server name: " << srvName << 
@@ -299,5 +300,6 @@ void Socket::FindServer(string &host, string &port)
 Socket::~Socket()
 {
 	delete context;
+	close(fd);
 }
 

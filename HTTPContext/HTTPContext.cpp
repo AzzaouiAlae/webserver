@@ -35,7 +35,7 @@ void HTTPContext::HandleRequest()
 	Routing &r = sock->GetRouter();
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 	char buff[1024 * 64];
-	int len = read(sock->GetFd(), buff, 1024);
+	int len = read(sock->GetFd(), buff, 1024 * 64 -1);
 
 	if (len != -1)
 	{
@@ -62,6 +62,8 @@ void HTTPContext::HandleResponse()
 	if (req.getMethod() == "GET") {
 		GetMethod();
 	}
+	else
+		sock->MarkedToFree = true;
 }
 enum enPathType
 {
@@ -104,6 +106,7 @@ HTTPContext::HTTPContext()
 	in = NULL;
 	out = NULL;
 	sock = NULL;
+	fileFd = -1;
 }
 
 void HTTPContext::GetMethod()
@@ -123,18 +126,23 @@ void HTTPContext::GetMethod()
 		fileFd = open(filename.c_str(), O_RDONLY);
 		if (fileFd == -1)
 		{
+			sock->MarkedToFree = true;
 			return;
 		}
 		CreateResponseHeader();
 		ShouldSend += responseHeaderStr.length();
 		readyToSend = true;
-		
+		SendResponse();
+		return ;
 	}
+	else
+		sock->MarkedToFree = true;
 }
 
 void HTTPContext::SendResponse()
 {
-	int size;
+	int size = 0;
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 	if (sended < (int)responseHeaderStr.length())
 	{
 		const char *h = &((responseHeaderStr.c_str())[sended]);
@@ -153,6 +161,8 @@ void HTTPContext::SendResponse()
 	}
 
 	if (filesize + (int)responseHeaderStr.length() <= sended) {
+		MulObj->ChangeToEpollOneShot(in);
+		MulObj->ChangeToEpollOneShot(out);
 		sock->MarkedToFree = true;
 	}
 }
@@ -213,5 +223,8 @@ HTTPContext::~HTTPContext()
 	if (out) {
 		MulObj->DeleteFromEpoll(out);
 		delete out;
+	}
+	if (fileFd != -1) {
+		close(fileFd);
 	}
 }

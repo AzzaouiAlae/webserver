@@ -103,7 +103,7 @@ ssize_t SocketIO::FileToSocket(int fileFd, int size)
 	return sendfile(this->fd, fileFd, NULL, size);
 }
 
-void SocketIO::CloseSockFD(int fd)
+int SocketIO::CloseSockFD(int fd)
 {
 	static vector<pair<int, long> > fds;
 	long now = CurrentTime();
@@ -125,7 +125,7 @@ void SocketIO::CloseSockFD(int fd)
 		{
 			if (info.tcpi_unacked == 0)
 			{
-				if (fds[i].second - USEC * 2 > now)	
+				if (fds[i].second - USEC * 1 > now)	
 					fds[i].second -= USEC;
 			}
 		}
@@ -137,6 +137,7 @@ void SocketIO::CloseSockFD(int fd)
 			i--;
 		}
 	}
+	return fds.size();
 }
 
 long SocketIO::CurrentTime()
@@ -148,7 +149,7 @@ long SocketIO::CurrentTime()
 
 int SocketIO::SocketToFile(int fileFD, int size)
 {
-	int len, flag = (eSocket | ePipe1);
+	int len = 0, flag = (eSocket | ePipe1);
 
 	if ((status & flag) == flag)
 	{
@@ -171,7 +172,7 @@ int SocketIO::SocketToFile(int fileFD, int size)
 
 int SocketIO::SocketToSocketRead(int socket, int size)
 {
-	int len, flag = (eSocket | ePipe0);
+	int len = 0, flag = (eSocket | ePipe0);
 
 	if (status & ePipe1)
 	{
@@ -194,7 +195,7 @@ int SocketIO::SocketToSocketRead(int socket, int size)
 
 int SocketIO::SocketToSocketWrite(int socket, int size)
 {
-	int len, flag = (eSocket | ePipe1);
+	int len = 0, flag = (eSocket | ePipe1);
 
 	if ((status & flag) == flag)
 	{
@@ -242,10 +243,20 @@ SocketIO::~SocketIO()
 		close(pipefd[0]);
 		close(pipefd[1]);
 	}
+
 	delete context;
 }
 
 Routing &SocketIO::GetRouter()
 {
 	return router;
+}
+
+void SocketIO::ClearPipePool()
+{
+	for(int i = 0; i < (int)pipePool.size(); i++)
+	{
+		close(pipePool[i].first);
+		close(pipePool[i].second);
+	}
 }
