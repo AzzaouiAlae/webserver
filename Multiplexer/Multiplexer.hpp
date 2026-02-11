@@ -10,7 +10,11 @@ class Multiplexer {
 	int epollFd;
 	void epoolInit();
 	static Multiplexer* currentMultiplexer;
+	static set<AFd *> toDelete;
+	int count;
+	static bool DeleteItem(AFd *item);
 public:
+	bool ChangeToEpollOneShot(AFd *fd);
 	Multiplexer();
 	~Multiplexer();
 	bool AddAsEpollIn(AFd *fd);
@@ -20,4 +24,5 @@ public:
 	bool DeleteFromEpoll(AFd *fd);
 	static Multiplexer* GetCurrentMultiplexer();
 	void MainLoop();
+	void ClearToDelete();
 };

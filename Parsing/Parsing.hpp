@@ -17,7 +17,7 @@ public:
 
 	static void GetHosts(vector<string > &hosts, vector<AST<string> > &srvChildren);
 	static string GetServerName(AST<string>& server);
-	static AST<string>* GetServerByName(const string &srvName, int &start);
+	static AST<string>* GetServerByName(const string &srvName, int &start, int end = 0);
 	static bool IsDuplicatedServer(const string &srvName, const string &host);
 	static bool IsDuplicatedServer(const string &srvName, const string &host, vector<AST<string> > &srvs);
 	static AST<string>* GetServerByName(const string &srvName, int &start, vector<AST<string> > &srvs);

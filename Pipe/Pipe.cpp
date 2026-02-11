@@ -2,6 +2,8 @@
 
 void Pipe::Handle()
 {
+	if (MarkedToFree)
+		return;
 	socket->SetStateByFd(fd);
 }
 

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Error.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
+/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/20 19:14:05 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/08 00:05:57 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/11 11:22:14 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ std::string Error::_RESETCOLOR   = "\x1b[0m";
 
 void Error::printError(std::string custoMessage)
 {
-    std::cout << _REDCOLOR  << _BOLD <<  "Error :\n	" << custoMessage << _RESETCOLOR << std::endl;
+    cerr << _REDCOLOR  << _BOLD <<  "Error :\n	" << custoMessage << _RESETCOLOR << std::endl;
 }
 
 void Error::ThrowError(std::string custoMessage)

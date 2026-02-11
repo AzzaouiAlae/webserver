@@ -45,7 +45,7 @@ using namespace std;
 #include "IContext/IContext.hpp"
 #include "AFd/AFd.hpp"
 #include "Singleton/Singleton.hpp"
-
+#include "Logging/Logging.hpp"
 
 
 

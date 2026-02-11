@@ -36,6 +36,7 @@ public:
 	int SocketToSocketRead(int socket, int size = 64 * 1024);
 	int SocketToSocketWrite(int socket, int size = 64 * 1024);
 	void Handle();
-	static void CloseSockFD(int fd);
+	static int CloseSockFD(int fd);
 	Routing &GetRouter();
+	static void ClearPipePool();
 };

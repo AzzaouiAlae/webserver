@@ -79,11 +79,11 @@ string Parsing::GetServerName(AST<string>& server)
 	return name;
 }
 
-AST<string>* Parsing::GetServerByName(const string &srvName, int &start)
+AST<string>* Parsing::GetServerByName(const string &srvName, int &start, int end)
 {
 	vector<AST<string> > &servers = Singleton::GetASTroot().GetChildren();
 	string sName;
-	for( ; start < (int)servers.size(); start++)
+	for( ; start < (int)servers.size() - end; start++)
 	{
 		sName = GetServerName(servers[start]);
 		if (sName == srvName)
@@ -97,7 +97,7 @@ bool Parsing::IsDuplicatedServer(const string &srvName, const string &host)
 	int start = 0;
 	while(start < (int)Singleton::GetASTroot().GetChildren().size() - 1)
 	{
-		AST<string>* server = GetServerByName(srvName, start);
+		AST<string>* server = GetServerByName(srvName, start, 1);
 		if (server == NULL)
 			return false;
 		if (IsduplicatedListen((string &)host, server->GetChildren()))

@@ -179,7 +179,6 @@ void Validation::IsValidVirtualServer()
 	}
 	string srvName = Parsing::GetServerName(*(Parsing::currentServer));
 	
-
 	for(int i = 0; i < (int)v.size(); i++)
 	{
 		if (Parsing::IsDuplicatedServer(srvName, v[i])) {
