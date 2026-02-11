@@ -6,12 +6,30 @@
 
 class HTTPContext : public IContext
 {
+	int fileFd;
+	bool readyToSend;
+	bool sendHeader;
+	stringstream responseHeader;
+	int filesize;
+	string filename;
+	int sended;
+	AFd *in;
+	AFd *out;
+	SocketIO *sock;
+	string responseHeaderStr;
+	int ShouldSend;
 public:
+	HTTPContext();
+	~HTTPContext();
 	vector<AST<string> > *servers;
 	void Handle(AFd *fd);
 	void Handle(Socket *sock);
-	void Handle(SocketIO *sock);
-	void HandleRequest(SocketIO *sock);
-	void HandleResponse(SocketIO *sock);
-	void GetMethod(SocketIO *sock);
+	void Handle();
+	void HandleRequest();
+	void HandleResponse();
+	void GetMethod();
+	void CreateResponseHeader();
+	string GetStatusCode();
+	string CreateDate();
+	void SendResponse();
 };

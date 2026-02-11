@@ -21,14 +21,22 @@ void SocketIO::SetStateByFd(int fd)
 
 int SocketIO::Send(void *buff, int size)
 {
-	ssize_t sent = -1;
+	ssize_t sent = 0;
 	int flag = (ePipe0 | eSocket);
-
-	if (status & ePipe1)
+	if (buff != this->buff)
 	{
-		sent = SendBuffToPipe(buff, size);
+		SendedBuffToPipe = 0;
+		this->buff = (char *)buff;
+	}
+
+	if (status & ePipe1 && SendedBuffToPipe < size)
+	{
+		sent = SendBuffToPipe(&((this->buff)[SendedBuffToPipe]), size - SendedBuffToPipe);
 		if (sent > 0)
+		{
+			SendedBuffToPipe += sent;
 			sent = 0;
+		}
 	}
 	if ((status & flag) == flag)
 	{
@@ -73,7 +81,7 @@ ssize_t SocketIO::sendFileWithHeader(const char *httpHeader, int headerLen, int 
         return -1;
 	}
     ssize_t headerSent = Send((char *)httpHeader, headerLen);
-    if (headerSent < 0 || size <= (int)headerSent) 
+    if (headerSent <= 0 || size <= (int)headerSent) 
 	{
         return headerSent;
 	}
@@ -116,7 +124,10 @@ void SocketIO::CloseSockFD(int fd)
 		if (getsockopt(fds[i].first, IPPROTO_TCP, TCP_INFO, &info, &len) == 0)
 		{
 			if (info.tcpi_unacked == 0)
-				fds[i].second -= USEC;
+			{
+				if (fds[i].second - USEC * 2 > now)	
+					fds[i].second -= USEC;
+			}
 		}
 		if (fds[i].second + USEC * CLOSE_TIME < now)
 		{
@@ -206,6 +217,7 @@ int SocketIO::SocketToSocketWrite(int socket, int size)
 
 SocketIO::SocketIO(int fd): AFd(fd, "SocketIO"), pipeInitialized(false), pendingInPipe(0), status(0)
 {
+	buff = NULL;
 	if (pipePool.size() > 0)
 	{
 		pair<int, int> p = pipePool[pipePool.size() - 1];
@@ -230,6 +242,7 @@ SocketIO::~SocketIO()
 		close(pipefd[0]);
 		close(pipefd[1]);
 	}
+	delete context;
 }
 
 Routing &SocketIO::GetRouter()

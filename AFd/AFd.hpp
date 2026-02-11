@@ -13,4 +13,6 @@ public:
 	IContext *context;
 	string GetType();
 	int GetFd();
+	bool MarkedToFree;
+	virtual ~AFd();
 };

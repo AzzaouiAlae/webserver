@@ -107,7 +107,6 @@ bool Parsing::IsDuplicatedServer(const string &srvName, const string &host)
 	return false;
 }
 
-
 AST<string>* Parsing::GetServerByName(const string &srvName, int &start, vector<AST<string> > &srvs)
 {
 	string sName;
@@ -134,4 +133,17 @@ bool Parsing::IsDuplicatedServer(const string &srvName, const string &host, vect
 		start++;
 	}
 	return false;
+}
+
+AST<string>* Parsing::GetServerByHost(vector<AST<string> > &srvs, const string &host)
+{
+	vector<string> hosts;
+	for(int i = 0; i < (int)srvs.size(); i++)
+	{
+		hosts.clear();
+		GetHosts(hosts, srvs[i].GetChildren());
+		if (host.find(host) != host.npos)
+			return &(srvs[i]);
+	}
+	return &(srvs[0]);
 }

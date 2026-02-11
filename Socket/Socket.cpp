@@ -13,13 +13,19 @@ void Socket::Handle()
 int Socket::inetConnect(const string &host, const string &service, int type)
 {
 	addrinfo hints, *result, *rp;
+	char *h = NULL, *s = NULL;
 	int sock = -1;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = type;
 
-	if (getaddrinfo(host.c_str(), service.c_str(), &hints, &result) != 0)
+	if (host != "")
+		h = (char *)host.c_str();
+	if (service != "")
+		s = (char *)service.c_str();
+
+	if (getaddrinfo(h, s, &hints, &result) != 0)
 		return -1;
 
 	for (rp = result; rp != NULL; rp = rp->ai_next)
@@ -251,6 +257,7 @@ void Socket::AddSocket(string &host, string &port)
 		FindServer(host, port);
 	}
 }
+
 void Socket::FindServer(string &host, string &port)
 {
 	map<int, vector<AST<string> > > &servers = Singleton::GetServers();
@@ -288,3 +295,9 @@ void Socket::FindServer(string &host, string &port)
 	}
 	cerr << "webserver: warning, bind to address " << host << ":" << port << " fail\n";
 }
+
+Socket::~Socket()
+{
+	delete context;
+}
+
