@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:48 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/10 16:14:39 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/11 22:40:53 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,4 +53,5 @@ public:
 	const string &getHost() const;
 	const string &getServerName() const;
 	string &getPath();
+	string &GetRequest();
 };

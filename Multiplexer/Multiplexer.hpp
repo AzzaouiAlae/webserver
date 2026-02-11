@@ -3,7 +3,6 @@
 #include <sys/epoll.h>
 class AFd;
 
-#define BUFF_SIZE 1024
 #define TIMEOUT_SEC 20
 
 class Multiplexer {
@@ -22,6 +21,7 @@ public:
 	bool AddAsEpoll(AFd *fd, int type);
 	bool ChangeToEpollOut(AFd *fd);
 	bool DeleteFromEpoll(AFd *fd);
+	bool ChangeToEpollIn(AFd *fd);
 	static Multiplexer* GetCurrentMultiplexer();
 	void MainLoop();
 	void ClearToDelete();

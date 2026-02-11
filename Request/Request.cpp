@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/10 16:14:33 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/11 22:45:11 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -170,7 +170,7 @@ bool Request::ParseHeader()
 		{
 			key = line.substr(0, line.find(':'));
 			value = line.substr(line.find(':') + 1);
-			value.erase(value.size() - 2);
+			Utility::trim(value, " \n\r");
 		}
 		else
 			Error::ThrowError("Bad Request Header");
@@ -193,11 +193,15 @@ bool Request::ParseHeader()
 	return (false);
 }
 
+string &Request::GetRequest()
+{
+	return _requestbuff;
+}
+
 bool Request::fillBody()
 {
 	if (_Parspos == eParsEnd && _env["REQUEST_METHOD"] == "POST" && _Thereisbody)
 	{
-
 		_env["Body"] += _requestbuff;
 		if (_env["Body"].size() < _content_len)
 			return (false);

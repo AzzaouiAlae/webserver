@@ -1,4 +1,5 @@
 #include "SocketIO.hpp"
+#include "../HTTPContext/HTTPContext.hpp"
 
 int SocketIO::errorNumber = 0;
 
@@ -53,6 +54,7 @@ int SocketIO::SendBuffToPipe(void *buff, int size)
 
 	ssize_t n = vmsplice(pipefd[1], &iov, 1, SPLICE_F_NONBLOCK);
 	status &= ~ePipe1;
+	((HTTPContext *)context)->activeOutPipe();
 	if (n <= 0)
 		return n;
 	pendingInPipe += n;
@@ -163,6 +165,7 @@ int SocketIO::SocketToFile(int fileFD, int size)
 	{
 		len = splice(pipefd[0], NULL, fileFD, NULL, pendingInPipe, 0);
 		status &= ~ePipe0;
+		((HTTPContext *)context)->activeInPipe();
 		if (len == -1)
 			return -1;
 		pendingInPipe -= len;
@@ -178,6 +181,7 @@ int SocketIO::SocketToSocketRead(int socket, int size)
 	{
 		len = splice(socket, NULL, pipefd[1], NULL, size, 0);
 		status &= ~ePipe1;
+		((HTTPContext *)context)->activeOutPipe();
 		if (len == -1)
 			return -1;
 		pendingInPipe += len;
@@ -209,6 +213,7 @@ int SocketIO::SocketToSocketWrite(int socket, int size)
 	{
 		len = splice(pipefd[0], NULL, socket, NULL, pendingInPipe, 0);
 		status &= ~ePipe0;
+		((HTTPContext *)context)->activeInPipe();
 		if (len == -1)
 			return -1;
 		pendingInPipe -= len;
@@ -243,8 +248,8 @@ SocketIO::~SocketIO()
 		close(pipefd[0]);
 		close(pipefd[1]);
 	}
-
 	delete context;
+	Singleton::GetFds().erase(this);
 }
 
 Routing &SocketIO::GetRouter()

@@ -10,6 +10,13 @@ bool Utility::isNotDot(char ch)
 	return ch != '.';
 }
 
+bool Utility::isChar(char ch)
+{
+	return ch != Utility::ch;
+}
+
+char Utility::ch;
+
 bool Utility::isNotSquareBracket(char ch)
 {
 	return ch != ']' && ch != '[';
@@ -31,6 +38,15 @@ void Utility::trim(std::string &s, bool (*f)(char ch))
 {
 	ltrim(s, f);
 	rtrim(s, f);
+}
+
+void Utility::trim(std::string &s, string toTrime)
+{
+	for(int i = 0; (int)toTrime.length() > i; i++)
+	{
+		Utility::ch = toTrime[i];
+		trim(s, isChar);
+	}
 }
 
 long Utility::CurrentTime()
@@ -84,4 +100,9 @@ bool Utility::strtosize_t(const std::string& s, size_t& out)
 
     out = result;
     return true;
+}
+
+void Utility::Close(int fd)
+{
+	close(fd);
 }

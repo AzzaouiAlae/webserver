@@ -19,6 +19,8 @@ class HTTPContext : public IContext
 	string responseHeaderStr;
 	int ShouldSend;
 public:
+	void activeInPipe();
+	void activeOutPipe();
 	HTTPContext();
 	~HTTPContext();
 	vector<AST<string> > *servers;
