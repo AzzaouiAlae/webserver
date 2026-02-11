@@ -18,9 +18,12 @@ vector<string> Path::SearchInTree(AST<std::string>& node, std::string value)
 
 std::string     Path::AttachPath(std::string rootPath, std::string addPath)
 {
-    if (rootPath.empty() && addPath.empty())
+    if (rootPath.empty() && addPath.empty()) {
         return "";
-
+	}
+	if (rootPath == "") {
+		rootPath = "/";
+	}
     int Back = rootPath.size() - 1;
 
     if (rootPath[Back] == '/' && addPath[0] == '/')

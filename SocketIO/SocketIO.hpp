@@ -19,8 +19,10 @@ class SocketIO : public AFd {
 	int pendingInPipe;
 	int SendBuffToPipe(void *buff, int size);
 	int SendPipeToSock();
-	int status;
 	Routing router;
+	int status;
+	int SendedBuffToPipe;
+	char *buff;
 public:
 	int pipefd[2];
 	SocketIO(int fd);

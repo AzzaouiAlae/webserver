@@ -6,4 +6,5 @@ class IContext
 
 public:
 	virtual void Handle(AFd *fd) = 0;
+	virtual ~IContext();
 };

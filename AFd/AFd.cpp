@@ -4,6 +4,7 @@ AFd::AFd(int fd, string type)
 {
 	this->fd = fd;
 	this->type = type;
+	MarkedToFree = false;
 }
 
 AFd::operator int() const 
@@ -20,3 +21,5 @@ int AFd::GetFd()
 {
 	return fd;
 }
+
+AFd::~AFd() {}

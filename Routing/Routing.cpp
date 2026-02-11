@@ -24,7 +24,13 @@ Path &Routing::GetPath()
 	return path;
 }
 
-void Routing::CreatePath()
+string Routing::CreatePath(vector<AST<string> > *servers)
 {
-	
+	if (strPath != "")
+		return strPath;
+
+	srv = Parsing::GetServerByHost(*servers, request.getHost() + ":" + request.getport());
+	path.CreatePath(srv, request.getPath());
+	strPath = path.getFullPath();
+	return strPath;
 }

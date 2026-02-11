@@ -60,9 +60,15 @@ bool Multiplexer::ChangeToEpollOut(AFd *fd)
 	return true;
 }
 
+bool Multiplexer::DeleteFromEpoll(AFd *fd)
+{
+	return epoll_ctl(epollFd, EPOLL_CTL_DEL, fd->GetFd(), NULL);
+}
+
 void Multiplexer::MainLoop()
 {
-	while(true)
+	long time = Utility::CurrentTime() + USEC * 30;
+	while(time > Utility::CurrentTime())
 	{
 		int s = Singleton::GetFds().size();
 		epoll_event eventList[s];
@@ -71,6 +77,17 @@ void Multiplexer::MainLoop()
 		{
 			AFd *obj = (AFd *)(eventList[i].data.ptr);
 			obj->Handle();
+			if (obj->MarkedToFree)
+				delete obj;
 		}
+	}
+}
+Multiplexer::~Multiplexer()
+{
+	vector<AFd *> &fds = Singleton::GetFds();
+	
+	for(int i = 0; i < (int)fds.size(); i++)
+	{
+		delete fds[i];
 	}
 }

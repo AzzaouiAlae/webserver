@@ -12,10 +12,12 @@ class Multiplexer {
 	static Multiplexer* currentMultiplexer;
 public:
 	Multiplexer();
+	~Multiplexer();
 	bool AddAsEpollIn(AFd *fd);
 	bool AddAsEpollOut(AFd *fd);
 	bool AddAsEpoll(AFd *fd, int type);
 	bool ChangeToEpollOut(AFd *fd);
+	bool DeleteFromEpoll(AFd *fd);
 	static Multiplexer* GetCurrentMultiplexer();
 	void MainLoop();
 };

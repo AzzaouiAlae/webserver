@@ -21,4 +21,5 @@ public:
 	static bool IsDuplicatedServer(const string &srvName, const string &host);
 	static bool IsDuplicatedServer(const string &srvName, const string &host, vector<AST<string> > &srvs);
 	static AST<string>* GetServerByName(const string &srvName, int &start, vector<AST<string> > &srvs);
+	static AST<string>* GetServerByHost(vector<AST<string> > &srvs, const string &host);
 }; 

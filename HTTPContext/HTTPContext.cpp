@@ -5,39 +5,37 @@ void HTTPContext::Handle(AFd *fd)
 	if (fd->GetType() == "Socket")
 		Handle((Socket *)fd);
 	else if (fd->GetType() == "SocketIO")
-		Handle((SocketIO *)fd);
+		Handle();
 }
 
 void HTTPContext::Handle(Socket *sock)
 {
-	vector<AFd *> &fds = Singleton::GetFds();
 	SocketIO *fd = new SocketIO(sock->acceptedSocket);
 	servers = &((Singleton::GetServers())[sock->GetFd()]);
-	fd->context = this;
-	fds.push_back(fd);
+	fd->context = new HTTPContext();
+	((HTTPContext *)fd->context)->servers = servers;
+	((HTTPContext *)fd->context)->sock = fd;
 	Multiplexer::GetCurrentMultiplexer()->AddAsEpollIn(fd);
 }
 
-void HTTPContext::Handle(SocketIO *sock)
+void HTTPContext::Handle()
 {
 	Routing &r = sock->GetRouter();
-	
+
 	if (r.isRequestComplete() == false) {
-		HandleRequest(sock);
+		HandleRequest();
 	}
 	else {
-		HandleResponse(sock);
+		HandleResponse();
 	}
 }
 
-void HTTPContext::HandleRequest(SocketIO *sock)
+void HTTPContext::HandleRequest()
 {
 	Routing &r = sock->GetRouter();
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	vector<AFd *> fds = Singleton::GetFds();
-	AFd *fd;
 	char buff[1024 * 64];
-	int len = read(sock->GetFd(), buff, 1024 * 64 - 1);
+	int len = read(sock->GetFd(), buff, 1024);
 
 	if (len != -1)
 	{
@@ -47,31 +45,173 @@ void HTTPContext::HandleRequest(SocketIO *sock)
 			r.SetRequestComplete();
 			MulObj->ChangeToEpollOut(sock);
 
-			fd = new Pipe(sock->pipefd[0], sock);
-			fds.push_back(fd);
-			MulObj->AddAsEpollIn(fd);
+			in = new Pipe(sock->pipefd[0], sock);
+			MulObj->AddAsEpollIn(in);
 
-			fd = new Pipe(sock->pipefd[1], sock);
-			fds.push_back(fd);
-			MulObj->AddAsEpollOut(fd);
+			out = new Pipe(sock->pipefd[1], sock);
+			MulObj->AddAsEpollOut(out);
 		}
 	}
 }
 
-void HTTPContext::HandleResponse(SocketIO *sock)
+void HTTPContext::HandleResponse()
 {
 	Request &req = sock->GetRouter().GetRequest();
+	sock->SetStateByFd(sock->GetFd());
 
 	if (req.getMethod() == "GET") {
-		GetMethod(sock);
+		GetMethod();
+	}
+}
+enum enPathType
+{
+	enPathError,
+	enPathFolder,
+	enPathFile,
+	enPathOther
+};
+
+int checkPathType(const std::string &path)
+{
+	struct stat info;
+
+	// stat returns 0 on success
+	if (stat(path.c_str(), &info) != 0)
+	{
+		// std::cout << "Path does not exist or cannot be accessed." << std::endl;
+		return enPathError;
+	}
+
+	// Checking the st_mode bitmask
+	if (info.st_mode & S_IFDIR)
+	{
+		return enPathFolder;
+	}
+	else if (info.st_mode & S_IFREG)
+	{
+		return enPathFile;
+	}
+	else
+	{
+		return enPathOther;
 	}
 }
 
-void HTTPContext::GetMethod(SocketIO *sock) 
+HTTPContext::HTTPContext()
 {
-	(void)sock;
-	Routing &r = sock->GetRouter();
-
-	
+	sended = 0;
+	readyToSend = false;
+	in = NULL;
+	out = NULL;
+	sock = NULL;
 }
 
+void HTTPContext::GetMethod()
+{
+	if (readyToSend) {
+		SendResponse();
+		return;
+	}
+	Routing &r = sock->GetRouter();
+	filename = r.CreatePath(servers);
+	int type = checkPathType(filename);
+
+	if (type == enPathFile)
+	{
+		filesize = Utility::getFileSize(filename);
+		ShouldSend = filesize;
+		fileFd = open(filename.c_str(), O_RDONLY);
+		if (fileFd == -1)
+		{
+			return;
+		}
+		CreateResponseHeader();
+		ShouldSend += responseHeaderStr.length();
+		readyToSend = true;
+		
+	}
+}
+
+void HTTPContext::SendResponse()
+{
+	int size;
+	if (sended < (int)responseHeaderStr.length())
+	{
+		const char *h = &((responseHeaderStr.c_str())[sended]);
+		int len = responseHeaderStr.length() - sended;
+		size = sock->sendFileWithHeader(h, len, fileFd);
+		if (size == -1) {
+			
+		}
+		else
+			sended += size;
+	}
+	else if (sended >= (int)responseHeaderStr.length()) {
+		size = sock->FileToSocket(fileFd);
+		if (size > 0)
+			sended += size;
+	}
+
+	if (filesize + (int)responseHeaderStr.length() <= sended) {
+		sock->MarkedToFree = true;
+	}
+}
+
+string HTTPContext::GetStatusCode()
+{
+	return "200 OK";
+}
+
+string HTTPContext::CreateDate()
+{
+	char date[100];
+	time_t now = time(0);
+	struct tm tm = *gmtime(&now);
+	strftime(date, sizeof(date), "%a, %d %b %Y %H:%M:%S GMT", &tm);
+	return date;
+}
+
+void HTTPContext::CreateResponseHeader()
+{
+	responseHeader.str("");
+	
+	string serverName = Parsing::GetServerName(*(sock->GetRouter().srv));
+	if (serverName == "")
+		serverName = Socket::getLocalName(sock->GetFd());
+	string type = Singleton::GetMime()[Utility::GetFileExtension(filename)];
+	
+	responseHeader 
+	<< "HTTP/1.1 " << GetStatusCode() << "\r\n"
+	<< "Date: " << CreateDate() << "\r\n"
+	<< "Server: " << serverName << "\r\n"
+	<< "Content-Type: " << type << "\r\n"
+	<< "Content-Length: " << filesize << "\r\n"
+	<< "Connection: close\r\n" 
+	<< "X-Content-Type-Options: nosniff\r\n"
+	<< "\r\n";
+
+	responseHeaderStr = responseHeader.str();
+} 
+
+void CreateNotFoundError()
+{}
+
+void ListFiles()
+{}
+
+HTTPContext::~HTTPContext()
+{
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+
+	if (sock) {
+		MulObj->DeleteFromEpoll(sock);
+	}
+	if (in) {
+		MulObj->DeleteFromEpoll(in);
+		delete in;
+	}
+	if (out) {
+		MulObj->DeleteFromEpoll(out);
+		delete out;
+	}
+}

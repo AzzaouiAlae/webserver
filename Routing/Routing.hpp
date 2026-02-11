@@ -5,14 +5,16 @@
 class Routing 
 {
 	Path path;
+	string strPath;
 	Request request;
 	bool RequestComplete;
 public:
+	AST<string> *srv;
 	Request &GetRequest();
 	Path &GetPath();
 	Routing();
 	bool isRequestComplete();
 	void SetRequestComplete();
-	void CreatePath();
+	string CreatePath(vector<AST<string> > *servers);
 };
 

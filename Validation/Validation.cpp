@@ -27,10 +27,10 @@ void Validation::CreateMimeMap()
 		}
 	}
 
-	for (map<string, string>::iterator it = mime.begin(); it != mime.end(); it++)
-	{
-		cout << "|" << it->first << ":" << it->second << "|" << endl;
-	}
+	// for (map<string, string>::iterator it = mime.begin(); it != mime.end(); it++)
+	// {
+	// 	cout << "|" << it->first << ":" << it->second << "|" << endl;
+	// }
 }
 
 void Validation::IsValidTypes()
