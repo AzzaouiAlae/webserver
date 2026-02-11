@@ -46,6 +46,7 @@
 *.css
 *.gcda
 *.gcov
+*.logs
 
 mainAlae.cpp
 mainOussama.cpp

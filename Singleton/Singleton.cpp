@@ -21,9 +21,9 @@ map<string, string> &Singleton::GetMime()
 	return mime;
 }
 
-vector<AFd *> &Singleton::GetFds()
+set<AFd *> &Singleton::GetFds()
 {
-	static vector<AFd *> fds;
+	static set<AFd *> fds;
 
 	return fds;
 } 

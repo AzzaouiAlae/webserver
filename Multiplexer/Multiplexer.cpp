@@ -22,11 +22,11 @@ void Multiplexer::epoolInit()
 	epollFd = epoll_create1(EPOLL_CLOEXEC);
 	if (epollFd == -1)
 		Error::ThrowError("epoll_create");
-	vector<AFd *> &fds = Singleton::GetFds();
-	
-	for(int i = 0; i < (int)fds.size(); i++)
+	set<AFd *> &fds = Singleton::GetFds();
+	set<AFd *>::iterator it = fds.begin();
+	for(; it != fds.end(); it++)
 	{
-		AddAsEpollIn(fds[i]);
+		AddAsEpollIn(*it);
 	}
 }
 
@@ -65,6 +65,18 @@ bool Multiplexer::ChangeToEpollOut(AFd *fd)
 	return true;
 }
 
+bool Multiplexer::ChangeToEpollIn(AFd *fd)
+{
+	epoll_event ev;
+
+	ev.events = EPOLLIN;
+	ev.data.ptr = (void *)fd;
+
+	if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev) == -1)
+		return false;
+	return true;
+}
+
 bool Multiplexer::ChangeToEpollOneShot(AFd *fd)
 {
 	epoll_event ev;
@@ -85,7 +97,7 @@ bool Multiplexer::DeleteFromEpoll(AFd *fd)
 
 void Multiplexer::MainLoop()
 {
-	int timeout = 15;
+	int timeout = 5;
 	AFd *obj;
 	long time = Utility::CurrentTime() + USEC * timeout;
 	(void)time;
@@ -93,6 +105,8 @@ void Multiplexer::MainLoop()
 	{
 		epoll_event eventList[count];
 		int size = epoll_wait(epollFd, eventList, count, USEC * timeout / 1000);
+		Logging::Debug() << "New event/timeout happen size: " << size;
+		
 		for(int i = 0; i < size; i++)
 		{
 			obj = (AFd *)(eventList[i].data.ptr);
@@ -102,15 +116,20 @@ void Multiplexer::MainLoop()
 		}
 		for(int i = 0; i < size; i++)
 		{
+
 			obj = (AFd *)(eventList[i].data.ptr);
 			if (obj->MarkedToFree == false && eventList->events & (EPOLLIN | EPOLLOUT)) {
+				Logging::Debug() << "Start handel " << obj->GetType() << 
+					" with fd: " << obj->GetFd();
 				obj->Handle();
 			}
 
 			if (obj->MarkedToFree || eventList->events & (EPOLLERR | EPOLLPRI | EPOLLRDHUP))
 			{
+				Logging::Debug() << "Add " << obj->GetType() << 
+					" with fd: " << obj->GetFd() << " to delete";
 				obj->MarkedToFree = true;
-				ChangeToEpollOneShot(obj);
+				DeleteFromEpoll(obj);
 				toDelete.insert(obj);
 			}
 		}
@@ -126,6 +145,8 @@ bool Multiplexer::DeleteItem(AFd *item)
 	
 	if (item->markedTime && item->markedTime < now)
 	{
+		Logging::Debug() << item->GetType() << 
+					" with fd: " << item->GetFd() << " deleted";
 		delete item;
         toDelete.erase(item);
 		return true;
@@ -148,20 +169,23 @@ void Multiplexer::ClearToDelete()
 	if (toDelete.size() == 0)
 		return;
 	set<AFd *>::iterator it = toDelete.begin();
-	for(; it != toDelete.end(); it++)
+	set<AFd *>::iterator next;
+	for(; it != toDelete.end(); it = next)
 	{
-		if (DeleteItem(*it))
-			break;
+		next = it;
+		next++;
+		DeleteItem(*it);
 	}
 }
 
 Multiplexer::~Multiplexer()
 {
-	vector<AFd *> &fds = Singleton::GetFds();
-	
-	for(int i = 0; i < (int)fds.size(); i++)
+	set<AFd *> &fds = Singleton::GetFds();
+	set<AFd *>::iterator it = fds.begin();
+
+	for(; it != fds.end(); it++)
 	{
-		delete fds[i];
+		toDelete.insert(*it);
 	}
 	close(epollFd);
 	while (toDelete.size()) {

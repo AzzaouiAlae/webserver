@@ -3,6 +3,7 @@
 
 class Utility
 {
+	static char ch;
 public:
 	static bool isNotZero(char ch);
 	static bool isNotSquareBracket(char ch);
@@ -14,4 +15,7 @@ public:
 	static bool isNotDot(char ch);
 	static long getFileSize(const std::string &path);
 	static bool strtosize_t(const std::string& s, size_t& out);
+	static bool isChar(char ch);
+	static void trim(std::string &s, string toTrime);
+	static void Close(int fd);
 };

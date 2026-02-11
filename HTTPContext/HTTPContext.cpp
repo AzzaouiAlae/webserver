@@ -11,11 +11,14 @@ void HTTPContext::Handle(AFd *fd)
 void HTTPContext::Handle(Socket *sock)
 {
 	SocketIO *fd = new SocketIO(sock->acceptedSocket);
+	Singleton::GetFds().insert(fd);
 	servers = &((Singleton::GetServers())[sock->GetFd()]);
 	fd->context = new HTTPContext();
 	((HTTPContext *)fd->context)->servers = servers;
 	((HTTPContext *)fd->context)->sock = fd;
 	Multiplexer::GetCurrentMultiplexer()->AddAsEpollIn(fd);
+	Logging::Debug() << "Socket FD: " << sock->GetFd() 
+	<< " accepte new connection as socket fd: " << sock->acceptedSocket;
 }
 
 void HTTPContext::Handle()
@@ -34,14 +37,16 @@ void HTTPContext::HandleRequest()
 {
 	Routing &r = sock->GetRouter();
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	char buff[1024 * 64];
-	int len = read(sock->GetFd(), buff, 1024 * 64 -1);
+	char buff[1024 * KBYTE];
+	int len = read(sock->GetFd(), buff, 1024 * KBYTE -1);
 
 	if (len != -1)
 	{
 		buff[len] = '\0';
 		if (r.GetRequest().isComplete(buff))
 		{
+			Logging::Debug() << "Read of Request from Socket fd: " << sock->GetFd() << " Complete";
+			Logging::Debug() << "Request is : " << r.GetRequest().getMethod() <<  " " << r.GetRequest().getPath();
 			r.SetRequestComplete();
 			MulObj->ChangeToEpollOut(sock);
 
@@ -58,13 +63,15 @@ void HTTPContext::HandleResponse()
 {
 	Request &req = sock->GetRouter().GetRequest();
 	sock->SetStateByFd(sock->GetFd());
-
+	Logging::Debug() << "Socket fd: " << sock->GetFd() << " try to Handle Response";
 	if (req.getMethod() == "GET") {
 		GetMethod();
 	}
-	else
+	else {
 		sock->MarkedToFree = true;
+	}
 }
+
 enum enPathType
 {
 	enPathError,
@@ -99,6 +106,18 @@ int checkPathType(const std::string &path)
 	}
 }
 
+string getTypeName(int type)
+{
+	switch (type)
+	{
+	case enPathError: return "enPathError";
+	case enPathFolder: return "enPathFolder";
+	case enPathFile: return "enPathFile";
+	case enPathOther: return "enPathOther";
+	}
+	return "";
+}
+
 HTTPContext::HTTPContext()
 {
 	sended = 0;
@@ -115,10 +134,13 @@ void HTTPContext::GetMethod()
 		SendResponse();
 		return;
 	}
+	
 	Routing &r = sock->GetRouter();
 	filename = r.CreatePath(servers);
 	int type = checkPathType(filename);
 
+	Logging::Debug() << "Socket fd: " << sock->GetFd() << 
+	" try to send file " << filename << " with type " << getTypeName(type);
 	if (type == enPathFile)
 	{
 		filesize = Utility::getFileSize(filename);
@@ -126,17 +148,22 @@ void HTTPContext::GetMethod()
 		fileFd = open(filename.c_str(), O_RDONLY);
 		if (fileFd == -1)
 		{
+			shutdown(sock->GetFd(), SHUT_RDWR);
 			sock->MarkedToFree = true;
 			return;
 		}
 		CreateResponseHeader();
 		ShouldSend += responseHeaderStr.length();
 		readyToSend = true;
+		Logging::Debug() << "Socket fd: " << sock->GetFd() << " ready To Send Response";
 		SendResponse();
 		return ;
 	}
 	else
+	{
+		shutdown(sock->GetFd(), SHUT_RDWR);
 		sock->MarkedToFree = true;
+	}
 }
 
 void HTTPContext::SendResponse()
@@ -159,10 +186,12 @@ void HTTPContext::SendResponse()
 		if (size > 0)
 			sended += size;
 	}
-
+	Logging::Debug() << "Socket fd: " << sock->GetFd() <<  
+			" Send " << sended << " byte from " << filesize + (int)responseHeaderStr.length();
 	if (filesize + (int)responseHeaderStr.length() <= sended) {
 		MulObj->ChangeToEpollOneShot(in);
 		MulObj->ChangeToEpollOneShot(out);
+		// shutdown(sock->GetFd(), SHUT_RDWR);
 		sock->MarkedToFree = true;
 	}
 }
@@ -213,9 +242,6 @@ HTTPContext::~HTTPContext()
 {
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 
-	if (sock) {
-		MulObj->DeleteFromEpoll(sock);
-	}
 	if (in) {
 		MulObj->DeleteFromEpoll(in);
 		delete in;
@@ -227,4 +253,16 @@ HTTPContext::~HTTPContext()
 	if (fileFd != -1) {
 		close(fileFd);
 	}
+}
+
+void HTTPContext::activeInPipe() {
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+
+	MulObj->ChangeToEpollIn(in);
+}
+
+void HTTPContext::activeOutPipe() {
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+
+	MulObj->ChangeToEpollIn(out);
 }
