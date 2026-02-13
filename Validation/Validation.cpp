@@ -27,10 +27,10 @@ void Validation::CreateMimeMap()
 		}
 	}
 
-	for (map<string, string>::iterator it = mime.begin(); it != mime.end(); it++)
-	{
-		cout << "|" << it->first << ":" << it->second << "|" << endl;
-	}
+	// for (map<string, string>::iterator it = mime.begin(); it != mime.end(); it++)
+	// {
+	// 	cout << "|" << it->first << ":" << it->second << "|" << endl;
+	// }
 }
 
 void Validation::IsValidTypes()
@@ -175,16 +175,15 @@ void Validation::IsValidVirtualServer()
 	set<string> unique_elements(v.begin(), v.end());
 
 	if (unique_elements.size() != v.size()) {
-		Error::ThrowError("Error: The same server has duplicate host and port");
+		Error::ThrowError("The same server has duplicate host and port");
 	}
 	string srvName = Parsing::GetServerName(*(Parsing::currentServer));
 	
-
 	for(int i = 0; i < (int)v.size(); i++)
 	{
 		if (Parsing::IsDuplicatedServer(srvName, v[i])) {
-			cerr << "webserver: warning, server name: " << srvName <<
-					", Host: " << v[i] << ", Are duplicated" << endl;
+			Logging::Warn() << "server name: " << srvName <<
+					", Host: " << v[i] << ", Are duplicated";
 			continue;
 		}
 		string port, host;
@@ -273,6 +272,7 @@ void Validation::IpAndPort()
 void Validation::parseListen(string str, string &port, string &host)
 {
 	const char *s1 = strrchr(str.c_str(), ':');
+	bool isHost = false;
 
 	if (s1 != NULL)
 	{
@@ -281,7 +281,20 @@ void Validation::parseListen(string str, string &port, string &host)
 		port = s1 + 1;
 		return;
 	}
-	port = str;
+	for(int i = 0; i < (int)str.length(); i++)
+	{
+		if(isdigit(str[i]) == false)
+		{
+			isHost = true;
+			break;
+		}
+	}
+	if (isHost) {
+		host = str;
+		port = "80";
+	}
+	else
+		port = str;
 }
 
 //     LISTEN

@@ -13,13 +13,19 @@ void Socket::Handle()
 int Socket::inetConnect(const string &host, const string &service, int type)
 {
 	addrinfo hints, *result, *rp;
+	char *h = NULL, *s = NULL;
 	int sock = -1;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = type;
 
-	if (getaddrinfo(host.c_str(), service.c_str(), &hints, &result) != 0)
+	if (host != "")
+		h = (char *)host.c_str();
+	if (service != "")
+		s = (char *)service.c_str();
+
+	if (getaddrinfo(h, s, &hints, &result) != 0)
 		return -1;
 
 	for (rp = result; rp != NULL; rp = rp->ai_next)
@@ -30,8 +36,8 @@ int Socket::inetConnect(const string &host, const string &service, int type)
 
 		if (connect(sock, rp->ai_addr, rp->ai_addrlen) != -1)
 			break;
-
-		close(sock);
+		
+		Utility::Close(sock);
 	}
 	freeaddrinfo(result);
 	return (rp != NULL) ? sock : -1;
@@ -67,21 +73,24 @@ int Socket::inetPassiveSocket(const char *host, const char *service, int type,
 								&optVal, sizeof(optVal));
 			if (res != 0)
 			{
-				close(sock);
+				Utility::Close(sock);
 				freeaddrinfo(result);
 				return -1;
 			}
 		}
 		if (bind(sock, rp->ai_addr, rp->ai_addrlen) == 0)
 			break;
-		close(sock);
+		if (sock > 0)
+			Utility::Close(sock);
+		sock = -1;
+		break;
 	}
 	freeaddrinfo(result);
-	if (doListen && rp != NULL)
+	if (doListen && rp != NULL && sock > 0)
 	{
 		if (listen(sock, backlog) == -1)
 		{
-			close(sock);
+			Utility::Close(sock);
 			return -1;
 		}
 	}
@@ -230,33 +239,35 @@ string Socket::getIpByHost(const string &host, const string &port, int type)
     return ip + ":" + Port;
 }
 
+
 void Socket::AddSocket(string &host, string &port)
 {
-	string hostToFind = getIpByHost(host, port);
 	int sock = inetListen(host.c_str(), port.c_str(), 100);
-	vector<AFd *> &fds = Singleton::GetFds();
+	set<AFd *> &fds = Singleton::GetFds();
 	map<int, vector<AST<string> > > &servers = Singleton::GetServers();
 
 	if (sock != -1)
 	{
-		cout << hostToFind << " is "<< host << ":" << port  << " --> " << getLocalName(sock) << endl;
 		AFd *NewFd = new Socket(sock);
 		NewFd->context = new HTTPContext();
-		fds.push_back(NewFd);
+		fds.insert(NewFd);
 		vector<AST<string> > myVector;
 		myVector.push_back(*Parsing::currentServer);
 		servers[sock] = myVector;
+		Logging::Info() << "Socket with host: " << host << ":" 
+		<< port << " created, fd: " << sock;
 	}
 	else {
 		FindServer(host, port);
 	}
 }
+
 void Socket::FindServer(string &host, string &port)
 {
 	map<int, vector<AST<string> > > &servers = Singleton::GetServers();
 	stringstream s;
 
-	s << "Error:\nhost: " << host << "\nport: " << port;
+	s << "Bind to address: " << host << ":" << port << " fail";
 	if (servers.size() == 0) {
 		Error::ThrowError(s.str().c_str());
 	}
@@ -278,13 +289,23 @@ void Socket::FindServer(string &host, string &port)
 			string srvName = Parsing::GetServerName(*Parsing::currentServer);
 			if (!Parsing::IsDuplicatedServer(srvName, hst, it->second)) {
 				it->second.push_back(*Parsing::currentServer);
+				Logging::Info() << "Host: " << host << ":" << port << 
+				" is added as virtual server with socket fd: " << (*it).first;
 			}
 			else {
-				cerr << "webserver: warning, server name: " << srvName << 
-				", Host: " << hst << ", are duplicated" << endl;
+				Logging::Warn() << "server name: " << srvName << 
+				", Host: " << hst << ", are duplicated";
 			}
 			return;
 		}
 	}
-	cerr << "webserver: warning, bind to address " << host << ":" << port << " fail\n";
+	Logging::Warn() << "Bind to address " << host << ":" << port << " fail";
 }
+
+Socket::~Socket()
+{
+	delete context;
+	Utility::Close(fd);
+	Singleton::GetFds().erase(this);
+}
+

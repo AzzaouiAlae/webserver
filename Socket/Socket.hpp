@@ -27,4 +27,5 @@ public:
 	static void FindServer(string &host, string &port);
 	void Handle();
 	Socket(int sock);
+	~Socket();
 };

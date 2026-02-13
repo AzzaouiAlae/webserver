@@ -1,4 +1,5 @@
 #include "SocketIO.hpp"
+#include "../HTTPContext/HTTPContext.hpp"
 
 int SocketIO::errorNumber = 0;
 
@@ -21,14 +22,22 @@ void SocketIO::SetStateByFd(int fd)
 
 int SocketIO::Send(void *buff, int size)
 {
-	ssize_t sent = -1;
+	ssize_t sent = 0;
 	int flag = (ePipe0 | eSocket);
-
-	if (status & ePipe1)
+	if (buff != this->buff)
 	{
-		sent = SendBuffToPipe(buff, size);
+		SendedBuffToPipe = 0;
+		this->buff = (char *)buff;
+	}
+
+	if (status & ePipe1 && SendedBuffToPipe < size)
+	{
+		sent = SendBuffToPipe(&((this->buff)[SendedBuffToPipe]), size - SendedBuffToPipe);
 		if (sent > 0)
+		{
+			SendedBuffToPipe += sent;
 			sent = 0;
+		}
 	}
 	if ((status & flag) == flag)
 	{
@@ -45,6 +54,7 @@ int SocketIO::SendBuffToPipe(void *buff, int size)
 
 	ssize_t n = vmsplice(pipefd[1], &iov, 1, SPLICE_F_NONBLOCK);
 	status &= ~ePipe1;
+	((HTTPContext *)context)->activeOutPipe();
 	if (n <= 0)
 		return n;
 	pendingInPipe += n;
@@ -73,7 +83,7 @@ ssize_t SocketIO::sendFileWithHeader(const char *httpHeader, int headerLen, int 
         return -1;
 	}
     ssize_t headerSent = Send((char *)httpHeader, headerLen);
-    if (headerSent < 0 || size <= (int)headerSent) 
+    if (headerSent <= 0 || size <= (int)headerSent) 
 	{
         return headerSent;
 	}
@@ -95,7 +105,7 @@ ssize_t SocketIO::FileToSocket(int fileFd, int size)
 	return sendfile(this->fd, fileFd, NULL, size);
 }
 
-void SocketIO::CloseSockFD(int fd)
+int SocketIO::CloseSockFD(int fd)
 {
 	static vector<pair<int, long> > fds;
 	long now = CurrentTime();
@@ -116,7 +126,10 @@ void SocketIO::CloseSockFD(int fd)
 		if (getsockopt(fds[i].first, IPPROTO_TCP, TCP_INFO, &info, &len) == 0)
 		{
 			if (info.tcpi_unacked == 0)
-				fds[i].second -= USEC;
+			{
+				if (fds[i].second - USEC * 1 > now)	
+					fds[i].second -= USEC;
+			}
 		}
 		if (fds[i].second + USEC * CLOSE_TIME < now)
 		{
@@ -126,6 +139,7 @@ void SocketIO::CloseSockFD(int fd)
 			i--;
 		}
 	}
+	return fds.size();
 }
 
 long SocketIO::CurrentTime()
@@ -137,7 +151,7 @@ long SocketIO::CurrentTime()
 
 int SocketIO::SocketToFile(int fileFD, int size)
 {
-	int len, flag = (eSocket | ePipe1);
+	int len = 0, flag = (eSocket | ePipe1);
 
 	if ((status & flag) == flag)
 	{
@@ -151,6 +165,7 @@ int SocketIO::SocketToFile(int fileFD, int size)
 	{
 		len = splice(pipefd[0], NULL, fileFD, NULL, pendingInPipe, 0);
 		status &= ~ePipe0;
+		((HTTPContext *)context)->activeInPipe();
 		if (len == -1)
 			return -1;
 		pendingInPipe -= len;
@@ -160,12 +175,13 @@ int SocketIO::SocketToFile(int fileFD, int size)
 
 int SocketIO::SocketToSocketRead(int socket, int size)
 {
-	int len, flag = (eSocket | ePipe0);
+	int len = 0, flag = (eSocket | ePipe0);
 
 	if (status & ePipe1)
 	{
 		len = splice(socket, NULL, pipefd[1], NULL, size, 0);
 		status &= ~ePipe1;
+		((HTTPContext *)context)->activeOutPipe();
 		if (len == -1)
 			return -1;
 		pendingInPipe += len;
@@ -183,7 +199,7 @@ int SocketIO::SocketToSocketRead(int socket, int size)
 
 int SocketIO::SocketToSocketWrite(int socket, int size)
 {
-	int len, flag = (eSocket | ePipe1);
+	int len = 0, flag = (eSocket | ePipe1);
 
 	if ((status & flag) == flag)
 	{
@@ -197,6 +213,7 @@ int SocketIO::SocketToSocketWrite(int socket, int size)
 	{
 		len = splice(pipefd[0], NULL, socket, NULL, pendingInPipe, 0);
 		status &= ~ePipe0;
+		((HTTPContext *)context)->activeInPipe();
 		if (len == -1)
 			return -1;
 		pendingInPipe -= len;
@@ -206,6 +223,7 @@ int SocketIO::SocketToSocketWrite(int socket, int size)
 
 SocketIO::SocketIO(int fd): AFd(fd, "SocketIO"), pipeInitialized(false), pendingInPipe(0), status(0)
 {
+	buff = NULL;
 	if (pipePool.size() > 0)
 	{
 		pair<int, int> p = pipePool[pipePool.size() - 1];
@@ -230,9 +248,20 @@ SocketIO::~SocketIO()
 		close(pipefd[0]);
 		close(pipefd[1]);
 	}
+	delete context;
+	Singleton::GetFds().erase(this);
 }
 
 Routing &SocketIO::GetRouter()
 {
 	return router;
+}
+
+void SocketIO::ClearPipePool()
+{
+	for(int i = 0; i < (int)pipePool.size(); i++)
+	{
+		close(pipePool[i].first);
+		close(pipePool[i].second);
+	}
 }

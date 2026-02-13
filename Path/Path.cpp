@@ -26,9 +26,12 @@ vector<string> Path::SearchInTree(AST<string>& node, string value )
 
 string     Path::AttachPath(string rootPath, string addPath)
 {
-    if (rootPath.empty() && addPath.empty())
+    if (rootPath.empty() && addPath.empty()) {
         return "";
-
+	}
+	if (rootPath == "") {
+		rootPath = "/";
+	}
     int Back = rootPath.size() - 1;
 
     if (rootPath[Back] == '/' && addPath[0] == '/')
@@ -41,7 +44,7 @@ string     Path::AttachPath(string rootPath, string addPath)
 
 bool Path::IsIndexPath(string requestPath, string locArgPath)
 {
-    cout << "{" << requestPath << "     " << locArgPath << "}\n";
+    // std::cout << "{" << requestPath << "     " << locArgPath << "}\n";
     if ( requestPath == locArgPath )
         return ( true );
     return ( false );
@@ -64,7 +67,7 @@ string     Path::FullPath( AST<string>& currNode )
     else
         locationPath = _requestPath;
     _FullPath = AttachPath(rootPath, locationPath) ;
-    cout << "<" << rootPath << "        " << locationPath << ">\n";
+    // std::cout << "<" << rootPath << "        " << locationPath << ">\n";
     return _FullPath;
 }
 
