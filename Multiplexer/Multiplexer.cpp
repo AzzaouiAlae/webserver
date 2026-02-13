@@ -97,7 +97,7 @@ bool Multiplexer::DeleteFromEpoll(AFd *fd)
 
 void Multiplexer::MainLoop()
 {
-	int timeout = 5;
+	int timeout = 10;
 	AFd *obj;
 	long time = Utility::CurrentTime() + USEC * timeout;
 	(void)time;
@@ -116,11 +116,14 @@ void Multiplexer::MainLoop()
 		}
 		for(int i = 0; i < size; i++)
 		{
-
 			obj = (AFd *)(eventList[i].data.ptr);
+			if (obj->GetType() == "Pipe") {
+				continue;
+			}
 			if (obj->MarkedToFree == false && eventList->events & (EPOLLIN | EPOLLOUT)) {
 				Logging::Debug() << "Start handel " << obj->GetType() << 
-					" with fd: " << obj->GetFd();
+					" with fd: " << obj->GetFd() << " and flag " <<
+					((eventList->events & EPOLLIN) ? "EPOLLIN" : "EPOLLOUT");
 				obj->Handle();
 			}
 
@@ -139,11 +142,10 @@ void Multiplexer::MainLoop()
 
 bool Multiplexer::DeleteItem(AFd *item)
 {
-	long now = Utility::CurrentTime();
 	tcp_info info;
     socklen_t len;
 	
-	if (item->markedTime && item->markedTime < now)
+	if (item->deleteNow)
 	{
 		Logging::Debug() << item->GetType() << 
 					" with fd: " << item->GetFd() << " deleted";
@@ -151,14 +153,12 @@ bool Multiplexer::DeleteItem(AFd *item)
         toDelete.erase(item);
 		return true;
 	}
-	if (item->markedTime)
-		return false;
 	len = sizeof(info);
 	if (getsockopt(item->GetFd(), IPPROTO_TCP, TCP_INFO, &info, &len) == 0)
 	{
-		if (info.tcpi_unacked == 0 && item->markedTime == 0)
+		if (info.tcpi_unacked == 0 && item->deleteNow == 0)
 		{
-			item->markedTime = Utility::CurrentTime() + USEC;
+			item->deleteNow = true;
 		}
 	}
 	return false;
@@ -166,6 +166,10 @@ bool Multiplexer::DeleteItem(AFd *item)
 
 void Multiplexer::ClearToDelete()
 {
+	SocketIO::CloseSockFD(-1);
+	Logging::Debug() << "toDelete has " << toDelete.size()
+	<< ", SocketIO has " << SocketIO::CloseSockFD(-1) <<
+	", pipe poll has " << SocketIO::GetPipePoolSize();
 	if (toDelete.size() == 0)
 		return;
 	set<AFd *>::iterator it = toDelete.begin();

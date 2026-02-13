@@ -239,10 +239,9 @@ string Socket::getIpByHost(const string &host, const string &port, int type)
     return ip + ":" + Port;
 }
 
-
 void Socket::AddSocket(string &host, string &port)
 {
-	int sock = inetListen(host.c_str(), port.c_str(), 100);
+	int sock = inetListen(host.c_str(), port.c_str(), 1000);
 	set<AFd *> &fds = Singleton::GetFds();
 	map<int, vector<AST<string> > > &servers = Singleton::GetServers();
 

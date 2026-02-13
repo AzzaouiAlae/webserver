@@ -5,7 +5,7 @@ AFd::AFd(int fd, string type)
 	this->fd = fd;
 	this->type = type;
 	MarkedToFree = false;
-	markedTime = 0;
+	deleteNow = false;
 }
 
 AFd::operator int() const 

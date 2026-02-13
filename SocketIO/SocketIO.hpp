@@ -27,17 +27,18 @@ class SocketIO : public AFd {
 	int SendedBuffToPipe;
 	char *buff;
 public:
+	static int GetPipePoolSize();
 	int pipefd[2];
 	SocketIO(int fd);
     ~SocketIO();
 	static int errorNumber;
 	void SetStateByFd(int fd);
-	int Send(void *buff, int size = KBYTE * 1024 * MBYTE);
-	ssize_t sendFileWithHeader(const char *httpHeader, int headerLen, int fileFd, int size = KBYTE * 1024 * MBYTE);
-	ssize_t FileToSocket(int fileFd, int size = KBYTE * 1024 * MBYTE);
-	int SocketToFile(int fileFD, int size = KBYTE * 1024 * MBYTE);
-	int SocketToSocketRead(int socket, int size = KBYTE * 1024 * MBYTE);
-	int SocketToSocketWrite(int socket, int size = KBYTE * 1024 * MBYTE);
+	int Send(void *buff, int size);
+	ssize_t sendFileWithHeader(const char *httpHeader, int headerLen, int fileFd, int size);
+	ssize_t FileToSocket(int fileFd, int size);
+	int SocketToFile(int fileFD, int size);
+	int SocketToSocketRead(int socket, int size);
+	int SocketToSocketWrite(int socket, int size);
 	void Handle();
 	static int CloseSockFD(int fd);
 	Routing &GetRouter();

@@ -25,6 +25,7 @@
 #include <sys/sendfile.h>
 #include <netinet/tcp.h>
 #include <sys/time.h>
+#include <signal.h>
 
 using namespace std;
 
