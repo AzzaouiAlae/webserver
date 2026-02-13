@@ -105,6 +105,11 @@ ssize_t SocketIO::FileToSocket(int fileFd, int size)
 	return sendfile(this->fd, fileFd, NULL, size);
 }
 
+int SocketIO::GetPipePoolSize()
+{
+	return pipePool.size();
+}
+
 int SocketIO::CloseSockFD(int fd)
 {
 	static vector<pair<int, long> > fds;
@@ -127,8 +132,7 @@ int SocketIO::CloseSockFD(int fd)
 		{
 			if (info.tcpi_unacked == 0)
 			{
-				if (fds[i].second - USEC * 1 > now)	
-					fds[i].second -= USEC;
+				fds[i].second -= USEC;
 			}
 		}
 		if (fds[i].second + USEC * CLOSE_TIME < now)

@@ -4,6 +4,8 @@
 #include "../SocketIO/SocketIO.hpp"
 #include "../Pipe/Pipe.hpp"
 
+#define BUF_SIZE (1024 * 1024 * 10)
+
 class HTTPContext : public IContext
 {
 	int fileFd;
@@ -18,6 +20,7 @@ class HTTPContext : public IContext
 	SocketIO *sock;
 	string responseHeaderStr;
 	int ShouldSend;
+	char *buf;
 public:
 	void activeInPipe();
 	void activeOutPipe();
@@ -33,5 +36,6 @@ public:
 	void CreateResponseHeader();
 	string GetStatusCode();
 	string CreateDate();
-	void SendResponse();
+	void SendGetResponse();
+	void MarkedSocketToFree();
 };

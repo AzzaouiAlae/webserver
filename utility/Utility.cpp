@@ -1,5 +1,7 @@
 #include "Utility.hpp"
 
+bool Utility::SigPipe;
+
 bool Utility::isNotZero(char ch)
 {
 	return ch != '0';
@@ -10,12 +12,17 @@ bool Utility::isNotDot(char ch)
 	return ch != '.';
 }
 
-bool Utility::isChar(char ch)
+bool Utility::isStrToTrime(char ch)
 {
-	return ch != Utility::ch;
+	for (int i = 0; i < (int)toTrime.length(); i++) 
+	{
+		if (toTrime[i] == ch)
+			return false;
+	}
+	return true;
 }
 
-char Utility::ch;
+string Utility::toTrime;
 
 bool Utility::isNotSquareBracket(char ch)
 {
@@ -42,11 +49,8 @@ void Utility::trim(std::string &s, bool (*f)(char ch))
 
 void Utility::trim(std::string &s, string toTrime)
 {
-	for(int i = 0; (int)toTrime.length() > i; i++)
-	{
-		Utility::ch = toTrime[i];
-		trim(s, isChar);
-	}
+	Utility::toTrime = toTrime;
+	trim(s, isStrToTrime);
 }
 
 long Utility::CurrentTime()
