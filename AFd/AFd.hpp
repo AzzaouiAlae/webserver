@@ -7,7 +7,7 @@ protected:
 	int fd;
 	string type;
 public:
-	long markedTime;
+	bool deleteNow;
 	AFd(int fd, string type);
 	virtual void Handle() = 0;
 	operator int() const ;

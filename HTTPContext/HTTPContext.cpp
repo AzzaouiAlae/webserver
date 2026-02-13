@@ -26,24 +26,35 @@ void HTTPContext::Handle()
 	Routing &r = sock->GetRouter();
 
 	if (r.isRequestComplete() == false) {
+		Logging::Debug()  << "Socket FD: " << sock->GetFd() << 
+		" start handle request";
 		HandleRequest();
 	}
 	else {
+		Logging::Debug()  << "Socket FD: " << sock->GetFd() << 
+		" start handle response";
 		HandleResponse();
 	}
 }
 
 void HTTPContext::HandleRequest()
 {
+	int len = 0;
 	Routing &r = sock->GetRouter();
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	char buff[1024 * KBYTE];
-	int len = read(sock->GetFd(), buff, 1024 * KBYTE -1);
-
+	if (buf == NULL) {
+		buf = (char *)calloc(1, BUF_SIZE + 1);
+	}
+	len = read(sock->GetFd(), buf, BUF_SIZE);
+	Logging::Debug() << "Socket FD: " << sock->GetFd() << 
+		" read " << len << " byte";
+	if (len == 0 || Utility::SigPipe) {
+		MarkedSocketToFree();
+	}
 	if (len != -1)
 	{
-		buff[len] = '\0';
-		if (r.GetRequest().isComplete(buff))
+		buf[len] = '\0';
+		if (r.GetRequest().isComplete(buf))
 		{
 			Logging::Debug() << "Read of Request from Socket fd: " << sock->GetFd() << " Complete";
 			Logging::Debug() << "Request is : " << r.GetRequest().getMethod() <<  " " << r.GetRequest().getPath();
@@ -68,7 +79,7 @@ void HTTPContext::HandleResponse()
 		GetMethod();
 	}
 	else {
-		sock->MarkedToFree = true;
+		MarkedSocketToFree();
 	}
 }
 
@@ -126,12 +137,15 @@ HTTPContext::HTTPContext()
 	out = NULL;
 	sock = NULL;
 	fileFd = -1;
+	buf = NULL;
 }
 
 void HTTPContext::GetMethod()
 {
 	if (readyToSend) {
-		SendResponse();
+		Logging::Debug() << "Socket fd: " << sock->GetFd() << 
+		" Send Get Response";
+		SendGetResponse();
 		return;
 	}
 	
@@ -148,51 +162,58 @@ void HTTPContext::GetMethod()
 		fileFd = open(filename.c_str(), O_RDONLY);
 		if (fileFd == -1)
 		{
-			shutdown(sock->GetFd(), SHUT_RDWR);
-			sock->MarkedToFree = true;
+			MarkedSocketToFree();
 			return;
 		}
 		CreateResponseHeader();
 		ShouldSend += responseHeaderStr.length();
 		readyToSend = true;
 		Logging::Debug() << "Socket fd: " << sock->GetFd() << " ready To Send Response";
-		SendResponse();
+		SendGetResponse();
 		return ;
 	}
 	else
 	{
-		shutdown(sock->GetFd(), SHUT_RDWR);
-		sock->MarkedToFree = true;
+		MarkedSocketToFree();
 	}
 }
 
-void HTTPContext::SendResponse()
+void HTTPContext::MarkedSocketToFree()
+{
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+
+	Utility::SigPipe = false;
+	if (in != NULL)
+		MulObj->ChangeToEpollOneShot(in);
+	if (in != NULL)
+		MulObj->ChangeToEpollOneShot(out);
+	shutdown(sock->GetFd(), SHUT_RDWR);
+	sock->MarkedToFree = true;
+}
+
+void HTTPContext::SendGetResponse()
 {
 	int size = 0;
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	
 	if (sended < (int)responseHeaderStr.length())
 	{
 		const char *h = &((responseHeaderStr.c_str())[sended]);
 		int len = responseHeaderStr.length() - sended;
-		size = sock->sendFileWithHeader(h, len, fileFd);
-		if (size == -1) {
-			
-		}
-		else
+		size = sock->sendFileWithHeader(h, len, fileFd, ShouldSend - sended);
+		if (size > 0) {
 			sended += size;
+		}
 	}
 	else if (sended >= (int)responseHeaderStr.length()) {
-		size = sock->FileToSocket(fileFd);
-		if (size > 0)
+		size = sock->FileToSocket(fileFd, ShouldSend - sended);
+		if (size > 0) {
 			sended += size;
+		}
 	}
 	Logging::Debug() << "Socket fd: " << sock->GetFd() <<  
-			" Send " << sended << " byte from " << filesize + (int)responseHeaderStr.length();
-	if (filesize + (int)responseHeaderStr.length() <= sended) {
-		MulObj->ChangeToEpollOneShot(in);
-		MulObj->ChangeToEpollOneShot(out);
-		// shutdown(sock->GetFd(), SHUT_RDWR);
-		sock->MarkedToFree = true;
+			" Send " << sended << " byte from " << ShouldSend;
+	if (ShouldSend == sended || Utility::SigPipe) {
+		MarkedSocketToFree();
 	}
 }
 
