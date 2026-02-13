@@ -1,9 +1,9 @@
 #include "Path.hpp"
 
-Path::Path() : _CGI(false)
+Path::Path() 
 {}
 
-void    Path::initData(AST<std::string> *node, std::string path)
+void    Path::initData(AST<string> *node, string path)
 {
 	_srvNode = node;
 	_requestPath = path;
@@ -11,9 +11,9 @@ void    Path::initData(AST<std::string> *node, std::string path)
     _srvIndex = SearchInTree((*_srvNode), "index")[0];
 }
 
-vector<string> Path::SearchInTree(AST<std::string>& node, std::string value )
+vector<string> Path::SearchInTree(AST<string>& node, string value )
 {
-	vector<AST<std::string> >& ch = node.GetChildren();
+	vector<AST<string> >& ch = node.GetChildren();
 	for (int pos = 0; pos < (int)ch.size(); pos++)
 	{
 		if (ch[pos].GetValue() == value)
@@ -24,7 +24,7 @@ vector<string> Path::SearchInTree(AST<std::string>& node, std::string value )
 	return vector<string>(1, "");
 }
 
-std::string     Path::AttachPath(std::string rootPath, std::string addPath)
+string     Path::AttachPath(string rootPath, string addPath)
 {
     if (rootPath.empty() && addPath.empty())
         return "";
@@ -39,33 +39,37 @@ std::string     Path::AttachPath(std::string rootPath, std::string addPath)
         return rootPath + addPath;
 }
 
-bool IsIndexPath(string requestPath, string locArgPath)
+bool Path::IsIndexPath(string requestPath, string locArgPath)
 {
-    std::cout << "{" << requestPath << "     " << locArgPath << "}\n";
+    cout << "{" << requestPath << "     " << locArgPath << "}\n";
     if ( requestPath == locArgPath )
         return ( true );
     return ( false );
 }
-
-std::string     Path::FullPath( AST<std::string>& currNode )
+string Path::findRootPath(AST<string>& currNode)
 {
     _locaRootPath = SearchInTree( currNode, "root")[0];
-    string rootPath, locationPath;
+    
     if ( _locaRootPath.empty() )
-        rootPath = _srvRootPath;
-    else
-        rootPath = _locaRootPath;
+         return ( _srvRootPath );
+    
+    return ( _locaRootPath );
+}
+string     Path::FullPath( AST<string>& currNode )
+{
+    string rootPath, locationPath;
+    rootPath = findRootPath(currNode);
     if ( IsIndexPath( _requestPath, _locaArgPath ) == true )
         locationPath = AttachIndex( currNode, _requestPath, "location" );
     else
         locationPath = _requestPath;
     _FullPath = AttachPath(rootPath, locationPath) ;
-    std::cout << "<" << rootPath << "        " << locationPath << ">\n";
+    cout << "<" << rootPath << "        " << locationPath << ">\n";
     return _FullPath;
 }
 
 
-std::string    Path::AttachIndex( AST<std::string>& currLocationNode, std::string path, std::string type )
+string    Path::AttachIndex( AST<string>& currLocationNode, string path, string type )
 {
     string pathWithIndex;
     _locaIndex = SearchInTree(currLocationNode, "index")[0];
@@ -77,7 +81,12 @@ std::string    Path::AttachIndex( AST<std::string>& currLocationNode, std::strin
     return ( pathWithIndex );
 }
 
-void    CkeckPath(vector<string>& strs)
+void    DecodeString(string& str)
+{
+    (void)str;
+}
+
+void    Path::CkeckPath(vector<string>& strs)
 {
     if ( strs.empty() || strs.size() == 1 )
         return ;
@@ -91,10 +100,14 @@ void    CkeckPath(vector<string>& strs)
                 strs.erase(strs.begin() + (i - 1));
             i = -1;
         }
+        if ( strs[i] == "." )
+            strs.erase(strs.begin() + i);
+        if ( strs[i].find('%') != string::npos )
+            DecodeString(strs[i]);
     }
 }
 
-void parsePath(vector<string>& strs, string& str,const string& sep)
+void Path::parsePath(vector<string>& strs, string& str,const string& sep)
 {
 
     char *s = strtok((char *)str.c_str(), sep.c_str());
@@ -112,7 +125,7 @@ void parsePath(vector<string>& strs, string& str,const string& sep)
 
 }
 
-int vectorCmp(vector<string>& reqPath, vector<string>&  locationPath)
+int Path::vectorCmp(vector<string>& reqPath, vector<string>&  locationPath, bool isCGI)
 {
     if (locationPath.size() > reqPath.size())
         return 0;
@@ -123,7 +136,7 @@ int vectorCmp(vector<string>& reqPath, vector<string>&  locationPath)
     {
         if (reqPath[i] != locationPath[i])
         {
-            if (i < (int)locationPath.size())
+            if (i < (int)locationPath.size() && isCGI == false)
                 return 0;
             return i + 1;
         }
@@ -131,30 +144,28 @@ int vectorCmp(vector<string>& reqPath, vector<string>&  locationPath)
     return i + 1;
 }
 
-void    append_with_sep(string& result, std::vector<string>& vec, string sep)
+void    Path::append_with_sep(string& result, vector<string>& vec, string sep, int pos )
 {
     if (vec.empty() )
         return ;
-    vector<string>::iterator it = vec.begin() ;
 
-    result += *it;
-    ++it;
-    for ( ; it != vec.end(); ++it)
-        result += (sep + *it);
+    if ( pos > (int)vec.size() )
+        return ;
+    result += vec[pos];
+    pos++;
+    for ( ; pos < (int)vec.size(); pos++)
+        result += (sep + vec[pos]);
 }
 
-void        Path::fillLocationInfo(AST<std::string> & locaNode, vector<string> vLocaArgPath)
+void        Path::fillLocationInfo( AST<string> & locaNode )
 {
-    _locaArgPath.clear();
-    append_with_sep(_locaArgPath, vLocaArgPath, "/");
-
     FullPath( locaNode);
     _requestPathNode = &locaNode;
 }
 
-std::string Path::getErrorPagePath(AST<std::string> & srvNode, string srvPath, string errorCode)
+string  Path::getErrorPagePath(AST<string> & srvNode, string srvPath, string errorCode)
 {
-    vector<AST<std::string> >& ch = srvNode.GetChildren();
+    vector<AST<string> >& ch = srvNode.GetChildren();
 
     for (int pos = 0; pos < (int)ch.size(); pos++)
 	{
@@ -225,43 +236,117 @@ void    Path::HandleLocationArgPath( vector<string>& vLocaArgPath, string locati
     if ( _locaArgPath[_locaArgPath.size() - 1] != '/' )
         _locaArgPath += "/";
     parsePath(vLocaArgPath, _locaArgPath, "/");
+    _locaArgPath.clear();
+    append_with_sep(_locaArgPath, vLocaArgPath, "/");
 }
 
 void    Path::HandleSRVPath()
 {
-    std::cout << "'" << _requestPath << "'\n";
+    cout << "'" << _requestPath << "'\n";
     if ( _requestPath.empty() )
         _FullPath = AttachPath(_srvRootPath, _srvIndex);
     _FullPath = AttachPath(_srvRootPath, _requestPath);
     _requestPathNode = &(*_srvNode);
 }
 
-bool    IsSuranded(string str, char begin, char end)
+bool    Path::IsSuranded(string str, char begin, char end)
 {
     if ( str[0] == begin && str[str.size() - 1] == end )
         return ( true );
     return ( false );
 }
 
-std::string     Path::CreatePath(AST<std::string> *node, std::string path)
+string getRequestExtantion(string path, string p)
+{
+	string::size_type point = path.find_last_of(p);
+    if  (point == string::npos || ( point + 1 ) > path.size() )
+		return ( "" );
+	if ( path[point + 1] == '/' )
+        return "";
+    string::size_type slash = path.find('/', point);
+    if ( slash == string::npos)
+        slash = path.size();
+
+
+    return ( path.substr(point, slash - point ) );
+}
+
+string getLocationExtantion(string path)
+{
+	string::size_type start = path.find_last_of('<');
+	string::size_type end = path.find_last_of('>');
+	string::size_type point = path.find_last_of('.');
+	string::size_type notFound = string::npos;
+	if (start == notFound || end == notFound || point == notFound )
+		return ( "" );
+	if ( start > end || point != (start + 1) || point > end )
+		return ( "" );
+	return ( path.substr(point, end - point) );
+}
+
+bool Path::checkCGI(string first, string second, string& Extantion)
+{
+    string reqExt = getRequestExtantion(first, ".");
+    string locaExt = getLocationExtantion(second);
+    if ( reqExt.empty() || locaExt.empty() )
+        return ( false );
+    if ( reqExt != locaExt )
+        return ( false );
+    Extantion = reqExt;
+    return ( true );
+}
+
+bool Path::IsCGI(string str)
+{
+    string reqExt = getRequestExtantion(str, ".");
+    if ( reqExt.empty() )
+        return ( false );
+    return ( true );
+}
+
+void    Path::HandleCGILocation(AST<string> & locaNode, vector<string>& vreqPath)
+{
+    string extantion, path;
+    if ( checkCGI(_requestPath, _locaArgPath, extantion) == true )
+    {
+        _requestPathNode = &locaNode;
+        path = findRootPath(locaNode);
+        for (size_t i = 0; i < vreqPath.size() ; i++)
+        {
+            extantion = getRequestExtantion(vreqPath[i], ".");
+            if (extantion.empty() )
+                path = AttachPath(path, vreqPath[i]);
+            else {
+                append_with_sep(_pathInfo, vreqPath, "/", i);
+                break;
+            }
+        }
+        _FullPath = path;
+    }
+}
+
+string     Path::CreatePath(AST<string> *node, string path)
 {
     initData(node, path);
 
     int lastSize = 0;
-    vector<AST<std::string> >& child = (*_srvNode).GetChildren();
+    vector<AST<string> >& child = (*_srvNode).GetChildren();
     vector<string> vReqPath, vLocaArgPath;
     HandleRequestPath(vReqPath);
+    bool isCGI = IsCGI(_requestPath);
     for (int i = 0; i < (int)child.size(); i++)
     {
         if ( child[i].GetValue() == "location" )
         {
             HandleLocationArgPath(vLocaArgPath, child[i].GetArguments()[0]);
-            int pos = vectorCmp(vReqPath, vLocaArgPath);
-            bool isCgi = for_each(vLocaArgPath.begin(), vLocaArgPath,end(), IsSuranded);
+            int pos = vectorCmp(vReqPath, vLocaArgPath, isCGI);
             if ( pos > lastSize )
             {
+                if (  isCGI == true )
+                    HandleCGILocation( child[i], vReqPath );
+                else
+                    fillLocationInfo(child[i]);
                 lastSize = pos;
-                fillLocationInfo(child[i], vLocaArgPath);
             }
         }
     }
@@ -272,28 +357,30 @@ std::string     Path::CreatePath(AST<std::string> *node, std::string path)
     return ( _FullPath );
 }
 
-AST<std::string>&   Path::getRequestNode()
+AST<string>&   Path::getRequestNode()
 {
     return ( *_requestPathNode );
 }
 
-std::string     Path::getLocationIndex()
+string     Path::getLocationIndex()
 {
     return ( _locaIndex );
 }
-std::string     Path::getServerIndex()
+string     Path::getServerIndex()
 {
     return ( _srvIndex );
 }
 
-std::string Path::getServerPath()
+string Path::getServerPath()
 {
     return ( _srvRootPath );
 }
-std::string Path::getFullPath()
+string Path::getFullPath()
 {
     return ( _FullPath );
 }
 
-
-
+string Path::getPathInfo()
+{
+    return ( _pathInfo );
+}
