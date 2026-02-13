@@ -1,6 +1,6 @@
 #include "Path.hpp"
 
-Path::Path() 
+Path::Path() : _isCGI(false), _isLocationCGI(false)
 {}
 
 void    Path::initData(AST<string> *node, string path)
@@ -125,7 +125,7 @@ void Path::parsePath(vector<string>& strs, string& str,const string& sep)
 
 }
 
-int Path::vectorCmp(vector<string>& reqPath, vector<string>&  locationPath, bool isCGI)
+int Path::vectorCmp( vector<string>& reqPath, vector<string>&  locationPath )
 {
     if (locationPath.size() > reqPath.size())
         return 0;
@@ -136,7 +136,7 @@ int Path::vectorCmp(vector<string>& reqPath, vector<string>&  locationPath, bool
     {
         if (reqPath[i] != locationPath[i])
         {
-            if (i < (int)locationPath.size() && isCGI == false)
+            if (i < (int)locationPath.size() )
                 return 0;
             return i + 1;
         }
@@ -256,10 +256,10 @@ bool    Path::IsSuranded(string str, char begin, char end)
     return ( false );
 }
 
-string getRequestExtantion(string path, string p)
+string Path::getRequestExtantion(string path, string p)
 {
 	string::size_type point = path.find_last_of(p);
-    if  (point == string::npos || ( point + 1 ) > path.size() )
+    if  (point == string::npos || ( point + 1 ) >= path.size() )
 		return ( "" );
 	if ( path[point + 1] == '/' )
         return "";
@@ -301,28 +301,37 @@ bool Path::IsCGI(string str)
     string reqExt = getRequestExtantion(str, ".");
     if ( reqExt.empty() )
         return ( false );
+    _reqExt = reqExt;
     return ( true );
 }
 
-void    Path::HandleCGILocation(AST<string> & locaNode, vector<string>& vreqPath)
+void    Path::HandleCGI(AST<string> & locaNode, vector<string>& vreqPath)
 {
     string extantion, path;
-    if ( checkCGI(_requestPath, _locaArgPath, extantion) == true )
+    _requestPathNode = &locaNode;
+    path = findRootPath(locaNode);
+    for (size_t i = 0; i < vreqPath.size() ; i++)
     {
-        _requestPathNode = &locaNode;
-        path = findRootPath(locaNode);
-        for (size_t i = 0; i < vreqPath.size() ; i++)
-        {
-            extantion = getRequestExtantion(vreqPath[i], ".");
-            if (extantion.empty() )
-                path = AttachPath(path, vreqPath[i]);
-            else {
-                append_with_sep(_pathInfo, vreqPath, "/", i);
-                break;
-            }
+        extantion = getRequestExtantion(vreqPath[i], ".");
+        if (extantion.empty() )
+            path = AttachPath(path, vreqPath[i]);
+        else {
+            path = AttachPath(path, vreqPath[i++]);
+            append_with_sep(_pathInfo, vreqPath, "/", i);
+            break;
         }
-        _FullPath = path;
     }
+    vector<string> cgiArgs = SearchInTree(locaNode, "cgi_pass" );
+    if ( cgiArgs.empty() )
+        _isLocationCGI = false;
+    if ( _reqExt == cgiArgs[0] )
+    {
+        _cgiPath = cgiArgs[1];
+        _isLocationCGI = true;
+    }
+    _FullPath = path;
+    
+
 }
 
 string     Path::CreatePath(AST<string> *node, string path)
@@ -333,25 +342,27 @@ string     Path::CreatePath(AST<string> *node, string path)
     vector<AST<string> >& child = (*_srvNode).GetChildren();
     vector<string> vReqPath, vLocaArgPath;
     HandleRequestPath(vReqPath);
-    bool isCGI = IsCGI(_requestPath);
+    _isCGI = IsCGI(_requestPath);
     for (int i = 0; i < (int)child.size(); i++)
     {
         if ( child[i].GetValue() == "location" )
         {
             HandleLocationArgPath(vLocaArgPath, child[i].GetArguments()[0]);
-            int pos = vectorCmp(vReqPath, vLocaArgPath, isCGI);
+            int pos = vectorCmp(vReqPath, vLocaArgPath);
             if ( pos > lastSize )
             {
-                if (  isCGI == true )
-                    HandleCGILocation( child[i], vReqPath );
+                if (  _isCGI == true )
+                    HandleCGI( child[i], vReqPath );
                 else
                     fillLocationInfo(child[i]);
                 lastSize = pos;
             }
         }
     }
-    if ( _FullPath.empty() )
+    if ( _FullPath.empty() && _isCGI == false )
         HandleSRVPath();
+    else if ( _FullPath.empty() && _isCGI == true )
+        HandleCGI(*_srvNode, vReqPath);
     cout << "full path befor check existance: <" << _FullPath << ">\n";
     CheckPathExist(_FullPath);
     return ( _FullPath );
@@ -384,3 +395,13 @@ string Path::getPathInfo()
 {
     return ( _pathInfo );
 }
+
+string Path::getExtantion()
+{
+    return ( _reqExt );
+}
+bool Path::isLocationCGi()
+{
+    return ( _isLocationCGI );
+}
+

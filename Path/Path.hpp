@@ -17,7 +17,9 @@ class Path {
         string      _locaRootPath, _locaArgPath, _locaIndex;
         string      _FullPath;
         PathType    _pathType;
-        string      _pathInfo;
+        string      _cgiPath, _reqExt, _pathInfo;
+        bool        _isCGI, _isLocationCGI;
+
 
         void            initData(AST<string> *node, string path);
         vector<string>  SearchInTree(AST<std::string>& node, std::string value );
@@ -35,13 +37,14 @@ class Path {
         bool            IsIndexPath(string requestPath, string locArgPath);
         void            CkeckPath(vector<string>& strs);
         void            parsePath(vector<string>& strs, string& str,const string& sep);
-        int             vectorCmp(vector<string>& reqPath, vector<string>&  locationPath, bool isCGI);
+        int             vectorCmp(vector<string>& reqPath, vector<string>&  locationPath);
         void            append_with_sep(string& result, vector<string>& vec, string sep, int pos = 0);
         bool            IsSuranded(string str, char begin, char end);
         bool            checkCGI(string first, string second, string& Ext);
         bool        IsCGI(string str);
+        string      getRequestExtantion(string path, string p);
         string      findRootPath(AST<string>& currNode);
-        void            HandleCGILocation( AST<string> & locaNode, vector<string>& vreqPath );
+        void            HandleCGI( AST<string> & locaNode, vector<string>& vreqPath );
     public:
         Path();
         string          CreatePath(AST<string> *node, string path);
@@ -51,4 +54,7 @@ class Path {
         string          getServerPath();
         string          getFullPath();
         string          getPathInfo();
+        string          getCGiPath();
+        string          getExtantion();
+        bool            isLocationCGi();
 };
