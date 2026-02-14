@@ -39,24 +39,6 @@
 				overflow-x: hidden;
 			}
 
-			/* ===== CURSOR GLOW ===== */
-			.cursor-glow {
-				position: fixed;
-				width: 500px;
-				height: 500px;
-				border-radius: 50%;
-				pointer-events: none;
-				z-index: 0;
-				background: radial-gradient(
-					circle,
-					rgba(99, 102, 241, 0.07) 0%,
-					transparent 70%
-				);
-				will-change: transform;
-				/* Added */
-				/* Remove left, top, transition properties */
-			}
-
 			/* ===== GRID BG ===== */
 			.grid-bg {
 				position: fixed;
@@ -76,55 +58,7 @@
 					);
 				background-size: 60px 60px;
 				z-index: 0;
-				mask-image: radial-gradient(
-					ellipse 80% 50% at 50% 50%,
-					black 40%,
-					transparent 100%
-				);
-			}
-
-			/* ===== PARTICLES ===== */
-			.particles {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				z-index: 0;
-				pointer-events: none;
-			}
-
-			.particle {
-				position: absolute;
-				width: 2px;
-				height: 2px;
-				background: var(--primary-light);
-				border-radius: 50%;
-				opacity: 0;
-				animation: particleFloat linear infinite;
-				will-change: transform, opacity;
-				/* Added */
-			}
-
-			@keyframes particleFloat {
-				0% {
-					opacity: 0;
-					transform: translate3d(0, 100vh, 0) scale(0);
-				}
-
-				/* Use translate3d */
-				10% {
-					opacity: 0.5;
-				}
-
-				90% {
-					opacity: 0.5;
-				}
-
-				100% {
-					opacity: 0;
-					transform: translate3d(0, -10vh, 0) scale(1);
-				}
+				opacity: 0.5;
 			}
 
 			/* ===== NAV ===== */
@@ -133,15 +67,13 @@
 				top: 0;
 				width: 100%;
 				padding: 1rem 3rem;
-				background: rgba(3, 7, 18, 0.75);
-				backdrop-filter: blur(12px);
+				background: rgba(3, 7, 18, 0.97);
 				border-bottom: 1px solid var(--border);
 				z-index: 1000;
 				display: flex;
 				justify-content: space-between;
 				align-items: center;
 				transition: padding 0.4s;
-				transform: translateZ(0);
 			}
 
 			nav.scrolled {
@@ -236,7 +168,6 @@
 
 			.nav-cta:hover {
 				transform: translateY(-2px);
-				box-shadow: 0 6px 30px rgba(99, 102, 241, 0.5);
 			}
 
 			.mobile-toggle {
@@ -293,18 +224,7 @@
 				font-size: 0.85rem;
 				color: var(--primary-light);
 				margin-bottom: 2rem;
-				animation: badgePulse 3s ease-in-out infinite;
-			}
-
-			@keyframes badgePulse {
-				0%,
-				100% {
-					box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.15);
-				}
-
-				50% {
-					box-shadow: 0 0 0 8px rgba(99, 102, 241, 0);
-				}
+				box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.1);
 			}
 
 			.hero h1 {
@@ -339,19 +259,6 @@
 				-webkit-background-clip: text;
 				-webkit-text-fill-color: transparent;
 				background-clip: text;
-				background-size: 200% 200%;
-				animation: gradShift 4s ease-in-out infinite;
-			}
-
-			@keyframes gradShift {
-				0%,
-				100% {
-					background-position: 0% 50%;
-				}
-
-				50% {
-					background-position: 100% 50%;
-				}
 			}
 
 			.hero-desc {
@@ -393,61 +300,35 @@
 				color: #fff;
 				box-shadow: 0 4px 24px rgba(99, 102, 241, 0.4);
 				position: relative;
-				overflow: hidden;
-			}
-
-			.btn-glow::before {
-				content: "";
-				position: absolute;
-				top: 0;
-				left: -100%;
-				width: 100%;
-				height: 100%;
-				background: linear-gradient(
-					90deg,
-					transparent,
-					rgba(255, 255, 255, 0.15),
-					transparent
-				);
-				transition: left 0.6s;
-			}
-
-			.btn-glow:hover::before {
-				left: 100%;
 			}
 
 			.btn-glow:hover {
 				transform: translateY(-3px);
-				box-shadow: 0 8px 40px rgba(99, 102, 241, 0.6);
 			}
 
 			.btn-glass {
-				background: rgba(255, 255, 255, 0.04);
+				background: rgba(15, 23, 42, 0.8);
 				color: var(--text);
 				border: 1px solid rgba(255, 255, 255, 0.1);
-				backdrop-filter: blur(8px);
 			}
 
 			.btn-glass:hover {
-				background: rgba(255, 255, 255, 0.08);
+				background: rgba(15, 23, 42, 0.95);
 				border-color: var(--primary);
 				transform: translateY(-3px);
-				box-shadow: 0 8px 30px rgba(99, 102, 241, 0.15);
 			}
 
 			/* Terminal */
 			.hero-terminal {
 				max-width: 660px;
 				margin: 0 auto;
-				background: rgba(15, 23, 42, 0.8);
+				background: rgba(15, 23, 42, 0.97);
 				border: 1px solid var(--border);
 				border-radius: 16px;
 				overflow: hidden;
-				backdrop-filter: blur(10px);
 				box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 				opacity: 0;
 				animation: termIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
-				transform: translateZ(0);
 			}
 
 			@keyframes termIn {
@@ -636,20 +517,6 @@
 				height: 7px;
 				background: var(--primary-light);
 				border-radius: 2px;
-				animation: scrollDot 2s ease-in-out infinite;
-			}
-
-			@keyframes scrollDot {
-				0%,
-				100% {
-					top: 6px;
-					opacity: 1;
-				}
-
-				50% {
-					top: 17px;
-					opacity: 0.3;
-				}
 			}
 
 			.scroll-label {
@@ -729,20 +596,17 @@
 			}
 
 			.metric-card {
-				background: var(--bg-card);
+				background: rgba(15, 23, 42, 0.95);
 				border: 1px solid var(--border);
 				border-radius: 20px;
 				padding: 2rem 1.5rem;
 				text-align: center;
-				backdrop-filter: blur(10px);
 				transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-				transform: translateZ(0);
 			}
 
 			.metric-card:hover {
 				transform: translateY(-6px);
 				border-color: rgba(99, 102, 241, 0.3);
-				box-shadow: 0 16px 50px rgba(99, 102, 241, 0.1);
 			}
 
 			.metric-icon {
@@ -774,15 +638,13 @@
 			}
 
 			.feat-card {
-				background: var(--bg-card);
+				background: rgba(15, 23, 42, 0.95);
 				border: 1px solid var(--border);
 				border-radius: 20px;
 				padding: 2rem;
-				backdrop-filter: blur(10px);
 				transition: all 0.4s;
 				position: relative;
 				overflow: hidden;
-				transform: translateZ(0);
 			}
 
 			.feat-card::after {
@@ -809,7 +671,6 @@
 			.feat-card:hover {
 				transform: translateY(-5px);
 				border-color: rgba(99, 102, 241, 0.25);
-				box-shadow: 0 14px 45px rgba(99, 102, 241, 0.1);
 			}
 
 			.feat-icon {
@@ -869,12 +730,11 @@
 			.arch-node {
 				flex: 1;
 				min-width: 130px;
-				background: var(--bg-card);
+				background: rgba(15, 23, 42, 0.95);
 				border: 1px solid var(--border);
 				border-radius: 14px;
 				padding: 1rem 0.8rem;
 				text-align: center;
-				backdrop-filter: blur(10px);
 				transition: all 0.4s;
 				cursor: default;
 			}
@@ -882,7 +742,6 @@
 			.arch-node:hover {
 				border-color: var(--primary);
 				transform: translateY(-4px) scale(1.02);
-				box-shadow: 0 10px 35px rgba(99, 102, 241, 0.12);
 				z-index: 5;
 			}
 
@@ -1007,17 +866,14 @@
 				display: grid;
 				grid-template-columns: 1fr 1fr;
 				gap: 1rem;
-				transform: translateZ(0);
 			}
 
 			.tcard {
-				background: var(--bg-card);
+				background: rgba(15, 23, 42, 0.95);
 				border: 1px solid var(--border);
 				border-radius: 16px;
 				padding: 1.3rem;
-				backdrop-filter: blur(10px);
 				transition: all 0.4s;
-				transform: translateZ(0);
 			}
 
 			.tcard:hover {
@@ -1164,8 +1020,6 @@
 				text-align: center;
 				position: relative;
 				overflow: hidden;
-				backdrop-filter: blur(10px);
-				transform: translateZ(0);
 			}
 
 			.cta-box::before {
@@ -1186,18 +1040,6 @@
 						rgba(6, 182, 212, 0.04) 0%,
 						transparent 50%
 					);
-				animation: ctaBg 10s ease-in-out infinite;
-			}
-
-			@keyframes ctaBg {
-				0%,
-				100% {
-					transform: translate(0, 0);
-				}
-
-				50% {
-					transform: translate(3%, -3%);
-				}
 			}
 
 			.cta-box > * {
@@ -1295,13 +1137,11 @@
 				text-decoration: none;
 			}
 			.code-box {
-				background: rgba(15, 23, 42, 0.8);
+				background: rgba(15, 23, 42, 0.97);
 				border: 1px solid var(--border);
 				border-radius: 16px;
 				overflow: hidden;
-				backdrop-filter: blur(10px);
 				box-shadow: 0 16px 60px rgba(0, 0, 0, 0.3);
-				transform: translateZ(0); /* ADD THIS LINE */
 			}
 
 			.cta-box {
@@ -1319,8 +1159,6 @@
 				text-align: center;
 				position: relative;
 				overflow: hidden;
-				backdrop-filter: blur(10px);
-				transform: translateZ(0); /* ADD THIS LINE */
 			}
 
 			/* ===== RESPONSIVE ===== */
@@ -1395,9 +1233,7 @@
 	</head>
 
 	<body>
-		<div class="cursor-glow" id="cursorGlow"></div>
 		<div class="grid-bg"></div>
-		<div class="particles" id="particles"></div>
 
 		<!-- NAV -->
 		<nav id="navbar">
@@ -1419,20 +1255,12 @@
 							<stop offset="50%" stop-color="#06b6d4" />
 							<stop offset="100%" stop-color="#8b5cf6" />
 						</linearGradient>
-						<filter id="gl">
-							<feGaussianBlur stdDeviation="2" result="b" />
-							<feMerge>
-								<feMergeNode in="b" />
-								<feMergeNode in="SourceGraphic" />
-							</feMerge>
-						</filter>
 					</defs>
 					<polygon
 						points="50,8 92,30 92,70 50,92 8,70 8,30"
 						fill="none"
 						stroke="url(#lg)"
 						stroke-width="3"
-						filter="url(#gl)"
 					/>
 					<polygon
 						points="50,20 78,35 78,65 50,80 22,65 22,35"
@@ -2166,75 +1994,7 @@
 		<!-- ===== ALL JAVASCRIPT ===== -->
 		<script>
 			(function () {
-				// ===== 1. PARTICLES (OPTIMIZED) =====
-				var pc = document.getElementById("particles");
-				if (pc && window.innerWidth >= 768) {
-					// Disable on mobile
-					var particleCount = window.innerWidth >= 1200 ? 15 : 10; // Reduced from 40
-
-					for (var i = 0; i < particleCount; i++) {
-						var p = document.createElement("div");
-						p.className = "particle";
-						p.style.left = Math.random() * 100 + "%";
-						p.style.animationDuration =
-							10 + Math.random() * 15 + "s";
-						p.style.animationDelay = Math.random() * 10 + "s";
-						var size = 1 + Math.random() * 2 + "px";
-						p.style.width = size;
-						p.style.height = size;
-						pc.appendChild(p);
-					}
-				}
-
-				// ===== 2. CURSOR GLOW (OPTIMIZED) =====
-				var glow = document.getElementById("cursorGlow");
-				if (glow) {
-					var glowX = 0,
-						glowY = 0;
-					var currentX = 0,
-						currentY = 0;
-					var isMoving = false;
-					var moveTimeout;
-					var animationId;
-
-					document.addEventListener("mousemove", function (e) {
-						glowX = e.clientX;
-						glowY = e.clientY;
-
-						if (!isMoving) {
-							isMoving = true;
-							animateGlow();
-						}
-
-						clearTimeout(moveTimeout);
-						moveTimeout = setTimeout(function () {
-							isMoving = false;
-							if (animationId) {
-								cancelAnimationFrame(animationId);
-								animationId = null;
-							}
-						}, 100);
-					});
-
-					function animateGlow() {
-						if (!isMoving) return;
-
-						currentX += (glowX - currentX) * 0.1;
-						currentY += (glowY - currentY) * 0.1;
-
-						// Use transform instead of left/top
-						glow.style.transform =
-							"translate(" +
-							(currentX - 250) +
-							"px, " +
-							(currentY - 250) +
-							"px)";
-
-						animationId = requestAnimationFrame(animateGlow);
-					}
-				}
-
-				// ===== 3. UNIFIED SCROLL HANDLER (OPTIMIZED) =====
+				// ===== 1. UNIFIED SCROLL HANDLER (OPTIMIZED) =====
 				var nav = document.getElementById("navbar");
 				var progressBar = document.createElement("div");
 				progressBar.style.cssText =
@@ -2305,7 +2065,7 @@
 				// Initial call
 				handleScroll();
 
-				// ===== 4. MOBILE NAV TOGGLE =====
+				// ===== 2. MOBILE NAV TOGGLE =====
 				var mobileBtn = document.getElementById("mobileBtn");
 				var mobileOpen = false;
 
@@ -2325,7 +2085,6 @@
 							links.style.flexDirection = "column";
 							links.style.padding = "1.5rem 2rem";
 							links.style.background = "rgba(3,7,18,0.97)";
-							links.style.backdropFilter = "blur(12px)";
 							links.style.borderBottom =
 								"1px solid rgba(99,102,241,0.15)";
 							links.style.gap = "1rem";
@@ -2357,10 +2116,7 @@
 						});
 				}
 
-				// ===== 5. SCROLL REVEAL =====
-				var reveals = document.querySelectorAll(".reveal");
-
-				// ===== 5. UNIFIED INTERSECTION OBSERVER (OPTIMIZED) =====
+				// ===== 3. UNIFIED INTERSECTION OBSERVER (OPTIMIZED) =====
 				if ("IntersectionObserver" in window) {
 					var observerOptions = {
 						threshold: 0.1,
@@ -2475,7 +2231,7 @@
 						});
 				}
 
-				// ===== 8. ARCHITECTURE NODE HOVER CONNECTIONS =====
+				// ===== 4. ARCHITECTURE NODE HOVER CONNECTIONS =====
 				var archNodes = document.querySelectorAll(".arch-node");
 				archNodes.forEach(function (node) {
 					node.addEventListener("mouseenter", function () {
@@ -2501,7 +2257,7 @@
 					});
 				});
 
-				// ===== 9. SMOOTH SCROLL FOR ANCHOR LINKS =====
+				// ===== 5. SMOOTH SCROLL FOR ANCHOR LINKS =====
 				document
 					.querySelectorAll('a[href^="#"]')
 					.forEach(function (anchor) {
@@ -2525,7 +2281,7 @@
 						});
 					});
 
-				// ===== 13. KEYBOARD SHORTCUTS =====
+				// ===== 6. KEYBOARD SHORTCUTS =====
 				document.addEventListener("keydown", function (e) {
 					// Press 'G' to go to GitHub
 					if (
@@ -2548,7 +2304,7 @@
 					}
 				});
 
-				// ===== 15. PRELOADER / PAGE LOADED =====
+				// ===== 7. PRELOADER / PAGE LOADED =====
 				window.addEventListener("load", function () {
 					document.body.style.opacity = "1";
 
@@ -2561,15 +2317,7 @@
 					});
 				});
 
-				// ===== 16. PERFORMANCE: REDUCE PARTICLES ON MOBILE =====
-				if (window.innerWidth < 768 && pc) {
-					var particles = pc.querySelectorAll(".particle");
-					for (var j = particles.length - 1; j >= 20; j--) {
-						pc.removeChild(particles[j]);
-					}
-				}
-
-				// ===== 17. EASTER EGG: KONAMI CODE =====
+				// ===== 8. EASTER EGG: KONAMI CODE =====
 				var konamiCode = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
 				var konamiIndex = 0;
 
