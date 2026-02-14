@@ -83,25 +83,36 @@ string    Path::AttachIndex( AST<string>& currLocationNode, string path, string 
 
 void    DecodeString(string& str)
 {
+    Logging::Debug() << "the encoded string befor decode: "  << str; 
+
     string result;
-    string::size_type pos;
-        int start = 0;
-    for (pos = 0; (pos = str.find('%')) != string::npos ; pos++)
+    string::size_type pos = 0;
+    string::size_type start = 0;
+
+    while ((pos = str.find('%', start)) != string::npos)
     {
-        start = pos;
-        if ( pos + 2 >= str.size() )
-            break;
         result += str.substr(start, pos - start);
-        if (str[pos] != '%' && str[pos + 1] != '%' )
+
+        if (pos + 2 < str.size() &&
+            Utility::isHexa(str.substr(pos + 1, 2)))
         {
-            string hex = str.substr(pos, 2);
+            string hex = str.substr(pos + 1, 2);
             result += Utility::HexaToChar(hex);
+            start = pos + 3;
+        }
+        else
+        {
+            result += '%';
+            start = pos + 1;
         }
     }
-    if ( pos  < str.size() )
-        result += str.substr(pos, str.size() - pos );
+
+    if (start < str.size())
+        result += str.substr(start);
+
     if (!result.empty() )
         str = result;
+    Logging::Debug() << "the decoded string after: "  << str; 
 }
 
 void    Path::CkeckPath(vector<string>& strs)
@@ -152,7 +163,7 @@ int Path::vectorCmp( vector<string>& reqPath, vector<string>&  locationPath )
     {
         if (reqPath[i] != locationPath[i])
         {
-            if (i < (int)locationPath.size() && _isExtantion == true  && locationPath[i] != _reqExt )
+            if (i < (int)locationPath.size() && _isExtantion == true  && locationPath[i] != _reqExt)
                 return 0;
             return i + 1;
         }
@@ -234,6 +245,7 @@ void    Path::CheckPathExist(string& path)
     {
         Error::errorType = NotFound;
         path = getErrorPagePath((*_srvNode), _srvRootPath, "404");
+        return ;
     }
     IsDirectory(info, path);
     IsFile(info, path);
@@ -335,6 +347,7 @@ void    Path::HandleCGI(AST<string> & locaNode, vector<string>& vreqPath)
 
 string     Path::CreatePath(AST<string> *node, string path)
 {
+    // path = "/app/hex%F0%9F%98%83in%20the%20midle%20%D9%85%D8%B1%D8%AD%D8%A7%D8%A7%D8%A7%D8%A7%D8%A7%D8%A7%D8%A7%D8%A7/";
     Logging::Info() << "request path in create path is: " << path;
     initData(node, path);
 
@@ -352,7 +365,7 @@ string     Path::CreatePath(AST<string> *node, string path)
         {
             HandleLocationArgPath(vLocaArgPath, child[i].GetArguments()[0]);
             int pos = vectorCmp(vReqPath, vLocaArgPath);
-            if ( pos > lastSize  )
+            if ( pos > lastSize )
             {
                 Logging::Debug() << "current location path: " << _locaArgPath ;
                 if (  _isExtantion == true )
@@ -368,11 +381,9 @@ string     Path::CreatePath(AST<string> *node, string path)
     else if ( _FullPath.empty() && _isExtantion == true )
         HandleCGI(*_srvNode, vReqPath);
     
-    cout << "full path befor check existance: <" << _FullPath << ">\n";
+    Logging::Debug() << "full path befor check existance: <" << _FullPath ;
     CheckPathExist(_FullPath);
-    Logging::Info() << "path created in create path " << _FullPath << 
-    "              and path info: " << _pathInfo ; 
-    cout << "------- " << _FullPath << " -------\n";
+    Logging::Info() << "path created in create path " << _FullPath << "        and path info: " << _pathInfo ; 
     return ( _FullPath );
 }
 

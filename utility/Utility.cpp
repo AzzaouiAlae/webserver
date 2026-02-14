@@ -115,3 +115,18 @@ char Utility::HexaToChar(string hex)
 {
 	return ( static_cast< char >( strtol(hex.c_str(), NULL, 16) ) );
 }
+
+bool Utility::isHexa( string hex )
+{
+    if (hex.length() != 2)
+        return false;
+
+    return ( isxdigit(static_cast<unsigned char>(hex[0])) &&
+           isxdigit(static_cast<unsigned char>(hex[1])) );
+}
+
+
+bool Utility::isHexa(char hex)
+{
+	return ( isxdigit(static_cast<unsigned char>(hex)) );
+}
