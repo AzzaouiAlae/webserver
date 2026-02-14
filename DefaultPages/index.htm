@@ -2065,7 +2065,7 @@
 				// Initial call
 				handleScroll();
 
-				// ===== 4. MOBILE NAV TOGGLE =====
+				// ===== 2. MOBILE NAV TOGGLE =====
 				var mobileBtn = document.getElementById("mobileBtn");
 				var mobileOpen = false;
 
@@ -2116,10 +2116,7 @@
 						});
 				}
 
-				// ===== 5. SCROLL REVEAL =====
-				var reveals = document.querySelectorAll(".reveal");
-
-				// ===== 5. UNIFIED INTERSECTION OBSERVER (OPTIMIZED) =====
+				// ===== 3. UNIFIED INTERSECTION OBSERVER (OPTIMIZED) =====
 				if ("IntersectionObserver" in window) {
 					var observerOptions = {
 						threshold: 0.1,
@@ -2234,7 +2231,7 @@
 						});
 				}
 
-				// ===== 8. ARCHITECTURE NODE HOVER CONNECTIONS =====
+				// ===== 4. ARCHITECTURE NODE HOVER CONNECTIONS =====
 				var archNodes = document.querySelectorAll(".arch-node");
 				archNodes.forEach(function (node) {
 					node.addEventListener("mouseenter", function () {
@@ -2260,7 +2257,7 @@
 					});
 				});
 
-				// ===== 9. SMOOTH SCROLL FOR ANCHOR LINKS =====
+				// ===== 5. SMOOTH SCROLL FOR ANCHOR LINKS =====
 				document
 					.querySelectorAll('a[href^="#"]')
 					.forEach(function (anchor) {
@@ -2284,7 +2281,7 @@
 						});
 					});
 
-				// ===== 13. KEYBOARD SHORTCUTS =====
+				// ===== 6. KEYBOARD SHORTCUTS =====
 				document.addEventListener("keydown", function (e) {
 					// Press 'G' to go to GitHub
 					if (
@@ -2307,7 +2304,7 @@
 					}
 				});
 
-				// ===== 15. PRELOADER / PAGE LOADED =====
+				// ===== 7. PRELOADER / PAGE LOADED =====
 				window.addEventListener("load", function () {
 					document.body.style.opacity = "1";
 
@@ -2320,7 +2317,7 @@
 					});
 				});
 
-				// ===== 16. EASTER EGG: KONAMI CODE =====
+				// ===== 8. EASTER EGG: KONAMI CODE =====
 				var konamiCode = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
 				var konamiIndex = 0;
 
