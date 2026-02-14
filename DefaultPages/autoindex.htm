@@ -11,7 +11,7 @@
             --accent: #06b6d4;
             --accent2: #8b5cf6;
             --bg: #030712;
-            --bg-card: rgba(15, 23, 42, 0.6);
+            --bg-card: rgba(15, 23, 42, 0.95);
             --bg-hover: rgba(99, 102, 241, 0.06);
             --text: #f1f5f9;
             --text-muted: #94a3b8;
@@ -34,57 +34,12 @@
         }
 
         /* ===== BACKGROUND ===== */
-        .grid-bg {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-image:
-                linear-gradient(rgba(99,102,241,0.025) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(99,102,241,0.025) 1px, transparent 1px);
-            background-size: 60px 60px;
-            z-index: 0;
-            mask-image: radial-gradient(ellipse 80% 50% at 50% 30%, black 30%, transparent 100%);
-        }
-
-        .glow-orb {
-            position: fixed;
-            width: 500px; height: 500px;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 0;
-            background: radial-gradient(circle, rgba(99,102,241,0.06) 0%, transparent 70%);
-            transform: translate(-50%, -50%);
-            transition: left 0.5s ease-out, top 0.5s ease-out;
-            will-change: left, top;
-        }
-
-        .particles {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 0; pointer-events: none;
-        }
-
-        .particle {
-            position: absolute;
-            width: 2px; height: 2px;
-            background: var(--primary-light);
-            border-radius: 50%;
-            opacity: 0;
-            animation: pFloat linear infinite;
-        }
-
-        @keyframes pFloat {
-            0%   { opacity: 0; transform: translateY(100vh) scale(0); }
-            10%  { opacity: 0.35; }
-            90%  { opacity: 0.35; }
-            100% { opacity: 0; transform: translateY(-10vh) scale(1); }
-        }
 
         /* ===== NAV ===== */
         nav {
             position: sticky; top: 0;
             padding: 0.8rem 2rem;
-            background: rgba(3, 7, 18, 0.8);
-            backdrop-filter: blur(24px);
+            background: rgba(3, 7, 18, 0.97);
             border-bottom: 1px solid var(--border);
             z-index: 100;
             display: flex;
@@ -100,7 +55,6 @@
 
         .logo-box svg {
             width: 32px; height: 32px;
-            filter: drop-shadow(0 0 8px rgba(99,102,241,0.4));
             transition: transform 0.4s;
         }
 
@@ -186,19 +140,18 @@
         .search-box input {
             width: 100%;
             padding: 0.6rem 1rem 0.6rem 2.5rem;
-            background: var(--bg-card);
+            background: rgba(15, 23, 42, 0.95);
             border: 1px solid var(--border);
             border-radius: 10px;
             color: var(--text);
             font-size: 0.88rem;
             font-family: inherit;
             outline: none;
-            backdrop-filter: blur(20px);
-            transition: border-color 0.3s, box-shadow 0.3s;
+            transition: border-color 0.3s;
         }
 
         .search-box input::placeholder { color: var(--text-dim); }
-        .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+        .search-box input:focus { border-color: var(--primary); }
 
         .search-icon {
             position: absolute;
@@ -213,11 +166,10 @@
         .view-toggle {
             display: flex;
             gap: 0.25rem;
-            background: var(--bg-card);
+            background: rgba(15, 23, 42, 0.95);
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 0.2rem;
-            backdrop-filter: blur(20px);
         }
 
         .view-btn {
@@ -250,11 +202,10 @@
         /* ===== TABLE VIEW ===== */
         .file-table {
             width: 100%;
-            background: var(--bg-card);
+            background: rgba(15, 23, 42, 0.95);
             border: 1px solid var(--border);
             border-radius: 16px;
             overflow: hidden;
-            backdrop-filter: blur(20px);
         }
 
         .file-table table {
@@ -329,12 +280,11 @@
         }
 
         .grid-item {
-            background: var(--bg-card);
+            background: rgba(15, 23, 42, 0.95);
             border: 1px solid var(--border);
             border-radius: 14px;
             padding: 1.2rem 0.8rem;
             text-align: center;
-            backdrop-filter: blur(20px);
             transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             text-decoration: none;
@@ -344,7 +294,6 @@
         .grid-item:hover {
             border-color: var(--border-hover);
             transform: translateY(-4px);
-            box-shadow: 0 10px 35px rgba(99,102,241,0.1);
             background: var(--bg-hover);
         }
 
@@ -468,7 +417,6 @@
 
         .foot-brand svg {
             width: 18px; height: 18px;
-            filter: drop-shadow(0 0 4px rgba(99,102,241,0.3));
         }
 
         .foot-brand span {
@@ -504,10 +452,6 @@
     </style>
 </head>
 <body>
-
-<div class="grid-bg"></div>
-<div class="glow-orb" id="glowOrb"></div>
-<div class="particles" id="particles"></div>
 
 <!-- NAV -->
 <nav>
@@ -940,25 +884,6 @@
             asc = !asc;
             render(currentFiles);
         });
-    });
-
-    // ===== PARTICLES =====
-    const pc = document.getElementById('particles');
-    for (let i = 0; i < 25; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle';
-        p.style.left = Math.random() * 100 + '%';
-        p.style.animationDuration = (10 + Math.random() * 15) + 's';
-        p.style.animationDelay = Math.random() * 10 + 's';
-        p.style.width = p.style.height = (1 + Math.random() * 2) + 'px';
-        pc.appendChild(p);
-    }
-
-    // ===== CURSOR GLOW =====
-    const orb = document.getElementById('glowOrb');
-    document.addEventListener('mousemove', e => {
-        orb.style.left = e.clientX + 'px';
-        orb.style.top = e.clientY + 'px';
     });
 
 })();
