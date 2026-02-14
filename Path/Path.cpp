@@ -1,6 +1,6 @@
 #include "Path.hpp"
 
-Path::Path() : _isExtantion(false), _isLocationCGI(false)
+Path::Path() : _isExtention(false), _isLocationCGI(false)
 {}
 
 void    Path::initData(AST<string> *node, string path)
@@ -163,7 +163,7 @@ int Path::vectorCmp( vector<string>& reqPath, vector<string>&  locationPath )
     {
         if (reqPath[i] != locationPath[i])
         {
-            if (i < (int)locationPath.size() && _isExtantion == true  && locationPath[i] != _reqExt)
+            if (i < (int)locationPath.size() && _isExtention == true  && locationPath[i] != _reqExt)
                 return 0;
             return i + 1;
         }
@@ -191,13 +191,13 @@ void    Path::fillLocationInfo( AST<string> & locaNode )
     _requestPathNode = &locaNode;
 }
 
-string  Path::getErrorPagePath(AST<string> & srvNode, string srvPath, string errorCode)
+string  Path::getCodePath(AST<string> & srvNode, string srvPath, string type, string errorCode)
 {
     vector<AST<string> >& ch = srvNode.GetChildren();
 
     for (int pos = 0; pos < (int)ch.size(); pos++)
 	{
-	    if (ch[pos].GetValue() == "error_page")
+	    if (ch[pos].GetValue() == type)
 	    {
 	    	vector<string> errorpages = ch[pos].GetArguments();
             if ( !errorpages.empty() && find(errorpages.begin(), errorpages.end(), errorCode) != errorpages.end() )
@@ -213,12 +213,7 @@ void    Path::IsDirectory(struct stat info, string& path)
     if (S_ISDIR(info.st_mode))
     {
         if (!(info.st_mode & S_IRUSR) || !(info.st_mode & S_IXUSR))
-        {
-            path = getErrorPagePath((*_srvNode), _srvRootPath, "403");
-            _pathType = Error;
-            return ;
-        }
-        _pathType = Dir;
+            throw path = getCodePath((*_srvNode), _srvRootPath, "error_page", "403");
     }
 }
 
@@ -228,27 +223,31 @@ void    Path::IsFile(struct stat info, string& path)
     {
         int fd = open(path.c_str(), O_RDONLY);
         if (fd < 0)
-        {
-            path = getErrorPagePath((*_srvNode), _srvRootPath, "403");
-            _pathType = Error;
-            return ;
-        }
+            throw path = getCodePath((*_srvNode), _srvRootPath, "error_page", "403");
         close(fd);
-        _pathType = File;
     }
+}
+
+void Path::IsRedirection(string& path)
+{
+    (void)path;
+    // for (int i = 0; i < 3 ; i++)
+    // {
+        
+    // }
+    
+    // getCodePath(*_requestPathNode, _locaRootPath, "return", to_string(i + 300));
+
 }
 
 void    Path::CheckPathExist(string& path)
 {
     struct stat info;
     if ( stat(path.c_str(), &info) != 0 )
-    {
-        Error::errorType = NotFound;
-        path = getErrorPagePath((*_srvNode), _srvRootPath, "404");
-        return ;
-    }
+        throw path = getCodePath((*_srvNode), _srvRootPath, "error_page", "404");
     IsDirectory(info, path);
     IsFile(info, path);
+    // IsRedirection(path);
 }
 
 void    Path::HandleRequestPath(vector<string>& vecReqPath)
@@ -277,7 +276,7 @@ void    Path::HandleSRVPath()
     _requestPathNode = &(*_srvNode);
 }
 
-string  Path::getExtantion(string path, string p)
+string  Path::getExtention(string path, string p)
 {
 	string::size_type point = path.find_last_of(p);
     if  (point == string::npos || ( point + 1 ) >= path.size() )
@@ -292,21 +291,21 @@ string  Path::getExtantion(string path, string p)
     return ( path.substr(point, slash - point ) );
 }
 
-bool    Path::checkCGI(string first, string second, string& Extantion)
+bool    Path::checkCGI(string first, string second, string& Extention)
 {
-    string reqExt = getExtantion(first, ".");
-    string locaExt = getExtantion(second, ".");
+    string reqExt = getExtention(first, ".");
+    string locaExt = getExtention(second, ".");
     if ( reqExt.empty() || locaExt.empty() )
         return ( false );
     if ( reqExt != locaExt )
         return ( false );
-    Extantion = reqExt;
+    Extention = reqExt;
     return ( true );
 }
 
-bool Path::IsExtantion(string str)
+bool Path::IsExtention(string str)
 {
-    string reqExt = getExtantion(str, ".");
+    string reqExt = getExtention(str, ".");
     if ( reqExt.empty() )
         return ( false );
     _reqExt = reqExt;
@@ -315,15 +314,15 @@ bool Path::IsExtantion(string str)
 
 void    Path::HandleCGI(AST<string> & locaNode, vector<string>& vreqPath)
 {
-    string extantion, path;
+    string extention, path;
     _requestPathNode = &locaNode;
     path = findRootPath(locaNode);
     Logging::Debug() << "Try to HandleCGI Path";
     for (size_t i = 0; i < vreqPath.size() ; i++)
     {
-        extantion = getExtantion(vreqPath[i], ".");
-        Logging::Debug() << "get Request Extantion: " << extantion;
-        if (extantion.empty() )
+        extention = getExtention(vreqPath[i], ".");
+        Logging::Debug() << "get Request Extention: " << extention;
+        if (extention.empty() )
             path = AttachPath(path, vreqPath[i]);
         else {
             path = AttachPath(path, vreqPath[i++]);
@@ -348,16 +347,16 @@ void    Path::HandleCGI(AST<string> & locaNode, vector<string>& vreqPath)
 string     Path::CreatePath(AST<string> *node, string path)
 {
     // path = "/app/hex%F0%9F%98%83in%20the%20midle%20%D9%85%D8%B1%D8%AD%D8%A7%D8%A7%D8%A7%D8%A7%D8%A7%D8%A7%D8%A7%D8%A7/";
-    Logging::Info() << "request path in create path is: " << path;
+    Logging::Debug() << "request path in create path is: " << path;
     initData(node, path);
 
     int lastSize = 0;
     vector<AST<string> >& child = (*_srvNode).GetChildren();
     vector<string> vReqPath, vLocaArgPath;
     HandleRequestPath(vReqPath);
-    _isExtantion = IsExtantion(_requestPath);
+    _isExtention = IsExtention(_requestPath);
     Logging::Debug() << "Path create reqPath list with size: " << vReqPath.size()
-     << " Path isCGI: " << _isExtantion;
+     << " Path isCGI: " << _isExtention;
     for (int i = 0; i < (int)child.size(); i++)
     {
 
@@ -368,7 +367,7 @@ string     Path::CreatePath(AST<string> *node, string path)
             if ( pos > lastSize )
             {
                 Logging::Debug() << "current location path: " << _locaArgPath ;
-                if (  _isExtantion == true )
+                if (  _isExtention == true )
                     HandleCGI( child[i], vReqPath );
                 else
                     fillLocationInfo(child[i]);
@@ -376,14 +375,14 @@ string     Path::CreatePath(AST<string> *node, string path)
             }
         }
     }
-    if ( _FullPath.empty() && _isExtantion == false )
+    if ( _FullPath.empty() && _isExtention == false )
         HandleSRVPath();
-    else if ( _FullPath.empty() && _isExtantion == true )
+    else if ( _FullPath.empty() && _isExtention == true )
         HandleCGI(*_srvNode, vReqPath);
     
     Logging::Debug() << "full path befor check existance: <" << _FullPath ;
     CheckPathExist(_FullPath);
-    Logging::Info() << "path created in create path " << _FullPath << "        and path info: " << _pathInfo ; 
+    Logging::Debug() << "path created in create path " << _FullPath << "        and path info: " << _pathInfo ; 
     return ( _FullPath );
 }
 

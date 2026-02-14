@@ -2,12 +2,6 @@
 
 #include "../Headers.hpp"
 
-enum PathType {
-    Error,
-    Dir,
-    File
-};
-
 class Path {
     private:
         AST<string> *_srvNode;
@@ -16,9 +10,8 @@ class Path {
         string      _srvRootPath, _srvIndex;
         string      _locaRootPath, _locaArgPath, _locaIndex;
         string      _FullPath;
-        PathType    _pathType;
         string      _cgiPath, _reqExt, _pathInfo;
-        bool        _isExtantion, _isLocationCGI;
+        bool        _isExtention, _isLocationCGI;
 
 
         void            initData(AST<string> *node, string path);
@@ -26,9 +19,10 @@ class Path {
         string          AttachPath(string rootPath, string addPath);
         string          FullPath( AST<string>& currLocationNode );
         string          AttachIndex( AST<string>& currLocationNode, string path, string type);
-        string          getErrorPagePath(AST<std::string> & srvNode, string srvPath, string errorCode);
+        string          getCodePath(AST<string> & srvNode, string srvPath, string type, string errorCode);
         void            fillLocationInfo( AST<string> & locaNode );
         void            CheckPathExist(string& path);
+        void            IsRedirection(string& path);
         void            IsDirectory(struct stat info, string& path);
         void            IsFile(struct stat info, string& path);
         void            HandleSRVPath();
@@ -39,11 +33,10 @@ class Path {
         void            parsePath(vector<string>& strs, string& str,const string& sep);
         int             vectorCmp(vector<string>& reqPath, vector<string>&  locationPath);
         void            append_with_sep(string& result, vector<string>& vec, string sep, int pos = 0);
-        bool            IsSuranded(string str, char begin, char end);
         bool            checkCGI(string first, string second, string& Ext);
-        bool        IsExtantion(string str);
-        string      getExtantion(string path, string p);
-        string      findRootPath(AST<string>& currNode);
+        bool            IsExtention(string str);
+        string          getExtention(string path, string p);
+        string          findRootPath(AST<string>& currNode);
         void            HandleCGI( AST<string> & locaNode, vector<string>& vreqPath );
     public:
         Path();
