@@ -165,7 +165,7 @@ void Validation::IsValidServer()
 	Parsing::AddServer();
 	CheckValidation();
 	ResetServerSeting();
-	// IsValidVirtualServer();
+	IsValidVirtualServer();
 }
 
 void Validation::IsValidVirtualServer()

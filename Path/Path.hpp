@@ -18,7 +18,7 @@ class Path {
         string      _FullPath;
         PathType    _pathType;
         string      _cgiPath, _reqExt, _pathInfo;
-        bool        _isCGI, _isLocationCGI;
+        bool        _isExtantion, _isLocationCGI;
 
 
         void            initData(AST<string> *node, string path);
@@ -41,8 +41,8 @@ class Path {
         void            append_with_sep(string& result, vector<string>& vec, string sep, int pos = 0);
         bool            IsSuranded(string str, char begin, char end);
         bool            checkCGI(string first, string second, string& Ext);
-        bool        IsCGI(string str);
-        string      getRequestExtantion(string path, string p);
+        bool        IsExtantion(string str);
+        string      getExtantion(string path, string p);
         string      findRootPath(AST<string>& currNode);
         void            HandleCGI( AST<string> & locaNode, vector<string>& vreqPath );
     public:
