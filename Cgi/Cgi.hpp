@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Environment.hpp                                    :+:      :+:    :+:   */
+/*   Cgi.hpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/01/22 23:25:36 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/14 01:55:49 by oel-bann         ###   ########.fr       */
+/*   Created: 2026/02/14 01:37:26 by oel-bann          #+#    #+#             */
+/*   Updated: 2026/02/14 01:48:34 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,8 @@
 
 #include "../Headers.hpp"
 
-class Environment
+class Cgi
 {
-    Environment();
-    static void AddEnvPair(std::pair<std::string, std::string> pair);
 public:
-    static void CreateEnv(std::map<std::string, std::string> env);
+    static void run_cgi(int infd, int outfd);
 };

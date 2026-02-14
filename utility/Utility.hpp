@@ -5,6 +5,7 @@ class Utility
 {
 	static string toTrime;
 public:
+	static char **environ;
 	static bool SigPipe;
 	static bool isNotZero(char ch);
 	static bool isNotSquareBracket(char ch);
@@ -19,4 +20,5 @@ public:
 	static bool isStrToTrime(char ch);
 	static void trim(std::string &s, string toTrime);
 	static void Close(int fd);
+	static void setenviron(char **envp);
 };

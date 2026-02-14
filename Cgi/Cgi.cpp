@@ -1,23 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Environment.hpp                                    :+:      :+:    :+:   */
+/*   Cgi.cpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/01/22 23:25:36 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/14 01:55:49 by oel-bann         ###   ########.fr       */
+/*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
+/*   Updated: 2026/02/14 02:15:19 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#pragma once
+#include "Cgi.hpp"
 
-#include "../Headers.hpp"
-
-class Environment
+void Cgi::run_cgi(int infd, int outfd, Request &req)
 {
-    Environment();
-    static void AddEnvPair(std::pair<std::string, std::string> pair);
-public:
-    static void CreateEnv(std::map<std::string, std::string> env);
-};
+    pid_t pid = fork();
+
+    if (pid == -1)
+        Error::ThrowError("Fork Failed");
+    else if (!pid)
+    {
+        Environment::CreateEnv(req.getrequestenv());
+        dup2(0, infd);
+        close(infd);
+        dup2(1, outfd);
+        close(outfd);
+        execve(get_);
+    }
+    
+}
