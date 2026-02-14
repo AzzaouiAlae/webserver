@@ -83,7 +83,25 @@ string    Path::AttachIndex( AST<string>& currLocationNode, string path, string 
 
 void    DecodeString(string& str)
 {
-    (void)str;
+    string result;
+    string::size_type pos;
+        int start = 0;
+    for (pos = 0; (pos = str.find('%')) != string::npos ; pos++)
+    {
+        start = pos;
+        if ( pos + 2 >= str.size() )
+            break;
+        result += str.substr(start, pos - start);
+        if (str[pos] != '%' && str[pos + 1] != '%' )
+        {
+            string hex = str.substr(pos, 2);
+            result += Utility::HexaToChar(hex);
+        }
+    }
+    if ( pos  < str.size() )
+        result += str.substr(pos, str.size() - pos );
+    if (!result.empty() )
+        str = result;
 }
 
 void    Path::CkeckPath(vector<string>& strs)
@@ -100,9 +118,9 @@ void    Path::CkeckPath(vector<string>& strs)
                 strs.erase(strs.begin() + (i - 1));
             i = -1;
         }
-        if ( strs[i] == "." )
+        else if ( strs[i] == "." )
             strs.erase(strs.begin() + i);
-        if ( strs[i].find('%') != string::npos )
+        else if ( strs[i].find('%') != string::npos )
             DecodeString(strs[i]);
     }
 }
@@ -134,7 +152,7 @@ int Path::vectorCmp( vector<string>& reqPath, vector<string>&  locationPath )
     {
         if (reqPath[i] != locationPath[i])
         {
-            if (i < (int)locationPath.size() )
+            if (i < (int)locationPath.size() && _isExtantion == true  && locationPath[i] != _reqExt )
                 return 0;
             return i + 1;
         }
@@ -157,6 +175,7 @@ void    Path::append_with_sep(string& result, vector<string>& vec, string sep, i
 
 void    Path::fillLocationInfo( AST<string> & locaNode )
 {
+    Logging::Debug() << "Fill lication info : " << locaNode.GetValue() ;
     FullPath( locaNode);
     _requestPathNode = &locaNode;
 }
@@ -294,14 +313,15 @@ void    Path::HandleCGI(AST<string> & locaNode, vector<string>& vreqPath)
         Logging::Debug() << "get Request Extantion: " << extantion;
         if (extantion.empty() )
             path = AttachPath(path, vreqPath[i]);
-        else if (i < vreqPath.size() - 1) {
+        else {
             path = AttachPath(path, vreqPath[i++]);
-            Logging::Debug() << "AttachPath: " << extantion;
-            append_with_sep(_pathInfo, vreqPath, "/", i);
+            if ( i < vreqPath.size() )
+                append_with_sep(_pathInfo, vreqPath, "/", i);
             break;
         }
     }
     Logging::Debug() << "Found CGI path: " << (_requestPathNode->GetArguments())[0];
+
     vector<string> cgiArgs = SearchInTree(locaNode, "cgi_pass" );
     if ( cgiArgs.empty() )
         _isLocationCGI = false;
@@ -315,6 +335,7 @@ void    Path::HandleCGI(AST<string> & locaNode, vector<string>& vreqPath)
 
 string     Path::CreatePath(AST<string> *node, string path)
 {
+    Logging::Info() << "request path in create path is: " << path;
     initData(node, path);
 
     int lastSize = 0;
@@ -326,12 +347,14 @@ string     Path::CreatePath(AST<string> *node, string path)
      << " Path isCGI: " << _isExtantion;
     for (int i = 0; i < (int)child.size(); i++)
     {
+
         if ( child[i].GetValue() == "location" )
         {
             HandleLocationArgPath(vLocaArgPath, child[i].GetArguments()[0]);
             int pos = vectorCmp(vReqPath, vLocaArgPath);
-            if ( pos > lastSize )
+            if ( pos > lastSize  )
             {
+                Logging::Debug() << "current location path: " << _locaArgPath ;
                 if (  _isExtantion == true )
                     HandleCGI( child[i], vReqPath );
                 else
@@ -340,13 +363,16 @@ string     Path::CreatePath(AST<string> *node, string path)
             }
         }
     }
-    Logging::Debug() << "Location path is: " << (_requestPathNode->GetArguments())[0];
     if ( _FullPath.empty() && _isExtantion == false )
         HandleSRVPath();
     else if ( _FullPath.empty() && _isExtantion == true )
         HandleCGI(*_srvNode, vReqPath);
+    
     cout << "full path befor check existance: <" << _FullPath << ">\n";
     CheckPathExist(_FullPath);
+    Logging::Info() << "path created in create path " << _FullPath << 
+    "              and path info: " << _pathInfo ; 
+    cout << "------- " << _FullPath << " -------\n";
     return ( _FullPath );
 }
 

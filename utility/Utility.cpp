@@ -110,3 +110,8 @@ void Utility::Close(int fd)
 {
 	close(fd);
 }
+
+char Utility::HexaToChar(string hex)
+{
+	return ( static_cast< char >( strtol(hex.c_str(), NULL, 16) ) );
+}

@@ -10,7 +10,7 @@
 			"request": "launch",
 			"program": "${workspaceFolder}/websrv.out",
 			"miDebuggerPath": "/usr/bin/gdb",
-			"args": [],
+			"args": ["Test/PathTests/ConfigFiles/TestCGIlocation.conf"],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
 			"environment": [],
