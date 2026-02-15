@@ -10,6 +10,7 @@
 class HTTPContext : public IContext
 {
 	Repsense repsense;
+	Routing router;
 	SocketIO *sock;
 	char *buf;
 	AFd *out;

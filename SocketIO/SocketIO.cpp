@@ -22,9 +22,10 @@ void SocketIO::SetStateByFd(int fd)
 
 int SocketIO::Send(void *buff, int size)
 {
+	char *b = (char *)buff;
 	ssize_t sent = 0;
 	int flag = (ePipe0 | eSocket);
-	if (buff != this->buff)
+	if (&(b[0]) != &((this->buff)[0]))
 	{
 		SendedBuffToPipe = 0;
 		this->buff = (char *)buff;
@@ -254,11 +255,6 @@ SocketIO::~SocketIO()
 	}
 	delete context;
 	Singleton::GetFds().erase(this);
-}
-
-Routing &SocketIO::GetRouter()
-{
-	return router;
 }
 
 void SocketIO::ClearPipePool()

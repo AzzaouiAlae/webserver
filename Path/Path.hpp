@@ -45,7 +45,7 @@ class Path {
         string          getLocationIndex();
         string          getServerIndex();
         string          getServerPath();
-        string          getFullPath();
+        string          &getFullPath();
         string          getPathInfo();
         string          getCGiPath();
         string          getExtantion();
