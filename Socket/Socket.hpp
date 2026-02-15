@@ -4,7 +4,7 @@
 
 using namespace std;
 
-class Socket : public AFd  {
+class Socket : public ISocket  {
 	static int inetPassiveSocket(const char *host, const char *service, int type, 
 		bool doListen, int backlog);
 public:

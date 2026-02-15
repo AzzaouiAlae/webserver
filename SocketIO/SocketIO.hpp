@@ -15,7 +15,7 @@ enum IOState {
 #define KBYTE 1024
 #define MBYTE 50
 
-class SocketIO : public AFd {
+class SocketIO : public ISocket {
 	static long CurrentTime();
 	static vector<pair<int, int> > pipePool;
 	bool pipeInitialized;

@@ -1,7 +1,9 @@
 #include "Path.hpp"
 
 Path::Path() : _isExtention(false), _isLocationCGI(false)
-{}
+{
+	_isDir = false;
+}
 
 void    Path::initData(AST<string> *node, string path)
 {
@@ -208,12 +210,22 @@ string  Path::getCodePath(AST<string> & srvNode, string srvPath, string type, st
     return ( errorCode );
 }
 
-void    Path::IsDirectory(struct stat info, string& path)
+bool Path::IsDir() {
+	return _isDir;
+}
+
+void   Path::IsDirectory(struct stat info, string& path)
 {
+	(void)path;
     if (S_ISDIR(info.st_mode))
     {
         if (!(info.st_mode & S_IRUSR) || !(info.st_mode & S_IXUSR))
-            throw path = getCodePath((*_srvNode), _srvRootPath, "error_page", "403");
+		{
+			// path = getCodePath((*_srvNode), _srvRootPath, "error_page", "403");
+			// _errorCode = "403";
+			// Error::ThrowError(path);
+			_isDir = true;
+		}
     }
 }
 
@@ -223,7 +235,11 @@ void    Path::IsFile(struct stat info, string& path)
     {
         int fd = open(path.c_str(), O_RDONLY);
         if (fd < 0)
-            throw path = getCodePath((*_srvNode), _srvRootPath, "error_page", "403");
+		{
+            path = getCodePath((*_srvNode), _srvRootPath, "error_page", "403");
+			_errorCode = "403";
+			Error::ThrowError(path);
+		}
         close(fd);
     }
 }
@@ -244,7 +260,11 @@ void    Path::CheckPathExist(string& path)
 {
     struct stat info;
     if ( stat(path.c_str(), &info) != 0 )
-        throw path = getCodePath((*_srvNode), _srvRootPath, "error_page", "404");
+	{
+		path = getCodePath((*_srvNode), _srvRootPath, "error_page", "404");
+		_errorCode = "404";
+		Error::ThrowError(path);
+	}
     IsDirectory(info, path);
     IsFile(info, path);
     // IsRedirection(path);
@@ -310,6 +330,11 @@ bool Path::IsExtention(string str)
         return ( false );
     _reqExt = reqExt;
     return ( true );
+}
+
+bool Path::emptyRoot()
+{
+	return _srvRootPath == "" && _locaRootPath == "";
 }
 
 void    Path::HandleCGI(AST<string> & locaNode, vector<string>& vreqPath)
@@ -423,3 +448,7 @@ bool Path::isLocationCGi()
     return ( _isLocationCGI );
 }
 
+string Path::getErrorCode()
+{
+	return _errorCode;
+}

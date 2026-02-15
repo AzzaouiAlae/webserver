@@ -225,7 +225,7 @@ int SocketIO::SocketToSocketWrite(int socket, int size)
 	return len;
 }
 
-SocketIO::SocketIO(int fd): AFd(fd, "SocketIO"), pipeInitialized(false), pendingInPipe(0), status(0)
+SocketIO::SocketIO(int fd): ISocket(fd, "SocketIO"), pipeInitialized(false), pendingInPipe(0), status(0)
 {
 	buff = NULL;
 	if (pipePool.size() > 0)
