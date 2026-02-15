@@ -13,18 +13,23 @@ class Repsense
 	string filename;
 	bool sendHeader;
 	int ShouldSend;
-	int filesize;
+	int bodySize;
 	string code;
 	int sended;
 	int fileFd;
 	bool del;
 	stringstream filesList;
+	string filesListStr;
+	int sendListFiles;
+	int targetToSend;
+	int sent;
+	Routing *router;
 
 	SocketIO *sock;
 	vector<AST<string> > *servers;
 public:
 	Repsense();
-	void Init(SocketIO *sock, vector<AST<string> > *servers);
+	void Init(SocketIO *sock, vector<AST<string> > *servers, Routing *router);
 	string CreateDate();
 	void SendGetResponse();
 	bool HandleResponse();
@@ -35,4 +40,8 @@ public:
 	void GetStaticIndex();
 	void listFiles(string path);
 	void CreateListFilesRepsense();
+	void SendListFilesRepsense();
+	void SendAutoIndex(StaticFile *f);
+	void SendListFilesStr(const string &str);
+	void ServeFile();
 };

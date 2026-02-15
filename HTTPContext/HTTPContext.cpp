@@ -23,9 +23,7 @@ void HTTPContext::Handle(Socket *sock)
 
 void HTTPContext::Handle()
 {
-	Routing &r = sock->GetRouter();
-	
-	if (r.isRequestComplete() == false)
+	if (router.isRequestComplete() == false)
 	{
 		Logging::Debug() << "Socket FD: " << sock->GetFd() << " start handle request";
 		HandleRequest();
@@ -33,7 +31,7 @@ void HTTPContext::Handle()
 	else
 	{
 		Logging::Debug() << "Socket FD: " << sock->GetFd() << " start handle response";
-		repsense.Init(sock, servers);
+		repsense.Init(sock, servers, &router);
 		if (repsense.HandleResponse()) {
 			MarkedSocketToFree();
 		}
@@ -48,7 +46,6 @@ void HTTPContext::Handle()
 void HTTPContext::HandleRequest()
 {
 	int len = 0;
-	Routing &r = sock->GetRouter();
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 	if (buf == NULL)
 	{
@@ -56,18 +53,27 @@ void HTTPContext::HandleRequest()
 	}
 	len = read(sock->GetFd(), buf, BUF_SIZE);
 	Logging::Debug() << "Socket FD: " << sock->GetFd() << " read " << len << " byte";
+	string s;
+	for(int i = 0; i < len; i++ )
+	{
+		if (buf[i] == 0)
+			s += "\\0";
+		else
+			s += buf[i];
+	}
+	Logging::Debug() << "Handle Request: buf is: " << s ;
 	if (len == 0 || Utility::SigPipe)
 	{
 		MarkedSocketToFree();
 	}
 	if (len != -1)
 	{
-		buf[len] = '\0';
-		if (r.GetRequest().isComplete(buf))
+		if (router.GetRequest().isComplete(buf))
 		{
 			Logging::Debug() << "Read of Request from Socket fd: " << sock->GetFd() << " Complete";
-			Logging::Debug() << "Request is : " << r.GetRequest().getMethod() << " " << r.GetRequest().getPath();
-			r.SetRequestComplete();
+			Logging::Debug() << "Request is : " << router.GetRequest().getMethod() << " " << router.GetRequest().getPath() << "\n"
+			<< router.GetRequest().GetRequest();
+			router.SetRequestComplete();
 			MulObj->ChangeToEpollOut(sock);
 
 			in = new Pipe(sock->pipefd[0], sock);
@@ -99,12 +105,6 @@ void HTTPContext::MarkedSocketToFree()
 	shutdown(sock->GetFd(), SHUT_RDWR);
 	sock->MarkedToDelete = true;
 }
-
-void CreateNotFoundError()
-{
-}
-// { name: '..', href: '../', isDir: true, size: '-', date: '' },
-
 
 HTTPContext::~HTTPContext()
 {

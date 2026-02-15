@@ -22,7 +22,7 @@ class SocketIO : public ISocket {
 	int pendingInPipe;
 	int SendBuffToPipe(void *buff, int size);
 	int SendPipeToSock();
-	Routing router;
+	
 	int status;
 	int SendedBuffToPipe;
 	char *buff;
@@ -41,6 +41,5 @@ public:
 	int SocketToSocketWrite(int socket, int size);
 	void Handle();
 	static int CloseSockFD(int fd);
-	Routing &GetRouter();
 	static void ClearPipePool();
 };
