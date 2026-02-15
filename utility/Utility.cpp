@@ -1,8 +1,6 @@
 #include "Utility.hpp"
 
 bool Utility::SigPipe;
-char Utility::**environ = NULL;
-
 
 bool Utility::isNotZero(char ch)
 {
@@ -111,10 +109,4 @@ bool Utility::strtosize_t(const std::string& s, size_t& out)
 void Utility::Close(int fd)
 {
 	close(fd);
-}
-
-
-void Utility::setenviron(char **envp)
-{
-	environ = envp;
 }

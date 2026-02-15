@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/11 22:45:11 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/14 04:44:40 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -193,11 +193,6 @@ bool Request::ParseHeader()
 	return (false);
 }
 
-string &Request::GetRequest()
-{
-	return _requestbuff;
-}
-
 bool Request::fillBody()
 {
 	if (_Parspos == eParsEnd && _env["REQUEST_METHOD"] == "POST" && _Thereisbody)
@@ -245,7 +240,6 @@ const string &Request::getMethod() const
 
 	map<string, string>::const_iterator it =
 		_env.find("REQUEST_METHOD");
-
 	return (it != _env.end()) ? it->second : empty;
 }
 
@@ -277,4 +271,10 @@ const string &Request::getport() const
 		_env.find("SERVER_PORT");
 
 	return (it != _env.end()) ? it->second : empty;
+}
+
+void Request::setUrlPart(string scriptpath, string pathinfo)
+{
+	_env["SCRIPT_NAME"] = scriptpath;
+	_env["PATH_INFO"] = pathinfo;
 }
