@@ -240,7 +240,7 @@ void Repsense::GetMethod()
 		return ;
 	}
 	if (r.GetPath().IsDir()) {
-		
+		Logging::Warn() << "this is a dir";
 	}
 
 	int type = checkPathType(filename);

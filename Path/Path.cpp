@@ -216,16 +216,24 @@ bool Path::IsDir() {
 
 void   Path::IsDirectory(struct stat info, string& path)
 {
-	(void)path;
     if (S_ISDIR(info.st_mode))
     {
-        if (!(info.st_mode & S_IRUSR) || !(info.st_mode & S_IXUSR))
+        if (access(path.c_str(), R_OK))
 		{
-			// path = getCodePath((*_srvNode), _srvRootPath, "error_page", "403");
-			// _errorCode = "403";
-			// Error::ThrowError(path);
-			_isDir = true;
+			path = getCodePath((*_srvNode), _srvRootPath, "error_page", "403");
+			_errorCode = "403";
+			Error::ThrowError(path);
 		}
+		vector<string > autoindex = SearchInTree(*_srvNode, "autoindex");
+		if (autoindex.size() == 0 || autoindex[0] == "" || autoindex[0] == "off") {
+			autoindex = SearchInTree(*_requestPathNode, "autoindex");
+		}
+		if (autoindex.size() == 0 || autoindex[0] == "" || autoindex[0] == "off") {
+			path = getCodePath((*_srvNode), _srvRootPath, "error_page", "403");
+			_errorCode = "403";
+			Error::ThrowError(path);
+		}
+		_isDir = true;
     }
 }
 
