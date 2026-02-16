@@ -1,11 +1,12 @@
 #include "Repsense.hpp"
 
+map<string, string> Repsense::statusMap;
+
 Repsense::Repsense()
 {
 	readyToSend = false;
 	sendHeader = false;
 	staticFile = NULL;
-	servers = NULL;
 	ShouldSend = 0;
 	bodySize = 0;
 	del = false;
@@ -18,20 +19,17 @@ Repsense::Repsense()
 	router = 0;
 }
 
-void Repsense::Init(SocketIO *sock, vector<AST<string> > *servers, Routing *router)
+void Repsense::Init(SocketIO *sock, Routing *router)
 {
 	if (this->sock == NULL)
 	{
 		this->sock = sock;
 	}
-	if (this->servers == NULL)
-	{
-		this->servers = servers;
-	}
 	if (this->router == NULL)
 	{
 		this->router = router;
 	}
+	InitStatusMap();
 }
 
 bool Repsense::HandleResponse()
@@ -107,15 +105,15 @@ void Repsense::CreateResponseHeader()
 	responseHeader.str("");
 	string serverName = "";
 	if (router->srv) {
-		serverName = Parsing::GetServerName(*(router->srv));
+		serverName = router->srv->serverName;
 	}
 	if (serverName == "") {
-		serverName = Socket::getLocalName(sock->GetFd());
+		serverName = router->srv->listen[0];
 	}
 	string type = Singleton::GetMime()[Utility::GetFileExtension(filename)];
 
 	responseHeader
-		<< "HTTP/1.1 " << code << "\r\n"
+		<< "HTTP/1.1 " << code << " " << statusMap[code] << "\r\n"
 		<< "Date: " << CreateDate() << "\r\n"
 		<< "Server: " << serverName << "\r\n"
 		<< "Content-Type: " << type << "\r\n"
@@ -127,15 +125,21 @@ void Repsense::CreateResponseHeader()
 	responseHeaderStr = responseHeader.str();
 }
 
-void Repsense::HandelErrorPages(const string &err, bool isPath)
+void Repsense::HandelErrorPages(const string &err)
 {
+	code = err;
+	string path = (Config::GetErrorPath(*router->srv, err));
+	bool isPath = path != "";
+	filename = router->srv->root + "/" + path;
 	if (isPath)
 	{
-		fileFd = open(err.c_str(), O_RDONLY);
+		fileFd = open(filename.c_str(), O_RDONLY);
 		if (fileFd == -1) {
 			staticFile = StaticFile::GetFileByName(err.c_str());
-			if (staticFile == NULL)
+			if (staticFile == NULL) {
 				staticFile = StaticFile::GetFileByName("404");
+				code = "404";
+			}
 			bodySize = staticFile->GetSize();
 			ShouldSend = bodySize;
 			filename = ".html";
@@ -159,7 +163,7 @@ void Repsense::HandelErrorPages(const string &err, bool isPath)
 
 void Repsense::GetStaticIndex()
 {
-	code = "200 OK";
+	code = "200";
 	staticFile = StaticFile::GetFileByName("index");
 	bodySize = staticFile->GetSize();
 	ShouldSend = bodySize;
@@ -231,7 +235,7 @@ void Repsense::CreateListFilesRepsense()
 	ShouldSend += StaticFile::GetFileByName("autoIndex2")->GetSize();
 	ShouldSend += StaticFile::GetFileByName("autoIndex3")->GetSize();
 
-	code = "200 OK";
+	code = "200";
 	filename = ".html";
 
 	bodySize = ShouldSend;
@@ -319,7 +323,7 @@ void Repsense::ServeFile()
 	bodySize = Utility::getFileSize(filename);
 	ShouldSend = bodySize;
 	fileFd = open(filename.c_str(), O_RDONLY);
-	code = "200 OK";
+	code = "200";
 	CreateResponseHeader();
 	ShouldSend += responseHeaderStr.length();
 	readyToSend = true;
@@ -329,29 +333,28 @@ void Repsense::ServeFile()
 
 void Repsense::GetMethod()
 {
-	
-
-	try {
-		filename = router->CreatePath(servers);
-	}
-	catch (exception &e) {
-		if (router->GetPath().emptyRoot() && router->GetRequest().getPath() == "/")
-			GetStaticIndex();
-		else
-		{
-			code = router->GetPath().getErrorCode();
-			HandelErrorPages(e.what(), router->GetPath().isErrorPath());
-		}
-		return;
-	}
+	filename = router->CreatePath(router->srv);
 
 	Logging::Debug() << "Socket fd: " << sock->GetFd() << 
 	" try to send file " << filename;
 
-	if (router->GetPath().IsDir())
+	if (router->GetPath().isFound() == false) {
+		HandelErrorPages("404");
+	}
+	else if (router->GetPath().hasPermission() == false) {
+		HandelErrorPages("403");
+	}
+	else if (router->GetPath().isDirectory()) {
 		CreateListFilesRepsense();
-	else
+	}
+	else if (router->GetPath().isFile())
 		ServeFile();
+	else if (router->GetPath().isCGI()) {
+		
+	}
+	else if (router->GetPath().emptyRoot() && router->GetRequest().getPath() == "/") {
+		GetStaticIndex();
+	}
 }
 
 Repsense::~Repsense()
@@ -360,4 +363,58 @@ Repsense::~Repsense()
 	{
 		close(fileFd);
 	}
+}
+
+void Repsense::InitStatusMap()
+{
+	if (statusMap.size() > 0)
+		return;
+	
+	// ---- 1xx Informational ----
+    statusMap["100"] = "Continue";
+    statusMap["101"] = "Switching Protocols";
+    statusMap["102"] = "Processing";
+
+    // ---- 2xx Success ----
+    statusMap["200"] = "OK";
+    statusMap["201"] = "Created";
+    statusMap["202"] = "Accepted";
+    statusMap["203"] = "Non-Authoritative Information";
+    statusMap["204"] = "No Content";
+    statusMap["205"] = "Reset Content";
+    statusMap["206"] = "Partial Content";
+
+    // ---- 3xx Redirection ----
+    statusMap["300"] = "Multiple Choices";
+    statusMap["301"] = "Moved Permanently";
+    statusMap["302"] = "Found";
+    statusMap["303"] = "See Other";
+    statusMap["304"] = "Not Modified";
+    statusMap["305"] = "Use Proxy";
+    statusMap["307"] = "Temporary Redirect";
+    statusMap["308"] = "Permanent Redirect";
+
+    // ---- 4xx Client Errors ----
+    statusMap["400"] = "Bad Request";
+    statusMap["401"] = "Unauthorized";
+    statusMap["403"] = "Forbidden";
+    statusMap["404"] = "Not Found";
+    statusMap["405"] = "Method Not Allowed";
+    statusMap["408"] = "Request Timeout";
+    statusMap["409"] = "Conflict";
+    statusMap["410"] = "Gone";
+    statusMap["411"] = "Length Required";
+    statusMap["413"] = "Payload Too Large";
+    statusMap["414"] = "URI Too Long";
+    statusMap["415"] = "Unsupported Media Type";
+    statusMap["429"] = "Too Many Requests";
+    statusMap["431"] = "Request Header Fields Too Large";
+
+    // ---- 5xx Server Errors ----
+    statusMap["500"] = "Internal Server Error";
+    statusMap["501"] = "Not Implemented";
+    statusMap["502"] = "Bad Gateway";
+    statusMap["503"] = "Service Unavailable";
+    statusMap["504"] = "Gateway Timeout";
+    statusMap["505"] = "HTTP Version Not Supported";
 }

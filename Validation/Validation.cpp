@@ -26,11 +26,6 @@ void Validation::CreateMimeMap()
 			}
 		}
 	}
-
-	// for (map<string, string>::iterator it = mime.begin(); it != mime.end(); it++)
-	// {
-	// 	cout << "|" << it->first << ":" << it->second << "|" << endl;
-	// }
 }
 
 void Validation::IsValidTypes()
@@ -165,31 +160,6 @@ void Validation::IsValidServer()
 	Parsing::AddServer();
 	CheckValidation();
 	ResetServerSeting();
-	IsValidVirtualServer();
-}
-
-void Validation::IsValidVirtualServer()
-{
-	vector<string> v ;
-	Parsing::GetHosts(v, Parsing::currentServer->GetChildren());
-	set<string> unique_elements(v.begin(), v.end());
-
-	if (unique_elements.size() != v.size()) {
-		Error::ThrowError("The same server has duplicate host and port");
-	}
-	string srvName = Parsing::GetServerName(*(Parsing::currentServer));
-	
-	for(int i = 0; i < (int)v.size(); i++)
-	{
-		if (Parsing::IsDuplicatedServer(srvName, v[i])) {
-			Logging::Warn() << "server name: " << srvName <<
-					", Host: " << v[i] << ", Are duplicated";
-			continue;
-		}
-		string port, host;
-		parseListen(v[i], port, host);
-		Socket::AddSocket(host, port);
-	}
 }
 
 //      LOCATION
@@ -222,51 +192,6 @@ long Validation::ConvertToNumber(std::string num)
 	if (num[0] == '+' || errno != 0 || *endptr != '\0')
 		Error::ThrowError("Invalid Syntax ( Number Not Valid )");
 	return (port);
-}
-
-void Validation::PortOnly()
-{
-	long port = ConvertToNumber(_data[_idx]);
-
-	if (port < 0 || port > 65535)
-		Error::ThrowError("Invalid Syntax ( Port Number Out Of Range )");
-
-	Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
-	_idx++;
-}
-
-void Validation::ValidIP()
-{
-	long Ip = 0;
-	size_t countPoint = 0;
-	size_t start = 0;
-	size_t pos = 0;
-	while ((pos = _data[_idx].find('.', start)) != std::string::npos)
-	{
-		if (countPoint >= 3)
-			Error::ThrowError("Invalid Syntax ( IP Address Not Valid )");
-		countPoint++;
-		Ip = ConvertToNumber(_data[_idx].substr(start, pos - start));
-
-		if (Ip < 0 || Ip > 255)
-			Error::ThrowError("Invalid Syntax ( IP Adress: Number Out Of Range )");
-		start = pos + 1;
-	}
-	pos = *(_data[_idx].end() - 1);
-	Ip = ConvertToNumber(_data[_idx].substr(start, pos - start));
-	if (Ip < 0 || Ip > 255)
-		Error::ThrowError("Invalid Syntax ( IP Adress: Number Out Of Range )");
-	if (countPoint != 3)
-		Error::ThrowError("Invalid Syntax ( IP Address Not Valid )");
-	Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
-	_idx++;
-}
-
-void Validation::IpAndPort()
-{
-	ValidIP();
-	_idx++;
-	PortOnly();
 }
 
 void Validation::parseListen(string str, string &port, string &host)

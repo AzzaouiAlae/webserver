@@ -12,7 +12,7 @@ void HTTPContext::Handle(Socket *sock)
 {
 	SocketIO *fd = new SocketIO(sock->acceptedSocket);
 	Singleton::GetFds().insert(fd);
-	servers = &((Singleton::GetServers())[sock->GetFd()]);
+	servers = &((Singleton::GetVirtualServers())[sock->GetFd()]);
 	fd->context = new HTTPContext();
 	((HTTPContext *)fd->context)->servers = servers;
 	((HTTPContext *)fd->context)->sock = fd;
@@ -23,7 +23,7 @@ void HTTPContext::Handle(Socket *sock)
 
 void HTTPContext::Handle()
 {
-	repsense.Init(sock, servers, &router);
+	repsense.Init(sock, &router);
 	if (router.isRequestComplete() == false && err == false)
 	{
 		Logging::Debug() << "Socket FD: " << sock->GetFd() << " start handle request";
@@ -54,15 +54,6 @@ void HTTPContext::HandleRequest()
 	}
 	len = read(sock->GetFd(), buf, BUF_SIZE);
 	Logging::Debug() << "Socket FD: " << sock->GetFd() << " read " << len << " byte";
-	string s;
-	for(int i = 0; i < len; i++ )
-	{
-		if (buf[i] == 0)
-			s += "\\0";
-		else
-			s += buf[i];
-	}
-	Logging::Debug() << "Handle Request: buf is: " << s ;
 	if (len == 0 || Utility::SigPipe) {
 		err = true;
 		isComplete = true;
@@ -82,6 +73,9 @@ void HTTPContext::HandleRequest()
 			Logging::Debug() << "Read of Request from Socket fd: " << sock->GetFd() << " Complete";
 			Logging::Debug() << "Request is : " << router.GetRequest().getMethod() << " " << router.GetRequest().getPath() << "\n"
 			<< router.GetRequest().GetRequest();
+			
+			router.srv = &Config::GetServerName(*servers, router.GetRequest().getPath());
+			
 			router.SetRequestComplete();
 			MulObj->ChangeToEpollOut(sock);
 
@@ -92,7 +86,7 @@ void HTTPContext::HandleRequest()
 			MulObj->AddAsEpollOut(out);
 		}
 		if (err) {
-			repsense.HandelErrorPages("400", false);
+			repsense.HandelErrorPages("400");
 		}
 	}
 }

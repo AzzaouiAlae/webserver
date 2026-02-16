@@ -1,6 +1,9 @@
 #pragma once
 
-#include "../Headers.hpp"
+#include <iostream>
+#include <map>
+#include <vector>
+
 
 template <typename content>
 class AST
@@ -49,8 +52,5 @@ public:
 	{
 		Value = val;
 	}
-	
-	
-
 	
 };

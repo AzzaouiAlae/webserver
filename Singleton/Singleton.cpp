@@ -34,3 +34,18 @@ map<int, vector<AST<string> > > &Singleton::GetServers()
 
 	return servers;
 }
+
+Config &Singleton::GetConf()
+{
+	static Config conf;
+
+	return conf;
+}
+
+map<int, vector<Config::Server> > &Singleton::GetVirtualServers()
+{
+	static map<int, vector<Config::Server> > virtualServers;
+
+	return virtualServers;
+}
+

@@ -130,3 +130,12 @@ bool Utility::isHexa(char hex)
 {
 	return ( isxdigit(static_cast<unsigned char>(hex)) );
 }
+
+void Utility::parseBySep(vector<string> &parsedPath, string str, string sep)
+{
+	char *s = strtok((char *)str.c_str(), sep.c_str());
+	while(s) {
+		parsedPath.push_back(s);
+		s = strtok(NULL, sep.c_str());
+	}
+}

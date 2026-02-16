@@ -1,6 +1,6 @@
-HTTP/1.1 
-Date: Mon, 16 Feb 2026 02:05:36 GMT
-Server: (127.0.0.1, 1025)
+HTTP/1.1 400 Bad Request
+Date: Mon, 16 Feb 2026 21:42:27 GMT
+Server: host
 Content-Type: text/html
 Content-Length: 3845
 Connection: close

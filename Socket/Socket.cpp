@@ -239,66 +239,71 @@ string Socket::getIpByHost(const string &host, const string &port, int type)
     return ip + ":" + Port;
 }
 
-void Socket::AddSocket(string &host, string &port)
+void Socket::AddSocketNew(string &host, string &port, Config::Server srv)
 {
+	map<int, vector<Config::Server> > &sockets = Singleton::GetVirtualServers();
 	int sock = inetListen(host.c_str(), port.c_str(), 1000);
 	set<AFd *> &fds = Singleton::GetFds();
-	map<int, vector<AST<string> > > &servers = Singleton::GetServers();
 
-	if (sock != -1)
+	if (sock != -1) 
 	{
 		Socket *NewFd = new Socket(sock);
 		NewFd->context = new HTTPContext();
 		fds.insert(NewFd);
-		vector<AST<string> > myVector;
-		myVector.push_back(*Parsing::currentServer);
-		servers[sock] = myVector;
+		vector<Config::Server> myVector;
+		myVector.push_back(srv);
+		sockets[sock] = myVector;
 		Logging::Info() << "Socket with host: " << host << ":" 
 		<< port << " created, fd: " << sock;
 	}
-	else {
-		FindServer(host, port);
+	else  {
+		FindServerNew(host, port, srv);
 	}
 }
 
-void Socket::FindServer(string &host, string &port)
+void Socket::FindServerNew(string &host, string &port, Config::Server srv)
 {
-	map<int, vector<AST<string> > > &servers = Singleton::GetServers();
-	stringstream s;
+    map<int, vector<Config::Server> > &sockets = Singleton::GetVirtualServers();
+    stringstream strError;
+    strError << "Bind to address: " << host << ":" << port << " fail";
 
-	s << "Bind to address: " << host << ":" << port << " fail";
-	if (servers.size() == 0) {
-		Error::ThrowError(s.str().c_str());
-	}
-	string hostToFind, hostToFind6, h, p;
-	hostToFind = getIpByHost(host, port);
-	hostToFind6 = getIpByHost(host, port, AF_INET6);
-	if (hostToFind == "") {
-		Error::ThrowError(s.str().c_str());
-	}
-	map<int, vector<AST<string> > >::iterator it = servers.begin();
-	for(; it != servers.end(); it++)
-	{
-		getLocalName((*it).first, h, p);
-		if (h == "0.0.0.0")
-			h = "";
-		string hst = getIpByHost(h, p);
-		string hst6 = getIpByHost(h, p, AF_INET6);
-		if (hostToFind == hst || hostToFind6 == hst6) {
-			string srvName = Parsing::GetServerName(*Parsing::currentServer);
-			if (!Parsing::IsDuplicatedServer(srvName, hst, it->second)) {
-				it->second.push_back(*Parsing::currentServer);
-				Logging::Info() << "Host: " << host << ":" << port << 
-				" is added as virtual server with socket fd: " << (*it).first;
-			}
-			else {
-				Logging::Warn() << "server name: " << srvName << 
-				", Host: " << hst << ", are duplicated";
-			}
-			return;
-		}
-	}
-	Logging::Warn() << "Bind to address " << host << ":" << port << " fail";
+    // 1. If no sockets exist at all, the port is locked by another program (e.g. Nginx/Apache)
+    if (sockets.empty()) {
+        Error::ThrowError(strError.str().c_str());
+    }
+
+    // 2. Resolve the Target Host ONCE
+    string targetV4 = getIpByHost(host, port, AF_INET);
+    string targetV6 = getIpByHost(host, port, AF_INET6);
+
+    if (targetV4.empty() && targetV6.empty()) {
+        Error::ThrowError(strError.str().c_str());
+    }
+
+    // 3. Iterate existing sockets to find a match
+    for (map<int, vector<Config::Server> >::iterator it = sockets.begin(); it != sockets.end(); ++it) 
+    {
+        string localIp, localPort;
+        getLocalName(it->first, localIp, localPort);
+
+        // Optimization: Resolve local socket name only if ports match
+        if (localPort == port) 
+        {
+            string socketV4 = getIpByHost(localIp, localPort, AF_INET);
+            string socketV6 = getIpByHost(localIp, localPort, AF_INET6);
+
+            // Check if the Target resolves to the same Identity as the Socket
+            if ((!targetV4.empty() && targetV4 == socketV4) || 
+                (!targetV6.empty() && targetV6 == socketV6))
+            {
+                it->second.push_back(srv);
+                Logging::Info() << "Host: " << host << ":" << port 
+                                << " added as virtual server to fd: " << it->first;
+                return;
+            }
+        }
+    }
+    Logging::Warn() << "Bind to address " << host << ":" << port << " failed (Port in use by foreign process)";
 }
 
 Socket::~Socket()

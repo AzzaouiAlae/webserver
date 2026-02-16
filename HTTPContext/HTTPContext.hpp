@@ -21,7 +21,7 @@ public:
 	void activeOutPipe();
 	HTTPContext();
 	~HTTPContext();
-	vector<AST<string> > *servers;
+	vector<Config::Server > *servers;
 	void Handle(AFd *fd);
 	void Handle(Socket *sock);
 	void Handle();
