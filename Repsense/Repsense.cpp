@@ -39,14 +39,17 @@ bool Repsense::HandleResponse()
 	Request &req = router->GetRequest();
 	sock->SetStateByFd(sock->GetFd());
 	Logging::Debug() << "Socket fd: " << sock->GetFd() << " try to Handle Response";
-	if (req.getMethod() == "GET")
+	if (sendListFiles)
+		SendListFilesRepsense();
+	else if (readyToSend)
 	{
+		Logging::Debug() << "Socket fd: " << sock->GetFd() << " Send Get Response";
+		SendGetResponse();
+	}
+	else if (req.getMethod() == "GET")
 		GetMethod();
-	}
 	else
-	{
 		return true;
-	}
 	return del;
 }
 
@@ -102,10 +105,13 @@ string Repsense::CreateDate()
 void Repsense::CreateResponseHeader()
 {
 	responseHeader.str("");
-
-	string serverName = Parsing::GetServerName(*(router->srv));
-	if (serverName == "")
+	string serverName = "";
+	if (router->srv) {
+		serverName = Parsing::GetServerName(*(router->srv));
+	}
+	if (serverName == "") {
 		serverName = Socket::getLocalName(sock->GetFd());
+	}
 	string type = Singleton::GetMime()[Utility::GetFileExtension(filename)];
 
 	responseHeader
@@ -121,20 +127,29 @@ void Repsense::CreateResponseHeader()
 	responseHeaderStr = responseHeader.str();
 }
 
-void Repsense::HandelErrorPages(const string &err)
+void Repsense::HandelErrorPages(const string &err, bool isPath)
 {
-	fileFd = open(err.c_str(), O_RDONLY);
-	if (fileFd == -1)
+	if (isPath)
 	{
-		staticFile = StaticFile::GetFileByName(code.c_str());
-		bodySize = staticFile->GetSize();
+		fileFd = open(err.c_str(), O_RDONLY);
+		if (fileFd == -1) {
+			staticFile = StaticFile::GetFileByName(err.c_str());
+			if (staticFile == NULL)
+				staticFile = StaticFile::GetFileByName("404");
+			bodySize = staticFile->GetSize();
+			ShouldSend = bodySize;
+			filename = ".html";
+			return;
+		}
+		bodySize = Utility::getFileSize(filename);
 		ShouldSend = bodySize;
-		filename = ".html";
 	}
 	else
 	{
-		bodySize = Utility::getFileSize(filename);
+		staticFile = StaticFile::GetFileByName(err.c_str());
+		bodySize = staticFile->GetSize();
 		ShouldSend = bodySize;
+		filename = ".html";
 	}
 	CreateResponseHeader();
 	ShouldSend += responseHeaderStr.length();
@@ -314,17 +329,7 @@ void Repsense::ServeFile()
 
 void Repsense::GetMethod()
 {
-	if (sendListFiles)
-	{
-		SendListFilesRepsense();
-		return;
-	}
-	if (readyToSend)
-	{
-		Logging::Debug() << "Socket fd: " << sock->GetFd() << " Send Get Response";
-		SendGetResponse();
-		return;
-	}
+	
 
 	try {
 		filename = router->CreatePath(servers);
@@ -335,7 +340,7 @@ void Repsense::GetMethod()
 		else
 		{
 			code = router->GetPath().getErrorCode();
-			HandelErrorPages(e.what());
+			HandelErrorPages(e.what(), router->GetPath().isErrorPath());
 		}
 		return;
 	}

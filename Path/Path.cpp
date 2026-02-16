@@ -3,6 +3,7 @@
 Path::Path() : _isExtention(false), _isLocationCGI(false)
 {
 	_isDir = false;
+	_isErrorPath = false;
 }
 
 void Path::initData(AST<string> *node, string path)
@@ -52,6 +53,7 @@ bool Path::IsIndexPath(string requestPath, string locArgPath)
 		return (true);
 	return (false);
 }
+
 string Path::findRootPath(AST<string> &currNode)
 {
 	_locaRootPath = SearchInTree(currNode, "root")[0];
@@ -61,6 +63,7 @@ string Path::findRootPath(AST<string> &currNode)
 
 	return (_locaRootPath);
 }
+
 string Path::FullPath(AST<string> &currNode)
 {
 	string rootPath, locationPath;
@@ -204,15 +207,23 @@ string Path::getCodePath(AST<string> &srvNode, string srvPath, string type, stri
 
 	for (int pos = 0; pos < (int)ch.size(); pos++)
 	{
+		
 		if (ch[pos].GetValue() == type)
 		{
 			vector<string> errorpages = ch[pos].GetArguments();
-			if (!errorpages.empty() && find(errorpages.begin(), errorpages.end(), errorCode) != errorpages.end())
+			if (!errorpages.empty() && find(errorpages.begin(), errorpages.end(), errorCode) != errorpages.end()) {
+				_isErrorPath = true;
 				return (AttachPath(srvPath, errorpages[errorpages.size() - 1]));
+			}
 		}
 	}
-
+	_isErrorPath = false;
 	return (errorCode);
+}
+
+bool Path::isErrorPath()
+{
+	return _isErrorPath;
 }
 
 bool Path::IsDir()
@@ -437,6 +448,7 @@ string Path::getLocationIndex()
 {
 	return (_locaIndex);
 }
+
 string Path::getServerIndex()
 {
 	return (_srvIndex);
@@ -446,6 +458,7 @@ string Path::getServerPath()
 {
 	return (_srvRootPath);
 }
+
 string &Path::getFullPath()
 {
 	return (_FullPath);
@@ -460,6 +473,7 @@ string Path::getExtantion()
 {
 	return (_reqExt);
 }
+
 bool Path::isLocationCGi()
 {
 	return (_isLocationCGI);

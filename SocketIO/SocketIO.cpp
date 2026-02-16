@@ -178,6 +178,17 @@ int SocketIO::SocketToFile(int fileFD, int size)
 	return len;
 }
 
+int SocketIO::SendSocketToPipe(int size)
+{
+	int len = splice(fd, NULL, pipefd[1], NULL, size, 0);
+	status &= ~ePipe1;
+	((HTTPContext *)context)->activeOutPipe();
+	if (len == -1)
+		return -1;
+	pendingInPipe += len;
+	return len;
+}
+
 int SocketIO::SocketToSocketRead(int socket, int size)
 {
 	int len = 0, flag = (eSocket | ePipe0);

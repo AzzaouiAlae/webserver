@@ -35,13 +35,13 @@ public:
 	bool HandleResponse();
 	void CreateResponseHeader();
 	void GetMethod();
-	void HandelErrorPages(const string& err);
+	void HandelErrorPages(const string& err, bool isPath);
+	void SendListFilesStr(const string &str);
 	~Repsense();
 	void GetStaticIndex();
 	void listFiles(string path);
 	void CreateListFilesRepsense();
 	void SendListFilesRepsense();
 	void SendAutoIndex(StaticFile *f);
-	void SendListFilesStr(const string &str);
 	void ServeFile();
 };
