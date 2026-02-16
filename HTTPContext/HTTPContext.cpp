@@ -62,7 +62,7 @@ void HTTPContext::HandleRequest()
 		try {
 			if (err == false) {
 				isComplete = router.GetRequest().isComplete(buf);
-				router.srv = &Config::GetServerName(*servers, router.GetRequest().getServerName());
+				router.srv = &Config::GetServerName(*servers, router.GetRequest().getHost());
 			}
 		} catch (exception &e)  {
 			err = true;
@@ -74,6 +74,7 @@ void HTTPContext::HandleRequest()
 			Logging::Debug() << "Request is : " << router.GetRequest().getMethod() << " " << router.GetRequest().getPath() << "\n"
 			<< router.GetRequest().GetRequest();
 			
+			router.srv = &Config::GetServerName(*servers, router.GetRequest().getHost());
 			
 			router.SetRequestComplete();
 			MulObj->ChangeToEpollOut(sock);
