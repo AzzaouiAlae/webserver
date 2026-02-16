@@ -1,7 +1,6 @@
-SRC = main.cpp Tokenizing/Tokenizing.cpp Parsing/Parsing.cpp Validation/Validation.cpp ErrorHandling/Error.cpp Singleton/Singleton.cpp
-OBJ = main.o Tokenizing/Tokenizing.o Parsing/Parsing.o Validation/Validation.o ErrorHandling/Error.o Singleton/Singleton.o
-CXX = g++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98 
+SRC = main.cpp $(shell find . -name "*.cpp" | grep -v "main" | grep -v ".*Test.cpp")
+OBJ = $(SRC:.cpp=.o)
+CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98 
 NAME = websrv.out
 
 all : $(NAME)

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>408 — Request Timeout</title>
+    <style>
+        :root { --primary: #6366f1; --accent: #06b6d4; --accent2: #8b5cf6; --bg: #030712; --text: #f1f5f9; --text-muted: #94a3b8; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+
+        .container { position: relative; z-index: 1; text-align: center; max-width: 600px; padding: 2rem; animation: fadeIn 0.8s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .error-code { font-size: clamp(6rem, 15vw, 10rem); font-weight: 900; line-height: 1; letter-spacing: -4px; background: linear-gradient(135deg, var(--primary), var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.5rem; }
+        .error-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; }
+        .error-desc { font-size: 1rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 2.5rem; max-width: 460px; margin-left: auto; margin-right: auto; }
+        .divider { width: 60px; height: 3px; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 2px; margin: 0 auto 2rem; }
+        .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.8rem 2rem; border-radius: 12px; font-size: 0.95rem; font-weight: 600; text-decoration: none; color: #fff; background: linear-gradient(135deg, var(--primary), var(--accent2)); box-shadow: 0 4px 24px rgba(99,102,241,0.3); transition: all 0.4s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden; }
+        .btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); transition: left 0.5s; }
+        .btn:hover::before { left: 100%; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 40px rgba(99,102,241,0.5); }
+        .logo { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 3rem; opacity: 0.7; }
+        .logo svg { width: 28px; height: 28px; }
+        .logo span { font-weight: 800; font-size: 1rem; background: linear-gradient(135deg, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .clock { font-size: 3.5rem; margin-bottom: 1.5rem; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="logo"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="50%" stop-color="#06b6d4"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs><polygon points="50,8 92,30 92,70 50,92 8,70 8,30" fill="none" stroke="url(#lg)" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-family="system-ui" font-weight="900" font-size="28" fill="url(#lg)">E</text></svg><span>Enginx</span></div>
+        <div class="clock">⏱️</div>
+        <div class="error-code">408</div>
+        <h1 class="error-title">Request Timeout</h1>
+        <div class="divider"></div>
+        <p class="error-desc">The server timed out waiting for your request. The connection was idle for too long. Please try your request again.</p>
+        <a href="/" class="btn">← Try Again</a>
+    </div>
+
+</body>
+</html>

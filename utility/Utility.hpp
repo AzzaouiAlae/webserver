@@ -19,4 +19,7 @@ public:
 	static bool isStrToTrime(char ch);
 	static void trim(std::string &s, string toTrime);
 	static void Close(int fd);
+	static char HexaToChar(string hex);
+	static bool isHexa(string hex);
+	static bool isHexa(char hex);
 };

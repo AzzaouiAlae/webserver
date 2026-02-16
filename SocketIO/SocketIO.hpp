@@ -20,8 +20,6 @@ class SocketIO : public AFd {
 	static vector<pair<int, int> > pipePool;
 	bool pipeInitialized;
 	int pendingInPipe;
-	int SendBuffToPipe(void *buff, int size);
-	int SendPipeToSock();
 	Routing router;
 	int status;
 	int SendedBuffToPipe;
@@ -31,6 +29,8 @@ public:
 	int pipefd[2];
 	SocketIO(int fd);
     ~SocketIO();
+	int SendBuffToPipe(void *buff, int size);
+	int SendPipeToSock();
 	static int errorNumber;
 	void SetStateByFd(int fd);
 	int Send(void *buff, int size);

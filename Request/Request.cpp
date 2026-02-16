@@ -6,7 +6,7 @@
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/14 04:44:40 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/16 04:07:37 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,9 +147,7 @@ void Request::parsLenTypeCont()
 
 	if (_env.find("CONTENT_TYPE") != _env.end() && _env.find("CONTENT_LENGTH") != _env.end())
 	{
-		if (Utility::strtosize_t(_env["CONTENT_LENGTH"], _content_len))
-			;
-		else
+		if (!Utility::strtosize_t(_env["CONTENT_LENGTH"], _content_len))
 			Error::ThrowError("The Content Length Invalid");
 		_Thereisbody = true;
 	}
@@ -183,7 +181,7 @@ bool Request::ParseHeader()
 		else
 			_env[key] = value;
 	}
-	if (_Parspos == eParsHttpStand && _env["REQUEST_METHOD"] == "POST")
+	if (_Parspos == eParsHttpStand && (_env["REQUEST_METHOD"] == "POST" || _env["REQUEST_METHOD"] == "DELETE"))
 		parsLenTypeCont();
 	if (_Parspos == eParsHttpStand && line == "\r\n")
 	{
@@ -193,17 +191,14 @@ bool Request::ParseHeader()
 	return (false);
 }
 
-bool Request::fillBody()
+void Request::fillBody()
 {
 	if (_Parspos == eParsEnd && _env["REQUEST_METHOD"] == "POST" && _Thereisbody)
 	{
-		_env["Body"] += _requestbuff;
-		if (_env["Body"].size() < _content_len)
-			return (false);
-		else if (_env["Body"].size() > _content_len || _env["Body"].size() > _maxbodysize)
+		_body += _requestbuff;
+		if (_body.size() > _content_len || _body.size() > _maxbodysize)
 			Error::ThrowError("Body Biger Than Expected");
 	}
-	return (true);
 }
 
 bool Request::ParseRequest(string request_buff)
@@ -214,11 +209,7 @@ bool Request::ParseRequest(string request_buff)
 		if (!ParseHeader())
 			return (false);
 	}
-	else
-	{
-		if (!fillBody())
-			return (false);
-	}
+	fillBody();
 	return true;
 }
 
@@ -277,4 +268,14 @@ void Request::setUrlPart(string scriptpath, string pathinfo)
 {
 	_env["SCRIPT_NAME"] = scriptpath;
 	_env["PATH_INFO"] = pathinfo;
+}
+
+bool Request::getthereisbody()
+{
+	return (_Thereisbody);
+}
+
+string& Request::getBody()
+{
+	return (_body);
 }

@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enginx — File Manager</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --accent: #06b6d4;
+            --accent2: #8b5cf6;
+            --bg: #030712;
+            --bg-card: rgba(15, 23, 42, 0.95);
+            --bg-hover: rgba(99, 102, 241, 0.06);
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --border: rgba(99, 102, 241, 0.12);
+            --border-hover: rgba(99, 102, 241, 0.3);
+            --row-hover: rgba(99, 102, 241, 0.04);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ===== BACKGROUND ===== */
+
+        /* ===== NAV ===== */
+        nav {
+            position: sticky; top: 0;
+            padding: 0.8rem 2rem;
+            background: rgba(3, 7, 18, 0.97);
+            border-bottom: 1px solid var(--border);
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-box {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+
+        .logo-box svg {
+            width: 32px; height: 32px;
+            transition: transform 0.4s;
+        }
+
+        .logo-box svg:hover { transform: rotate(-8deg) scale(1.1); }
+
+        .logo-box span {
+            font-weight: 800; font-size: 1.15rem;
+            background: linear-gradient(135deg, #fff, var(--primary-light), var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+
+        .nav-info {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            font-family: 'Consolas', 'SF Mono', monospace;
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== BREADCRUMB ===== */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .breadcrumb a {
+            color: var(--primary-light);
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .breadcrumb a:hover {
+            background: rgba(99,102,241,0.1);
+            color: #fff;
+        }
+
+        .breadcrumb .sep {
+            color: var(--text-dim);
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb .current {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        /* ===== TOOLBAR ===== */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 360px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 0.6rem 1rem 0.6rem 2.5rem;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 0.88rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input::placeholder { color: var(--text-dim); }
+        .search-box input:focus { border-color: var(--primary); }
+
+        .search-icon {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 0.25rem;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.2rem;
+        }
+
+        .view-btn {
+            padding: 0.45rem 0.75rem;
+            border: none;
+            background: transparent;
+            color: var(--text-dim);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .view-btn.active {
+            background: rgba(99,102,241,0.15);
+            color: var(--primary-light);
+        }
+
+        .view-btn:hover:not(.active) { color: var(--text); }
+
+        .file-count {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+        }
+
+        .file-count strong {
+            color: var(--primary-light);
+        }
+
+        /* ===== TABLE VIEW ===== */
+        .file-table {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .file-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .file-table thead th {
+            padding: 0.8rem 1.2rem;
+            text-align: left;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.3s;
+            white-space: nowrap;
+        }
+
+        .file-table thead th:hover { color: var(--primary-light); }
+
+        .file-table thead th .sort-arrow {
+            display: inline-block;
+            margin-left: 0.3rem;
+            font-size: 0.65rem;
+            opacity: 0.4;
+            transition: opacity 0.3s;
+        }
+
+        .file-table thead th:hover .sort-arrow { opacity: 1; }
+
+        .file-table tbody tr {
+            border-bottom: 1px solid rgba(99,102,241,0.06);
+            transition: background 0.25s;
+            cursor: pointer;
+        }
+
+        .file-table tbody tr:last-child { border-bottom: none; }
+        .file-table tbody tr:hover { background: var(--row-hover); }
+
+        .file-table tbody td {
+            padding: 0.65rem 1.2rem;
+            font-size: 0.9rem;
+        }
+
+        .file-name-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .file-name-cell a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .file-name-cell a:hover { color: var(--primary-light); }
+
+        .file-size { color: var(--text-muted); font-family: 'Consolas', 'SF Mono', monospace; font-size: 0.82rem; }
+        .file-date { color: var(--text-dim); font-size: 0.82rem; }
+
+        /* ===== GRID VIEW ===== */
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .grid-item {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.2rem 0.8rem;
+            text-align: center;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+        }
+
+        .grid-item:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-4px);
+            background: var(--bg-hover);
+        }
+
+        .grid-item .grid-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.6rem;
+            display: block;
+            transition: transform 0.3s;
+        }
+
+        .grid-item:hover .grid-icon { transform: scale(1.15); }
+
+        .grid-item .grid-name {
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--text);
+            word-break: break-all;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .grid-item .grid-size {
+            font-size: 0.68rem;
+            color: var(--text-dim);
+            margin-top: 0.3rem;
+            font-family: 'Consolas', 'SF Mono', monospace;
+        }
+
+        /* ===== FILE ICONS ===== */
+        .file-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            transition: transform 0.3s;
+        }
+
+        tr:hover .file-icon { transform: scale(1.1); }
+
+        .icon-folder   { background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(245,158,11,0.1)); }
+        .icon-parent   { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1)); }
+        .icon-html     { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(249,115,22,0.1)); }
+        .icon-css      { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(99,102,241,0.1)); }
+        .icon-js       { background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(234,179,8,0.1)); }
+        .icon-ts       { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.1)); }
+        .icon-py       { background: linear-gradient(135deg, rgba(52,211,153,0.15), rgba(16,185,129,0.1)); }
+        .icon-php      { background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(124,58,237,0.1)); }
+        .icon-rb       { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(220,38,38,0.1)); }
+        .icon-c        { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(37,99,235,0.1)); }
+        .icon-cpp      { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(79,70,229,0.1)); }
+        .icon-h        { background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(109,40,217,0.1)); }
+        .icon-java     { background: linear-gradient(135deg, rgba(249,115,22,0.15), rgba(234,88,12,0.1)); }
+        .icon-go       { background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(8,145,178,0.1)); }
+        .icon-rs       { background: linear-gradient(135deg, rgba(249,115,22,0.15), rgba(194,65,12,0.1)); }
+        .icon-json     { background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(202,138,4,0.1)); }
+        .icon-xml      { background: linear-gradient(135deg, rgba(249,115,22,0.15), rgba(234,88,12,0.1)); }
+        .icon-yaml     { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(185,28,28,0.1)); }
+        .icon-md       { background: linear-gradient(135deg, rgba(148,163,184,0.15), rgba(100,116,139,0.1)); }
+        .icon-txt      { background: linear-gradient(135deg, rgba(148,163,184,0.15), rgba(100,116,139,0.1)); }
+        .icon-pdf      { background: linear-gradient(135deg, rgba(239,68,68,0.15), rgba(185,28,28,0.1)); }
+        .icon-img      { background: linear-gradient(135deg, rgba(52,211,153,0.15), rgba(5,150,105,0.1)); }
+        .icon-video    { background: linear-gradient(135deg, rgba(236,72,153,0.15), rgba(219,39,119,0.1)); }
+        .icon-audio    { background: linear-gradient(135deg, rgba(168,85,247,0.15), rgba(147,51,234,0.1)); }
+        .icon-zip      { background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(161,98,7,0.1)); }
+        .icon-exe      { background: linear-gradient(135deg, rgba(148,163,184,0.15), rgba(71,85,105,0.1)); }
+        .icon-sh       { background: linear-gradient(135deg, rgba(52,211,153,0.15), rgba(16,185,129,0.1)); }
+        .icon-docker   { background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(14,116,144,0.1)); }
+        .icon-git      { background: linear-gradient(135deg, rgba(249,115,22,0.15), rgba(234,88,12,0.1)); }
+        .icon-env      { background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(161,98,7,0.1)); }
+        .icon-make     { background: linear-gradient(135deg, rgba(52,211,153,0.15), rgba(5,150,105,0.1)); }
+        .icon-sql      { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(29,78,216,0.1)); }
+        .icon-conf     { background: linear-gradient(135deg, rgba(148,163,184,0.15), rgba(71,85,105,0.1)); }
+        .icon-lock     { background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(161,98,7,0.1)); }
+        .icon-log      { background: linear-gradient(135deg, rgba(148,163,184,0.15), rgba(71,85,105,0.1)); }
+        .icon-font     { background: linear-gradient(135deg, rgba(236,72,153,0.15), rgba(190,24,93,0.1)); }
+        .icon-svg      { background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(245,158,11,0.1)); }
+        .icon-default  { background: linear-gradient(135deg, rgba(148,163,184,0.1), rgba(71,85,105,0.06)); }
+
+        /* ===== HIDDEN TOGGLE ===== */
+        .hidden { display: none !important; }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-dim);
+        }
+
+        .empty-state .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+        .empty-state p { font-size: 0.95rem; }
+
+        /* ===== FOOTER ===== */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .foot-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .foot-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .foot-brand svg {
+            width: 18px; height: 18px;
+        }
+
+        .foot-brand span {
+            font-weight: 700; font-size: 0.82rem;
+            background: linear-gradient(135deg, #fff, var(--primary-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+
+        .foot-text {
+            color: var(--text-dim);
+            font-size: 0.75rem;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .container { padding: 1.5rem 1rem 3rem; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .search-box { max-width: none; }
+            .file-table thead th:nth-child(3),
+            .file-table tbody td:nth-child(3) { display: none; }
+            .foot-inner { flex-direction: column; gap: 0.5rem; }
+            .file-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+        }
+
+        @media (max-width: 480px) {
+            nav { padding: 0.6rem 1rem; }
+            .file-table thead th:nth-child(2),
+            .file-table tbody td:nth-child(2) { display: none; }
+            .file-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.6rem; }
+            .grid-item { padding: 0.8rem 0.5rem; }
+            .grid-item .grid-icon { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <div class="logo-box">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#6366f1"/>
+                    <stop offset="50%" stop-color="#06b6d4"/>
+                    <stop offset="100%" stop-color="#8b5cf6"/>
+                </linearGradient>
+            </defs>
+            <polygon points="50,8 92,30 92,70 50,92 8,70 8,30" fill="none" stroke="url(#lg)" stroke-width="3"/>
+            <polygon points="50,20 78,35 78,65 50,80 22,65 22,35" fill="none" stroke="url(#lg)" stroke-width="1.5" opacity="0.35"/>
+            <text x="50" y="58" text-anchor="middle" font-family="system-ui" font-weight="900" font-size="28" fill="url(#lg)">E</text>
+        </svg>
+        <span>Enginx</span>
+    </div>
+    <div class="nav-info" id="navPath"></div>
+</nav>
+
+<!-- MAIN -->
+<div class="container">
+
+    <!-- BREADCRUMB -->
+    <div class="breadcrumb" id="breadcrumb"></div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Filter files and folders...">
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;">
+            <div class="file-count" id="fileCount"></div>
+            <div class="view-toggle">
+                <button class="view-btn active" id="listViewBtn" title="List view">☰</button>
+                <button class="view-btn" id="gridViewBtn" title="Grid view">⊞</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div class="file-table" id="listView">
+        <table>
+            <thead>
+                <tr>
+                    <th data-sort="name">Name <span class="sort-arrow">▲</span></th>
+                    <th data-sort="size">Size <span class="sort-arrow">▲</span></th>
+                    <th data-sort="date">Last Modified <span class="sort-arrow">▲</span></th>
+                </tr>
+            </thead>
+            <tbody id="fileListBody"></tbody>
+        </table>
+    </div>
+
+    <!-- GRID VIEW -->
+    <div class="file-grid hidden" id="gridView"></div>
+
+    <!-- EMPTY STATE -->
+    <div class="empty-state hidden" id="emptyState">
+        <div class="empty-icon">📭</div>
+        <p>No files match your search.</p>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+    <div class="foot-inner">
+        <div class="foot-brand">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="flg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#06b6d4"/></linearGradient></defs>
+                <polygon points="50,8 92,30 92,70 50,92 8,70 8,30" fill="none" stroke="url(#flg)" stroke-width="3"/>
+                <text x="50" y="58" text-anchor="middle" font-family="system-ui" font-weight="900" font-size="28" fill="url(#flg)">E</text>
+            </svg>
+            <span>Enginx</span>
+        </div>
+        <div class="foot-text">Enginx Autoindex — Directory Listing</div>
+    </div>
+</footer>
+
+<script>
+(function () {
+    // ===== FILE ICON MAP =====
+    const iconMap = {
+        // Folders
+        folder:     { icon: '📁', cls: 'icon-folder' },
+        parent:     { icon: '🔙', cls: 'icon-parent' },
+
+        // Web
+        html:       { icon: '🌐', cls: 'icon-html' },
+        htm:        { icon: '🌐', cls: 'icon-html' },
+        css:        { icon: '🎨', cls: 'icon-css' },
+        scss:       { icon: '🎨', cls: 'icon-css' },
+        sass:       { icon: '🎨', cls: 'icon-css' },
+        less:       { icon: '🎨', cls: 'icon-css' },
+
+        // JavaScript / TypeScript
+        js:         { icon: '⚡', cls: 'icon-js' },
+        mjs:        { icon: '⚡', cls: 'icon-js' },
+        jsx:        { icon: '⚛️', cls: 'icon-js' },
+        ts:         { icon: '🔷', cls: 'icon-ts' },
+        tsx:        { icon: '🔷', cls: 'icon-ts' },
+
+        // Languages
+        py:         { icon: '🐍', cls: 'icon-py' },
+        php:        { icon: '🐘', cls: 'icon-php' },
+        rb:         { icon: '💎', cls: 'icon-rb' },
+        c:          { icon: '🇨', cls: 'icon-c' },
+        cpp:        { icon: '⚙️', cls: 'icon-cpp' },
+        cc:         { icon: '⚙️', cls: 'icon-cpp' },
+        cxx:        { icon: '⚙️', cls: 'icon-cpp' },
+        h:          { icon: '📋', cls: 'icon-h' },
+        hpp:        { icon: '📋', cls: 'icon-h' },
+        hxx:        { icon: '📋', cls: 'icon-h' },
+        java:       { icon: '☕', cls: 'icon-java' },
+        class:      { icon: '☕', cls: 'icon-java' },
+        jar:        { icon: '☕', cls: 'icon-java' },
+        go:         { icon: '🔵', cls: 'icon-go' },
+        rs:         { icon: '🦀', cls: 'icon-rs' },
+        swift:      { icon: '🐦', cls: 'icon-java' },
+        kt:         { icon: '🟣', cls: 'icon-cpp' },
+        lua:        { icon: '🌙', cls: 'icon-py' },
+        pl:         { icon: '🐪', cls: 'icon-py' },
+        r:          { icon: '📊', cls: 'icon-c' },
+
+        // Data / Config
+        json:       { icon: '📦', cls: 'icon-json' },
+        xml:        { icon: '📄', cls: 'icon-xml' },
+        yaml:       { icon: '⚙️', cls: 'icon-yaml' },
+        yml:        { icon: '⚙️', cls: 'icon-yaml' },
+        toml:       { icon: '⚙️', cls: 'icon-yaml' },
+        ini:        { icon: '⚙️', cls: 'icon-conf' },
+        conf:       { icon: '⚙️', cls: 'icon-conf' },
+        cfg:        { icon: '⚙️', cls: 'icon-conf' },
+        env:        { icon: '🔑', cls: 'icon-env' },
+        csv:        { icon: '📊', cls: 'icon-json' },
+
+        // Documents
+        md:         { icon: '📝', cls: 'icon-md' },
+        markdown:   { icon: '📝', cls: 'icon-md' },
+        txt:        { icon: '📄', cls: 'icon-txt' },
+        rtf:        { icon: '📄', cls: 'icon-txt' },
+        pdf:        { icon: '📕', cls: 'icon-pdf' },
+        doc:        { icon: '📘', cls: 'icon-pdf' },
+        docx:       { icon: '📘', cls: 'icon-pdf' },
+        xls:        { icon: '📗', cls: 'icon-py' },
+        xlsx:       { icon: '📗', cls: 'icon-py' },
+        ppt:        { icon: '📙', cls: 'icon-java' },
+        pptx:       { icon: '📙', cls: 'icon-java' },
+
+        // Images
+        png:        { icon: '🖼️', cls: 'icon-img' },
+        jpg:        { icon: '🖼️', cls: 'icon-img' },
+        jpeg:       { icon: '🖼️', cls: 'icon-img' },
+        gif:        { icon: '🖼️', cls: 'icon-img' },
+        bmp:        { icon: '🖼️', cls: 'icon-img' },
+        webp:       { icon: '🖼️', cls: 'icon-img' },
+        ico:        { icon: '🖼️', cls: 'icon-img' },
+        svg:        { icon: '🔶', cls: 'icon-svg' },
+        tiff:       { icon: '🖼️', cls: 'icon-img' },
+
+        // Video
+        mp4:        { icon: '🎬', cls: 'icon-video' },
+        mkv:        { icon: '🎬', cls: 'icon-video' },
+        avi:        { icon: '🎬', cls: 'icon-video' },
+        mov:        { icon: '🎬', cls: 'icon-video' },
+        wmv:        { icon: '🎬', cls: 'icon-video' },
+        webm:       { icon: '🎬', cls: 'icon-video' },
+        flv:        { icon: '🎬', cls: 'icon-video' },
+
+        // Audio
+        mp3:        { icon: '🎵', cls: 'icon-audio' },
+        wav:        { icon: '🎵', cls: 'icon-audio' },
+        ogg:        { icon: '🎵', cls: 'icon-audio' },
+        flac:       { icon: '🎵', cls: 'icon-audio' },
+        aac:        { icon: '🎵', cls: 'icon-audio' },
+        m4a:        { icon: '🎵', cls: 'icon-audio' },
+
+        // Archives
+        zip:        { icon: '🗜️', cls: 'icon-zip' },
+        tar:        { icon: '🗜️', cls: 'icon-zip' },
+        gz:         { icon: '🗜️', cls: 'icon-zip' },
+        bz2:        { icon: '🗜️', cls: 'icon-zip' },
+        xz:         { icon: '🗜️', cls: 'icon-zip' },
+        rar:        { icon: '🗜️', cls: 'icon-zip' },
+        '7z':       { icon: '🗜️', cls: 'icon-zip' },
+        deb:        { icon: '📦', cls: 'icon-zip' },
+        rpm:        { icon: '📦', cls: 'icon-zip' },
+
+        // Executables / Binaries
+        exe:        { icon: '⬛', cls: 'icon-exe' },
+        out:        { icon: '⬛', cls: 'icon-exe' },
+        bin:        { icon: '⬛', cls: 'icon-exe' },
+        o:          { icon: '⬛', cls: 'icon-exe' },
+        a:          { icon: '📚', cls: 'icon-exe' },
+        so:         { icon: '🔗', cls: 'icon-exe' },
+        dll:        { icon: '🔗', cls: 'icon-exe' },
+
+        // Shell / Scripts
+        sh:         { icon: '🐚', cls: 'icon-sh' },
+        bash:       { icon: '🐚', cls: 'icon-sh' },
+        zsh:        { icon: '🐚', cls: 'icon-sh' },
+        fish:       { icon: '🐚', cls: 'icon-sh' },
+        bat:        { icon: '🐚', cls: 'icon-sh' },
+        ps1:        { icon: '🐚', cls: 'icon-sh' },
+
+        // DevOps / Build
+        Dockerfile: { icon: '🐳', cls: 'icon-docker' },
+        Makefile:   { icon: '🔨', cls: 'icon-make' },
+        CMakeLists: { icon: '🔨', cls: 'icon-make' },
+        Vagrantfile:{ icon: '📦', cls: 'icon-docker' },
+
+        // Database
+        sql:        { icon: '🗃️', cls: 'icon-sql' },
+        db:         { icon: '🗃️', cls: 'icon-sql' },
+        sqlite:     { icon: '🗃️', cls: 'icon-sql' },
+
+        // Git
+        gitignore:  { icon: '🙈', cls: 'icon-git' },
+        gitmodules: { icon: '🔗', cls: 'icon-git' },
+        gitattributes: { icon: '⚙️', cls: 'icon-git' },
+
+        // Lock files
+        lock:       { icon: '🔒', cls: 'icon-lock' },
+
+        // Logs
+        log:        { icon: '📋', cls: 'icon-log' },
+
+        // Fonts
+        ttf:        { icon: '🔤', cls: 'icon-font' },
+        otf:        { icon: '🔤', cls: 'icon-font' },
+        woff:       { icon: '🔤', cls: 'icon-font' },
+        woff2:      { icon: '🔤', cls: 'icon-font' },
+        eot:        { icon: '🔤', cls: 'icon-font' },
+
+        // Misc
+        LICENSE:    { icon: '📜', cls: 'icon-txt' },
+        README:     { icon: '📖', cls: 'icon-md' },
+    };
+
+    function getFileIcon(name, isDir) {
+        if (isDir) return iconMap.folder;
+        if (name === '..') return iconMap.parent;
+
+        // Check exact filename matches first
+        const baseName = name.split('/').pop();
+        if (iconMap[baseName]) return iconMap[baseName];
+
+        // Check by extension
+        const parts = baseName.split('.');
+        if (parts.length > 1) {
+            const ext = parts.pop().toLowerCase();
+            if (iconMap[ext]) return iconMap[ext];
+        }
+
+        return { icon: '📄', cls: 'icon-default' };
+    }
+
+    function formatSize(bytes) {
+        if (bytes === 0 || bytes === '-') return '—';
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        let i = 0;
+        let size = typeof bytes === 'number' ? bytes : parseInt(bytes);
+        if (isNaN(size)) return '—';
+        while (size >= 1024 && i < units.length - 1) { size /= 1024; i++; }
+        return size.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+    }
+
+    // ===== DEMO DATA (replace with server-generated data) =====
+    // Your C++ server should replace this array with actual directory contents.
+    // Each entry: { name, href, isDir, size (bytes or '-'), date }
+    const FILES = [
+        { name: '..', href: '../', isDir: true, size: '-', date: '' },
+        { name: 'css', href: 'css/', isDir: true, size: '-', date: '2026-02-12 14:30' },
+        { name: 'js', href: 'js/', isDir: true, size: '-', date: '2026-02-13 09:15' },
+        { name: 'images', href: 'images/', isDir: true, size: '-', date: '2026-02-10 18:00' },
+        { name: 'cgi-bin', href: 'cgi-bin/', isDir: true, size: '-', date: '2026-02-11 22:45' },
+        { name: 'uploads', href: 'uploads/', isDir: true, size: '-', date: '2026-02-14 08:00' },
+        { name: 'index.html', href: 'index.html', isDir: false, size: 4521, date: '2026-02-14 10:20' },
+        { name: 'style.css', href: 'style.css', isDir: false, size: 12800, date: '2026-02-13 16:45' },
+        { name: 'app.js', href: 'app.js', isDir: false, size: 34200, date: '2026-02-13 17:30' },
+        { name: 'main.cpp', href: 'main.cpp', isDir: false, size: 1184, date: '2026-02-11 11:22' },
+        { name: 'Headers.hpp', href: 'Headers.hpp', isDir: false, size: 1095, date: '2026-02-10 09:00' },
+        { name: 'server.py', href: 'server.py', isDir: false, size: 8420, date: '2026-02-12 14:10' },
+        { name: 'handler.php', href: 'handler.php', isDir: false, size: 5630, date: '2026-02-09 20:15' },
+        { name: 'Makefile', href: 'Makefile', isDir: false, size: 500, date: '2026-02-08 12:00' },
+        { name: 'Dockerfile', href: 'Dockerfile', isDir: false, size: 340, date: '2026-02-07 10:30' },
+        { name: 'README.md', href: 'README.md', isDir: false, size: 2500, date: '2026-02-14 09:00' },
+        { name: 'config.json', href: 'config.json', isDir: false, size: 890, date: '2026-02-06 15:40' },
+        { name: 'default.conf', href: 'default.conf', isDir: false, size: 620, date: '2026-02-05 11:55' },
+        { name: 'database.sql', href: 'database.sql', isDir: false, size: 45000, date: '2026-02-04 18:20' },
+        { name: '.gitignore', href: '.gitignore', isDir: false, size: 488, date: '2026-02-03 08:00' },
+        { name: '.env', href: '.env', isDir: false, size: 120, date: '2026-02-02 09:30' },
+        { name: 'deploy.sh', href: 'deploy.sh', isDir: false, size: 780, date: '2026-02-01 14:00' },
+        { name: 'logo.svg', href: 'logo.svg', isDir: false, size: 3200, date: '2026-01-30 16:10' },
+        { name: 'photo.jpg', href: 'photo.jpg', isDir: false, size: 245000, date: '2026-01-28 12:45' },
+        { name: 'video.mp4', href: 'video.mp4', isDir: false, size: 15400000, date: '2026-01-25 20:00' },
+        { name: 'song.mp3', href: 'song.mp3', isDir: false, size: 4800000, date: '2026-01-22 10:30' },
+        { name: 'archive.tar.gz', href: 'archive.tar.gz', isDir: false, size: 8900000, date: '2026-01-20 08:15' },
+        { name: 'report.pdf', href: 'report.pdf', isDir: false, size: 1200000, date: '2026-01-18 17:00' },
+        { name: 'websrv.out', href: 'websrv.out', isDir: false, size: 98000, date: '2026-02-14 11:00' },
+        { name: 'data.yaml', href: 'data.yaml', isDir: false, size: 1560, date: '2026-01-15 13:20' },
+        { name: 'font.woff2', href: 'font.woff2', isDir: false, size: 32000, date: '2026-01-12 09:45' },
+        { name: 'package-lock.json', href: 'package-lock.json', isDir: false, size: 520000, date: '2026-01-10 07:30' },
+        { name: 'server.log', href: 'server.log', isDir: false, size: 89000, date: '2026-02-14 12:00' },
+        { name: 'utils.go', href: 'utils.go', isDir: false, size: 4100, date: '2026-01-08 11:10' },
+        { name: 'lib.rs', href: 'lib.rs', isDir: false, size: 6700, date: '2026-01-06 14:50' },
+        { name: 'App.tsx', href: 'App.tsx', isDir: false, size: 3400, date: '2026-01-05 16:30' },
+        { name: 'routes.rb', href: 'routes.rb', isDir: false, size: 2100, date: '2026-01-04 09:00' },
+        { name: 'Main.java', href: 'Main.java', isDir: false, size: 5500, date: '2026-01-03 13:40' },
+    ];
+
+    const CURRENT_PATH = '/var/www/html';
+
+    // ===== RENDER =====
+    const listBody = document.getElementById('fileListBody');
+    const gridView = document.getElementById('gridView');
+    const fileCount = document.getElementById('fileCount');
+    const navPath = document.getElementById('navPath');
+    const breadcrumb = document.getElementById('breadcrumb');
+
+    navPath.textContent = CURRENT_PATH;
+
+    // Breadcrumb
+    const pathParts = CURRENT_PATH.split('/').filter(Boolean);
+    let bcHTML = '<a href="/">/</a>';
+    let cumPath = '/';
+    pathParts.forEach((p, i) => {
+        cumPath += p + '/';
+        if (i === pathParts.length - 1) {
+            bcHTML += `<span class="sep">›</span><span class="current">${p}</span>`;
+        } else {
+            bcHTML += `<span class="sep">›</span><a href="${cumPath}">${p}</a>`;
+        }
+    });
+    breadcrumb.innerHTML = bcHTML;
+
+    let currentFiles = [...FILES];
+
+    function render(files) {
+        // Count
+        const dirs = files.filter(f => f.isDir && f.name !== '..').length;
+        const fls = files.filter(f => !f.isDir).length;
+        fileCount.innerHTML = `<strong>${dirs}</strong> folders, <strong>${fls}</strong> files`;
+
+        // List view
+        listBody.innerHTML = '';
+        files.forEach(f => {
+            const ic = getFileIcon(f.name, f.isDir);
+            const tr = document.createElement('tr');
+            tr.onclick = () => window.location.href = f.href;
+            tr.innerHTML = `
+                <td><div class="file-name-cell"><div class="file-icon ${ic.cls}">${ic.icon}</div><a href="${f.href}">${f.name}${f.isDir && f.name !== '..' ? '/' : ''}</a></div></td>
+                <td class="file-size">${f.isDir ? '—' : formatSize(f.size)}</td>
+                <td class="file-date">${f.date || '—'}</td>
+            `;
+            listBody.appendChild(tr);
+        });
+
+        // Grid view
+        gridView.innerHTML = '';
+        files.forEach(f => {
+            const ic = getFileIcon(f.name, f.isDir);
+            const a = document.createElement('a');
+            a.className = 'grid-item';
+            a.href = f.href;
+            a.innerHTML = `
+                <span class="grid-icon">${ic.icon}</span>
+                <div class="grid-name">${f.name}${f.isDir && f.name !== '..' ? '/' : ''}</div>
+                <div class="grid-size">${f.isDir ? 'Folder' : formatSize(f.size)}</div>
+            `;
+            gridView.appendChild(a);
+        });
+
+        // Empty state
+        document.getElementById('emptyState').classList.toggle('hidden', files.length > 0);
+        document.getElementById('listView').classList.toggle('hidden', files.length === 0 || gridView.classList.contains('hidden') === false && listBody.parentElement.parentElement.classList.contains('hidden'));
+    }
+
+    render(currentFiles);
+
+    // ===== SEARCH =====
+    document.getElementById('searchInput').addEventListener('input', function () {
+        const q = this.value.toLowerCase();
+        const filtered = FILES.filter(f => f.name.toLowerCase().includes(q));
+        render(filtered);
+    });
+
+    // ===== VIEW TOGGLE =====
+    const listViewEl = document.getElementById('listView');
+    const gridViewEl = document.getElementById('gridView');
+    const listBtn = document.getElementById('listViewBtn');
+    const gridBtn = document.getElementById('gridViewBtn');
+
+    listBtn.addEventListener('click', () => {
+        listViewEl.classList.remove('hidden');
+        gridViewEl.classList.add('hidden');
+        listBtn.classList.add('active');
+        gridBtn.classList.remove('active');
+    });
+
+    gridBtn.addEventListener('click', () => {
+        gridViewEl.classList.remove('hidden');
+        listViewEl.classList.add('hidden');
+        gridBtn.classList.add('active');
+        listBtn.classList.remove('active');
+    });
+
+    // ===== SORT =====
+    document.querySelectorAll('[data-sort]').forEach(th => {
+        let asc = true;
+        th.addEventListener('click', () => {
+            const key = th.dataset.sort;
+            currentFiles.sort((a, b) => {
+                // Dirs always first
+                if (a.name === '..') return -1;
+                if (b.name === '..') return 1;
+                if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
+
+                let va, vb;
+                if (key === 'name') { va = a.name.toLowerCase(); vb = b.name.toLowerCase(); }
+                else if (key === 'size') { va = typeof a.size === 'number' ? a.size : -1; vb = typeof b.size === 'number' ? b.size : -1; }
+                else { va = a.date || ''; vb = b.date || ''; }
+
+                if (va < vb) return asc ? -1 : 1;
+                if (va > vb) return asc ? 1 : -1;
+                return 0;
+            });
+            asc = !asc;
+            render(currentFiles);
+        });
+    });
+
+})();
+</script>
+</body>
+</html>
