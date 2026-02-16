@@ -36,7 +36,19 @@ bool Repsense::HandleResponse()
 {
 	Request &req = router->GetRequest();
 	sock->SetStateByFd(sock->GetFd());
+	string method = req.getMethod();
 	Logging::Debug() << "Socket fd: " << sock->GetFd() << " try to Handle Response";
+	
+	if (router->srv->allowMethodExists && !readyToSend) {
+		vector<string>::iterator start , end;
+		start = router->srv->allowMethods.begin();
+		end = router->srv->allowMethods.end();
+		if (find(start, end, method) == end) {
+			if (method == "GET" || method == "POST" || method == "DELETE") {
+				HandelErrorPages("405");
+			}
+		}
+	}
 	if (sendListFiles)
 		SendListFilesRepsense();
 	else if (readyToSend)
@@ -359,8 +371,6 @@ void Repsense::GetMethod()
 		GetStaticIndex();
 	}
 }
-
-// Repsense.cpp
 
 void Repsense::SendRedirection()
 {
