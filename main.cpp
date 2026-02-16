@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 		Validation valid(token.get_tokens());
 		valid.CheckValidation();
 		Logging::Debug() << "Validation and parsing complete";
-
+		
 		Logging::Debug() << "The main loop start";
 		Multiplexer m;
 		m.MainLoop();

@@ -6,6 +6,7 @@
 
 class Repsense 
 {
+	static map<string, string> statusMap;
 	stringstream responseHeader;
 	string responseHeaderStr;
 	StaticFile *staticFile;
@@ -24,18 +25,18 @@ class Repsense
 	int targetToSend;
 	int sent;
 	Routing *router;
-
 	SocketIO *sock;
-	vector<AST<string> > *servers;
+	static void InitStatusMap();
+
 public:
 	Repsense();
-	void Init(SocketIO *sock, vector<AST<string> > *servers, Routing *router);
+	void Init(SocketIO *sock, Routing *router);
 	string CreateDate();
 	void SendGetResponse();
 	bool HandleResponse();
 	void CreateResponseHeader();
 	void GetMethod();
-	void HandelErrorPages(const string& err, bool isPath);
+	void HandelErrorPages(const string& err);
 	void SendListFilesStr(const string &str);
 	~Repsense();
 	void GetStaticIndex();

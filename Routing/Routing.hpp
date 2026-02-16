@@ -9,12 +9,12 @@ class Routing
 	Request request;
 	bool RequestComplete;
 public:
-	AST<string> *srv;
+	Config::Server *srv;
 	Request &GetRequest();
 	Path &GetPath();
 	Routing();
 	bool isRequestComplete();
 	void SetRequestComplete();
-	string CreatePath(vector<AST<string> > *servers);
+	string CreatePath(Config::Server *srv);
 };
 

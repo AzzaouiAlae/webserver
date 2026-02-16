@@ -1,149 +1,189 @@
-# include "../Headers.hpp"
+#include "../Headers.hpp"
 #include "../Singleton/Singleton.hpp"
+#include "../Socket/Socket.hpp"
 
-AST<std::string>* Parsing::currentServer;
-AST<std::string>* Parsing::currentLocation;
-AST<std::string>* Parsing::currentDirective;
-std::vector<std::string>* Parsing::currentDirecAgs;
+AST<std::string> *Parsing::currentServer;
+AST<std::string> *Parsing::currentLocation;
+AST<std::string> *Parsing::currentDirective;
+std::vector<std::string> *Parsing::currentDirecAgs;
 
 void Parsing::AddServer()
 {
-	AST<std::string>& root = Singleton::GetASTroot();
+	AST<std::string> &root = Singleton::GetASTroot();
 
 	root.AddChild("server");
 	int idx = root.GetChildren().size() - 1;
 	currentServer = &((root.GetChildren())[idx]);
 }
 
-void Parsing::AddLocation(AST<std::string>& server)
+void Parsing::AddLocation(AST<std::string> &server)
 {
 	server.AddChild("location");
 	int idx = server.GetChildren().size() - 1;
 	currentLocation = &((server.GetChildren())[idx]);
 }
 
-void Parsing::AddDirective(AST<std::string>& node, std::string value)
+void Parsing::AddDirective(AST<std::string> &node, std::string value)
 {
 	node.AddChild(value);
 	int idx = node.GetChildren().size() - 1;
 	currentDirective = &((node.GetChildren())[idx]);
 }
 
-void Parsing::AddArg(AST<std::string>& node, std::string arg)
+void Parsing::AddArg(AST<std::string> &node, std::string arg)
 {
 	node.AddArgument(arg);
 }
 
-void Parsing::GetHosts(vector<string > &hosts, vector<AST<string> > &srvChildren)
+void Parsing::FillConf()
 {
-	for(int i = 0; i < (int)srvChildren.size(); i++)
-	{
-		if (srvChildren[i].GetValue() == "listen" && srvChildren[i].GetArguments().size() > 0)
-		{
-			string s = (srvChildren[i].GetArguments())[0];
-			hosts.push_back(s);
-		}
-	}
-}
+	Config &conf = Singleton::GetConf();
 
-bool Parsing::IsduplicatedListen(string &host, vector<AST<string> > &srvChildren)
-{
-	for(int i = 0; i < (int)srvChildren.size(); i++)
-	{
-		int size = srvChildren[i].GetArguments().size();
-		string val = srvChildren[i].GetValue();
-		if (val == "listen" && size > 0)
-		{
-			string s = (srvChildren[i].GetArguments())[0];
-			if (s == host)
-				return true;
-		}
-	}
-	return false;
-}
-
-string Parsing::GetServerName(AST<string>& server)
-{
-	string name = "";
-	vector<AST<string> > &children = server.GetChildren();
-	for(int i = 0; i < (int)children.size(); i++)
-	{
-		AST<string> &childe = children[i];
-		if (childe.GetValue() != "server_name")
-			continue;
-		if (childe.GetArguments().size() == 0)
-			continue;
-		name = (childe.GetArguments())[0];
-		break;
-	}
-	return name;
-}
-
-AST<string>* Parsing::GetServerByName(const string &srvName, int &start, int end)
-{
 	vector<AST<string> > &servers = Singleton::GetASTroot().GetChildren();
-	string sName;
-	for( ; start < (int)servers.size() - end; start++)
+	for (int i = 0; i < (int)servers.size(); i++)
 	{
-		sName = GetServerName(servers[start]);
-		if (sName == srvName)
-			return &(servers[start]);
+		vector<AST<string> > &ch = (servers[i]).GetChildren();
+		Config::Server srv;
+		for (int i = 0; i < (int)ch.size(); i++)
+		{
+			vector<string> &args = ch[i].GetArguments();
+			string val = ch[i].GetValue();
+			if (val == "listen")
+			{
+				
+				if (find(srv.listen.begin(), srv.listen.end(), args[0]) != srv.listen.end()) {
+					Error::ThrowError("The same server has duplicate host and port");
+				}
+				srv.listen.push_back(args[0]);
+				pair<string, string> p;
+				parseListen(args[0], p.second, p.first);
+				srv.hosts.push_back(p);
+			}	
+			else if (val == "error_page")
+			{
+				srv.errorPages[args[0]] = args[1];
+			}
+			else if (val == "server_name")
+			{
+				srv.serverName = args[0];
+			}
+			else if (val == "index")
+			{
+				for (int i = 0; i < (int)args.size(); i++)
+				{
+					srv.index.push_back(args[i]);
+				}
+			}
+			else if (val == "root")
+			{
+				srv.root = args[0];
+			}
+			else if (val == "autoindex")
+			{
+				srv.autoindex = args[0] == "on";
+			}
+			else if (val == "client_max_body_size")
+			{
+				srv.clientMaxBodySize = atoi((args[0]).c_str());
+			}
+			else if (val == "allow_methods")
+			{
+				srv.allowMethodExists = true;
+				for (int i = 0; i < (int)args.size(); i++)
+				{
+					srv.allowMethods.push_back(args[i]);
+				}
+			}
+			else if (val == "location")
+			{
+				Config::Server::Location loc;
+				loc.path = args[0];
+				parseLocation(ch[i], loc);
+				srv.Locations.push_back(loc);
+			}
+			else
+			{
+				Logging::Debug() << "value: " << val;
+				Error::ThrowError("Some invalid value");
+			}
+		}
+		conf.Servers.push_back(srv);
 	}
-	return NULL;
+	conf.listenToAllHosts();
 }
 
-bool Parsing::IsDuplicatedServer(const string &srvName, const string &host)
+void Parsing::parseLocation(AST<string> &location, Config::Server::Location &loc)
 {
-	int start = 0;
-	while(start < (int)Singleton::GetASTroot().GetChildren().size() - 1)
+	vector<AST<string> > &ch = location.GetChildren();
+	Utility::parseBySep(loc.parsedPath, loc.path, "/");
+
+	for (int i = 0; i < (int)ch.size(); i++)
 	{
-		AST<string>* server = GetServerByName(srvName, start, 1);
-		if (server == NULL)
-			return false;
-		if (IsduplicatedListen((string &)host, server->GetChildren()))
-			return true;
-		start++;
+		vector<string> &args = ch[i].GetArguments();
+		string val = ch[i].GetValue();
+
+		if (val == "index")
+		{
+			for (int i = 0; i < (int)args.size(); i++)
+			{
+				loc.index.push_back(args[i]);
+			}
+		}
+		else if (val == "allow_methods")
+		{
+			loc.allowMethodExists = true;
+			for (int i = 0; i < (int)args.size(); i++)
+			{
+				loc.allowMethods.push_back(args[i]);
+			}
+		}
+		else if (val == "root")
+		{
+			loc.root = args[0];
+		}
+		else if (val == "cgi_pass")
+		{
+			loc.cgiPassExt = args[0];
+			loc.cgiPassPath = args[1];
+		}
+		else if (val == "return")
+		{
+			loc.redirectionCode = args[0];
+			loc.redirectionURI = args[1];
+		}
+		else
+		{
+			Logging::Debug() << "value: " << val;
+			Error::ThrowError("Some invalid value");
+		}
 	}
-	return false;
 }
 
-AST<string>* Parsing::GetServerByName(const string &srvName, int &start, vector<AST<string> > &srvs)
+void Parsing::parseListen(string str, string &port, string &host)
 {
-	string sName;
+	const char *s1 = strrchr(str.c_str(), ':');
+	bool isHost = false;
 
-	for( ; start < (int)srvs.size(); start++)
+	if (s1 != NULL)
 	{
-		sName = GetServerName(srvs[start]);
-		if (sName == srvName) 
-			return &(srvs[start]);
+		host = str.c_str();
+		host = host.substr(0, (s1 - str.c_str()));
+		port = s1 + 1;
+		return;
 	}
-	return NULL;
+	for(int i = 0; i < (int)str.length(); i++)
+	{
+		if(isdigit(str[i]) == false)
+		{
+			isHost = true;
+			break;
+		}
+	}
+	if (isHost) {
+		host = str;
+		port = "80";
+	}
+	else
+		port = str;
 }
 
-bool Parsing::IsDuplicatedServer(const string &srvName, const string &host, vector<AST<string> > &srvs)
-{
-	int start = 0;
-	while(start < (int)srvs.size())
-	{
-		AST<string>* server = GetServerByName(srvName, start, srvs);
-		if (server == NULL)
-			return false;
-		if (IsduplicatedListen((string &)host, server->GetChildren()))
-			return true;
-		start++;
-	}
-	return false;
-}
-
-AST<string>* Parsing::GetServerByHost(vector<AST<string> > &srvs, const string &host)
-{
-	vector<string> hosts;
-	for(int i = 0; i < (int)srvs.size(); i++)
-	{
-		hosts.clear();
-		GetHosts(hosts, srvs[i].GetChildren());
-		if (host.find(host) != host.npos)
-			return &(srvs[i]);
-	}
-	return &(srvs[0]);
-}
