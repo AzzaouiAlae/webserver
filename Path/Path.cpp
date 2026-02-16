@@ -7,6 +7,7 @@ Path::Path()
 		_isFile(false),
 		_isCGI(false),
 		_found(false),
+		_isRedir(false),
 		_hasPermission(false),
 		matchedLocationIndex(-1)
 {
@@ -87,6 +88,22 @@ void Path::_setRootAndCGI(Config::Server &srv)
     }
 }
 
+void Path::_handleRedirection(Config::Server &srv)
+{
+    // If no location matched, there can't be a location-based redirection
+    if (matchedLocationIndex == -1) return;
+
+    const Config::Server::Location &loc = srv.Locations[matchedLocationIndex];
+
+    // Check if the location block has a "return" directive
+    if (!loc.redirectionCode.empty()) 
+    {
+        _isRedir = true;
+        _redirCode = loc.redirectionCode;
+        _redirPath = loc.redirectionURI;
+    }
+}
+
 void Path::_handleDirectoryIndex(Config::Server &srv)
 {
     // Get the list of indices (e.g., "index.html", "index.php")
@@ -123,20 +140,25 @@ void Path::CreatePath(Config::Server &srv, const string &reqUrl)
     // 1. Find the best matching Location block
     matchedLocationIndex = Config::GetLocationIndex(srv, reqUrl);
 
-    // 2. Set the Root and Check for CGI (Helper 1)
+    // 2. NEW: Check for Redirection
+    _handleRedirection(srv);
+    if (_isRedir) {
+        return; // STOP HERE! No need to look for files on disk.
+    }
+
+    // 3. Set the Root and Check for CGI (Helper 1)
     _setRootAndCGI(srv);
 
-    // 3. Construct the Basic Full Path
+    // 4. Construct the Basic Full Path
     _fullPath = joinPath(_root, reqUrl);
     
-    // 4. Check Existence and Permissions
+    // 5. Check Existence and Permissions
     checkFileExistence(_fullPath);
     if (_found) {
         checkPermissions(_fullPath);
     }
 
-    // 5. Handle Directory Indices if needed (Helper 2)
-    // Only look for index if it is a directory AND we have permission to read it
+    // 6. Handle Directory Indices if needed (Helper 2)
     if (_isDir && _hasPermission) 
     {
         _handleDirectoryIndex(srv);
@@ -160,3 +182,6 @@ bool Path::isDirectory() const { return _isDir; }
 bool Path::isFile() const { return _isFile; }
 bool Path::isFound() const { return _found; }
 bool Path::hasPermission() const { return _hasPermission; }
+bool Path::isRedirection() const { return _isRedir; }
+string Path::getRedirCode() const { return _redirCode; }
+string Path::getRedirPath() const { return _redirPath; }

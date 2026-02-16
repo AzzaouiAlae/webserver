@@ -338,7 +338,10 @@ void Repsense::GetMethod()
 	Logging::Debug() << "Socket fd: " << sock->GetFd() << 
 	" try to send file " << filename;
 
-	if (router->GetPath().isFound() == false) {
+	if (router->GetPath().isRedirection()) {
+		SendRedirection();
+	}
+	else if (router->GetPath().isFound() == false) {
 		HandelErrorPages("404");
 	}
 	else if (router->GetPath().hasPermission() == false) {
@@ -355,6 +358,29 @@ void Repsense::GetMethod()
 	else if (router->GetPath().emptyRoot() && router->GetRequest().getPath() == "/") {
 		GetStaticIndex();
 	}
+}
+
+// Repsense.cpp
+
+void Repsense::SendRedirection()
+{
+    Path &path = router->GetPath(); 
+    string redirCode = path.getRedirCode();
+    string redirLoc = path.getRedirPath();
+
+    responseHeader << "HTTP/1.1 " << redirCode << " " << statusMap[redirCode] << "\r\n";
+    responseHeader << "Location: " << redirLoc << "\r\n";
+    responseHeader << "Date: " << CreateDate() << "\r\n";
+    responseHeader << "Content-Length: 0\r\n";
+    responseHeader << "Connection: close\r\n";
+    responseHeader << "\r\n";
+
+    responseHeaderStr = responseHeader.str();
+    Logging::Debug() << "Sending Redirection: " << redirCode << " to " << redirLoc;
+    
+    ShouldSend = responseHeaderStr.length();
+	readyToSend = true;
+	SendGetResponse();
 }
 
 Repsense::~Repsense()

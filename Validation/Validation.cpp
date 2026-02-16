@@ -349,10 +349,16 @@ void Validation::IsValidReturn()
 	_idx++;
 
 	if (!IsSeparator())
+	{
+		Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
 		_idx++;
+	}
 
 	if (_data[_idx] == ";")
 		_idx++;
+	else {
+		Error::ThrowError("Invalid Syntax : ';' is missing");
+	}
 }
 
 //    ERRORPAGE

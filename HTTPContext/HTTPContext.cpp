@@ -48,8 +48,7 @@ void HTTPContext::HandleRequest()
 	int len = 0;
 	bool isComplete;
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	if (buf == NULL)
-	{
+	if (buf == NULL) {
 		buf = (char *)calloc(1, BUF_SIZE + 1);
 	}
 	len = read(sock->GetFd(), buf, BUF_SIZE);
@@ -63,6 +62,7 @@ void HTTPContext::HandleRequest()
 		try {
 			if (err == false) {
 				isComplete = router.GetRequest().isComplete(buf);
+				router.srv = &Config::GetServerName(*servers, router.GetRequest().getServerName());
 			}
 		} catch (exception &e)  {
 			err = true;
@@ -74,7 +74,6 @@ void HTTPContext::HandleRequest()
 			Logging::Debug() << "Request is : " << router.GetRequest().getMethod() << " " << router.GetRequest().getPath() << "\n"
 			<< router.GetRequest().GetRequest();
 			
-			router.srv = &Config::GetServerName(*servers, router.GetRequest().getPath());
 			
 			router.SetRequestComplete();
 			MulObj->ChangeToEpollOut(sock);
