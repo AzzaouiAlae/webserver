@@ -30,6 +30,7 @@ class Repsense
 
 public:
 	Repsense();
+	void SendRedirection();
 	void Init(SocketIO *sock, Routing *router);
 	string CreateDate();
 	void SendGetResponse();

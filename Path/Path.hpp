@@ -17,7 +17,10 @@ class Path {
         bool        _isFile;        // Is the resulting path a file?
         bool        _isCGI;         // Does it match a CGI extension?
         bool        _found;         // Does the file exist on disk?
+		bool        _isRedir;       // <--- NEW FLAG
 		bool        _hasPermission;
+        string      _redirCode;     // <--- e.g., "301"
+        string      _redirPath;     // <--- e.g., "/home"
 
         
         // --- INTERNAL HELPERS ---
@@ -30,6 +33,7 @@ class Path {
 
 		void _setRootAndCGI(Config::Server &srv);
         void _handleDirectoryIndex(Config::Server &srv);
+		void _handleRedirection(Config::Server &srv);
 
     public:
         Path();
@@ -50,6 +54,9 @@ class Path {
         bool        isFound() const;
 		bool 		emptyRoot() const;
 		bool        hasPermission() const;
+		bool        isRedirection() const;
+		string      getRedirCode() const;
+        string      getRedirPath() const;
         
         // Returns the index of the location used (optional, if you need to know which block matched)
         int         matchedLocationIndex; 

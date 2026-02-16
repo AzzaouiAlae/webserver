@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/11 22:45:11 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/16 22:31:17 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -233,6 +233,7 @@ bool Request::isComplete(char *request)
 		return (false);
 	return true;
 }
+
 
 map<string, string> &Request::getrequestenv()
 {
