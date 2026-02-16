@@ -11,7 +11,7 @@ class Path {
         string      _locaRootPath, _locaArgPath, _locaIndex;
         string      _FullPath;
         string      _cgiPath, _reqExt, _pathInfo, _errorCode;
-        bool        _isExtention, _isLocationCGI, _isDir;
+        bool        _isExtention, _isLocationCGI, _isDir, _isErrorPath;
 
 
         void            initData(AST<string> *node, string path);
@@ -53,4 +53,5 @@ class Path {
 		string getErrorCode();
 		bool emptyRoot();
 		bool IsDir();
+		bool isErrorPath();
 };

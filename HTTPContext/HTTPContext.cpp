@@ -23,7 +23,8 @@ void HTTPContext::Handle(Socket *sock)
 
 void HTTPContext::Handle()
 {
-	if (router.isRequestComplete() == false)
+	repsense.Init(sock, servers, &router);
+	if (router.isRequestComplete() == false && err == false)
 	{
 		Logging::Debug() << "Socket FD: " << sock->GetFd() << " start handle request";
 		HandleRequest();
@@ -31,7 +32,6 @@ void HTTPContext::Handle()
 	else
 	{
 		Logging::Debug() << "Socket FD: " << sock->GetFd() << " start handle response";
-		repsense.Init(sock, servers, &router);
 		if (repsense.HandleResponse()) {
 			MarkedSocketToFree();
 		}
@@ -46,6 +46,7 @@ void HTTPContext::Handle()
 void HTTPContext::HandleRequest()
 {
 	int len = 0;
+	bool isComplete;
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 	if (buf == NULL)
 	{
@@ -62,13 +63,21 @@ void HTTPContext::HandleRequest()
 			s += buf[i];
 	}
 	Logging::Debug() << "Handle Request: buf is: " << s ;
-	if (len == 0 || Utility::SigPipe)
-	{
-		MarkedSocketToFree();
+	if (len == 0 || Utility::SigPipe) {
+		err = true;
+		isComplete = true;
 	}
 	if (len != -1)
 	{
-		if (router.GetRequest().isComplete(buf))
+		try {
+			if (err == false) {
+				isComplete = router.GetRequest().isComplete(buf);
+			}
+		} catch (exception &e)  {
+			err = true;
+			isComplete = true;
+		}
+		if (isComplete)
 		{
 			Logging::Debug() << "Read of Request from Socket fd: " << sock->GetFd() << " Complete";
 			Logging::Debug() << "Request is : " << router.GetRequest().getMethod() << " " << router.GetRequest().getPath() << "\n"
@@ -82,8 +91,13 @@ void HTTPContext::HandleRequest()
 			out = new Pipe(sock->pipefd[1], sock);
 			MulObj->AddAsEpollOut(out);
 		}
+		if (err) {
+			repsense.HandelErrorPages("400", false);
+		}
 	}
 }
+
+
 
 HTTPContext::HTTPContext()
 {
@@ -91,6 +105,7 @@ HTTPContext::HTTPContext()
 	out = NULL;
 	sock = NULL;
 	buf = NULL;
+	err = false;
 }
 
 void HTTPContext::MarkedSocketToFree()

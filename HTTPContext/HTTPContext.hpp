@@ -15,8 +15,8 @@ class HTTPContext : public IContext
 	char *buf;
 	AFd *out;
 	AFd *in;
+	bool err;
 public:
-	void HandelErrorPages(const string& code);
 	void activeInPipe();
 	void activeOutPipe();
 	HTTPContext();

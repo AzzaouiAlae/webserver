@@ -20,13 +20,12 @@ class SocketIO : public ISocket {
 	static vector<pair<int, int> > pipePool;
 	bool pipeInitialized;
 	int pendingInPipe;
-	int SendBuffToPipe(void *buff, int size);
-	int SendPipeToSock();
-	
 	int status;
 	int SendedBuffToPipe;
 	char *buff;
 public:
+	int SendBuffToPipe(void *buff, int size);
+	int SendPipeToSock();
 	static int GetPipePoolSize();
 	int pipefd[2];
 	SocketIO(int fd);
@@ -42,4 +41,5 @@ public:
 	void Handle();
 	static int CloseSockFD(int fd);
 	static void ClearPipePool();
+	int SendSocketToPipe(int size = KBYTE * MBYTE);
 };
