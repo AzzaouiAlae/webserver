@@ -61,7 +61,7 @@ bool GET::HandleResponse()
 void GET::GetMethod()
 {
 	filename = router->CreatePath(router->srv);
-
+	
 	Logging::Debug() << "Socket fd: " << sock->GetFd()
 					 << " try to send file " << filename;
 

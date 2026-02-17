@@ -137,19 +137,17 @@ void HTTPContext::HandleRequest()
     bool isComplete = _parseAndConfig();
 
     // 3. Check for Completion or Errors
-    if (isComplete)
+    if (isComplete || router.GetRequest().isPostRequest())
     {
-        if (err) {
-			_setupPipeline();
-			if (errNo == "413") {
-				repsense.HandelErrorPages("413");
+		_setupPipeline();
+        if (err) 
+		{
+			if (Config::GetErrorPath(*router.srv, errNo) != "" || StaticFile::GetFileByName(errNo) != NULL ) {
+				repsense.HandelErrorPages(errNo);
 			}
 			else {
 				repsense.HandelErrorPages("400");
 			}
-        } 
-        else {
-            _setupPipeline();
         }
     }
 }

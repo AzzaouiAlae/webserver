@@ -156,6 +156,7 @@ void AMethod::HandelErrorPages(const string &err)
 	else
 	{
 		LoadStaticErrorFile(err);
+		
 	}
 	CreateResponseHeader();
 	ShouldSend += responseHeaderStr.length();

@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/17 05:09:39 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/17 20:25:31 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -129,7 +129,7 @@ void Request::parsHttpStandard(string httpStandard)
 	if (!(ss >> method >> path >> httpv) || (ss >> extra))
 		Error::ThrowError("The Request HttpStandard is Invalid");
 	if (!(method == "GET" || method == "POST" || method == "DELETE"))
-		Error::ThrowError("The Request method Not Found");
+		Error::ThrowError("501");
 	if (!(httpv == "HTTP/1.1" || httpv == "HTTP/1.0"))
 		Error::ThrowError("The Request Protocol version Invalid");
 	if (!parsPath(path))
@@ -200,9 +200,19 @@ bool Request::ParseHeader()
 	return (false);
 }
 
+bool Request::isPostRequest()
+{
+	return _Parspos == eParsEnd && _env["REQUEST_METHOD"] == "POST";
+}
+
 string &Request::GetRequest()
 {
 	return _requestbuff;
+}
+
+string &Request::getBody() 
+{
+	return _env["Body"];
 }
 
 bool Request::fillBody()
@@ -212,7 +222,7 @@ bool Request::fillBody()
 		_env["Body"] += _requestbuff;
 		if (_env["Body"].size() < _content_len)
 			return (false);
-		else if (_env["Body"].size() > _content_len || _env["Body"].size() > _maxbodysize)
+		else if (_env["Body"].size() > _content_len || _content_len > _maxbodysize)
 			Error::ThrowError("413");
 	}
 	return (true);
@@ -289,9 +299,10 @@ const string &Request::getport() const
 
 void Request::SetMaxBodySize(int size)
 {
-	string s = _env["Body"];
-	if (s.size() > _maxbodysize) {
+	_maxbodysize = size;
+	
+	string &s = _env["Body"];
+	if (s.size() > _maxbodysize || _content_len > _maxbodysize) {
 		Error::ThrowError("413");
 	}
-	_maxbodysize = size;
 }
