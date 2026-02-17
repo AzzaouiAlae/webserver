@@ -176,10 +176,6 @@ void Parsing::parseLocation(AST<string> &location, Config::Server::Location &loc
 		{
 			loc.clientBodyInFileOnly = (args[0] == "on");
 		}
-		else if (val == "client_body_temp_path") 
-		{
-			loc.clientBodyTempPath = args[0];
-		}
 		else
 		{
 			Logging::Debug() << "value: " << val;

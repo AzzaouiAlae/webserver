@@ -112,7 +112,6 @@ void Validation::CreateMap()
 	_map["cgi_pass"] = &Validation::IsValidCGIPass;
 	_map["types"] = &Validation::IsValidTypes;
 	_map["client_body_in_file_only"] = &Validation::IsValidBodyInFile;
-    _map["client_body_temp_path"] = &Validation::IsValidBodyTempPath;
 
 }
 
@@ -377,41 +376,6 @@ void Validation::IsValidBodyInFile()
         Error::ThrowError("Invalid Syntax : (Missing semicolon)");
 }
 
-// In Validation.cpp
-
-void Validation::IsValidBodyTempPath()
-{
-    // 1. Scope Check
-    if (_level != 2)
-        Error::ThrowError("Invalid Syntax : (client_body_temp_path must be inside a location block)");
-
-    // 2. Duplication Check
-    if (_useLocation["BodyTempPath"] == true)
-        Error::ThrowError("Invalid Syntax : ( Duplication In client_body_temp_path )");
-    
-    // NOTE: Do NOT check for CgiPass conflict here. It is valid to have both.
-
-    _useLocation["BodyTempPath"] = true;
-
-    Validation::AddDirective("client_body_temp_path");
-
-    // 3. Argument Parsing
-    if (IsSeparator()) {
-	
-        Error::ThrowError("Invalid Syntax : (client_body_temp_path missing path argument)");
-	}
-
-	_idx++;
-
-    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
-    _idx++;
-
-    // 4. Semicolon Check
-    if (_data[_idx] == ";")
-        _idx++;
-    else
-        Error::ThrowError("Invalid Syntax : (Missing semicolon after client_body_temp_path)");
-}
 
 //      RETURN
 void Validation::IsValidReturn()

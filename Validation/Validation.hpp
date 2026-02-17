@@ -57,7 +57,6 @@ class Validation {
         long            ConvertToNumber(std::string num);
 
 		void IsValidBodyInFile();
-		void IsValidBodyTempPath();
 
     public:
         static void parseListen(string str, string& port, string& host);
