@@ -23,4 +23,6 @@ public:
 	static bool isHexa(string hex);
 	static bool isHexa(char hex);
 	static void parseBySep(vector<string> &parsedPath, string str, string sep);
+	static string lastToken(const string &str, char ch) ;
+
 };

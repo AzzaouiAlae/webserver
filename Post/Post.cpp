@@ -2,7 +2,9 @@
 
 Post::Post(SocketIO *sock, Routing *router): AMethod(sock, router)
 {
-
+	fileFd = -1;
+	contentBodySize = 0;
+	uploadedSize = 0;
 }
 
 
@@ -19,21 +21,13 @@ bool Post::HandleResponse()
 		HandelErrorPages("405");
 	}
 
-	PostMethod();
-
-
-	
-	
-	
-	return del;
-}
-
-void Post::PostMethod()
-{
 	filename = router->CreatePath(router->srv);
 
+	if (readyToSend) {
+		SendResponse();
+	}
 	if (readyToUpload) {
-		
+		uploadFileToDisk();
 	} 
 	else if (router->GetPath().isFound()) {
 		HandelErrorPages("409");
@@ -42,14 +36,61 @@ void Post::PostMethod()
 		
 	}
 	else {
-		int idx = Config::GetLocationIndex(*(router->srv), router->GetRequest().getPath());
-		if (idx == -1) {
-			
-		}
+		PostMethod();
+	}
+	
+	return del;
+}
+
+void Post::PostMethod()
+{
+	int idx = Config::GetLocationIndex(*(router->srv), router->GetRequest().getPath());
+	if (idx == -1) 
+	{
+		HandelErrorPages("403");
+		return;
+	}
+	fileFd = open(filename.c_str(), O_CREAT | O_WRONLY, 0666);
+	if (fileFd == -1) 
+	{
+		HandelErrorPages("403");
+		return;
+	}
+	contentBodySize = router->GetRequest().getContentLen();
+	readyToUpload = true;
+	uploadFileToDisk();
+}
+
+void  Post::uploadFileToDisk()
+{
+	string &s = router->GetRequest().getBody();
+	int size;
+	if (s.length() > uploadedSize) {
+		char *h = &(s[uploadedSize]);
+		size = write(fileFd, h, s.length() - uploadedSize);
+	}
+	else {
+		size = sock->SocketToFile(fileFd, contentBodySize - uploadedSize);
+	}
+	if(size <= 0) 
+	{
+		HandelErrorPages("400");
+		unlink(filename.c_str());
+		return;
+	}
+	uploadedSize += size;
+	if (uploadedSize >= contentBodySize) {
+		createPostRespence();
 	}
 }
 
-void uploadFileToDisk()
+Post::~Post()
 {
+	if (fileFd != -1)
+		close(fileFd);
+}
 
+void Post::createPostRespence()
+{
+	
 }

@@ -137,7 +137,7 @@ void HTTPContext::HandleRequest()
     bool isComplete = _parseAndConfig();
 
     // 3. Check for Completion or Errors
-    if (isComplete || router.GetRequest().isPostRequest())
+    if (isComplete || router.GetRequest().isRequestHeaderComplete())
     {
 		_setupPipeline();
         if (err) 
