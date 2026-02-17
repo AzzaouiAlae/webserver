@@ -5,7 +5,7 @@
 // ══════════════════════════════════════════════
 
 // Does one thing: initializes GET-specific members to default values
-GET::GET()
+GET::GET(SocketIO *sock, Routing *router): AMethod(sock, router)
 {
 	sendListFiles = 0;
 	targetToSend = 0;

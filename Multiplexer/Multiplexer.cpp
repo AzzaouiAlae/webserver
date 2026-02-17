@@ -101,6 +101,7 @@ void Multiplexer::MainLoop()
 	AFd *obj;
 	long time = Utility::CurrentTime() + USEC * timeout;
 	(void)time;
+	// while(time > Utility::CurrentTime())
 	while(true)
 	{
 		epoll_event eventList[count];

@@ -23,29 +23,27 @@ void Repsense::Init(SocketIO *sock, Routing *router)
 {
 	this->sock = sock;
 	this->router = router;
-
-	if (method != NULL)
-		return;
-
-	string requestMethod = router->GetRequest().getMethod();
-
-	if (requestMethod == "GET")
-		method = new GET();
-	else if (requestMethod == "POST") {
-		// method = new POST();
-	}
-	else if (requestMethod == "DELETE") {
-		// method = new DELETE();
-	}
-	else
-		method = new GET(); // fallback: GET handles unknown methods with 405
-
-	method->Init(sock, router);
 }
 
 // Does one thing: delegates HandleResponse to the correct method object
 bool Repsense::HandleResponse()
 {
+	if (method == NULL) 
+	{
+		string requestMethod = router->GetRequest().getMethod();
+
+		if (requestMethod == "GET")
+			method = new GET(sock, router);
+		else if (requestMethod == "POST") {
+			method = new Post(sock, router);
+		}
+		else if (requestMethod == "DELETE") {
+			// method = new DELETE(sock, router);
+		}
+		else
+			method = new GET(sock, router); // fallback: GET handles unknown methods with 405
+	}
+
 	return method->HandleResponse();
 }
 
@@ -54,8 +52,7 @@ void Repsense::HandelErrorPages(const string &err)
 {
 	if (method == NULL)
 	{
-		method = new GET();
-		method->Init(sock, router);
+		method = new GET(sock, router);
 	}
 	method->HandelErrorPages(err);
 }

@@ -18,6 +18,7 @@ void HTTPContext::Handle(Socket *sock)
 	((HTTPContext *)fd->context)->router.srv = &((*servers)[0]);
 	((HTTPContext *)fd->context)->router.GetRequest().SetMaxBodySize(Config::GetMaxBodySize(*servers));
 	((HTTPContext *)fd->context)->sock = fd;
+	((HTTPContext *)fd->context)->repsense.Init(fd, &(((HTTPContext *)fd->context)->router));
 	Multiplexer::GetCurrentMultiplexer()->AddAsEpollIn(fd);
 	Logging::Debug() << "Socket FD: " << sock->GetFd()
 					<< " accepte new connection as socket fd: " << sock->acceptedSocket;
@@ -25,7 +26,6 @@ void HTTPContext::Handle(Socket *sock)
 
 void HTTPContext::Handle()
 {
-	repsense.Init(sock, &router);
 	if (router.isRequestComplete() == false && err == false)
 	{
 		Logging::Debug() << "Socket FD: " << sock->GetFd() << " start handle request";
@@ -63,6 +63,7 @@ int HTTPContext::_readFromSocket()
 
 void HTTPContext::setMaxBodySize()
 {
+	router.srv = &Config::GetServerName(*servers, router.GetRequest().getHost());
 	int i = Config::GetLocationIndex(*router.srv, router.GetRequest().getPath());
 
 	if (i != -1 && router.srv->Locations[i].isMaxBodySize) {
@@ -85,11 +86,8 @@ bool HTTPContext::_parseAndConfig()
 
         // 2. Configure Server Block logic
         // We do this immediately so we can check MaxBodySize during parsing if needed
-		if (!isMaxBodyInit) {
-			router.srv = &Config::GetServerName(*servers, router.GetRequest().getHost());	
-			if (router.GetRequest().getHost() != "") {
-				setMaxBodySize();
-			}
+		if (!isMaxBodyInit && router.GetRequest().getHost() != "") {
+			setMaxBodySize();
 		}
         return complete;
 

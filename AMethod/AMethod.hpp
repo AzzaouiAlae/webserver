@@ -48,10 +48,8 @@ protected:
 	bool IsMethodAllowed(const string &method);
 
 public:
-	AMethod();
+	AMethod(SocketIO *sock, Routing *router);
 	virtual ~AMethod();
-
-	void Init(SocketIO *sock, Routing *router);
 
 	// ──── Pure virtual: each HTTP method subclass must implement ────
 	virtual bool HandleResponse() = 0;

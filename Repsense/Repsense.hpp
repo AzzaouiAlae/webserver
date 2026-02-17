@@ -1,7 +1,7 @@
 #pragma once
 // #include "AMethod.hpp"
 #include "../GET/GET.hpp"
-// #include "POST.hpp"
+#include "../Post/Post.hpp"
 // #include "DELETE.hpp"
 
 class Repsense

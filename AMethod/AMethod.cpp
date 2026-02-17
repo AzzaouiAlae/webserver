@@ -7,7 +7,7 @@ map<string, string> AMethod::statusMap;
 // ══════════════════════════════════════════════
 
 // Does one thing: initializes all member variables to default values
-AMethod::AMethod()
+AMethod::AMethod(SocketIO *sock, Routing *router)
 {
 	readyToSend = false;
 	sendHeader = false;
@@ -15,13 +15,14 @@ AMethod::AMethod()
 	ShouldSend = 0;
 	bodySize = 0;
 	del = false;
-	sock = NULL;
 	sended = 0;
 	fileFd = -1;
-	router = NULL;
 	code = "";
 	filename = "";
 	responseHeaderStr = "";
+	this->sock = sock;
+	this->router = router;
+	InitStatusMap();
 }
 
 // Does one thing: closes the file descriptor if it was opened
@@ -33,19 +34,6 @@ AMethod::~AMethod()
 	}
 }
 
-// ══════════════════════════════════════════════
-//  Initialization
-// ══════════════════════════════════════════════
-
-// Does one thing: sets the socket and router pointers
-void AMethod::Init(SocketIO *sock, Routing *router)
-{
-	if (this->sock == NULL)
-		this->sock = sock;
-	if (this->router == NULL)
-		this->router = router;
-	InitStatusMap();
-}
 
 // ══════════════════════════════════════════════
 //  Date Formatting
