@@ -35,7 +35,7 @@ class GET : public AMethod
 	void GetMethod();
 
 public:
-	GET();
+	GET(SocketIO *sock, Routing *router);
 	~GET();
 
 	// ──── Implements the pure virtual from AMethod ────
