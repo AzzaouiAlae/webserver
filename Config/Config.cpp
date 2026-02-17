@@ -4,13 +4,16 @@
 Config::Server::Server()
 {
 	autoindex = true;
-	clientMaxBodySize = -1;
+	clientMaxBodySize = 0;
 	allowMethodExists = false;
+	isMaxBodySize = false;
 }
 
 Config::Server::Location::Location()
 {
 	allowMethodExists = false;
+	clientMaxBodySize = 0;
+	isMaxBodySize = false;
 }
 
 bool Config::IsDuplicatedServer(int currServerIdx, const string &val, const string &srvName)
@@ -65,6 +68,25 @@ Config::Server &Config::GetServerName(vector<Config::Server> &srvs, const string
 		}
 	}
 	return srvs[0];
+}
+
+int Config::GetMaxBodySize(vector<Config::Server> &srvs)
+{
+	size_t size = 0;
+	for (int i = 0; i < (int)srvs.size(); i++)
+	{
+		if (size < srvs[i].clientMaxBodySize) {
+			size = srvs[i].clientMaxBodySize;
+		}
+		vector < Config::Server::Location> &loc = srvs[i].Locations;
+		for(int j = 0; j < (int)loc.size(); j++)
+		{
+			if (size < loc[j].clientMaxBodySize) {
+				size = loc[j].clientMaxBodySize;
+			}
+		}
+	}
+	return size;
 }
 
 string Config::GetErrorPath(Config::Server &srv, const string &code)

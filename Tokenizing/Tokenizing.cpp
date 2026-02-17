@@ -35,23 +35,70 @@ char Tokenizing::shearch_delimiter(std::string& str, std::string delimiters)
     }
     return (delimiter);
 }
-
 void Tokenizing::split_tokens()
 {
-    std::string word;
-    char c = '\0';
-    while (_file >> word)
+    char c;
+    std::string token = "";
+
+    // Read the file character by character to control parsing manually
+    while (_file.get(c))
     {
-        while ((c = shearch_delimiter(word, ";{}")) && c != '\0')
+        // 1. Handle Quotes (Start of string)
+        if (c == '\"' || c == '\'')
         {
-            size_t pos = word.find(c);
-            if (pos > 0)
-                _tokens.push_back(word.substr(0, pos));
-            _tokens.push_back(word.substr(pos, 1));
-            word.erase(0, pos + 1);
+            // If we were building a token (e.g., key="value"), push "key" first.
+            if (!token.empty())
+            {
+                _tokens.push_back(token);
+                token.clear();
+            }
+
+            char quoteType = c; // Remember if it was ' or "
+
+            // Loop until we find the closing quote
+            while (_file.get(c) && c != quoteType)
+            {
+                token += c;
+            }
+
+            // We hit the closing quote or EOF. 
+            // Push the content inside the quotes as a single token.
+            _tokens.push_back(token);
+            token.clear();
         }
-        if (word.size() > 0)
-            _tokens.push_back(word);
+        // 2. Handle Special Delimiters (; { })
+        else if (c == ';' || c == '{' || c == '}')
+        {
+            // If we had a word before the delimiter, push it
+            if (!token.empty())
+            {
+                _tokens.push_back(token);
+                token.clear();
+            }
+            // Push the delimiter as its own token
+            std::string delim(1, c);
+            _tokens.push_back(delim);
+        }
+        // 3. Handle Whitespace (Space, Tab, Newline)
+        else if (std::isspace(c))
+        {
+            // Whitespace marks the end of a token
+            if (!token.empty())
+            {
+                _tokens.push_back(token);
+                token.clear();
+            }
+        }
+        // 4. Regular Characters
+        else
+        {
+            token += c;
+        }
+    }
+
+    // Push any remaining token at the end of the file
+    if (!token.empty())
+    {
+        _tokens.push_back(token);
     }
 }
-

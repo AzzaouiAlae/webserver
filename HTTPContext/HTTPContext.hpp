@@ -16,6 +16,17 @@ class HTTPContext : public IContext
 	AFd *out;
 	AFd *in;
 	bool err;
+	string errNo;
+	bool isMaxBodyInit;
+
+	// Helper to handle buffer allocation and raw socket reading
+    int  _readFromSocket();
+
+    // Helper to parse the buffer and find the correct Server block
+    bool _parseAndConfig();
+
+    // Helper to set up Pipes and switch Epoll state when request is done
+    void _setupPipeline();
 public:
 	void activeInPipe();
 	void activeOutPipe();
@@ -27,5 +38,5 @@ public:
 	void Handle();
 	void HandleRequest();
 	void MarkedSocketToFree();
-	
+	void setMaxBodySize();
 };
