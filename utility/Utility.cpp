@@ -139,3 +139,13 @@ void Utility::parseBySep(vector<string> &parsedPath, string str, string sep)
 		s = strtok(NULL, sep.c_str());
 	}
 }
+
+string lastToken(const string &str, char ch) 
+{
+	for(int i = str.length() - 1; i > 0; i++) {
+		if (str[i] == ch)
+			return str.substr(i + 1);
+		i++;
+	}
+	return str;
+}

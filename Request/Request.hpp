@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:48 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/17 20:24:44 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/17 21:36:11 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,9 +52,10 @@ public:
 	const string &getport() const;
 	const string &getHost() const;
 	const string &getServerName() const;
+	size_t getContentLen() ;
 	string &getBody();
 	string &getPath();
 	string &GetRequest();
 	void SetMaxBodySize(int size);
-	bool isPostRequest();
+	bool isRequestHeaderComplete();
 };
