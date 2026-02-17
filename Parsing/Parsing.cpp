@@ -157,8 +157,8 @@ void Parsing::parseLocation(AST<string> &location, Config::Server::Location &loc
 		}
 		else if (val == "return")
 		{
-			loc.redirectionCode = args[0];
-			loc.redirectionURI = args[1];
+			loc.returnCode = args[0];
+			loc.returnArg = args[1];
 		}
 		else if (val == "client_max_body_size")
 		{
