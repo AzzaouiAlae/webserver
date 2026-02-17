@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/16 22:31:17 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/17 05:09:39 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,6 +64,7 @@ Request::Request()
 {
 	initReqDirectives();
 
+	_maxbodysize = UINT64_MAX;
 	_Parspos = eParsStart;
 	_requestbuff = "";
 	_env["SERVER_SOFTWARE"] = "webserv/1.0";
@@ -152,6 +153,7 @@ void Request::parsLenTypeCont()
 		else
 			Error::ThrowError("The Content Length Invalid");
 		_Thereisbody = true;
+		return;
 	}
 	_Thereisbody = false;
 }
@@ -183,11 +185,16 @@ bool Request::ParseHeader()
 		else
 			_env[key] = value;
 	}
-	if (_Parspos == eParsHttpStand && _env["REQUEST_METHOD"] == "POST")
+	if (_Parspos == eParsHttpStand && _env["REQUEST_METHOD"] == "POST") {
 		parsLenTypeCont();
+	}
 	if (_Parspos == eParsHttpStand && line == "\r\n")
 	{
 		_Parspos = eParsEnd;
+		if (_env["REQUEST_METHOD"] == "POST") {
+			_env["Body"] = "";
+			return fillBody();
+		}
 		return (true);
 	}
 	return (false);
@@ -206,7 +213,7 @@ bool Request::fillBody()
 		if (_env["Body"].size() < _content_len)
 			return (false);
 		else if (_env["Body"].size() > _content_len || _env["Body"].size() > _maxbodysize)
-			Error::ThrowError("Body Biger Than Expected");
+			Error::ThrowError("413");
 	}
 	return (true);
 }
@@ -278,4 +285,13 @@ const string &Request::getport() const
 		_env.find("SERVER_PORT");
 
 	return (it != _env.end()) ? it->second : empty;
+}
+
+void Request::SetMaxBodySize(int size)
+{
+	string s = _env["Body"];
+	if (s.size() > _maxbodysize) {
+		Error::ThrowError("413");
+	}
+	_maxbodysize = size;
 }

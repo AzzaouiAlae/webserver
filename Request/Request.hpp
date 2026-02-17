@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:48 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/16 21:27:25 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/16 23:54:52 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,5 +54,5 @@ public:
 	const string &getServerName() const;
 	string &getPath();
 	string &GetRequest();
-	void SetMaxBodySize();
+	void SetMaxBodySize(int size);
 };
