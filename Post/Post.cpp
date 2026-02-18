@@ -170,6 +170,8 @@ void Post::WriteBodyFromMemory()
 // Does one thing: splices data directly from socket to file (zero-copy)
 void Post::WriteBodyFromSocket()
 {
+	while (uploadedSize < contentBodySize)
+	{
 	int len = 0, w;
 	int size = read(sock->GetFd(), buf, BUF_SIZE -1);
 	if (errno == EAGAIN)
@@ -182,6 +184,9 @@ void Post::WriteBodyFromSocket()
 		Logging::Debug() << "EBADF	fd already closed (bug)	Set err = true, debug your code";
 	if (errno == EFAULT)
 		Logging::Debug() << "EFAULT	buf is bad pointer	Crash/set err = true";
+	Logging::Debug() << "Socket fd: " << sock->GetFd()
+					 << " POST uploaded " << uploadedSize
+					 << " / " << contentBodySize << " bytes";
 	Logging::Debug() << "WriteBodyFromSocket size: " << size;
 	if (size > 0) 
 	{
@@ -199,6 +204,7 @@ void Post::WriteBodyFromSocket()
 		uploadedSize += size;
 	}
 	usleep(300000);
+}
 }
 
 // Does one thing: orchestrates writing — memory first, then socket

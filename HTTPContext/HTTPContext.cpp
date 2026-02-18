@@ -76,13 +76,13 @@ void HTTPContext::setMaxBodySize()
 	isMaxBodyInit = true;
 }
 
-bool HTTPContext::_parseAndConfig()
+bool HTTPContext::_parseAndConfig(int len)
 {
     try {
         if (err) return true; // If error already exists, treat as "complete" to trigger error page
 
         // 1. Parse buffer
-        bool complete = router.GetRequest().isComplete(buf);
+        bool complete = router.GetRequest().isComplete(buf, len);
 
         // 2. Configure Server Block logic
         // We do this immediately so we can check MaxBodySize during parsing if needed
@@ -134,7 +134,7 @@ void HTTPContext::HandleRequest()
     }
 
     // 2. Parse Data
-    bool isComplete = _parseAndConfig();
+    bool isComplete = _parseAndConfig(len);
 
     // 3. Check for Completion or Errors
     if (isComplete || router.GetRequest().isRequestHeaderComplete())

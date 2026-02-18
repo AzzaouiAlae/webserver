@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/17 22:31:58 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/18 04:21:04 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -234,9 +234,9 @@ bool Request::fillBody()
 	return (true);
 }
 
-bool Request::ParseRequest(string request_buff)
+bool Request::ParseRequest(char *request_buff, int size)
 {
-	_requestbuff += request_buff;
+	_requestbuff.append(request_buff, size);
 	if (_Parspos != eParsEnd)
 	{
 		if (!ParseHeader())
@@ -250,9 +250,9 @@ bool Request::ParseRequest(string request_buff)
 	return true;
 }
 
-bool Request::isComplete(char *request)
+bool Request::isComplete(char *request, int size)
 {
-	if (!ParseRequest(request))
+	if (!ParseRequest(request, size))
 		return (false);
 	return true;
 }

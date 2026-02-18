@@ -23,7 +23,7 @@ class HTTPContext : public IContext
     int  _readFromSocket();
 
     // Helper to parse the buffer and find the correct Server block
-    bool _parseAndConfig();
+    bool _parseAndConfig(int len);
 
     // Helper to set up Pipes and switch Epoll state when request is done
     void _setupPipeline();
