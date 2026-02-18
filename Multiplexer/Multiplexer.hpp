@@ -13,6 +13,7 @@ class Multiplexer {
 	int count;
 	static bool DeleteItem(AFd *item);
 public:
+	void ChangeToEpollInOut(AFd *fd);
 	bool ChangeToEpollOneShot(AFd *fd);
 	Multiplexer();
 	~Multiplexer();

@@ -5,12 +5,12 @@
 
 class Post : public AMethod
 {
-	static Post *current;
 	int uploadFd;
 	bool readyToUpload;
 	bool pathResolved;
 	size_t contentBodySize;
 	size_t uploadedSize;
+	char *buf;
 
 	// ──── Single-responsibility helpers ────
 	void ResolvePath();
@@ -26,10 +26,10 @@ class Post : public AMethod
 	void SendPostDefault();
 	void createPostResponse();
 	void PostMethod();
-	static void fdActive(AFd *fd);
 
 public:
 	Post(SocketIO *sock, Routing *router);
+
 	~Post();
 	bool HandleResponse();
 };
