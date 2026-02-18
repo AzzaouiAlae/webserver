@@ -25,6 +25,19 @@
 
     let currentFiles = [...FILES];
 
+    // ===== SELECTION STATE (must be before render!) =====
+    let selectedFiles = new Set();
+
+    function updateDeleteBtn() {
+        const btn = document.getElementById('deleteBtn');
+        if (selectedFiles.size > 0) {
+            btn.classList.add('visible');
+            btn.textContent = '🗑️ Delete (' + selectedFiles.size + ')';
+        } else {
+            btn.classList.remove('visible');
+        }
+    }
+
     function render(files) {
         // Count
         const dirs = files.filter(f => f.isDir && f.name !== '..').length;
@@ -36,12 +49,33 @@
         files.forEach(f => {
             const ic = getFileIcon(f.name, f.isDir);
             const tr = document.createElement('tr');
-            tr.onclick = () => window.location.href = f.href;
+            const isParent = (f.name === '..');
+            const canSelect = !isParent;
+
             tr.innerHTML = `
-                <td><div class="file-name-cell"><div class="file-icon ${ic.cls}">${ic.icon}</div><a href="${f.href}">${f.name}${f.isDir && f.name !== '..' ? '/' : ''}</a></div></td>
+                <td>${canSelect ? '<input type="checkbox" class="file-checkbox row-checkbox" data-href="' + f.href + '"' + (selectedFiles.has(f.href) ? ' checked' : '') + '>' : ''}</td>
+                <td><div class="file-name-cell"><div class="file-icon ${ic.cls}">${ic.icon}</div><a href="${f.href}">${f.name}${f.isDir && !isParent ? '/' : ''}</a></div></td>
                 <td class="file-size">${f.isDir ? '—' : formatSize(f.size)}</td>
                 <td class="file-date">${f.date || '—'}</td>
             `;
+
+            // Click row → navigate (but not if clicking checkbox)
+            tr.addEventListener('click', function (e) {
+                if (e.target.classList.contains('file-checkbox')) return;
+                window.location.href = f.href;
+            });
+
+            // Checkbox change
+            const cb = tr.querySelector('.row-checkbox');
+            if (cb) {
+                cb.addEventListener('change', function (e) {
+                    e.stopPropagation();
+                    if (this.checked) selectedFiles.add(f.href);
+                    else selectedFiles.delete(f.href);
+                    updateDeleteBtn();
+                });
+            }
+
             listBody.appendChild(tr);
         });
 
@@ -62,7 +96,6 @@
 
         // Empty state
         document.getElementById('emptyState').classList.toggle('hidden', files.length > 0);
-        document.getElementById('listView').classList.toggle('hidden', files.length === 0 || gridView.classList.contains('hidden') === false && listBody.parentElement.parentElement.classList.contains('hidden'));
     }
 
     render(currentFiles);
@@ -117,6 +150,211 @@
             asc = !asc;
             render(currentFiles);
         });
+    });
+
+    // ===== TOAST =====
+    function showToast(msg, type) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-' + type;
+        toast.textContent = msg;
+        container.appendChild(toast);
+
+        let isHovered = false;
+        let fadeTimer = null;
+        let removeTimer = null;
+
+        function startDismiss() {
+            fadeTimer = setTimeout(() => {
+                if (isHovered) return;
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                removeTimer = setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        toast.addEventListener('mouseenter', () => {
+            isHovered = true;
+            // Cancel any pending dismiss
+            if (fadeTimer) { clearTimeout(fadeTimer); fadeTimer = null; }
+            if (removeTimer) { clearTimeout(removeTimer); removeTimer = null; }
+            // Restore visibility if it was fading
+            toast.style.opacity = '1';
+        });
+
+        toast.addEventListener('mouseleave', () => {
+            isHovered = false;
+            // Restart dismiss timer after mouse leaves
+            startDismiss();
+        });
+
+        startDismiss();
+    }
+
+    // ===== UPLOAD =====
+    function uploadFiles(fileList) {
+        const progEl = document.getElementById('uploadProgress');
+        const progName = document.getElementById('progName');
+        const progPercent = document.getElementById('progPercent');
+        const progFill = document.getElementById('progFill');
+        const progStatus = document.getElementById('progStatus');
+
+        let idx = 0;
+        const total = fileList.length;
+
+        progEl.classList.add('active');
+
+        function uploadNext() {
+            if (idx >= total) {
+                progEl.classList.remove('active');
+                showToast('All ' + total + ' file(s) uploaded successfully!', 'success');
+                setTimeout(() => location.reload(), 800);
+                return;
+            }
+
+            const file = fileList[idx];
+            progName.textContent = 'Uploading: ' + file.name;
+            progStatus.textContent = 'File ' + (idx + 1) + ' of ' + total;
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', CURRENT_PATH + (CURRENT_PATH.endsWith('/') ? '' : '/') + file.name, true);
+
+            xhr.upload.onprogress = function (e) {
+                if (e.lengthComputable) {
+                    const pct = Math.round((e.loaded / e.total) * 100);
+                    progFill.style.width = pct + '%';
+                    progPercent.textContent = pct + '%';
+                }
+            };
+
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    idx++;
+                    uploadNext();
+                } else {
+                    progEl.classList.remove('active');
+                    showToast('Failed to upload ' + file.name + ' (' + xhr.status + ')', 'error');
+                }
+            };
+
+            xhr.onerror = function () {
+                progEl.classList.remove('active');
+                showToast('Network error uploading ' + file.name, 'error');
+            };
+
+            xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+            xhr.send(file);
+        }
+
+        uploadNext();
+    }
+
+    // Upload button click
+    document.getElementById('uploadBtn').addEventListener('click', function () {
+        document.getElementById('fileInput').click();
+    });
+
+    document.getElementById('fileInput').addEventListener('change', function () {
+        if (this.files.length > 0) uploadFiles(this.files);
+        this.value = '';
+    });
+
+    // Drag & drop
+    let dragCounter = 0;
+    const dropOverlay = document.getElementById('dropOverlay');
+
+    document.addEventListener('dragenter', function (e) {
+        e.preventDefault();
+        dragCounter++;
+        dropOverlay.classList.add('active');
+    });
+
+    document.addEventListener('dragleave', function (e) {
+        e.preventDefault();
+        dragCounter--;
+        if (dragCounter <= 0) { dragCounter = 0; dropOverlay.classList.remove('active'); }
+    });
+
+    document.addEventListener('dragover', function (e) { e.preventDefault(); });
+
+    document.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dragCounter = 0;
+        dropOverlay.classList.remove('active');
+        if (e.dataTransfer.files.length > 0) uploadFiles(e.dataTransfer.files);
+    });
+
+    // ===== DELETE =====
+    function deleteFiles(filePaths) {
+        let idx = 0;
+        let success = 0;
+        let fail = 0;
+
+        function deleteNext() {
+            if (idx >= filePaths.length) {
+                if (success > 0) showToast(success + ' file(s) deleted', 'success');
+                if (fail > 0) showToast(fail + ' file(s) failed to delete', 'error');
+                selectedFiles.clear();
+                updateDeleteBtn();
+                setTimeout(() => location.reload(), 800);
+                return;
+            }
+
+            const path = filePaths[idx];
+            const xhr = new XMLHttpRequest();
+            xhr.open('DELETE', path, true);
+
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) success++;
+                else fail++;
+                idx++;
+                deleteNext();
+            };
+
+            xhr.onerror = function () {
+                fail++;
+                idx++;
+                deleteNext();
+            };
+
+            xhr.send();
+        }
+
+        deleteNext();
+    }
+
+    // Delete button → confirm dialog
+    document.getElementById('deleteBtn').addEventListener('click', function () {
+        if (selectedFiles.size === 0) return;
+        const msg = 'Are you sure you want to delete ' + selectedFiles.size + ' selected file(s)? This cannot be undone.';
+        document.getElementById('confirmMsg').textContent = msg;
+        document.getElementById('confirmOverlay').classList.add('active');
+    });
+
+    document.getElementById('confirmCancel').addEventListener('click', function () {
+        document.getElementById('confirmOverlay').classList.remove('active');
+    });
+
+    document.getElementById('confirmDelete').addEventListener('click', function () {
+        document.getElementById('confirmOverlay').classList.remove('active');
+        deleteFiles(Array.from(selectedFiles));
+    });
+
+    // Close confirm on overlay click
+    document.getElementById('confirmOverlay').addEventListener('click', function (e) {
+        if (e.target === this) this.classList.remove('active');
+    });
+
+    // ===== SELECT ALL =====
+    document.getElementById('selectAll').addEventListener('change', function () {
+        const checked = this.checked;
+        document.querySelectorAll('.row-checkbox').forEach(cb => {
+            cb.checked = checked;
+            const href = cb.dataset.href;
+            if (checked) selectedFiles.add(href);
+            else selectedFiles.delete(href);
+        });
+        updateDeleteBtn();
     });
 
 })();

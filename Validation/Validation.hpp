@@ -56,6 +56,8 @@ class Validation {
         void            IsValidListen();
         long            ConvertToNumber(std::string num);
 
+		void IsValidBodyInFile();
+
     public:
         static void parseListen(string str, string& port, string& host);
         Validation(std::vector<std::string> inputData);

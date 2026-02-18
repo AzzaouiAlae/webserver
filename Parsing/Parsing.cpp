@@ -84,7 +84,15 @@ void Parsing::FillConf()
 			}
 			else if (val == "client_max_body_size")
 			{
-				srv.clientMaxBodySize = atoi((args[0]).c_str());
+				char *endptr;
+				srv.isMaxBodySize = true;
+				srv.clientMaxBodySize = std::strtoll((args[0]).c_str(), &endptr, 10);
+				if (*endptr == 'k' || *endptr == 'K')
+					srv.clientMaxBodySize *= 1024;
+				else if (*endptr == 'm' || *endptr == 'M')
+					srv.clientMaxBodySize *= 1024 * 1024;
+				else if (*endptr == 'G' || *endptr == 'G')
+					srv.clientMaxBodySize *= 1024 * 1024 * 1024;
 			}
 			else if (val == "allow_methods")
 			{
@@ -101,6 +109,7 @@ void Parsing::FillConf()
 				parseLocation(ch[i], loc);
 				srv.Locations.push_back(loc);
 			}
+			
 			else
 			{
 				Logging::Debug() << "value: " << val;
@@ -148,8 +157,24 @@ void Parsing::parseLocation(AST<string> &location, Config::Server::Location &loc
 		}
 		else if (val == "return")
 		{
-			loc.redirectionCode = args[0];
-			loc.redirectionURI = args[1];
+			loc.returnCode = args[0];
+			loc.returnArg = args[1];
+		}
+		else if (val == "client_max_body_size")
+		{
+			char *endptr;
+			loc.isMaxBodySize = true;
+			loc.clientMaxBodySize = std::strtoll((args[0]).c_str(), &endptr, 10);
+			if (*endptr == 'k' || *endptr == 'K')
+				loc.clientMaxBodySize *= 1024;
+			else if (*endptr == 'm' || *endptr == 'M')
+				loc.clientMaxBodySize *= 1024 * 1024;
+			else if (*endptr == 'G' || *endptr == 'G')
+				loc.clientMaxBodySize *= 1024 * 1024 * 1024;
+		}
+		else if (val == "client_body_in_file_only")
+		{
+			loc.clientBodyInFileOnly = (args[0] == "on");
 		}
 		else
 		{

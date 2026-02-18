@@ -95,12 +95,21 @@ bool Multiplexer::DeleteFromEpoll(AFd *fd)
 	return epoll_ctl(epollFd, EPOLL_CTL_DEL, fd->GetFd(), NULL);
 }
 
+void Multiplexer::ChangeToEpollInOut(AFd *fd)
+{
+    struct epoll_event ev;
+    ev.events = EPOLLIN | EPOLLOUT;
+    ev.data.fd = fd->GetFd();
+    epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev);
+}
+
 void Multiplexer::MainLoop()
 {
 	int timeout = 10;
 	AFd *obj;
 	long time = Utility::CurrentTime() + USEC * timeout;
 	(void)time;
+	// while(time > Utility::CurrentTime())
 	while(true)
 	{
 		epoll_event eventList[count];
@@ -110,6 +119,8 @@ void Multiplexer::MainLoop()
 		for(int i = 0; i < size; i++)
 		{
 			obj = (AFd *)(eventList[i].data.ptr);
+			if (obj == (void *)7)
+				continue;
 			if (obj->GetType() == "Pipe") {
 				obj->Handle();
 			}

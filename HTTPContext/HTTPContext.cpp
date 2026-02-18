@@ -15,7 +15,10 @@ void HTTPContext::Handle(Socket *sock)
 	servers = &((Singleton::GetVirtualServers())[sock->GetFd()]);
 	fd->context = new HTTPContext();
 	((HTTPContext *)fd->context)->servers = servers;
+	((HTTPContext *)fd->context)->router.srv = &((*servers)[0]);
+	((HTTPContext *)fd->context)->router.GetRequest().SetMaxBodySize(Config::GetMaxBodySize(*servers));
 	((HTTPContext *)fd->context)->sock = fd;
+	((HTTPContext *)fd->context)->repsense.Init(fd, &(((HTTPContext *)fd->context)->router));
 	Multiplexer::GetCurrentMultiplexer()->AddAsEpollIn(fd);
 	Logging::Debug() << "Socket FD: " << sock->GetFd()
 					<< " accepte new connection as socket fd: " << sock->acceptedSocket;
@@ -23,7 +26,6 @@ void HTTPContext::Handle(Socket *sock)
 
 void HTTPContext::Handle()
 {
-	repsense.Init(sock, &router);
 	if (router.isRequestComplete() == false && err == false)
 	{
 		Logging::Debug() << "Socket FD: " << sock->GetFd() << " start handle request";
@@ -43,54 +45,112 @@ void HTTPContext::Handle()
 	}
 }
 
-void HTTPContext::HandleRequest()
+int HTTPContext::_readFromSocket()
 {
-	int len = 0;
-	bool isComplete;
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	if (buf == NULL) {
-		buf = (char *)calloc(1, BUF_SIZE + 1);
-	}
-	len = read(sock->GetFd(), buf, BUF_SIZE);
-	Logging::Debug() << "Socket FD: " << sock->GetFd() << " read " << len << " byte";
-	if (len == 0 || Utility::SigPipe) {
-		err = true;
-		isComplete = true;
-	}
-	if (len != -1)
-	{
-		try {
-			if (err == false) {
-				isComplete = router.GetRequest().isComplete(buf);
-				router.srv = &Config::GetServerName(*servers, router.GetRequest().getServerName());
-			}
-		} catch (exception &e)  {
-			err = true;
-			isComplete = true;
-		}
-		if (isComplete)
-		{
-			Logging::Debug() << "Read of Request from Socket fd: " << sock->GetFd() << " Complete";
-			Logging::Debug() << "Request is : " << router.GetRequest().getMethod() << " " << router.GetRequest().getPath() << "\n"
-			<< router.GetRequest().GetRequest();
-			
-			
-			router.SetRequestComplete();
-			MulObj->ChangeToEpollOut(sock);
+    if (buf == NULL) {
+        buf = (char *)calloc(1, BUF_SIZE + 1);
+    }
+    int len = read(sock->GetFd(), buf, BUF_SIZE); 
+    
+    Logging::Debug() << "Socket FD: " << sock->GetFd() << " read " << len << " byte\n" << buf;
 
-			in = new Pipe(sock->pipefd[0], sock);
-			MulObj->AddAsEpollIn(in);
-
-			out = new Pipe(sock->pipefd[1], sock);
-			MulObj->AddAsEpollOut(out);
-		}
-		if (err) {
-			repsense.HandelErrorPages("400");
-		}
-	}
+    if (len == 0 || Utility::SigPipe) {
+        err = true;
+        return 0;
+    }
+    return len;
 }
 
+void HTTPContext::setMaxBodySize()
+{
+	router.srv = &Config::GetServerName(*servers, router.GetRequest().getHost());
+	int i = Config::GetLocationIndex(*router.srv, router.GetRequest().getPath());
 
+	if (i != -1 && router.srv->Locations[i].isMaxBodySize) {
+		router.GetRequest().SetMaxBodySize(router.srv->Locations[i].clientMaxBodySize);
+	} 
+	else if (router.srv->isMaxBodySize)
+	{
+		router.GetRequest().SetMaxBodySize(router.srv->clientMaxBodySize);
+	}
+	isMaxBodyInit = true;
+}
+
+bool HTTPContext::_parseAndConfig()
+{
+    try {
+        if (err) return true; // If error already exists, treat as "complete" to trigger error page
+
+        // 1. Parse buffer
+        bool complete = router.GetRequest().isComplete(buf);
+
+        // 2. Configure Server Block logic
+        // We do this immediately so we can check MaxBodySize during parsing if needed
+		if (!isMaxBodyInit && router.GetRequest().getHost() != "") {
+			setMaxBodySize();
+		}
+        return complete;
+
+    } catch (exception &e) {
+        Logging::Error() << "Request Parsing Exception: " << e.what();
+		errNo = e.what();
+        err = true;
+        return true; // Return true to proceed to error handling
+    }
+}
+
+void HTTPContext::_setupPipeline()
+{
+    Logging::Debug() << "Read of Request from Socket fd: " << sock->GetFd() << " Complete";
+    
+    // Log the request details
+    Logging::Debug() << "Request is : " << router.GetRequest().getMethod() 
+                     << " " << router.GetRequest().getPath() << "\n"
+                     << router.GetRequest().GetRequest();
+
+    router.SetRequestComplete();
+
+    // Switch Multiplexer state
+    Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+    MulObj->ChangeToEpollOut(sock);
+
+    // Create Pipes
+    // Note: Ensure you manage memory for 'in' and 'out' properly (e.g., delete in destructor)
+    in = new Pipe(sock->pipefd[0], sock);
+    MulObj->AddAsEpollIn(in);
+
+    out = new Pipe(sock->pipefd[1], sock);
+    MulObj->AddAsEpollOut(out);
+}
+
+void HTTPContext::HandleRequest()
+{
+    // 1. Read Data
+    int len = _readFromSocket();
+    
+    // If read failed (-1) or nothing to process, return
+    if (len == -1 && !err) {
+        return; 
+    }
+
+    // 2. Parse Data
+    bool isComplete = _parseAndConfig();
+
+    // 3. Check for Completion or Errors
+    if (isComplete || router.GetRequest().isRequestHeaderComplete())
+    {
+		_setupPipeline();
+        if (err) 
+		{
+			if (Config::GetErrorPath(*router.srv, errNo) != "" || StaticFile::GetFileByName(errNo) != NULL ) {
+				repsense.HandelErrorPages(errNo);
+			}
+			else {
+				repsense.HandelErrorPages("400");
+			}
+        }
+    }
+}
 
 HTTPContext::HTTPContext()
 {
@@ -99,6 +159,7 @@ HTTPContext::HTTPContext()
 	sock = NULL;
 	buf = NULL;
 	err = false;
+	isMaxBodyInit=  false;
 }
 
 void HTTPContext::MarkedSocketToFree()

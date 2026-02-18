@@ -41,5 +41,7 @@ public:
 	void Handle();
 	static int CloseSockFD(int fd);
 	static void ClearPipePool();
-	int SendSocketToPipe(int size = KBYTE * MBYTE);
+	int SocketToPipe(int size);
+	int getPendingInPipe() const;
+	int PipeToFile(int fileFD);
 };

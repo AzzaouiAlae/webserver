@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/16 22:31:17 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/17 22:31:58 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,10 +64,12 @@ Request::Request()
 {
 	initReqDirectives();
 
+	_maxbodysize = UINT64_MAX;
 	_Parspos = eParsStart;
 	_requestbuff = "";
 	_env["SERVER_SOFTWARE"] = "webserv/1.0";
 	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
+	_content_len = 0;
 }
 
 bool Request::getFullLine(string &line)
@@ -128,7 +130,7 @@ void Request::parsHttpStandard(string httpStandard)
 	if (!(ss >> method >> path >> httpv) || (ss >> extra))
 		Error::ThrowError("The Request HttpStandard is Invalid");
 	if (!(method == "GET" || method == "POST" || method == "DELETE"))
-		Error::ThrowError("The Request method Not Found");
+		Error::ThrowError("501");
 	if (!(httpv == "HTTP/1.1" || httpv == "HTTP/1.0"))
 		Error::ThrowError("The Request Protocol version Invalid");
 	if (!parsPath(path))
@@ -152,8 +154,14 @@ void Request::parsLenTypeCont()
 		else
 			Error::ThrowError("The Content Length Invalid");
 		_Thereisbody = true;
+		return;
 	}
 	_Thereisbody = false;
+}
+
+size_t Request::getContentLen() 
+{
+	return _content_len;
 }
 
 bool Request::ParseHeader()
@@ -183,19 +191,34 @@ bool Request::ParseHeader()
 		else
 			_env[key] = value;
 	}
-	if (_Parspos == eParsHttpStand && _env["REQUEST_METHOD"] == "POST")
+	if (_Parspos == eParsHttpStand && _env["REQUEST_METHOD"] == "POST") {
 		parsLenTypeCont();
+	}
 	if (_Parspos == eParsHttpStand && line == "\r\n")
 	{
 		_Parspos = eParsEnd;
+		if (_env["REQUEST_METHOD"] == "POST") {
+			_env["Body"] = "";
+			return fillBody();
+		}
 		return (true);
 	}
 	return (false);
 }
 
+bool Request::isRequestHeaderComplete()
+{
+	return _Parspos == eParsEnd;
+}
+
 string &Request::GetRequest()
 {
 	return _requestbuff;
+}
+
+string &Request::getBody() 
+{
+	return _env["Body"];
 }
 
 bool Request::fillBody()
@@ -205,8 +228,8 @@ bool Request::fillBody()
 		_env["Body"] += _requestbuff;
 		if (_env["Body"].size() < _content_len)
 			return (false);
-		else if (_env["Body"].size() > _content_len || _env["Body"].size() > _maxbodysize)
-			Error::ThrowError("Body Biger Than Expected");
+		else if (_env["Body"].size() > _content_len || _content_len > _maxbodysize)
+			Error::ThrowError("413");
 	}
 	return (true);
 }
@@ -278,4 +301,14 @@ const string &Request::getport() const
 		_env.find("SERVER_PORT");
 
 	return (it != _env.end()) ? it->second : empty;
+}
+
+void Request::SetMaxBodySize(int size)
+{
+	_maxbodysize = size;
+	
+	string &s = _env["Body"];
+	if (s.size() > _maxbodysize || _content_len > _maxbodysize) {
+		Error::ThrowError("413");
+	}
 }

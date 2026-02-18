@@ -21,8 +21,10 @@ string AFd::GetType()
 
 int AFd::GetFd()
 {
-	
 	return fd;
 }
 
-AFd::~AFd() {}
+AFd::~AFd() 
+{
+
+}

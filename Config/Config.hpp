@@ -20,18 +20,23 @@ public:
 		vector<string> index;
 		string root;
 		bool autoindex;
-		int clientMaxBodySize;
+		size_t clientMaxBodySize;
 		bool allowMethodExists;
 		vector<string> allowMethods;
+		bool isMaxBodySize;
 
 		class Location
 		{
 		public:
 			Location();
+			bool isMaxBodySize;
+			size_t clientMaxBodySize;
+			bool clientBodyInFileOnly;
+			string clientBodyTempPath;
 			string cgiPassExt;
 			string cgiPassPath;
-			string redirectionCode;
-			string redirectionURI;
+			string returnCode;
+			string returnArg;
 			string root;
 			vector<string> index;
 			string path;
@@ -47,6 +52,7 @@ public:
 	static Config::Server &GetServerName(vector<Config::Server> &srvs, const string &val);
 	static string GetErrorPath(Config::Server &srv, const string &code);
 	static int GetLocationIndex(Config::Server &srv, const string &path);
+	static int GetMaxBodySize(vector<Config::Server> &srvs);
 private:
 	
 };

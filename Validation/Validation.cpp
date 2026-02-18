@@ -64,6 +64,9 @@ void Validation::CreateLocationMap()
 	_useLocation["Return"] = false;
 	_useLocation["ClientMaxBodySize"] = false;
 	_useLocation["AllowMethods"] = false;
+	_useLocation["BodyInFile"] = false;
+    _useLocation["BodyTempPath"] = false;
+	_useLocation["CgiPass"] = false;
 }
 
 void Validation::CreateServerdMap()
@@ -108,6 +111,8 @@ void Validation::CreateMap()
 	_map["allow_methods"] = &Validation::IsValidAllowMethods;
 	_map["cgi_pass"] = &Validation::IsValidCGIPass;
 	_map["types"] = &Validation::IsValidTypes;
+	_map["client_body_in_file_only"] = &Validation::IsValidBodyInFile;
+
 }
 
 bool Validation::SkipedOptions(std::string option)
@@ -139,12 +144,17 @@ void Validation::ResetServerSeting()
 
 	_useServer["Root"] = false;
 	_useServer["Index"] = false;
+	_useServer["ClientMaxBodySize"] = false;
 }
 
 void Validation::ResetLocationSeting()
 {
 	_useLocation["Root"] = false;
 	_useLocation["Index"] = false;
+
+	_useLocation["BodyInFile"] = false;
+    _useLocation["BodyTempPath"] = false;
+    _useLocation["CgiPass"] = false;
 }
 
 //      SERVER
@@ -335,6 +345,38 @@ void Validation::IsValidAutoindex()
 		_idx++;
 }
 
+void Validation::IsValidBodyInFile()
+{
+    if (_level != 2)
+        Error::ThrowError("Invalid Syntax : (client_body_in_file_only must be inside a location block)");
+
+    if (_useLocation["BodyInFile"] == true)
+        Error::ThrowError("Invalid Syntax : ( Duplication In client_body_in_file_only )");
+
+    // --- CONFLICT CHECK ---
+    if (_useLocation["CgiPass"] == true)
+        Error::ThrowError("Invalid Syntax : (client_body_in_file_only cannot be used with cgi_pass)");
+    // ----------------------
+
+    _useLocation["BodyInFile"] = true;
+
+    Validation::AddDirective("client_body_in_file_only");
+
+	_idx++;
+
+    if (IsSeparator() || (_data[_idx] != "on" && _data[_idx] != "off"))
+        Error::ThrowError("Invalid Syntax : (client_body_in_file_only has invalid option)");
+
+    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
+    _idx++;
+
+    if (_data[_idx] == ";")
+        _idx++;
+    else
+        Error::ThrowError("Invalid Syntax : (Missing semicolon)");
+}
+
+
 //      RETURN
 void Validation::IsValidReturn()
 {
@@ -342,7 +384,7 @@ void Validation::IsValidReturn()
 
 	Validation::AddDirective("return");
 	long redirectCode = ConvertToNumber(_data[_idx]);
-	if (redirectCode != 301 && redirectCode != 302)
+	if (redirectCode != 301 && redirectCode != 302 && redirectCode != 200)
 		Error::ThrowError("Invalid Syntax : ( Invalid Redirection Code In return )");
 
 	Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
@@ -397,7 +439,7 @@ void Validation::IsErrorPage()
 
 bool Validation::IsByteSizeUnit(std::string &data)
 {
-	return (strchr("KkMmGg", data[data.size() - 1]));
+	return (strchr("bBKkMmGg", data[data.size() - 1]));
 }
 
 //     CLIENTMAXBODYSIZE
@@ -445,21 +487,34 @@ void Validation::IsValidAllowMethods()
 
 void Validation::IsValidCGIPass()
 {
-	if (_level != 2)
-		Error::ThrowError("Invalid Syntax : (Element out of scope)");
+    if (_level != 2)
+        Error::ThrowError("Invalid Syntax : (Element out of scope)");
 
-	Validation::AddDirective("cgi_pass");
-	_idx++;
+    // --- CONFLICT CHECKS ---
+    if (_useLocation["BodyInFile"] == true)
+        Error::ThrowError("Invalid Syntax : (cgi_pass cannot be used with client_body_in_file_only)");
+    
+    if (_useLocation["CgiPass"] == true)
+        Error::ThrowError("Invalid Syntax : (Duplication In cgi_pass)");
+    // -----------------------
 
-	if (_data[_idx].find(".") != 0)
-		Error::ThrowError("Invalid Syntax : (CgiPass Must Have an extension)");
-	Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
-	if (!IsSeparator())
-		Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
-	else
-		Error::ThrowError("Invalid Syntax : (CgiPass Must Have a Path)");
-	if (_data[_idx] == ";")
-		_idx++;
+    _useLocation["CgiPass"] = true; // Mark as used
+
+    Validation::AddDirective("cgi_pass");
+    _idx++;
+
+    if (_data[_idx].find(".") != 0)
+        Error::ThrowError("Invalid Syntax : (CgiPass Must Have an extension)");
+    
+    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
+    
+    if (!IsSeparator())
+        Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
+    else
+        Error::ThrowError("Invalid Syntax : (CgiPass Must Have a Path)");
+    
+    if (_data[_idx] == ";")
+        _idx++;
 }
 
 void Validation::CheckValidation()
