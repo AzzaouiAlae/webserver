@@ -253,8 +253,7 @@ void Socket::AddSocketNew(string &host, string &port, Config::Server srv)
 		vector<Config::Server> myVector;
 		myVector.push_back(srv);
 		sockets[sock] = myVector;
-		Logging::Info() << "Socket with host: " << host << ":" 
-		<< port << " created, fd: " << sock;
+		
 	}
 	else  {
 		FindServerNew(host, port, srv);
@@ -297,13 +296,12 @@ void Socket::FindServerNew(string &host, string &port, Config::Server srv)
                 (!targetV6.empty() && targetV6 == socketV6))
             {
                 it->second.push_back(srv);
-                Logging::Info() << "Host: " << host << ":" << port 
-                                << " added as virtual server to fd: " << it->first;
+                
                 return;
             }
         }
     }
-    Logging::Warn() << "Bind to address " << host << ":" << port << " failed (Port in use by foreign process)";
+    
 }
 
 Socket::~Socket()

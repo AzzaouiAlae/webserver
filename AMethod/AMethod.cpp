@@ -138,6 +138,8 @@ void AMethod::LoadStaticErrorFile(const string &errorCode)
 // Does one thing: orchestrates error page resolution, then prepares for sending
 void AMethod::HandelErrorPages(const string &err)
 {
+	DEBUG() << "socket fd: " << sock->GetFd() << ", AMethod::HandelErrorPages";
+
 	code = err;
 	string path = ResolveErrorFilePath(err);
 	bool isPath = (path != "");
@@ -158,6 +160,7 @@ void AMethod::HandelErrorPages(const string &err)
 		LoadStaticErrorFile(err);
 		
 	}
+	bodySize = 0;
 	CreateResponseHeader();
 	ShouldSend += responseHeaderStr.length();
 	readyToSend = true;
@@ -167,6 +170,7 @@ void AMethod::HandelErrorPages(const string &err)
 // ══════════════════════════════════════════════
 //  Sending Response
 // ══════════════════════════════════════════════
+
 
 // Does one thing: sends the next chunk of data (header + body) to the socket
 void AMethod::SendResponse()
@@ -203,11 +207,13 @@ void AMethod::SendResponse()
 	if (size > 0)
 		sended += size;
 
-	Logging::Debug() << "Socket fd: " << sock->GetFd()
-					 << " Send " << sended << " byte from " << ShouldSend;
-
-	if (ShouldSend <= sended || Utility::SigPipe)
+	if (ShouldSend <= sended || Utility::SigPipe) 
+	{
 		del = true;
+		if (code == "413" || code == "409") {
+			sock->cleanBody = true;
+		}
+	}
 }
 
 // ══════════════════════════════════════════════
@@ -222,8 +228,6 @@ void AMethod::SendRedirection()
 	string redirLoc = path.getRedirPath();
 
 	CreateRedirectionHeader(redirCode, redirLoc);
-
-	Logging::Debug() << "Sending Redirection: " << redirCode << " to " << redirLoc;
 
 	ShouldSend = responseHeaderStr.length();
 	readyToSend = true;

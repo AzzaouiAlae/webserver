@@ -1,12 +1,8 @@
 #include "Post.hpp"
-#include "../Pipe/Pipe.hpp"
-#include "../HTTPContext/HTTPContext.hpp"
 
 // ══════════════════════════════════════════════
 //  Constructor / Destructor
 // ══════════════════════════════════════════════
-
-
 
 Post::Post(SocketIO *sock, Routing *router) : AMethod(sock, router)
 {
@@ -15,9 +11,7 @@ Post::Post(SocketIO *sock, Routing *router) : AMethod(sock, router)
 	pathResolved = false;
 	contentBodySize = 0;
 	uploadedSize = 0;
-	buf = (char *)calloc(1, BUF_SIZE);
 }
-
 
 Post::~Post()
 {
@@ -32,7 +26,6 @@ Post::~Post()
 // Does one thing: dispatches to the correct state for POST
 bool Post::HandleResponse()
 {
-
 	sock->SetStateByFd(sock->GetFd());
 
 	Logging::Debug() << "Socket fd: " << sock->GetFd() << " try to Handle POST Response";
@@ -87,9 +80,6 @@ bool Post::HandleResponse()
 	return del;
 }
 
-
-
-
 // ═══���══════════════════════════════════════════
 //  Path Resolution
 // ══════════════════════════════════════════════
@@ -124,7 +114,6 @@ void Post::OpenUploadFile()
 void Post::PostMethod()
 {
 	int idx = Config::GetLocationIndex(*(router->srv), router->GetRequest().getPath());
-
 	if (idx == -1)
 	{
 		HandelErrorPages("403");
@@ -137,11 +126,6 @@ void Post::PostMethod()
 		HandelErrorPages("403");
 		return;
 	}
-
-	
-    Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-
-    MulObj->ChangeToEpollOut(sock);
 
 	contentBodySize = router->GetRequest().getContentLen();
 	readyToUpload = true;
@@ -170,35 +154,9 @@ void Post::WriteBodyFromMemory()
 // Does one thing: splices data directly from socket to file (zero-copy)
 void Post::WriteBodyFromSocket()
 {
-	int len = 0, w;
-	int size = read(sock->GetFd(), buf, BUF_SIZE -1);
-	if (errno == EAGAIN)
-		Logging::Debug() << "EAGAIN	No data yet (non-blocking)	Retry on next epoll event";
-	if (errno == EINTR)
-		Logging::Debug() << "EINTR	Signal interrupted	Retry immediately or on next event";
-	if (errno == ECONNRESET)
-		Logging::Debug() << "ECONNRESET	Client killed connection	Set err = true, cleanup";
-	if (errno == EBADF)
-		Logging::Debug() << "EBADF	fd already closed (bug)	Set err = true, debug your code";
-	if (errno == EFAULT)
-		Logging::Debug() << "EFAULT	buf is bad pointer	Crash/set err = true";
-	Logging::Debug() << "WriteBodyFromSocket size: " << size;
-	if (size > 0) 
-	{
-		while(size - len > 0)
-		{
-			w = write(uploadFd, &(buf[len]), size - len);
-			if (w < 0) 
-			{
-				HandelErrorPages("403");
-				return;
-			}
-			len += w;
-			Logging::Debug() << "write " << w << " from " << size;
-		}
-		uploadedSize += size;
-	}
-	usleep(300000);
+	int written = sock->SocketToFile(uploadFd, contentBodySize - uploadedSize);
+	if (written > 0)
+		uploadedSize += written;
 }
 
 // Does one thing: orchestrates writing — memory first, then socket
@@ -224,6 +182,8 @@ void Post::uploadFileToDisk()
 	// Check if upload is complete
 	if (uploadedSize >= contentBodySize)
 	{
+		close(uploadFd);
+		uploadFd = -1;
 		readyToUpload = false;
 		createPostResponse();
 	}

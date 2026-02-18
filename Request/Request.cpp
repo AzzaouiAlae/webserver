@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/17 22:31:58 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/18 07:14:50 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -218,25 +218,29 @@ string &Request::GetRequest()
 
 string &Request::getBody() 
 {
-	return _env["Body"];
+	return _requestbuff;
 }
 
 bool Request::fillBody()
 {
 	if (_Parspos == eParsEnd && _env["REQUEST_METHOD"] == "POST" && _Thereisbody)
 	{
-		_env["Body"] += _requestbuff;
-		if (_env["Body"].size() < _content_len)
+		_env["Body"].append(_requestbuff, _requestbuff.length());
+		if (_env["Body"].length() < _content_len) {
+			
 			return (false);
-		else if (_env["Body"].size() > _content_len || _content_len > _maxbodysize)
+		}
+		else if (_env["Body"].length() > _content_len || _content_len > _maxbodysize)
 			Error::ThrowError("413");
+		
 	}
 	return (true);
 }
 
-bool Request::ParseRequest(string request_buff)
+bool Request::ParseRequest(char *request_buff, int size)
 {
-	_requestbuff += request_buff;
+	_requestbuff.append(request_buff, size);
+	
 	if (_Parspos != eParsEnd)
 	{
 		if (!ParseHeader())
@@ -250,9 +254,9 @@ bool Request::ParseRequest(string request_buff)
 	return true;
 }
 
-bool Request::isComplete(char *request)
+bool Request::isComplete(char *request, int size)
 {
-	if (!ParseRequest(request))
+	if (!ParseRequest(request, size))
 		return (false);
 	return true;
 }

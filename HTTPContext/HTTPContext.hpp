@@ -5,7 +5,8 @@
 #include "../Pipe/Pipe.hpp"
 #include "../Repsense/Repsense.hpp"
 
-#define BUF_SIZE (1024 * 1024 * 10)
+#define BUF_SIZE 1024 * 1024 * 10
+#define SAFE_MARGIN 1024 * 64
 
 class HTTPContext : public IContext
 {
@@ -23,7 +24,7 @@ class HTTPContext : public IContext
     int  _readFromSocket();
 
     // Helper to parse the buffer and find the correct Server block
-    bool _parseAndConfig();
+    bool _parseAndConfig(int len);
 
     // Helper to set up Pipes and switch Epoll state when request is done
     void _setupPipeline();
@@ -39,5 +40,4 @@ public:
 	void HandleRequest();
 	void MarkedSocketToFree();
 	void setMaxBodySize();
-
 };

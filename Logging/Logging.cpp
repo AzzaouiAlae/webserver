@@ -51,7 +51,6 @@ void Logging::Write(int level, const string &msg)
 	char buffer[80];
 	strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", ltm);
 	string timeStr(buffer);
-
 	string prefix, color;
 	switch (level)
 	{

@@ -1,0 +1,250 @@
+diff --git a/HTTPContext/HTTPContext.cpp b/HTTPContext/HTTPContext.cpp
+index 40ab832..eeb7a0c 100644
+--- a/HTTPContext/HTTPContext.cpp
++++ b/HTTPContext/HTTPContext.cpp
+@@ -137,7 +137,7 @@ void HTTPContext::HandleRequest()
+     bool isComplete = _parseAndConfig();
+ 
+     // 3. Check for Completion or Errors
+-    if (isComplete || router.GetRequest().isPostRequest())
++    if (isComplete || router.GetRequest().isRequestHeaderComplete())
+     {
+ 		_setupPipeline();
+         if (err) 
+diff --git a/Post/Post.cpp b/Post/Post.cpp
+index 89ade90..0848683 100644
+--- a/Post/Post.cpp
++++ b/Post/Post.cpp
+@@ -2,7 +2,9 @@
+ 
+ Post::Post(SocketIO *sock, Routing *router): AMethod(sock, router)
+ {
+-
++	fileFd = -1;
++	contentBodySize = 0;
++	uploadedSize = 0;
+ }
+ 
+ 
+@@ -19,21 +21,13 @@ bool Post::HandleResponse()
+ 		HandelErrorPages("405");
+ 	}
+ 
+-	PostMethod();
+-
+-
+-	
+-	
+-	
+-	return del;
+-}
+-
+-void Post::PostMethod()
+-{
+ 	filename = router->CreatePath(router->srv);
+ 
++	if (readyToSend) {
++		SendResponse();
++	}
+ 	if (readyToUpload) {
+-		
++		uploadFileToDisk();
+ 	} 
+ 	else if (router->GetPath().isFound()) {
+ 		HandelErrorPages("409");
+@@ -42,14 +36,61 @@ void Post::PostMethod()
+ 		
+ 	}
+ 	else {
+-		int idx = Config::GetLocationIndex(*(router->srv), router->GetRequest().getPath());
+-		if (idx == -1) {
+-			
+-		}
++		PostMethod();
++	}
++	
++	return del;
++}
++
++void Post::PostMethod()
++{
++	int idx = Config::GetLocationIndex(*(router->srv), router->GetRequest().getPath());
++	if (idx == -1) 
++	{
++		HandelErrorPages("403");
++		return;
++	}
++	fileFd = open(filename.c_str(), O_CREAT | O_WRONLY, 0666);
++	if (fileFd == -1) 
++	{
++		HandelErrorPages("403");
++		return;
++	}
++	contentBodySize = router->GetRequest().getContentLen();
++	readyToUpload = true;
++	uploadFileToDisk();
++}
++
++void  Post::uploadFileToDisk()
++{
++	string &s = router->GetRequest().getBody();
++	int size;
++	if (s.length() > uploadedSize) {
++		char *h = &(s[uploadedSize]);
++		size = write(fileFd, h, s.length() - uploadedSize);
++	}
++	else {
++		size = sock->SocketToFile(fileFd, contentBodySize - uploadedSize);
++	}
++	if(size <= 0) 
++	{
++		HandelErrorPages("400");
++		unlink(filename.c_str());
++		return;
++	}
++	uploadedSize += size;
++	if (uploadedSize >= contentBodySize) {
++		createPostRespence();
+ 	}
+ }
+ 
+-void uploadFileToDisk()
++Post::~Post()
+ {
++	if (fileFd != -1)
++		close(fileFd);
++}
+ 
++void Post::createPostRespence()
++{
++	
+ }
+\ No newline at end of file
+diff --git a/Post/Post.hpp b/Post/Post.hpp
+index 3d40539..c47f777 100644
+--- a/Post/Post.hpp
++++ b/Post/Post.hpp
+@@ -7,9 +7,12 @@ class Post: public AMethod
+ 	bool readyToUpload;
+ 	size_t contentBodySize;
+ 	size_t uploadedSize;
++	void uploadFileToDisk();
++	void createPostRespence();
++	void PostMethod();
+ 
+ public:
+ 	Post(SocketIO *sock, Routing *router);
++	~Post();
+ 	bool HandleResponse();
+-	void PostMethod();
+ };
+diff --git a/Request/Request.cpp b/Request/Request.cpp
+index 759ddd6..979da1b 100644
+--- a/Request/Request.cpp
++++ b/Request/Request.cpp
+@@ -6,7 +6,7 @@
+ /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
+ /*                                                +#+#+#+#+#+   +#+           */
+ /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
+-/*   Updated: 2026/02/17 20:25:31 by aazzaoui         ###   ########.fr       */
++/*   Updated: 2026/02/17 21:36:18 by aazzaoui         ###   ########.fr       */
+ /*                                                                            */
+ /* ************************************************************************** */
+ 
+@@ -158,6 +158,11 @@ void Request::parsLenTypeCont()
+ 	_Thereisbody = false;
+ }
+ 
++size_t Request::getContentLen() 
++{
++	return _content_len;
++}
++
+ bool Request::ParseHeader()
+ {
+ 	string line = "";
+@@ -200,9 +205,9 @@ bool Request::ParseHeader()
+ 	return (false);
+ }
+ 
+-bool Request::isPostRequest()
++bool Request::isRequestHeaderComplete()
+ {
+-	return _Parspos == eParsEnd && _env["REQUEST_METHOD"] == "POST";
++	return _Parspos == eParsEnd;
+ }
+ 
+ string &Request::GetRequest()
+diff --git a/Request/Request.hpp b/Request/Request.hpp
+index fe3c9aa..52a9b66 100644
+--- a/Request/Request.hpp
++++ b/Request/Request.hpp
+@@ -6,7 +6,7 @@
+ /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
+ /*                                                +#+#+#+#+#+   +#+           */
+ /*   Created: 2026/01/27 20:05:48 by oel-bann          #+#    #+#             */
+-/*   Updated: 2026/02/17 20:24:44 by aazzaoui         ###   ########.fr       */
++/*   Updated: 2026/02/17 21:36:11 by aazzaoui         ###   ########.fr       */
+ /*                                                                            */
+ /* ************************************************************************** */
+ 
+@@ -52,9 +52,10 @@ class Request
+ 	const string &getport() const;
+ 	const string &getHost() const;
+ 	const string &getServerName() const;
++	size_t getContentLen() ;
+ 	string &getBody();
+ 	string &getPath();
+ 	string &GetRequest();
+ 	void SetMaxBodySize(int size);
+-	bool isPostRequest();
++	bool isRequestHeaderComplete();
+ };
+\ No newline at end of file
+diff --git a/utility/Utility.cpp b/utility/Utility.cpp
+index dc9f6f7..ab9fbf8 100644
+--- a/utility/Utility.cpp
++++ b/utility/Utility.cpp
+@@ -138,4 +138,14 @@ void Utility::parseBySep(vector<string> &parsedPath, string str, string sep)
+ 		parsedPath.push_back(s);
+ 		s = strtok(NULL, sep.c_str());
+ 	}
++}
++
++string lastToken(const string &str, char ch) 
++{
++	for(int i = str.length() - 1; i > 0; i++) {
++		if (str[i] == ch)
++			return str.substr(i + 1);
++		i++;
++	}
++	return str;
+ }
+\ No newline at end of file
+diff --git a/utility/Utility.hpp b/utility/Utility.hpp
+index 1cdf981..ad55544 100644
+--- a/utility/Utility.hpp
++++ b/utility/Utility.hpp
+@@ -23,4 +23,6 @@ class Utility
+ 	static bool isHexa(string hex);
+ 	static bool isHexa(char hex);
+ 	static void parseBySep(vector<string> &parsedPath, string str, string sep);
++	static string lastToken(const string &str, char ch) ;
++
+ };
+diff --git a/vgcore.219588 b/vgcore.219588
+deleted file mode 100644
+index 304d3f4..0000000
+Binary files a/vgcore.219588 and /dev/null differ
+diff --git a/vgcore.474407 b/vgcore.474407
+deleted file mode 100644
+index 38aea38..0000000
+Binary files a/vgcore.474407 and /dev/null differ
+diff --git a/vgcore.475591 b/vgcore.475591
+deleted file mode 100644
+index a497466..0000000
+Binary files a/vgcore.475591 and /dev/null differ
+diff --git a/vgcore.516884 b/vgcore.516884
+deleted file mode 100644
+index 7a29972..0000000
+Binary files a/vgcore.516884 and /dev/null differ

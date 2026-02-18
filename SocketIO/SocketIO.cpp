@@ -154,50 +154,43 @@ long SocketIO::CurrentTime()
 	return time.tv_sec * USEC + time.tv_usec;
 }
 
-int SocketIO::SocketToPipe(int size)
-{
-	int len = 0;
-	int flag = (ePipe1 | eSocket);
-	// Step 1: Socket → Pipe (always try if pipe is writable)
-	if ((status & flag) == flag)
-	{
-		len = splice(this->fd, NULL, pipefd[1], NULL, size, SPLICE_F_NONBLOCK);
-		status &= ~ePipe1;
-		((HTTPContext *)context)->activeOutPipe();
-		if (len > 0)
-			pendingInPipe += len;
-	}
-	return len;
-}
-
-int SocketIO::PipeToFile(int fileFD)
-{
-	int len = 0;
-	if ((status & ePipe0) && pendingInPipe > 0)
-	{
-		len = splice(pipefd[0], NULL, fileFD, NULL, pendingInPipe, SPLICE_F_NONBLOCK);
-		status &= ~ePipe0;
-		((HTTPContext *)context)->activeInPipe();
-		if (len > 0)
-			pendingInPipe -= len;
-	}
-	return len;
-}
-
-int SocketIO::getPendingInPipe() const
-{
-	return pendingInPipe;
-}
-
-
 int SocketIO::SocketToFile(int fileFD, int size)
 {
-	SocketToPipe(size);
+	int len = 0, flag = (eSocket | ePipe1);
 
-	return PipeToFile(fileFD);
+	if ((status & flag) == flag)
+	{
+		len = splice(this->fd, NULL, pipefd[1], NULL, size, 0);
+		status &= ~flag;
+		if (len == -1)
+			return -1;
+		pendingInPipe += len;
+	}
+	if (status & ePipe0 && pendingInPipe > 0)
+	{
+		len = splice(pipefd[0], NULL, fileFD, NULL, pendingInPipe, 0);
+		status &= ~ePipe0;
+		((HTTPContext *)context)->activeInPipe();
+		if (len == -1)
+			return -1;
+		pendingInPipe -= len;
+	}
+	return len;
 }
 
-
+int SocketIO::SendSocketToPipe(int size)
+{
+	int len = 0;
+	if (status & ePipe1) {
+		len = splice(fd, NULL, pipefd[1], NULL, size, 0);
+		status &= ~ePipe1;
+		((HTTPContext *)context)->activeOutPipe();
+		if (len == -1)
+			return -1;
+		pendingInPipe += len;
+	}
+	return len;
+}
 
 int SocketIO::SocketToSocketRead(int socket, int size)
 {
@@ -286,3 +279,4 @@ void SocketIO::ClearPipePool()
 		close(pipePool[i].second);
 	}
 }
+

@@ -31,7 +31,7 @@ string Routing::CreatePath(Config::Server *srv)
 		return strPath;
 	string h = request.getHost();
 	this->srv = srv;
-	Logging::Debug() << "Getting Server name " << srv->serverName;
+	
 	path.CreatePath(*srv, request.getPath());
 	strPath = path.getFullPath();
 	return strPath;

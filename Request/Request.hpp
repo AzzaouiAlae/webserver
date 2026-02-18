@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:48 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/17 21:36:11 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/18 04:19:01 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ class Request
 	int _Parspos;
 	bool _Thereisbody;
 	void initReqDirectives();
-	bool ParseRequest(string request_buff);
+	bool ParseRequest(char *request_buff, int size);
 	bool ParseHeader();
 	void parsHttpStandard(string httpStandard);
 	bool parsPath(string path);
@@ -46,7 +46,7 @@ class Request
 public:
 	Request(size_t maxbodysze);
 	Request();
-	bool isComplete(char *request);
+	bool isComplete(char *request, int size);
 	map<string, string> &getrequestenv();
 	const string &getMethod() const;
 	const string &getport() const;
