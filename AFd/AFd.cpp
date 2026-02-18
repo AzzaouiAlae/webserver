@@ -7,7 +7,6 @@ AFd::AFd(int fd, string type)
 	this->type = type;
 	MarkedToDelete = false;
 	deleteNow = false;
-	onActiveEvent = NULL;
 }
 
 AFd::operator int() const 
@@ -25,4 +24,7 @@ int AFd::GetFd()
 	return fd;
 }
 
-AFd::~AFd() {}
+AFd::~AFd() 
+{
+
+}

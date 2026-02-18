@@ -123,17 +123,6 @@ void HTTPContext::_setupPipeline()
     MulObj->AddAsEpollOut(out);
 }
 
-void HTTPContext::addInEvent(void (*f)(AFd *fd))
-{
-	in->onActiveEvent = f;
-}
-
-void HTTPContext::addOutEvent(void (*f)(AFd *fd))
-{
-	out->onActiveEvent = f;
-}
-
-
 void HTTPContext::HandleRequest()
 {
     // 1. Read Data
@@ -162,7 +151,6 @@ void HTTPContext::HandleRequest()
         }
     }
 }
-
 
 HTTPContext::HTTPContext()
 {
