@@ -2,7 +2,6 @@
 #include "../Headers.hpp"
 #include "../AMethod/AMethod.hpp"
 
-
 class Post : public AMethod
 {
 	int uploadFd;
@@ -10,7 +9,6 @@ class Post : public AMethod
 	bool pathResolved;
 	size_t contentBodySize;
 	size_t uploadedSize;
-	char *buf;
 
 	// ──── Single-responsibility helpers ────
 	void ResolvePath();
@@ -29,7 +27,6 @@ class Post : public AMethod
 
 public:
 	Post(SocketIO *sock, Routing *router);
-
 	~Post();
 	bool HandleResponse();
 };

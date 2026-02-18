@@ -20,20 +20,22 @@ void HTTPContext::Handle(Socket *sock)
 	((HTTPContext *)fd->context)->sock = fd;
 	((HTTPContext *)fd->context)->repsense.Init(fd, &(((HTTPContext *)fd->context)->router));
 	Multiplexer::GetCurrentMultiplexer()->AddAsEpollIn(fd);
-	Logging::Debug() << "Socket FD: " << sock->GetFd()
-					<< " accepte new connection as socket fd: " << sock->acceptedSocket;
+	
 }
 
 void HTTPContext::Handle()
 {
+	DEBUG() << "Socket fd: " << sock->GetFd() << ", HTTPContext::Handle() start";
 	if (router.isRequestComplete() == false && err == false)
 	{
-		Logging::Debug() << "Socket FD: " << sock->GetFd() << " start handle request";
+		DEBUG() << "Socket fd: " << sock->GetFd() << ", HTTPContext::Handle() router.isRequestComplete(): " <<
+		router.isRequestComplete() << ", err: " << err;
+
 		HandleRequest();
 	}
 	else
 	{
-		Logging::Debug() << "Socket FD: " << sock->GetFd() << " start handle response";
+		
 		if (repsense.HandleResponse()) {
 			MarkedSocketToFree();
 		}
@@ -51,8 +53,6 @@ int HTTPContext::_readFromSocket()
         buf = (char *)calloc(1, BUF_SIZE + 1);
     }
     int len = read(sock->GetFd(), buf, BUF_SIZE); 
-    
-    Logging::Debug() << "Socket FD: " << sock->GetFd() << " read " << len << " byte\n" << buf;
 
     if (len == 0 || Utility::SigPipe) {
         err = true;
@@ -63,6 +63,7 @@ int HTTPContext::_readFromSocket()
 
 void HTTPContext::setMaxBodySize()
 {
+	DEBUG() << "Socket fd: " << sock->GetFd() << ", HTTPContext::setMaxBodySize, err: " << err;
 	router.srv = &Config::GetServerName(*servers, router.GetRequest().getHost());
 	int i = Config::GetLocationIndex(*router.srv, router.GetRequest().getPath());
 
@@ -80,10 +81,10 @@ bool HTTPContext::_parseAndConfig(int len)
 {
     try {
         if (err) return true; // If error already exists, treat as "complete" to trigger error page
-
+		
         // 1. Parse buffer
         bool complete = router.GetRequest().isComplete(buf, len);
-
+		DEBUG() << "Socket fd: " << sock->GetFd() << ", HTTPContext::_parseAndConfig, " << complete;
         // 2. Configure Server Block logic
         // We do this immediately so we can check MaxBodySize during parsing if needed
 		if (!isMaxBodyInit && router.GetRequest().getHost() != "") {
@@ -92,8 +93,9 @@ bool HTTPContext::_parseAndConfig(int len)
         return complete;
 
     } catch (exception &e) {
-        Logging::Error() << "Request Parsing Exception: " << e.what();
+		ERR() << "Socket fd: " << sock->GetFd() << ", HTTPContext::_parseAndConfig, exception: " << e.what();
 		errNo = e.what();
+		sock->cleanBody = true;
         err = true;
         return true; // Return true to proceed to error handling
     }
@@ -101,12 +103,10 @@ bool HTTPContext::_parseAndConfig(int len)
 
 void HTTPContext::_setupPipeline()
 {
-    Logging::Debug() << "Read of Request from Socket fd: " << sock->GetFd() << " Complete";
+    
     
     // Log the request details
-    Logging::Debug() << "Request is : " << router.GetRequest().getMethod() 
-                     << " " << router.GetRequest().getPath() << "\n"
-                     << router.GetRequest().GetRequest();
+    
 
     router.SetRequestComplete();
 
@@ -127,6 +127,8 @@ void HTTPContext::HandleRequest()
 {
     // 1. Read Data
     int len = _readFromSocket();
+
+	DEBUG() << "Socket fd: " << sock->GetFd() << ", HTTPContext::HandleRequest(), len: " << len;
     
     // If read failed (-1) or nothing to process, return
     if (len == -1 && !err) {
@@ -135,12 +137,22 @@ void HTTPContext::HandleRequest()
 
     // 2. Parse Data
     bool isComplete = _parseAndConfig(len);
+	DEBUG() << "Socket fd: " << sock->GetFd() << ", HTTPContext::HandleRequest(), isComplete: " << isComplete 
+	<< ", err: " << err;
 
     // 3. Check for Completion or Errors
     if (isComplete || router.GetRequest().isRequestHeaderComplete())
     {
 		_setupPipeline();
-        if (err) 
+		if (sock->cleanBody) {
+			if (router.GetRequest().getContentLen() < INT64_MAX) {
+				sock->maxToClean = router.GetRequest().getContentLen() + SAFE_MARGIN;
+			}
+			else
+				sock->maxToClean = router.GetRequest().getContentLen();
+			Multiplexer::GetCurrentMultiplexer()->ChangeToEpollIn(sock);
+		}
+        else if (err) 
 		{
 			if (Config::GetErrorPath(*router.srv, errNo) != "" || StaticFile::GetFileByName(errNo) != NULL ) {
 				repsense.HandelErrorPages(errNo);
@@ -169,7 +181,7 @@ void HTTPContext::MarkedSocketToFree()
 	Utility::SigPipe = false;
 	if (in != NULL)
 		MulObj->ChangeToEpollOneShot(in);
-	if (in != NULL)
+	if (out != NULL)
 		MulObj->ChangeToEpollOneShot(out);
 	shutdown(sock->GetFd(), SHUT_RDWR);
 	sock->MarkedToDelete = true;

@@ -25,11 +25,13 @@ GET::~GET()
 // Does one thing: dispatches to the correct sending/processing path for GET
 bool GET::HandleResponse()
 {
+	DEBUG() << "Socket fd: " << sock->GetFd() << ", GET::HandleResponse() start";
+
 	Request &req = router->GetRequest();
 	sock->SetStateByFd(sock->GetFd());
 	string method = req.getMethod();
 
-	Logging::Debug() << "Socket fd: " << sock->GetFd() << " try to Handle GET Response";
+	
 
 	// Check allowed methods (shared logic from AMethod)
 	if (!readyToSend && !IsMethodAllowed(method))
@@ -42,7 +44,7 @@ bool GET::HandleResponse()
 		SendListFilesResponse();
 	else if (readyToSend)
 	{
-		Logging::Debug() << "Socket fd: " << sock->GetFd() << " Send Get Response";
+		
 		SendResponse();
 	}
 	else if (method == "GET")
@@ -62,8 +64,8 @@ void GET::GetMethod()
 {
 	filename = router->CreatePath(router->srv);
 	
-	Logging::Debug() << "Socket fd: " << sock->GetFd()
-					 << " try to send file " << filename;
+	
+				
 
 	if (router->GetPath().isRedirection())
 		SendRedirection();
@@ -109,7 +111,7 @@ void GET::ServeFile()
 {
 	OpenFile(filename);
 	PrepareFileResponse();
-	Logging::Debug() << "Socket fd: " << sock->GetFd() << " ready To Send Response";
+	
 	SendResponse();
 }
 
@@ -243,14 +245,12 @@ void GET::SendListFilesStr(const string &str)
 	int len = targetToSend - sended;
 	int offset = str.length() - len;
 
-	Logging::Debug() << "SendListFilesStr offset: " << offset << ", len: " << len
-					 << ", targetToSend: " << targetToSend << ", sended: " << sended
-					 << ", str len: " << str.length();
+	
 
 	const char *b = &(str[offset]);
 	SendChunk(b, len);
 
-	Logging::Debug() << "SendListFilesStr sent chunk";
+	
 }
 
 // Does one thing: calculates the correct offset into a static file and sends that chunk
@@ -262,7 +262,7 @@ void GET::SendAutoIndex(StaticFile *f)
 
 	SendChunk(b, len);
 
-	Logging::Debug() << "SendAutoIndex sent chunk";
+	
 }
 
 // Does one thing: advances the state machine counter and checks for completion

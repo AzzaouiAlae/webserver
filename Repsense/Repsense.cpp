@@ -28,16 +28,21 @@ void Repsense::Init(SocketIO *sock, Routing *router)
 // Does one thing: delegates HandleResponse to the correct method object
 bool Repsense::HandleResponse()
 {
+	DEBUG() << "Socket fd: " << sock->GetFd() << ", Repsense::HandleResponse start";
 	if (method == NULL) 
 	{
 		string requestMethod = router->GetRequest().getMethod();
 
-		if (requestMethod == "GET")
+		if (requestMethod == "GET") {
+			DEBUG() << "Socket fd: " << sock->GetFd() << ", Repsense::HandleResponse create GET method";
 			method = new GET(sock, router);
+		}
 		else if (requestMethod == "POST") {
+			DEBUG() << "Socket fd: " << sock->GetFd() << ", Repsense::HandleResponse create POST method";
 			method = new Post(sock, router);
 		}
 		else if (requestMethod == "DELETE") {
+			DEBUG() << "Socket fd: " << sock->GetFd() << ", Repsense::HandleResponse create POST method";
 			// method = new DELETE(sock, router);
 		}
 		else

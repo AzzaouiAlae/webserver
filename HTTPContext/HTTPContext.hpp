@@ -5,7 +5,8 @@
 #include "../Pipe/Pipe.hpp"
 #include "../Repsense/Repsense.hpp"
 
-#define BUF_SIZE (1024 * 1024 * 10)
+#define BUF_SIZE 1024 * 1024 * 10
+#define SAFE_MARGIN 1024 * 64
 
 class HTTPContext : public IContext
 {
@@ -39,5 +40,4 @@ public:
 	void HandleRequest();
 	void MarkedSocketToFree();
 	void setMaxBodySize();
-
 };

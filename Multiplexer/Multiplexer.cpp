@@ -105,7 +105,7 @@ void Multiplexer::ChangeToEpollInOut(AFd *fd)
 
 void Multiplexer::MainLoop()
 {
-	int timeout = 10;
+	int timeout = 1;
 	AFd *obj;
 	long time = Utility::CurrentTime() + USEC * timeout;
 	(void)time;
@@ -114,7 +114,7 @@ void Multiplexer::MainLoop()
 	{
 		epoll_event eventList[count];
 		int size = epoll_wait(epollFd, eventList, count, USEC * timeout / 1000);
-		Logging::Debug() << "New event/timeout happen size: " << size;
+		
 		
 		for(int i = 0; i < size; i++)
 		{
@@ -131,20 +131,19 @@ void Multiplexer::MainLoop()
 			if (obj->GetType() == "Pipe") {
 				continue;
 			}
-			if (obj->MarkedToDelete == false && eventList->events & (EPOLLIN | EPOLLOUT)) {
-				Logging::Debug() << "Start handel " << obj->GetType() << 
-					" with fd: " << obj->GetFd() << " and flag " <<
-					((eventList->events & EPOLLIN) ? "EPOLLIN" : "EPOLLOUT");
-				obj->Handle();
+			if (obj->cleanBody) {
+				obj->cleanFd();
 			}
-
-			if (obj->MarkedToDelete || eventList->events & (EPOLLERR | EPOLLPRI | EPOLLRDHUP))
+			else if (obj->MarkedToDelete || eventList->events & (EPOLLERR | EPOLLPRI | EPOLLRDHUP))
 			{
-				Logging::Debug() << "Add " << obj->GetType() << 
-					" with fd: " << obj->GetFd() << " to delete";
+				
 				obj->MarkedToDelete = true;
 				DeleteFromEpoll(obj);
 				toDelete.insert(obj);
+			}
+			else if (obj->MarkedToDelete == false && eventList->events & (EPOLLIN | EPOLLOUT)) {
+				
+				obj->Handle();
 			}
 		}
 		ClearToDelete();
@@ -158,8 +157,7 @@ bool Multiplexer::DeleteItem(AFd *item)
 	
 	if (item->deleteNow)
 	{
-		Logging::Debug() << item->GetType() << 
-					" with fd: " << item->GetFd() << " deleted";
+		
 		delete item;
         toDelete.erase(item);
 		return true;
@@ -178,9 +176,7 @@ bool Multiplexer::DeleteItem(AFd *item)
 void Multiplexer::ClearToDelete()
 {
 	SocketIO::CloseSockFD(-1);
-	Logging::Debug() << "toDelete has " << toDelete.size()
-	<< ", SocketIO has " << SocketIO::CloseSockFD(-1) <<
-	", pipe poll has " << SocketIO::GetPipePoolSize();
+	
 	if (toDelete.size() == 0)
 		return;
 	set<AFd *>::iterator it = toDelete.begin();

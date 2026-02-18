@@ -43,7 +43,7 @@ void Config::listenToAllHosts()
 		{
 			if (IsDuplicatedServer(i, srv.listen[j], srv.serverName))
 			{
-				Logging::Warn() << "server name: " << srv.serverName << ", Host: " << srv.listen[j] << ", Are duplicated";
+				
 				continue;
 			}
 			Socket::AddSocketNew(srv.hosts[j].first, srv.hosts[j].second, srv);

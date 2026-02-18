@@ -112,7 +112,7 @@ void Parsing::FillConf()
 			
 			else
 			{
-				Logging::Debug() << "value: " << val;
+				
 				Error::ThrowError("Some invalid value");
 			}
 		}
@@ -178,7 +178,7 @@ void Parsing::parseLocation(AST<string> &location, Config::Server::Location &loc
 		}
 		else
 		{
-			Logging::Debug() << "value: " << val;
+			
 			Error::ThrowError("Some invalid value");
 		}
 	}
