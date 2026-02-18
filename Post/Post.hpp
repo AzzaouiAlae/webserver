@@ -2,8 +2,10 @@
 #include "../Headers.hpp"
 #include "../AMethod/AMethod.hpp"
 
+
 class Post : public AMethod
 {
+	static Post *current;
 	int uploadFd;
 	bool readyToUpload;
 	bool pathResolved;
@@ -16,8 +18,15 @@ class Post : public AMethod
 	void WriteBodyFromMemory();
 	void WriteBodyFromSocket();
 	void uploadFileToDisk();
+
+	// ──── Response helpers ────
+	bool GetLocationReturn(string &retCode, string &retBody);
+	void SendPostRedirection(const string &retCode, const string &retBody);
+	void SendPostCustomBody(const string &retCode, const string &retBody);
+	void SendPostDefault();
 	void createPostResponse();
 	void PostMethod();
+	static void fdActive(AFd *fd);
 
 public:
 	Post(SocketIO *sock, Routing *router);

@@ -8,6 +8,9 @@ void Pipe::Handle()
 	
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 	MulObj->ChangeToEpollOneShot(this);
+	if (onActiveEvent) {
+		onActiveEvent(this);
+	}
 }
 
 Pipe::Pipe(int fd, SocketIO *socket): AFd(fd, "Pipe"), socket(socket)

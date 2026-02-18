@@ -1,8 +1,12 @@
 #include "Post.hpp"
+#include "../Pipe/Pipe.hpp"
+#include "../HTTPContext/HTTPContext.hpp"
 
 // ══════════════════════════════════════════════
 //  Constructor / Destructor
 // ══════════════════════════════════════════════
+
+Post *Post::current;
 
 Post::Post(SocketIO *sock, Routing *router) : AMethod(sock, router)
 {
@@ -26,6 +30,8 @@ Post::~Post()
 // Does one thing: dispatches to the correct state for POST
 bool Post::HandleResponse()
 {
+	current = this;
+
 	sock->SetStateByFd(sock->GetFd());
 
 	Logging::Debug() << "Socket fd: " << sock->GetFd() << " try to Handle POST Response";
@@ -80,6 +86,22 @@ bool Post::HandleResponse()
 	return del;
 }
 
+void Post::fdActive(AFd *fd)
+{
+	if (fd->GetFd() == current->sock->pipefd[0]) {
+		int len = current->sock->PipeToFile(current->uploadFd);
+		if (len > 0) {
+			current->uploadedSize += len;
+		}
+		if (current->uploadedSize >= current->contentBodySize)
+		{
+			current->readyToUpload = false;
+			current->createPostResponse();
+		}
+	}
+}
+
+
 // ═══���══════════════════════════════════════════
 //  Path Resolution
 // ══════════════════════════════════════════════
@@ -114,6 +136,7 @@ void Post::OpenUploadFile()
 void Post::PostMethod()
 {
 	int idx = Config::GetLocationIndex(*(router->srv), router->GetRequest().getPath());
+	((HTTPContext *)(sock->context))->addInEvent(fdActive);
 	if (idx == -1)
 	{
 		HandelErrorPages("403");
@@ -126,6 +149,11 @@ void Post::PostMethod()
 		HandelErrorPages("403");
 		return;
 	}
+
+	
+    Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+
+    MulObj->ChangeToEpollIn(sock);
 
 	contentBodySize = router->GetRequest().getContentLen();
 	readyToUpload = true;
@@ -182,19 +210,57 @@ void Post::uploadFileToDisk()
 	// Check if upload is complete
 	if (uploadedSize >= contentBodySize)
 	{
-		close(uploadFd);
-		uploadFd = -1;
 		readyToUpload = false;
 		createPostResponse();
 	}
 }
 
 // ══════════════════════════════════════════════
-//  Success Response (201 Created)
+//  Success Response
 // ══════════════════════════════════════════════
 
-// Does one thing: builds and sends a 201 Created response
-void Post::createPostResponse()
+// Does one thing: gets the return directive from the matched location (if any)
+bool Post::GetLocationReturn(string &retCode, string &retBody)
+{
+	int idx = router->GetPath().matchedLocationIndex;
+	if (idx == -1)
+		return false;
+
+	const Config::Server::Location &loc = router->srv->Locations[idx];
+	if (loc.returnCode.empty())
+		return false;
+
+	retCode = loc.returnCode;
+	retBody = loc.returnArg;
+	return true;
+}
+
+// Does one thing: sends a redirection response (301, 302)
+void Post::SendPostRedirection(const string &retCode, const string &retBody)
+{
+	CreateRedirectionHeader(retCode, retBody);
+	Logging::Debug()	<< "Socket fd: " << sock->GetFd()
+						<< " POST redirect " << retCode << " to " << retBody;
+	ShouldSend = responseHeaderStr.length();
+	readyToSend = true;
+	SendResponse();
+}
+
+// Does one thing: sends a custom body response (e.g., return 200 '{"status":"ok"}')
+void Post::SendPostCustomBody(const string &retCode, const string &retBody)
+{
+	code = retCode;
+	bodySize = retBody.length();
+	filename = ".json";
+	CreateResponseHeader();
+	responseHeaderStr += retBody;
+	ShouldSend = responseHeaderStr.length();
+	readyToSend = true;
+	SendResponse();
+}
+
+// Does one thing: sends the default 201 Created (no body)
+void Post::SendPostDefault()
 {
 	code = "201";
 	bodySize = 0;
@@ -203,4 +269,34 @@ void Post::createPostResponse()
 	ShouldSend = responseHeaderStr.length();
 	readyToSend = true;
 	SendResponse();
+}
+
+// Does one thing: orchestrates which response to send after upload completes
+void Post::createPostResponse()
+{
+	string retCode, retBody;
+
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+
+    MulObj->ChangeToEpollOut(sock);
+
+	if (GetLocationReturn(retCode, retBody))
+	{
+		// Location has a "return" directive
+		if (retCode == "301" || retCode == "302")
+		{
+			// return 301 /new-path;  → redirect
+			SendPostRedirection(retCode, retBody);
+		}
+		else
+		{
+			// return 200 '{"status": "success"}';  → custom body
+			SendPostCustomBody(retCode, retBody);
+		}
+	}
+	else
+	{
+		// No "return" directive → default 201 Created
+		SendPostDefault();
+	}
 }
