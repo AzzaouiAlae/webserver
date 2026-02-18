@@ -105,7 +105,7 @@ void Multiplexer::MainLoop()
 	{
 		epoll_event eventList[count];
 		int size = epoll_wait(epollFd, eventList, count, USEC * timeout / 1000);
-		Logging::Debug() << "New event/timeout happen size: " << size;
+		// Logging::Debug() << "New event/timeout happen size: " << size;
 		
 		for(int i = 0; i < size; i++)
 		{
@@ -167,9 +167,9 @@ bool Multiplexer::DeleteItem(AFd *item)
 void Multiplexer::ClearToDelete()
 {
 	SocketIO::CloseSockFD(-1);
-	Logging::Debug() << "toDelete has " << toDelete.size()
-	<< ", SocketIO has " << SocketIO::CloseSockFD(-1) <<
-	", pipe poll has " << SocketIO::GetPipePoolSize();
+	// Logging::Debug() << "toDelete has " << toDelete.size()
+	// << ", SocketIO has " << SocketIO::CloseSockFD(-1) <<
+	// ", pipe poll has " << SocketIO::GetPipePoolSize();
 	if (toDelete.size() == 0)
 		return;
 	set<AFd *>::iterator it = toDelete.begin();
