@@ -95,7 +95,6 @@ bool HTTPContext::_parseAndConfig(int len)
     } catch (exception &e) {
 		ERR() << "Socket fd: " << sock->GetFd() << ", HTTPContext::_parseAndConfig, exception: " << e.what();
 		errNo = e.what();
-		sock->cleanBody = true;
         err = true;
         return true; // Return true to proceed to error handling
     }
@@ -103,8 +102,6 @@ bool HTTPContext::_parseAndConfig(int len)
 
 void HTTPContext::_setupPipeline()
 {
-    
-    
     // Log the request details
     
 
@@ -144,15 +141,8 @@ void HTTPContext::HandleRequest()
     if (isComplete || router.GetRequest().isRequestHeaderComplete())
     {
 		_setupPipeline();
-		if (sock->cleanBody) {
-			if (router.GetRequest().getContentLen() < INT64_MAX) {
-				sock->maxToClean = router.GetRequest().getContentLen() + SAFE_MARGIN;
-			}
-			else
-				sock->maxToClean = router.GetRequest().getContentLen();
-			Multiplexer::GetCurrentMultiplexer()->ChangeToEpollIn(sock);
-		}
-        else if (err) 
+	
+        if (err) 
 		{
 			if (Config::GetErrorPath(*router.srv, errNo) != "" || StaticFile::GetFileByName(errNo) != NULL ) {
 				repsense.HandelErrorPages(errNo);
@@ -160,6 +150,12 @@ void HTTPContext::HandleRequest()
 			else {
 				repsense.HandelErrorPages("400");
 			}
+			if (router.GetRequest().getContentLen() < INT64_MAX) {
+			sock->maxToClean = router.GetRequest().getContentLen() + SAFE_MARGIN;
+			}
+			else
+				sock->maxToClean = router.GetRequest().getContentLen();
+			Multiplexer::GetCurrentMultiplexer()->ChangeToEpollIn(sock);
         }
     }
 }

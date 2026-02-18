@@ -35,7 +35,8 @@ void AFd::cleanFd()
 {
 	if (buff == NULL)
 		buff = (char *)calloc(1, 1024 * 1024 * 5);
-	int size = read(fd, buff, 1024 * 1024 * 5);
+	int size = 0;
+	size = read(fd, buff, 1024 * 1024 * 5);
 	if (size > 0)
 		totalClean += size;
 	if (totalClean  >= maxToClean || size == 0 || Utility::SigPipe) 
@@ -44,4 +45,5 @@ void AFd::cleanFd()
 		cleanBody = false;
 		MarkedToDelete = true;
 	}
+	DEBUG() << "sock fd: " << fd << ", AFd::cleanFd() read " << size;
 }
