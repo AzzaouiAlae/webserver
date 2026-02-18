@@ -39,4 +39,7 @@ public:
 	void HandleRequest();
 	void MarkedSocketToFree();
 	void setMaxBodySize();
+	void addInEvent(void (*f)(AFd *fd));
+	void addOutEvent(void (*f)(AFd *fd));
+
 };

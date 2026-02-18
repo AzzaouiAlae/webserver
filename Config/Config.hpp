@@ -35,8 +35,8 @@ public:
 			string clientBodyTempPath;
 			string cgiPassExt;
 			string cgiPassPath;
-			string redirectionCode;
-			string redirectionURI;
+			string returnCode;
+			string returnArg;
 			string root;
 			vector<string> index;
 			string path;

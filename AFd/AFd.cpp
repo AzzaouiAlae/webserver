@@ -7,6 +7,7 @@ AFd::AFd(int fd, string type)
 	this->type = type;
 	MarkedToDelete = false;
 	deleteNow = false;
+	onActiveEvent = NULL;
 }
 
 AFd::operator int() const 
@@ -21,7 +22,6 @@ string AFd::GetType()
 
 int AFd::GetFd()
 {
-	
 	return fd;
 }
 

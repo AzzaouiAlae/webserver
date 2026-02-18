@@ -9,6 +9,7 @@ protected:
 	int fd;
 	string type;
 public:
+	void (*onActiveEvent)(AFd *fd);
 	bool deleteNow;
 	AFd(int fd, string type);
 	virtual void Handle() = 0;

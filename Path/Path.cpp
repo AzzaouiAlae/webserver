@@ -96,11 +96,11 @@ void Path::_handleRedirection(Config::Server &srv)
     const Config::Server::Location &loc = srv.Locations[matchedLocationIndex];
 
     // Check if the location block has a "return" directive
-    if (!loc.redirectionCode.empty()) 
+    if (!loc.returnCode.empty()) 
     {
         _isRedir = true;
-        _redirCode = loc.redirectionCode;
-        _redirPath = loc.redirectionURI;
+        _redirCode = loc.returnCode;
+        _redirPath = loc.returnArg;
     }
 }
 

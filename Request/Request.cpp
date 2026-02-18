@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/17 21:36:18 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/17 22:31:58 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,7 @@ Request::Request()
 	_requestbuff = "";
 	_env["SERVER_SOFTWARE"] = "webserv/1.0";
 	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
+	_content_len = 0;
 }
 
 bool Request::getFullLine(string &line)
