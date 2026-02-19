@@ -1,0 +1,125 @@
+';
+
+    // ===== RENDER =====
+    const listBody = document.getElementById('fileListBody');
+    const gridView = document.getElementById('gridView');
+    const fileCount = document.getElementById('fileCount');
+    const navPath = document.getElementById('navPath');
+    const breadcrumb = document.getElementById('breadcrumb');
+
+    navPath.textContent = CURRENT_PATH;
+
+    // Breadcrumb
+    const pathParts = CURRENT_PATH.split('/').filter(Boolean);
+    let bcHTML = '<a href="/">/</a>';
+    let cumPath = '/';
+    pathParts.forEach((p, i) => {
+        cumPath += p + '/';
+        if (i === pathParts.length - 1) {
+            bcHTML += `<span class="sep">›</span><span class="current">${p}</span>`;
+        } else {
+            bcHTML += `<span class="sep">›</span><a href="${cumPath}">${p}</a>`;
+        }
+    });
+    breadcrumb.innerHTML = bcHTML;
+
+    let currentFiles = [...FILES];
+
+    function render(files) {
+        // Count
+        const dirs = files.filter(f => f.isDir && f.name !== '..').length;
+        const fls = files.filter(f => !f.isDir).length;
+        fileCount.innerHTML = `<strong>${dirs}</strong> folders, <strong>${fls}</strong> files`;
+
+        // List view
+        listBody.innerHTML = '';
+        files.forEach(f => {
+            const ic = getFileIcon(f.name, f.isDir);
+            const tr = document.createElement('tr');
+            tr.onclick = () => window.location.href = f.href;
+            tr.innerHTML = `
+                <td><div class="file-name-cell"><div class="file-icon ${ic.cls}">${ic.icon}</div><a href="${f.href}">${f.name}${f.isDir && f.name !== '..' ? '/' : ''}</a></div></td>
+                <td class="file-size">${f.isDir ? '—' : formatSize(f.size)}</td>
+                <td class="file-date">${f.date || '—'}</td>
+            `;
+            listBody.appendChild(tr);
+        });
+
+        // Grid view
+        gridView.innerHTML = '';
+        files.forEach(f => {
+            const ic = getFileIcon(f.name, f.isDir);
+            const a = document.createElement('a');
+            a.className = 'grid-item';
+            a.href = f.href;
+            a.innerHTML = `
+                <span class="grid-icon">${ic.icon}</span>
+                <div class="grid-name">${f.name}${f.isDir && f.name !== '..' ? '/' : ''}</div>
+                <div class="grid-size">${f.isDir ? 'Folder' : formatSize(f.size)}</div>
+            `;
+            gridView.appendChild(a);
+        });
+
+        // Empty state
+        document.getElementById('emptyState').classList.toggle('hidden', files.length > 0);
+        document.getElementById('listView').classList.toggle('hidden', files.length === 0 || gridView.classList.contains('hidden') === false && listBody.parentElement.parentElement.classList.contains('hidden'));
+    }
+
+    render(currentFiles);
+
+    // ===== SEARCH =====
+    document.getElementById('searchInput').addEventListener('input', function () {
+        const q = this.value.toLowerCase();
+        const filtered = FILES.filter(f => f.name.toLowerCase().includes(q));
+        render(filtered);
+    });
+
+    // ===== VIEW TOGGLE =====
+    const listViewEl = document.getElementById('listView');
+    const gridViewEl = document.getElementById('gridView');
+    const listBtn = document.getElementById('listViewBtn');
+    const gridBtn = document.getElementById('gridViewBtn');
+
+    listBtn.addEventListener('click', () => {
+        listViewEl.classList.remove('hidden');
+        gridViewEl.classList.add('hidden');
+        listBtn.classList.add('active');
+        gridBtn.classList.remove('active');
+    });
+
+    gridBtn.addEventListener('click', () => {
+        gridViewEl.classList.remove('hidden');
+        listViewEl.classList.add('hidden');
+        gridBtn.classList.add('active');
+        listBtn.classList.remove('active');
+    });
+
+    // ===== SORT =====
+    document.querySelectorAll('[data-sort]').forEach(th => {
+        let asc = true;
+        th.addEventListener('click', () => {
+            const key = th.dataset.sort;
+            currentFiles.sort((a, b) => {
+                // Dirs always first
+                if (a.name === '..') return -1;
+                if (b.name === '..') return 1;
+                if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
+
+                let va, vb;
+                if (key === 'name') { va = a.name.toLowerCase(); vb = b.name.toLowerCase(); }
+                else if (key === 'size') { va = typeof a.size === 'number' ? a.size : -1; vb = typeof b.size === 'number' ? b.size : -1; }
+                else { va = a.date || ''; vb = b.date || ''; }
+
+                if (va < vb) return asc ? -1 : 1;
+                if (va > vb) return asc ? 1 : -1;
+                return 0;
+            });
+            asc = !asc;
+            render(currentFiles);
+        });
+    });
+
+})();
+</script>
+</body>
+</html>

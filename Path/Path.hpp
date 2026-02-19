@@ -10,8 +10,8 @@ class Path {
         string      _srvRootPath, _srvIndex;
         string      _locaRootPath, _locaArgPath, _locaIndex;
         string      _FullPath;
-        string      _cgiPath, _reqExt, _pathInfo;
-        bool        _isExtention, _isLocationCGI;
+        string      _cgiPath, _reqExt, _pathInfo, _errorCode;
+        bool        _isExtention, _isLocationCGI, _isDir, _isErrorPath;
 
 
         void            initData(AST<string> *node, string path);
@@ -45,9 +45,13 @@ class Path {
         string          getLocationIndex();
         string          getServerIndex();
         string          getServerPath();
-        string          getFullPath();
+        string          &getFullPath();
         string          getPathInfo();
         string          getCGiPath();
         string          getExtantion();
         bool            isLocationCGi();
+		string getErrorCode();
+		bool emptyRoot();
+		bool IsDir();
+		bool isErrorPath();
 };

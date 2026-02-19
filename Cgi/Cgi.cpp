@@ -6,20 +6,16 @@
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/16 04:19:07 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/16 12:24:34 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Cgi.hpp"
 
-Cgi::Cgi(int (&fds)[2], Request &req, char** exec, SocketIO &sok)
+Cgi::Cgi(Request &req, char** exec, SocketIO &sok) : _req(req), _sok(sok)
 {
-   _infd = fds[1];
-   _outfd = fds[0];
-   _req = req;
-   _exec = exec;
-   _sok = sok;
-   _status = false;
+    _exec = exec;
+    _reqlen  = 0;
 }
 
 bool Cgi::isExeted()
@@ -50,7 +46,7 @@ long Cgi::getTime()
     // body 1 checkbody  parent 
     //----------------------
     // else
-    // 
+
 void Cgi::createChild()
 {
     _pid = fork();
@@ -59,24 +55,67 @@ void Cgi::createChild()
     else if (!_pid)
     {
         Environment::CreateEnv(_req.getrequestenv());
-        dup2(0, _infd);
-        close(_infd);
-        dup2(1, _outfd);
-        close(_outfd);
+        dup2(0, _sok.pipefd[0]);
+        close(_sok.pipefd[0]);
+        dup2(1, _sok.pipefd[1]);
+        close(_sok.pipefd[1]);
         execve(_exec[0], _exec, environ);
         exit(1);
+    }
+    _status = eFORK;
+}
+
+void Cgi::writetocgi()
+{
+    int len = 0;
+
+    if (_status < eFINISHWRITING && _req.getthereisbody())
+    {
+        if (!_eventexec && _status == eFORK) 
+        {
+            string &body = _req.getBody();
+            len = _sok.SendBuffToPipe((void *)body.c_str(), body.size());
+            _status = eSENDBUFFTOPIPE;
+            _reqlen += len;
+        }
+        else if (!_eventexec && _status == eSENDBUFFTOPIPE)
+        {
+            len = _sok.SendSocketToPipe();
+            if (len == 0)
+            {
+                if (_reqlen != _req.getcontentlen())
+                    Error::ThrowError("Bad Request");
+                _status == eFINISHWRITING;
+            }
+            _status = eSENDSOCKETOPIPE;
+            _reqlen += len;
+        }
+    }
+}
+
+void Cgi::readfromcgi()
+{
+    if (_status < ePARSEDCGIHEADER)
+    {
+        while (_status != ePARSEDCGIHEADER)
+        {
+            int len = read(_sok.pipefd[0], )
+        }
+    }
+    
+    if (_finishwriting && !_finishreading)
+    {
+        if (_sok.SendPipeToSock() == 0)
+            _complete = true;
     }
 }
 
 void Cgi::Handle()
 {
-    if (!_status)
+    _eventexec = false;
+    if (_status == eSTART)
         createChild();
-    if (_req.getthereisbody())
-    {
-        string &body = _req.getBody();
-        _sok.SendBuffToPipe((void *)body.c_str(), body.size());
-        _sok.SendPipeToSock();
-    }
-
+    if (_status < eFINISHWRITING)
+        writetocgi();
+    
 }

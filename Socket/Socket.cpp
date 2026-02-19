@@ -205,7 +205,7 @@ int Socket::getSocketType(int sock)
 	return optval;
 }
 
-Socket::Socket(int sock): AFd(sock, "Socket")
+Socket::Socket(int sock): ISocket(sock, "Socket")
 {}
 
 string Socket::getIpByHost(const string &host, const string &port, int type)
@@ -247,7 +247,7 @@ void Socket::AddSocket(string &host, string &port)
 
 	if (sock != -1)
 	{
-		AFd *NewFd = new Socket(sock);
+		Socket *NewFd = new Socket(sock);
 		NewFd->context = new HTTPContext();
 		fds.insert(NewFd);
 		vector<AST<string> > myVector;

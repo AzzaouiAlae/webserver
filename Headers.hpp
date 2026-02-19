@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <map>
 #include <vector>
 #include <set>
@@ -27,6 +26,8 @@
 #include <netinet/tcp.h>
 #include <sys/time.h>
 #include <signal.h>
+#include <sys/types.h> 
+#include <dirent.h>
 
 using namespace std;
 
@@ -47,6 +48,8 @@ using namespace std;
 #include "Singleton/Singleton.hpp"
 #include "Logging/Logging.hpp"
 #include "Environment/Environment.hpp"
+#include "StaticFile/StaticFile.hpp"
+#include "ISocket/ISocket.hpp"
 
 extern char **environ;
 

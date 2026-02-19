@@ -6,7 +6,7 @@
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:37:26 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/16 04:01:37 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/16 12:09:38 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,20 +14,35 @@
 #include "../Headers.hpp"
 #include "../SocketIO/SocketIO.hpp"
 
+enum estatus
+{
+    eSTART,
+    eFORK,
+    eSENDBUFFTOPIPE,
+    eSENDSOCKETOPIPE,
+    eFINISHWRITING,
+    ePARSEDCGIHEADER,
+    eSENDPIPETOSOCKET,
+    eCOMPLETE
+};
+
 class Cgi
 {
     Request     &_req;
     SocketIO    &_sok;
     pid_t       _pid;
     bool        _status;
-    int         _infd;
-    int         _outfd;
+    bool        _parsheader;
     long        _time;
+    bool        _eventexec;
     char        **_exec;
+    size_t      _reqlen;
     Cgi();
     void createChild();
+    void writetocgi();
+    void readfromcgi();
 public:
-    Cgi(int (&fds)[2], Request &req, char** exec, SocketIO &s);
+    Cgi(Request &req, char** exec, SocketIO &sok);
     void run_cgi(int infd, int outfd, Request &req, char** exec);
     bool isExeted();
     void Handle();

@@ -2,7 +2,7 @@
 
 void Pipe::Handle()
 {
-	if (MarkedToFree)
+	if (MarkedToDelete)
 		return;
 	socket->SetStateByFd(fd);
 	

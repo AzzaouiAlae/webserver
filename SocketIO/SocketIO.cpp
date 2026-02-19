@@ -22,9 +22,10 @@ void SocketIO::SetStateByFd(int fd)
 
 int SocketIO::Send(void *buff, int size)
 {
+	char *b = (char *)buff;
 	ssize_t sent = 0;
 	int flag = (ePipe0 | eSocket);
-	if (buff != this->buff)
+	if (&(b[0]) != &((this->buff)[0]))
 	{
 		SendedBuffToPipe = 0;
 		this->buff = (char *)buff;
@@ -177,6 +178,17 @@ int SocketIO::SocketToFile(int fileFD, int size)
 	return len;
 }
 
+int SocketIO::SendSocketToPipe(int size)
+{
+	int len = splice(fd, NULL, pipefd[1], NULL, size, 0);
+	status &= ~ePipe1;
+	((HTTPContext *)context)->activeOutPipe();
+	if (len == -1)
+		return -1;
+	pendingInPipe += len;
+	return len;
+}
+
 int SocketIO::SocketToSocketRead(int socket, int size)
 {
 	int len = 0, flag = (eSocket | ePipe0);
@@ -225,7 +237,7 @@ int SocketIO::SocketToSocketWrite(int socket, int size)
 	return len;
 }
 
-SocketIO::SocketIO(int fd): AFd(fd, "SocketIO"), pipeInitialized(false), pendingInPipe(0), status(0)
+SocketIO::SocketIO(int fd): ISocket(fd, "SocketIO"), pipeInitialized(false), pendingInPipe(0), status(0)
 {
 	buff = NULL;
 	if (pipePool.size() > 0)
@@ -254,11 +266,6 @@ SocketIO::~SocketIO()
 	}
 	delete context;
 	Singleton::GetFds().erase(this);
-}
-
-Routing &SocketIO::GetRouter()
-{
-	return router;
 }
 
 void SocketIO::ClearPipePool()

@@ -1,5 +1,7 @@
 #pragma once
-#include "../Headers.hpp"
+#include <iostream>
+using namespace std;
+
 
 class AFd 
 {
@@ -11,9 +13,8 @@ public:
 	AFd(int fd, string type);
 	virtual void Handle() = 0;
 	operator int() const ;
-	IContext *context;
 	string GetType();
 	int GetFd();
-	bool MarkedToFree;
+	bool MarkedToDelete;
 	virtual ~AFd();
 };

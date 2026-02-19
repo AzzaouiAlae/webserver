@@ -3,24 +3,19 @@
 #include "../Socket/Socket.hpp"
 #include "../SocketIO/SocketIO.hpp"
 #include "../Pipe/Pipe.hpp"
+#include "../Repsense/Repsense.hpp"
 
 #define BUF_SIZE (1024 * 1024 * 10)
 
 class HTTPContext : public IContext
 {
-	int fileFd;
-	bool readyToSend;
-	bool sendHeader;
-	stringstream responseHeader;
-	int filesize;
-	string filename;
-	int sended;
-	AFd *in;
-	AFd *out;
+	Repsense repsense;
+	Routing router;
 	SocketIO *sock;
-	string responseHeaderStr;
-	int ShouldSend;
 	char *buf;
+	AFd *out;
+	AFd *in;
+	bool err;
 public:
 	void activeInPipe();
 	void activeOutPipe();
@@ -31,11 +26,6 @@ public:
 	void Handle(Socket *sock);
 	void Handle();
 	void HandleRequest();
-	void HandleResponse();
-	void GetMethod();
-	void CreateResponseHeader();
-	string GetStatusCode();
-	string CreateDate();
-	void SendGetResponse();
 	void MarkedSocketToFree();
+	
 };

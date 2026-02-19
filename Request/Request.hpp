@@ -6,7 +6,7 @@
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:48 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/16 04:07:14 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/16 12:21:11 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,8 +53,9 @@ public:
 	const string &getport() const;
 	const string &getHost() const;
 	const string &getServerName() const;
-	string &getPath();
-	bool getthereisbody();
-	string& getBody();
-	void setUrlPart(string scriptpath, string pathinfo);
+	string		 &getPath();
+	string& 	 getBody();
+	bool 		 getthereisbody();
+	size_t		 getcontentlen();
+	void 		 setUrlPart(string scriptpath, string pathinfo);
 };

@@ -12,15 +12,14 @@ enum IOState {
 	eSocket = 4,
 };
 
-#define KBYTE 1024
+#define KBYTE 1024 * 1024
 #define MBYTE 50
 
-class SocketIO : public AFd {
+class SocketIO : public ISocket {
 	static long CurrentTime();
 	static vector<pair<int, int> > pipePool;
 	bool pipeInitialized;
 	int pendingInPipe;
-	Routing router;
 	int status;
 	int SendedBuffToPipe;
 	char *buff;
@@ -41,6 +40,6 @@ public:
 	int SocketToSocketWrite(int socket, int size);
 	void Handle();
 	static int CloseSockFD(int fd);
-	Routing &GetRouter();
 	static void ClearPipePool();
+	int SendSocketToPipe(int size = KBYTE * MBYTE);
 };

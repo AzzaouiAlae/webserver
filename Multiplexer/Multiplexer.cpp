@@ -120,18 +120,18 @@ void Multiplexer::MainLoop()
 			if (obj->GetType() == "Pipe") {
 				continue;
 			}
-			if (obj->MarkedToFree == false && eventList->events & (EPOLLIN | EPOLLOUT)) {
+			if (obj->MarkedToDelete == false && eventList->events & (EPOLLIN | EPOLLOUT)) {
 				Logging::Debug() << "Start handel " << obj->GetType() << 
 					" with fd: " << obj->GetFd() << " and flag " <<
 					((eventList->events & EPOLLIN) ? "EPOLLIN" : "EPOLLOUT");
 				obj->Handle();
 			}
 
-			if (obj->MarkedToFree || eventList->events & (EPOLLERR | EPOLLPRI | EPOLLRDHUP))
+			if (obj->MarkedToDelete || eventList->events & (EPOLLERR | EPOLLPRI | EPOLLRDHUP))
 			{
 				Logging::Debug() << "Add " << obj->GetType() << 
 					" with fd: " << obj->GetFd() << " to delete";
-				obj->MarkedToFree = true;
+				obj->MarkedToDelete = true;
 				DeleteFromEpoll(obj);
 				toDelete.insert(obj);
 			}

@@ -6,7 +6,7 @@
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/16 04:07:37 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/16 13:48:05 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -193,7 +193,7 @@ bool Request::ParseHeader()
 
 void Request::fillBody()
 {
-	if (_Parspos == eParsEnd && _env["REQUEST_METHOD"] == "POST" && _Thereisbody)
+	if (_Parspos == eParsEnd && (_env["REQUEST_METHOD"] == "POST" || _env["REQUEST_METHOD"] == "DELETE") && _Thereisbody)
 	{
 		_body += _requestbuff;
 		if (_body.size() > _content_len || _body.size() > _maxbodysize)
@@ -278,4 +278,9 @@ bool Request::getthereisbody()
 string& Request::getBody()
 {
 	return (_body);
+}
+
+size_t		 Request::getcontentlen()
+{
+	return (_content_len);
 }

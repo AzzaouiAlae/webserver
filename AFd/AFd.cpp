@@ -1,10 +1,11 @@
 #include "AFd.hpp"
+#include "../Headers.hpp"
 
 AFd::AFd(int fd, string type)
 {
 	this->fd = fd;
 	this->type = type;
-	MarkedToFree = false;
+	MarkedToDelete = false;
 	deleteNow = false;
 }
 
@@ -20,6 +21,7 @@ string AFd::GetType()
 
 int AFd::GetFd()
 {
+	
 	return fd;
 }
 
