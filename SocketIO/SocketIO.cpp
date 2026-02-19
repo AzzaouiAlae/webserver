@@ -22,6 +22,7 @@ void SocketIO::SetStateByFd(int fd)
 
 int SocketIO::Send(void *buff, int size)
 {
+	// return write(fd, buff, size);
 	char *b = (char *)buff;
 	ssize_t sent = 0;
 	int flag = (ePipe0 | eSocket);
@@ -162,9 +163,9 @@ int SocketIO::SocketToFile(int fileFD, int size)
 	{
 		len = splice(this->fd, NULL, pipefd[1], NULL, size, 0);
 		status &= ~flag;
-		if (len == -1)
-			return -1;
-		pendingInPipe += len;
+		if (len > 0)
+			pendingInPipe += len;
+		len = 0;
 	}
 	if (status & ePipe0 && pendingInPipe > 0)
 	{
@@ -175,6 +176,7 @@ int SocketIO::SocketToFile(int fileFD, int size)
 			return -1;
 		pendingInPipe -= len;
 	}
+	DEBUG() << "SocketIO::SocketToFile, pendingInPipe: " << pendingInPipe;
 	return len;
 }
 

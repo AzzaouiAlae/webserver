@@ -131,12 +131,12 @@ void Multiplexer::MainLoop()
 			if (obj->GetType() == "Pipe") {
 				continue;
 			}
-			if (obj->cleanBody) {
+			else if (obj->cleanBody) {
 				obj->cleanFd();
 			}
 			else if (obj->MarkedToDelete || eventList->events & (EPOLLERR | EPOLLPRI | EPOLLRDHUP))
 			{
-				
+				DEBUG() << "Socket fd: " << obj->GetFd() << ", MarkedToDelete";
 				obj->MarkedToDelete = true;
 				DeleteFromEpoll(obj);
 				toDelete.insert(obj);

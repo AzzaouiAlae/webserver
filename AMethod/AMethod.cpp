@@ -135,11 +135,12 @@ void AMethod::LoadStaticErrorFile(const string &errorCode)
 	filename = ".html";
 }
 
+
+
 // Does one thing: orchestrates error page resolution, then prepares for sending
 void AMethod::HandelErrorPages(const string &err)
 {
 	DEBUG() << "socket fd: " << sock->GetFd() << ", AMethod::HandelErrorPages";
-
 	code = err;
 	string path = ResolveErrorFilePath(err);
 	bool isPath = (path != "");
@@ -158,9 +159,7 @@ void AMethod::HandelErrorPages(const string &err)
 	else
 	{
 		LoadStaticErrorFile(err);
-		
 	}
-	bodySize = 0;
 	CreateResponseHeader();
 	ShouldSend += responseHeaderStr.length();
 	readyToSend = true;
@@ -214,6 +213,7 @@ void AMethod::SendResponse()
 			sock->cleanBody = true;
 		}
 	}
+	INFO() << "Sock fd: "<< sock->GetFd() <<", AMethod::SendResponse(): " << size << ", " << sended << "/"<< ShouldSend;
 }
 
 // ══════════════════════════════════════════════
