@@ -7,7 +7,7 @@ using namespace std;
 
 class Config
 {
-	
+
 public:
 	class Server 
 	{
@@ -29,6 +29,7 @@ public:
 		{
 		public:
 			Location();
+			bool autoindex;
 			bool isMaxBodySize;
 			size_t clientMaxBodySize;
 			bool clientBodyInFileOnly;
@@ -43,6 +44,7 @@ public:
 			vector<string> parsedPath;
 			bool allowMethodExists;
 			vector<string> allowMethods;
+			bool deleteFiles;
 		};
 		vector<Location> Locations;
 	};
@@ -54,6 +56,9 @@ public:
 	static int GetLocationIndex(Config::Server &srv, const string &path);
 	static int GetMaxBodySize(vector<Config::Server> &srvs);
 private:
-	
+	static bool isPrefixMatch(const vector<string> &locPath, const vector<string> &reqPath);
+    static bool pathMatchesCgiExt(const string &path, const string &cgiPassExt);
+    static int findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, const string &path);
+    static int findBestStaticMatch(Config::Server &srv, const vector<string> &reqPath);
 };
 #include "../Headers.hpp"

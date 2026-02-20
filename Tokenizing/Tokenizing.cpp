@@ -1,6 +1,6 @@
 #include "Tokenizing.hpp"
 
-Tokenizing::Tokenizing(std::string filepath): _filepath(filepath)
+Tokenizing::Tokenizing(string filepath): _filepath(filepath)
 {
     openConfFile();
 }
@@ -14,12 +14,12 @@ void Tokenizing::openConfFile()
     }
 }
 
-const std::vector<std::string>& Tokenizing::get_tokens() const
+const vector<string>& Tokenizing::get_tokens() const
 {
     return (_tokens);
 }
 
-char Tokenizing::shearch_delimiter(std::string& str, std::string delimiters)
+char Tokenizing::shearch_delimiter(string& str, string delimiters)
 {   
     size_t pos = 0;
     size_t spos = str.find(delimiters[0]);
@@ -27,7 +27,7 @@ char Tokenizing::shearch_delimiter(std::string& str, std::string delimiters)
     for (size_t i = 0; i < delimiters.size(); i++)
     {
         pos = str.find(delimiters[i]);
-        if (pos != std::string::npos && pos <= spos)
+        if (pos != string::npos && pos <= spos)
         {
             spos = pos;
             delimiter = str[spos];
@@ -38,7 +38,7 @@ char Tokenizing::shearch_delimiter(std::string& str, std::string delimiters)
 void Tokenizing::split_tokens()
 {
     char c;
-    std::string token = "";
+    string token = "";
 
     // Read the file character by character to control parsing manually
     while (_file.get(c))
@@ -76,11 +76,11 @@ void Tokenizing::split_tokens()
                 token.clear();
             }
             // Push the delimiter as its own token
-            std::string delim(1, c);
+            string delim(1, c);
             _tokens.push_back(delim);
         }
         // 3. Handle Whitespace (Space, Tab, Newline)
-        else if (std::isspace(c))
+        else if (isspace(c))
         {
             // Whitespace marks the end of a token
             if (!token.empty())

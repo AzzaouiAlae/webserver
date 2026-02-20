@@ -3,20 +3,19 @@
 /*                                                        :::      ::::::::   */
 /*   ClientRequest.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
+/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:48 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/19 08:54:14 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/20 05:04:59 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
+
 #include "../Headers.hpp"
 
 
-
-class ClientRequest : ARequest
-{
+class ClientRequest: public ARequest {
 
 	enum eHeaderParsPos {eParsStart, eParsHttpStand, eParsEnd};
 	static map<string, string> _clientreqDirectives;
@@ -43,3 +42,4 @@ public:
 	void SetMaxBodySize(int size);
 	bool isRequestHeaderComplete();
 };
+

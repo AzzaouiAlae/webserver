@@ -43,7 +43,7 @@ bool Repsense::HandleResponse()
 		}
 		else if (requestMethod == "DELETE") {
 			DEBUG() << "Socket fd: " << sock->GetFd() << ", Repsense::HandleResponse create POST method";
-			// method = new DELETE(sock, router);
+			method = new Delete(sock, router);
 		}
 		else
 			method = new GET(sock, router); // fallback: GET handles unknown methods with 405

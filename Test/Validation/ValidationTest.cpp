@@ -17,7 +17,7 @@ void Test1()
 	    valid.CheckValidation();
 	    TEST_PASS();
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_FAIL_MESSAGE(e.what());
 	}
@@ -33,7 +33,7 @@ void Test2()
 	    valid.CheckValidation();
 	    TEST_PASS();
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_FAIL_MESSAGE(e.what());
 	}
@@ -49,7 +49,7 @@ void Test3()
 	    valid.CheckValidation();
 	    TEST_PASS();
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_FAIL_MESSAGE(e.what());
 	}
@@ -65,7 +65,7 @@ void Test4()
 	    valid.CheckValidation();
 	    TEST_PASS();
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_FAIL_MESSAGE(e.what());
 	}
@@ -81,7 +81,7 @@ void Test5()
 	    valid.CheckValidation();
 	    TEST_PASS();
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_FAIL_MESSAGE(e.what());
 	}
@@ -97,7 +97,7 @@ void Test6()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -113,7 +113,7 @@ void Test7()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -129,7 +129,7 @@ void Test8()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -145,7 +145,7 @@ void Test9()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -161,7 +161,7 @@ void Test10()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -177,7 +177,7 @@ void Test11()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -193,7 +193,7 @@ void Test12()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -209,7 +209,7 @@ void Test13()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -225,7 +225,7 @@ void Test14()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -241,7 +241,7 @@ void Test15()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -257,7 +257,7 @@ void Test16()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -273,7 +273,7 @@ void Test17()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -289,7 +289,7 @@ void Test18()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -305,7 +305,7 @@ void Test19()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -321,7 +321,7 @@ void Test20()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -337,7 +337,7 @@ void Test21()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -353,7 +353,7 @@ void Test22()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -370,7 +370,7 @@ void Test23()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -386,7 +386,7 @@ void Test24()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -402,7 +402,7 @@ void Test25()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -418,7 +418,7 @@ void Test26()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -434,7 +434,7 @@ void Test27()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -450,7 +450,7 @@ void Test28()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -466,7 +466,7 @@ void Test29()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -482,7 +482,7 @@ void Test30()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -498,7 +498,7 @@ void Test31()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -514,7 +514,7 @@ void Test32()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -530,7 +530,7 @@ void Test33()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -546,7 +546,7 @@ void Test34()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -562,7 +562,7 @@ void Test35()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -578,7 +578,7 @@ void Test36()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -594,7 +594,7 @@ void Test37()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -610,7 +610,7 @@ void Test38()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -626,7 +626,7 @@ void Test39()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -642,7 +642,7 @@ void Test40()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -658,7 +658,7 @@ void Test41()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -674,7 +674,7 @@ void Test42()
 	    valid.CheckValidation();
 	    TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 	    TEST_PASS();
 	}
@@ -690,7 +690,7 @@ void Test43()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -706,7 +706,7 @@ void Test44()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -722,7 +722,7 @@ void Test45()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -738,7 +738,7 @@ void Test46()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -754,7 +754,7 @@ void Test47()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -770,7 +770,7 @@ void Test48()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -786,7 +786,7 @@ void Test49()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -802,7 +802,7 @@ void Test50()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -818,7 +818,7 @@ void Test51()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -834,7 +834,7 @@ void Test52()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -850,7 +850,7 @@ void Test53()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -866,7 +866,7 @@ void Test54()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -882,7 +882,7 @@ void Test55()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -899,7 +899,7 @@ void Test56()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -915,7 +915,7 @@ void Test57()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -931,7 +931,7 @@ void Test58()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -947,7 +947,7 @@ void Test59()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}
@@ -963,7 +963,7 @@ void Test60()
 		valid.CheckValidation();
 		TEST_FAIL_MESSAGE("It Should FAIL Because of Invalid syntax");
 	}
-	catch (const std::exception& e)
+	catch (const exception& e)
 	{
 		TEST_PASS();
 	}

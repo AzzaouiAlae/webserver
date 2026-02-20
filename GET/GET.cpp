@@ -27,11 +27,12 @@ bool GET::HandleResponse()
 {
 	DEBUG() << "Socket fd: " << sock->GetFd() << ", GET::HandleResponse() start";
 
-	Request &req = router->GetRequest();
+	ClientRequest &req = router->GetRequest();
 	sock->SetStateByFd(sock->GetFd());
 	string method = req.getMethod();
+	ResolvePath();
 
-	
+
 
 	// Check allowed methods (shared logic from AMethod)
 	if (!readyToSend && !IsMethodAllowed(method))
@@ -40,7 +41,16 @@ bool GET::HandleResponse()
 			HandelErrorPages("405");
 	}
 
-	if (sendListFiles)
+	if (router->GetPath().emptyRoot()) {
+		if (router->GetRequest().getPath() == "/") {
+			GetStaticIndex();
+		}
+		else
+			HandelErrorPages("404");
+	}
+
+		
+	else if (sendListFiles)
 		SendListFilesResponse();
 	else if (readyToSend)
 	{
@@ -62,11 +72,6 @@ bool GET::HandleResponse()
 // Does one thing: resolves the path, then dispatches based on path state
 void GET::GetMethod()
 {
-	filename = router->CreatePath(router->srv);
-	
-	
-				
-
 	if (router->GetPath().isRedirection())
 		SendRedirection();
 	else if (router->GetPath().isFound() == false)
@@ -81,8 +86,7 @@ void GET::GetMethod()
 	{
 		// CGI handling — to be implemented
 	}
-	else if (router->GetPath().emptyRoot() && router->GetRequest().getPath() == "/")
-		GetStaticIndex();
+
 }
 
 // ══════════════════════════════════════════════
@@ -142,10 +146,10 @@ string GET::FormatDirectoryEntry(const string &name, const struct stat &st, cons
 {
 	stringstream entry;
 
-	entry << "{ name: '" << name
-		  << "', href: '" << requestPath
+	entry << "{ name: '" << escapeForJS(name)
+		  << "', href: '" << Path::encodePath(requestPath)
 		  << (requestPath[requestPath.size() - 1] == '/' ? "" : "/")
-		  << name
+		  << Path::encodePath(name)
 		  << "', isDir: ";
 
 	if (S_ISDIR(st.st_mode))
@@ -192,7 +196,7 @@ void GET::ListFiles(const string &path)
 		if (stat(fullPath.c_str(), &st) == 0)
 			filesList << FormatDirectoryEntry(entryName, st, requestPath);
 	}
-
+	ERR() << "Socket fd: " << sock->GetFd() << ", GET::ListFiles: " << filesList.str();
 	closedir(dir);
 }
 

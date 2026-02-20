@@ -15,7 +15,7 @@ void TestRootPath()
 		Validation valid(token.get_tokens());
 		valid.CheckValidation();
 
-	} catch (const std::exception& e) {
+	} catch (const exception& e) {
 		TEST_FAIL_MESSAGE(e.what());
         return;
 	}
@@ -31,7 +31,7 @@ void TestLocationPath()
 		Validation valid(token.get_tokens());
 		valid.CheckValidation();
 
-	} catch (const std::exception& e) {
+	} catch (const exception& e) {
 		TEST_FAIL_MESSAGE(e.what());
         return;
 	}
@@ -47,7 +47,7 @@ void TestLocationRootPath()
 		Validation valid(token.get_tokens());
 		valid.CheckValidation();
 
-	} catch (const std::exception& e) {
+	} catch (const exception& e) {
 		TEST_FAIL_MESSAGE(e.what());
         return;
 	}
@@ -63,7 +63,7 @@ void TestLocationRootPath()
 		Validation valid(token.get_tokens());
 		valid.CheckValidation();
 
-	} catch (const std::exception& e) {
+	} catch (const exception& e) {
 		TEST_FAIL_MESSAGE(e.what());
         return;
 	}
@@ -79,7 +79,7 @@ void TestLocationSubDir()
         Validation valid(token.get_tokens());
         valid.CheckValidation();
 
-    } catch (const std::exception& e) {
+    } catch (const exception& e) {
         TEST_FAIL_MESSAGE(e.what());
         return;
     }
@@ -95,7 +95,7 @@ void TestNonExistionPath()
         Validation valid(token.get_tokens());
         valid.CheckValidation();
 
-    } catch (const std::exception& e) {
+    } catch (const exception& e) {
         TEST_FAIL_MESSAGE(e.what());
         return;
     }
@@ -111,7 +111,7 @@ void TestNonExistionPathWithLocationRootPath()
         Validation valid(token.get_tokens());
         valid.CheckValidation();
 
-    } catch (const std::exception& e) {
+    } catch (const exception& e) {
         TEST_FAIL_MESSAGE(e.what());
         return;
     }

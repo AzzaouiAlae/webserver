@@ -8,9 +8,10 @@ Post::Post(SocketIO *sock, Routing *router) : AMethod(sock, router)
 {
 	uploadFd = -1;
 	readyToUpload = false;
-	pathResolved = false;
 	contentBodySize = 0;
 	uploadedSize = 0;
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+    MulObj->ChangeToEpollIn(sock);
 }
 
 Post::~Post()
@@ -80,21 +81,6 @@ bool Post::HandleResponse()
 	return del;
 }
 
-// ═══���══════════════════════════════════════════
-//  Path Resolution
-// ══════════════════════════════════════════════
-
-// Does one thing: resolves file path from the request URL (only once)
-void Post::ResolvePath()
-{
-	if (!pathResolved)
-	{
-		filename = router->CreatePath(router->srv);
-		pathResolved = true;
-		Logging::Debug() << "Socket fd: " << sock->GetFd()
-						 << " POST resolved path: " << filename;
-	}
-}
 
 // ══════════════════════════════════════════════
 //  File Creation
@@ -113,8 +99,7 @@ void Post::OpenUploadFile()
 // Does one thing: validates location and starts the upload
 void Post::PostMethod()
 {
-	int idx = Config::GetLocationIndex(*(router->srv), router->GetRequest().getPath());
-	if (idx == -1)
+	if (router->GetPath().getLocation() == NULL)
 	{
 		HandelErrorPages("403");
 		return;
@@ -127,7 +112,7 @@ void Post::PostMethod()
 		return;
 	}
 
-	contentBodySize = router->GetRequest().getContentLen();
+	contentBodySize = router->GetRequest().getcontentlen();
 	readyToUpload = true;
 	uploadFileToDisk();
 }
@@ -196,16 +181,12 @@ void Post::uploadFileToDisk()
 // Does one thing: gets the return directive from the matched location (if any)
 bool Post::GetLocationReturn(string &retCode, string &retBody)
 {
-	int idx = router->GetPath().matchedLocationIndex;
-	if (idx == -1)
+	const Config::Server::Location *loc = router->GetPath().getLocation();
+	if (loc == NULL || loc->returnCode.empty())
 		return false;
 
-	const Config::Server::Location &loc = router->srv->Locations[idx];
-	if (loc.returnCode.empty())
-		return false;
-
-	retCode = loc.returnCode;
-	retBody = loc.returnArg;
+	retCode = loc->returnCode;
+	retBody = loc->returnArg;
 	return true;
 }
 
@@ -233,17 +214,7 @@ void Post::SendPostCustomBody(const string &retCode, const string &retBody)
 	SendResponse();
 }
 
-// Does one thing: sends the default 201 Created (no body)
-void Post::SendPostDefault()
-{
-	code = "201";
-	bodySize = 0;
-	filename = ".html";
-	CreateResponseHeader();
-	ShouldSend = responseHeaderStr.length();
-	readyToSend = true;
-	SendResponse();
-}
+
 
 // Does one thing: orchestrates which response to send after upload completes
 void Post::createPostResponse()
@@ -271,6 +242,6 @@ void Post::createPostResponse()
 	else
 	{
 		// No "return" directive → default 201 Created
-		SendPostDefault();
+		SendDefaultRespense();
 	}
 }

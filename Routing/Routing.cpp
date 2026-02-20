@@ -5,7 +5,7 @@ Routing::Routing()
 	RequestComplete = false;
 	srv = NULL;
 }
-Request &Routing::GetRequest()
+ClientRequest &Routing::GetRequest()
 {
 	return request;
 }

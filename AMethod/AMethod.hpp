@@ -29,7 +29,8 @@ protected:
 	bool del;
 	Routing *router;
 	SocketIO *sock;
-
+	bool pathResolved;
+	Config::Server::Location *loc;
 	// ──── Shared utilities (each does one thing) ────
 	string CreateDate();
 	void CreateResponseHeader();
@@ -43,10 +44,14 @@ protected:
 	// ──── Sending ────
 	void SendResponse();
 	void SendRedirection();
+	void SendDefaultRespense();
 
 	// ──── Method validation ────
 	bool IsMethodAllowed(const string &method);
 
+	void ResolvePath();
+
+	string escapeForJS(const string& input);
 public:
 	AMethod(SocketIO *sock, Routing *router);
 	virtual ~AMethod();

@@ -9,6 +9,7 @@ Path::Path()
 		_found(false),
 		_isRedir(false),
 		_hasPermission(false),
+		srv(NULL),
 		matchedLocationIndex(-1)
 {
 }
@@ -16,6 +17,15 @@ Path::Path()
 Path::~Path()
 {
 }
+
+Config::Server::Location *Path::getLocation()
+{
+	if (matchedLocationIndex == -1 || srv == NULL || 
+		(int)srv->Locations.size() <= matchedLocationIndex)
+		return NULL;
+	return &(srv->Locations[matchedLocationIndex]);
+}
+
 
 // Helper: Cleanly joins two paths (e.g., "/var/www" + "/index.html")
 string Path::joinPath(const string &root, const string &uri)
@@ -137,8 +147,10 @@ void Path::_handleDirectoryIndex(Config::Server &srv)
 
 void Path::CreatePath(Config::Server &srv, const string &reqUrl)
 {
+	string decodedPath = decodePath(reqUrl);
     // 1. Find the best matching Location block
-    matchedLocationIndex = Config::GetLocationIndex(srv, reqUrl);
+    matchedLocationIndex = Config::GetLocationIndex(srv, decodedPath);
+	this->srv = &srv;
 
     // 2. NEW: Check for Redirection
     _handleRedirection(srv);
@@ -150,7 +162,7 @@ void Path::CreatePath(Config::Server &srv, const string &reqUrl)
     _setRootAndCGI(srv);
 
     // 4. Construct the Basic Full Path
-    _fullPath = joinPath(_root, reqUrl);
+    _fullPath = joinPath(_root, decodedPath);
     
     // 5. Check Existence and Permissions
     checkFileExistence(_fullPath);
@@ -167,11 +179,68 @@ void Path::CreatePath(Config::Server &srv, const string &reqUrl)
 
 // 4. Implement Getter
 
+
 // --- The New Function ---
 bool Path::emptyRoot() const
 {
     // Returns true ONLY if both Server root AND Location root resulted in an empty string.
     return _root.empty();
+}
+
+string Path::encodePath(const string& path) {
+    ostringstream escaped;
+    escaped.fill('0');
+    escaped << hex << uppercase; // URL encoding uses uppercase hex (e.g., %2F)
+
+    for (size_t i = 0; i < path.length(); ++i) {
+        unsigned char c = path[i];
+
+        // Keep alphanumeric and unreserved characters intact
+        // We also keep '/' intact so we don't break the directory structure of the URL
+        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' || c == '/') {
+            escaped << c;
+        } else {
+            // Percent-encode any other character (e.g., space becomes %20, ' becomes %27)
+            escaped << '%' << setw(2) << static_cast<int>(c);
+        }
+    }
+
+    return escaped.str();
+}
+
+// ... your existing constructor and methods ...
+
+string Path::decodePath(const string& path) 
+{
+    string decoded;
+    decoded.reserve(path.length()); // Optimize memory allocation
+
+    for (size_t i = 0; i < path.length(); ++i) {
+        // Look for the '%' character followed by two valid hex digits
+        if (path[i] == '%' && i + 2 < path.length() && 
+            isxdigit(path[i + 1]) && isxdigit(path[i + 2])) {
+            
+            // Extract the two hex characters (e.g., "20")
+            string hexStr = path.substr(i + 1, 2);
+            
+            // Convert hex string to a char and append it
+            char decodedChar = static_cast<char>(strtol(hexStr.c_str(), NULL, 16));
+            decoded += decodedChar;
+            
+            // Skip the next two characters since we just processed them
+            i += 2;
+        } else if (path[i] == '+') {
+            // Note: In standard URIs, '+' in the query string means space, 
+            // but in the actual path it's usually just a literal '+'.
+            // If you want to treat '+' as space everywhere, change this to: decoded += ' ';
+            decoded += path[i]; 
+        } else {
+            // Regular character, just append it
+            decoded += path[i];
+        }
+    }
+    
+    return decoded;
 }
 
 string Path::getFullPath() const { return _fullPath; }

@@ -16,7 +16,7 @@
 class Logging
 {
 	ofstream logFile;
-	void Write(int level, const std::string &msg);
+	void Write(int level, const string &msg);
 
 public:
 	static Logging *current;
@@ -26,7 +26,7 @@ public:
 	class LogBase
 	{
 	protected:
-		std::stringstream ss;
+		stringstream ss;
 		int level;
 
 	public:

@@ -3,13 +3,13 @@
 
 class Tokenizing
 {
-	std::string _filepath;
-	std::vector<std::string> _tokens;
-	std::ifstream _file;
+	string _filepath;
+	vector<string> _tokens;
+	ifstream _file;
 	void openConfFile();
-	char shearch_delimiter(std::string& str, std::string delimiters);
+	char shearch_delimiter(string& str, string delimiters);
 public:
-	Tokenizing(std::string filepath);
-	const std::vector<std::string>& get_tokens() const;
+	Tokenizing(string filepath);
+	const vector<string>& get_tokens() const;
 	void split_tokens();
 };

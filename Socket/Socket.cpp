@@ -37,7 +37,7 @@ int Socket::inetConnect(const string &host, const string &service, int type)
 		if (connect(sock, rp->ai_addr, rp->ai_addrlen) != -1)
 			break;
 		
-		Utility::Close(sock);
+		close(sock);
 	}
 	freeaddrinfo(result);
 	return (rp != NULL) ? sock : -1;
@@ -73,7 +73,7 @@ int Socket::inetPassiveSocket(const char *host, const char *service, int type,
 								&optVal, sizeof(optVal));
 			if (res != 0)
 			{
-				Utility::Close(sock);
+				close(sock);
 				freeaddrinfo(result);
 				return -1;
 			}
@@ -81,7 +81,7 @@ int Socket::inetPassiveSocket(const char *host, const char *service, int type,
 		if (bind(sock, rp->ai_addr, rp->ai_addrlen) == 0)
 			break;
 		if (sock > 0)
-			Utility::Close(sock);
+			close(sock);
 		sock = -1;
 		break;
 	}
@@ -90,7 +90,7 @@ int Socket::inetPassiveSocket(const char *host, const char *service, int type,
 	{
 		if (listen(sock, backlog) == -1)
 		{
-			Utility::Close(sock);
+			close(sock);
 			return -1;
 		}
 	}
@@ -307,7 +307,7 @@ void Socket::FindServerNew(string &host, string &port, Config::Server srv)
 Socket::~Socket()
 {
 	delete context;
-	Utility::Close(fd);
+	close(fd);
 	Singleton::GetFds().erase(this);
 }
 
