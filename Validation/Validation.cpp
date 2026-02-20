@@ -278,6 +278,39 @@ void Validation::IsValidServerName()
 		_idx++;
 }
 
+//upload files
+void Validation::IsValidBodyInFile()
+{
+    if (_level != 2)
+        Error::ThrowError("Invalid Syntax : (client_body_in_file_only must be inside a location block)");
+
+    if (_useLocation["BodyInFile"] == true)
+        Error::ThrowError("Invalid Syntax : ( Duplication In client_body_in_file_only )");
+
+    // --- CONFLICT CHECK ---
+    if (_useLocation["CgiPass"] == true)
+        Error::ThrowError("Invalid Syntax : (client_body_in_file_only cannot be used with cgi_pass)");
+    // ----------------------
+
+    _useLocation["BodyInFile"] = true;
+
+    Validation::AddDirective("client_body_in_file_only");
+
+	_idx++;
+
+    if (IsSeparator() || (_data[_idx] != "on" && _data[_idx] != "off"))
+        Error::ThrowError("Invalid Syntax : (client_body_in_file_only has invalid option)");
+
+    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
+    _idx++;
+
+    if (_data[_idx] == ";")
+        _idx++;
+    else
+        Error::ThrowError("Invalid Syntax : (Missing semicolon)");
+}
+
+
 void Validation::CkeckDuplication(bool &first, bool &second, std::string msg)
 {
 	if (_level == 1)

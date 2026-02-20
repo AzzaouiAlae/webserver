@@ -67,7 +67,7 @@ void Cgi::createChild()
 void Cgi::writetocgi()
 {
     // Only write if there is a body to send
-    if (_req.getContentLen() == 0)
+    if (_req.getcontentlen() == 0)
     {
         _status = eFINISHWRITING;
         return;
@@ -89,7 +89,7 @@ void Cgi::writetocgi()
         if (len > 0)
             _reqlen += len;
 
-        if (_reqlen >= _req.getContentLen())
+        if (_reqlen >= _req.getcontentlen())
         {
             _status = eFINISHWRITING; // ✅ was _status == (assignment bug fixed)
         }
@@ -105,7 +105,7 @@ void Cgi::writetocgi()
         if (len > 0)
             _reqlen += len;
 
-        if (_reqlen >= _req.getContentLen())
+        if (_reqlen >= _req.getcontentlen())
             _status = eFINISHWRITING;
     }
 }

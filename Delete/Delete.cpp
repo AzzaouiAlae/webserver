@@ -1,5 +1,8 @@
 #include "Delete.hpp"
 
+Delete::Delete(SocketIO *sock, Routing *router) : AMethod(sock, router)
+{}
+
 bool Delete::HandleResponse()
 {
 	sock->SetStateByFd(sock->GetFd());
@@ -51,6 +54,14 @@ bool Delete::HandleResponse()
 
 void Delete::deleteFile()
 {
-	unlink(filename.c_str());
-	
+	if (unlink(filename.c_str())) {
+		HandelErrorPages("500");
+	}
+	else {
+		if (router->GetPath().isRedirection())
+			SendRedirection();
+		else {
+			SendDefaultRespense();
+		}
+	}
 }

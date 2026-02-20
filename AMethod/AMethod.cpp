@@ -115,6 +115,18 @@ void AMethod::CreateResponseHeader()
 	responseHeaderStr = responseHeader.str();
 }
 
+// Does one thing: sends the default 201 Created (no body)
+void AMethod::SendDefaultRespense()
+{
+	code = "201";
+	bodySize = 0;
+	filename = ".html";
+	CreateResponseHeader();
+	ShouldSend = responseHeaderStr.length();
+	readyToSend = true;
+	SendResponse();
+}
+
 // Does one thing: builds a redirection-specific header (no body, includes Location)
 void AMethod::CreateRedirectionHeader(const string &redirCode, const string &redirLocation)
 {

@@ -2,7 +2,7 @@
 // #include "AMethod.hpp"
 #include "../GET/GET.hpp"
 #include "../Post/Post.hpp"
-// #include "DELETE.hpp"
+#include "../Delete/Delete.hpp"
 
 class Repsense
 {
