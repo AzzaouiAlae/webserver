@@ -21,6 +21,7 @@ class Path {
 		bool        _hasPermission;
         string      _redirCode;     // <--- e.g., "301"
         string      _redirPath;     // <--- e.g., "/home"
+		Config::Server *srv;
 
         
         // --- INTERNAL HELPERS ---
@@ -34,6 +35,7 @@ class Path {
 		void _setRootAndCGI(Config::Server &srv);
         void _handleDirectoryIndex(Config::Server &srv);
 		void _handleRedirection(Config::Server &srv);
+        int         matchedLocationIndex; 
 
     public:
         Path();
@@ -43,6 +45,10 @@ class Path {
         // This replaces the old CreatePath. 
         // It takes the pre-parsed Server config and the Request URI.
         void        CreatePath(Config::Server &srv, const string &reqUrl);
+
+		static std::string decodePath(const std::string& path);
+		static std::string encodePath(const std::string& path);
+
 
         // --- GETTERS ---
         string      getFullPath() const;
@@ -58,6 +64,6 @@ class Path {
 		string      getRedirCode() const;
         string      getRedirPath() const;
         
-        // Returns the index of the location used (optional, if you need to know which block matched)
-        int         matchedLocationIndex; 
+        // Returns the location used (optional, if you need to know which block matched)
+		Config::Server::Location *getLocation();
 };

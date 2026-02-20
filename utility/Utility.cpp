@@ -106,10 +106,6 @@ bool Utility::strtosize_t(const std::string& s, size_t& out)
     return true;
 }
 
-void Utility::Close(int fd)
-{
-	close(fd);
-}
 
 char Utility::HexaToChar(string hex)
 {
