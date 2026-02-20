@@ -5,7 +5,7 @@
 class Delete: public AMethod
 {
 	void deleteFile();
-	Config::Server::Location *loc;
+	
 public:
 	bool HandleResponse();
 	Delete(SocketIO *sock, Routing *router);
