@@ -23,6 +23,33 @@ AMethod::AMethod(SocketIO *sock, Routing *router)
 	this->sock = sock;
 	this->router = router;
 	InitStatusMap();
+	pathResolved = false;
+}
+
+void AMethod::ResolvePath()
+{
+	if (!pathResolved)
+	{
+		filename = router->CreatePath(router->srv);
+		pathResolved = true;
+		Logging::Debug() << "Socket fd: " << sock->GetFd()
+						<< " " << router->GetRequest().getMethod() 
+						<< " resolved path: " << filename;
+	}
+}
+
+string AMethod::escapeForJS(const std::string& input) {
+    std::string output;
+    for (size_t i = 0; i < input.length(); ++i) {
+        if (input[i] == '\'') {
+            output += "\\'";  // Escape single quotes
+        } else if (input[i] == '\\') {
+            output += "\\\\"; // Escape backslashes
+        } else {
+            output += input[i];
+        }
+    }
+    return output;
 }
 
 // Does one thing: closes the file descriptor if it was opened

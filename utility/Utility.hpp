@@ -18,7 +18,6 @@ public:
 	static bool strtosize_t(const std::string& s, size_t& out);
 	static bool isStrToTrime(char ch);
 	static void trim(std::string &s, string toTrime);
-	static void Close(int fd);
 	static char HexaToChar(string hex);
 	static bool isHexa(string hex);
 	static bool isHexa(char hex);

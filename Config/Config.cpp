@@ -99,77 +99,83 @@ string Config::GetErrorPath(Config::Server &srv, const string &code)
 	return "";
 }
 
+// Checks if locPath is a prefix of reqPath
+bool Config::isPrefixMatch(const vector<string> &locPath, const vector<string> &reqPath)
+{
+    if (locPath.size() > reqPath.size())
+        return false;
+    for (size_t j = 0; j < locPath.size(); ++j)
+    {
+        if (locPath[j] != reqPath[j])
+            return false;
+    }
+    return true;
+}
+
+// Checks if the request path ends with the CGI extension
+bool Config::pathMatchesCgiExt(const string &path, const string &cgiPassExt)
+{
+    if (path.length() < cgiPassExt.length())
+        return false;
+    return path.compare(path.length() - cgiPassExt.length(),
+                        cgiPassExt.length(), cgiPassExt) == 0;
+}
+
+// Returns the index of the best (longest prefix) CGI location match, or -1
+int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, const string &path)
+{
+    int    bestIndex = -1;
+    size_t maxLength = 0;
+
+    for (size_t i = 0; i < srv.Locations.size(); ++i)
+    {
+        const Config::Server::Location &loc = srv.Locations[i];
+        if (loc.cgiPassExt.empty())
+            continue;
+        if (!isPrefixMatch(loc.parsedPath, reqPath))
+            continue;
+        if (!pathMatchesCgiExt(path, loc.cgiPassExt))
+            continue;
+        if (loc.parsedPath.size() > maxLength || bestIndex == -1)
+        {
+            maxLength = loc.parsedPath.size();
+            bestIndex = (int)i;
+        }
+    }
+    return bestIndex;
+}
+
+// Returns the index of the best (longest prefix) static location match, or -1
+int Config::findBestStaticMatch(Config::Server &srv, const vector<string> &reqPath)
+{
+    int    bestIndex = -1;
+    size_t maxLength = 0;
+
+    for (size_t i = 0; i < srv.Locations.size(); ++i)
+    {
+        const Config::Server::Location &loc = srv.Locations[i];
+        if (!loc.cgiPassExt.empty())
+            continue;
+        if (!isPrefixMatch(loc.parsedPath, reqPath))
+            continue;
+        if (loc.parsedPath.size() > maxLength || bestIndex == -1)
+        {
+            maxLength = loc.parsedPath.size();
+            bestIndex = (int)i;
+        }
+    }
+    return bestIndex;
+}
+
+// Main orchestrator — now just coordinates the helpers
 int Config::GetLocationIndex(Config::Server &srv, const string &path)
 {
-	vector<string> reqPath;
-	Utility::parseBySep(reqPath, path, "/");
+    vector<string> reqPath;
+    Utility::parseBySep(reqPath, path, "/");
 
-	int bestCgiIndex = -1;
-	size_t maxCgiLength = 0;
+    int bestCgiIndex = findBestCgiMatch(srv, reqPath, path);
+    if (bestCgiIndex != -1)
+        return bestCgiIndex;
 
-	int bestStaticIndex = -1;
-	size_t maxStaticLength = 0;
-
-	for (size_t i = 0; i < srv.Locations.size(); ++i)
-	{
-		const Config::Server::Location &loc = srv.Locations[i];
-		const vector<string> &locPath = loc.parsedPath;
-
-		// 1. Basic Prefix Check
-		// If location path is longer than request path, it can't be a match.
-		if (locPath.size() > reqPath.size())
-			continue;
-
-		bool isPrefixMatch = true;
-		for (size_t j = 0; j < locPath.size(); ++j)
-		{
-			if (locPath[j] != reqPath[j])
-			{
-				isPrefixMatch = false;
-				break;
-			}
-		}
-
-		if (!isPrefixMatch)
-			continue;
-
-		// 2. Logic Split: Is this a CGI Location or a Standard Location?
-		if (!loc.cgiPassExt.empty())
-		{
-			// --- CGI LOCATION Logic ---
-			// It only counts as a match if the Request Extension matches the Location's Extension.
-			if (path.length() >= loc.cgiPassExt.length())
-			{
-				// Check if path ends with cgiPassExt (e.g., ".php")
-				if (path.compare(path.length() - loc.cgiPassExt.length(),
-								loc.cgiPassExt.length(), loc.cgiPassExt) == 0)
-				{
-					// It is a valid CGI match. Check if it is the longest/most specific so far.
-					// Note: We use >= to allow overriding earlier matches of same length (optional)
-					if (locPath.size() > maxCgiLength || bestCgiIndex == -1)
-					{
-						maxCgiLength = locPath.size();
-						bestCgiIndex = (int)i;
-					}
-				}
-			}
-		}
-		else
-		{
-			// --- STATIC LOCATION Logic ---
-			// Standard longest prefix match
-			if (locPath.size() > maxStaticLength || bestStaticIndex == -1)
-			{
-				maxStaticLength = locPath.size();
-				bestStaticIndex = (int)i;
-			}
-		}
-	}
-
-	// 3. Final Decision: Priority to CGI
-	if (bestCgiIndex != -1)
-	{
-		return bestCgiIndex;
-	}
-	return bestStaticIndex;
+    return findBestStaticMatch(srv, reqPath);
 }

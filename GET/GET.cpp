@@ -62,11 +62,8 @@ bool GET::HandleResponse()
 // Does one thing: resolves the path, then dispatches based on path state
 void GET::GetMethod()
 {
-	filename = router->CreatePath(router->srv);
+	ResolvePath();
 	
-	
-				
-
 	if (router->GetPath().isRedirection())
 		SendRedirection();
 	else if (router->GetPath().isFound() == false)
@@ -142,10 +139,10 @@ string GET::FormatDirectoryEntry(const string &name, const struct stat &st, cons
 {
 	stringstream entry;
 
-	entry << "{ name: '" << name
-		  << "', href: '" << requestPath
+	entry << "{ name: '" << escapeForJS(name)
+		  << "', href: '" << Path::encodePath(requestPath)
 		  << (requestPath[requestPath.size() - 1] == '/' ? "" : "/")
-		  << name
+		  << Path::encodePath(name)
 		  << "', isDir: ";
 
 	if (S_ISDIR(st.st_mode))
@@ -192,7 +189,7 @@ void GET::ListFiles(const string &path)
 		if (stat(fullPath.c_str(), &st) == 0)
 			filesList << FormatDirectoryEntry(entryName, st, requestPath);
 	}
-
+	ERR() << "Socket fd: " << sock->GetFd() << ", GET::ListFiles: " << filesList.str();
 	closedir(dir);
 }
 
