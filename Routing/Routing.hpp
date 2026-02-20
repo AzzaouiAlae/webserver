@@ -6,12 +6,12 @@ class Routing
 {
 	Path path;
 	string strPath;
-	Request request;
+	ClientRequest request;
 	bool RequestComplete;
 public:
 	Config::Server *srv;
 	Config::Server::Location *loc;
-	Request &GetRequest();
+	ClientRequest &GetRequest();
 	Path &GetPath();
 	Routing();
 	bool isRequestComplete();

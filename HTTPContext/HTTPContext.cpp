@@ -150,11 +150,11 @@ void HTTPContext::HandleRequest()
 			else {
 				repsense.HandelErrorPages("400");
 			}
-			if (router.GetRequest().getContentLen() < INT64_MAX) {
-			sock->maxToClean = router.GetRequest().getContentLen() + SAFE_MARGIN;
+			if (router.GetRequest().getcontentlen() < INT64_MAX) {
+			sock->maxToClean = router.GetRequest().getcontentlen() + SAFE_MARGIN;
 			}
 			else
-				sock->maxToClean = router.GetRequest().getContentLen();
+				sock->maxToClean = router.GetRequest().getcontentlen();
 			Multiplexer::GetCurrentMultiplexer()->ChangeToEpollIn(sock);
         }
     }

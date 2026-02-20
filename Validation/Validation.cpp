@@ -67,6 +67,7 @@ void Validation::CreateLocationMap()
 	_useLocation["BodyInFile"] = false;
     _useLocation["BodyTempPath"] = false;
 	_useLocation["CgiPass"] = false;
+	_useLocation["DeleteFiles"] = false;
 }
 
 void Validation::CreateServerdMap()
@@ -112,7 +113,7 @@ void Validation::CreateMap()
 	_map["cgi_pass"] = &Validation::IsValidCGIPass;
 	_map["types"] = &Validation::IsValidTypes;
 	_map["client_body_in_file_only"] = &Validation::IsValidBodyInFile;
-
+	_map["delete_files"] = &Validation::isValidDeleteFiles;
 }
 
 bool Validation::SkipedOptions(std::string option)
@@ -155,6 +156,7 @@ void Validation::ResetLocationSeting()
 	_useLocation["BodyInFile"] = false;
     _useLocation["BodyTempPath"] = false;
     _useLocation["CgiPass"] = false;
+	_useLocation["DeleteFiles"] = false;
 }
 
 //      SERVER
@@ -276,6 +278,39 @@ void Validation::IsValidServerName()
 		_idx++;
 }
 
+//upload files
+void Validation::IsValidBodyInFile()
+{
+    if (_level != 2)
+        Error::ThrowError("Invalid Syntax : (client_body_in_file_only must be inside a location block)");
+
+    if (_useLocation["BodyInFile"] == true)
+        Error::ThrowError("Invalid Syntax : ( Duplication In client_body_in_file_only )");
+
+    // --- CONFLICT CHECK ---
+    if (_useLocation["CgiPass"] == true)
+        Error::ThrowError("Invalid Syntax : (client_body_in_file_only cannot be used with cgi_pass)");
+    // ----------------------
+
+    _useLocation["BodyInFile"] = true;
+
+    Validation::AddDirective("client_body_in_file_only");
+
+	_idx++;
+
+    if (IsSeparator() || (_data[_idx] != "on" && _data[_idx] != "off"))
+        Error::ThrowError("Invalid Syntax : (client_body_in_file_only has invalid option)");
+
+    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
+    _idx++;
+
+    if (_data[_idx] == ";")
+        _idx++;
+    else
+        Error::ThrowError("Invalid Syntax : (Missing semicolon)");
+}
+
+
 void Validation::CkeckDuplication(bool &first, bool &second, std::string msg)
 {
 	if (_level == 1)
@@ -345,36 +380,6 @@ void Validation::IsValidAutoindex()
 		_idx++;
 }
 
-void Validation::IsValidBodyInFile()
-{
-    if (_level != 2)
-        Error::ThrowError("Invalid Syntax : (client_body_in_file_only must be inside a location block)");
-
-    if (_useLocation["BodyInFile"] == true)
-        Error::ThrowError("Invalid Syntax : ( Duplication In client_body_in_file_only )");
-
-    // --- CONFLICT CHECK ---
-    if (_useLocation["CgiPass"] == true)
-        Error::ThrowError("Invalid Syntax : (client_body_in_file_only cannot be used with cgi_pass)");
-    // ----------------------
-
-    _useLocation["BodyInFile"] = true;
-
-    Validation::AddDirective("client_body_in_file_only");
-
-	_idx++;
-
-    if (IsSeparator() || (_data[_idx] != "on" && _data[_idx] != "off"))
-        Error::ThrowError("Invalid Syntax : (client_body_in_file_only has invalid option)");
-
-    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
-    _idx++;
-
-    if (_data[_idx] == ";")
-        _idx++;
-    else
-        Error::ThrowError("Invalid Syntax : (Missing semicolon)");
-}
 
 
 //      RETURN
@@ -457,6 +462,44 @@ void Validation::IsClientMaxBodySize()
 	if (_data[_idx] == ";")
 		_idx++;
 }
+
+void Validation::isValidDeleteFiles() 
+{
+    // 1. Scope Check: Must be inside a location block
+    if (_level != 2)
+        Error::ThrowError("Invalid Syntax : (delete_files must be inside a location block)");
+
+    // 2. Duplication Check
+    if (_useLocation["DeleteFiles"] == true)
+        Error::ThrowError("Invalid Syntax : ( Duplication In delete_files )");
+
+    // 3. Conflict Check: Cannot exist if CGI is already defined
+    if (_useLocation["CgiPass"] == true)
+        Error::ThrowError("Invalid Syntax : (delete_files cannot be used with cgi_pass)");
+
+    // 4. Update State
+    _useLocation["DeleteFiles"] = true;
+
+    // 5. Add Directive to parsing structure
+    Validation::AddDirective("delete_files");
+
+    _idx++; // Move to the value
+
+    // 6. Validate Value ("on" or "off")
+    if (IsSeparator() || (_data[_idx] != "on" && _data[_idx] != "off"))
+        Error::ThrowError("Invalid Syntax : (delete_files has invalid option)");
+
+    // 7. Store the argument
+    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
+    _idx++;
+
+    // 8. Ensure it ends with a semicolon
+    if (_data[_idx] == ";")
+        _idx++;
+    else
+        Error::ThrowError("Invalid Syntax : (Missing semicolon in delete_files)");
+}
+
 
 bool Validation::IsAllowedMethods(std::string &method)
 {

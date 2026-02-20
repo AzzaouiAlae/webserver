@@ -55,6 +55,7 @@ class Validation {
 
         void            IsValidListen();
         long            ConvertToNumber(std::string num);
+		void 			isValidDeleteFiles();
 
 		void IsValidBodyInFile();
 

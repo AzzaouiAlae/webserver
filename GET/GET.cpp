@@ -27,7 +27,7 @@ bool GET::HandleResponse()
 {
 	DEBUG() << "Socket fd: " << sock->GetFd() << ", GET::HandleResponse() start";
 
-	Request &req = router->GetRequest();
+	ClientRequest &req = router->GetRequest();
 	sock->SetStateByFd(sock->GetFd());
 	string method = req.getMethod();
 

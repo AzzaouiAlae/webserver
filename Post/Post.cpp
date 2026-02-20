@@ -10,6 +10,8 @@ Post::Post(SocketIO *sock, Routing *router) : AMethod(sock, router)
 	readyToUpload = false;
 	contentBodySize = 0;
 	uploadedSize = 0;
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+    MulObj->ChangeToEpollIn(sock);
 }
 
 Post::~Post()
@@ -110,7 +112,7 @@ void Post::PostMethod()
 		return;
 	}
 
-	contentBodySize = router->GetRequest().getContentLen();
+	contentBodySize = router->GetRequest().getcontentlen();
 	readyToUpload = true;
 	uploadFileToDisk();
 }
@@ -212,17 +214,7 @@ void Post::SendPostCustomBody(const string &retCode, const string &retBody)
 	SendResponse();
 }
 
-// Does one thing: sends the default 201 Created (no body)
-void Post::SendPostDefault()
-{
-	code = "201";
-	bodySize = 0;
-	filename = ".html";
-	CreateResponseHeader();
-	ShouldSend = responseHeaderStr.length();
-	readyToSend = true;
-	SendResponse();
-}
+
 
 // Does one thing: orchestrates which response to send after upload completes
 void Post::createPostResponse()
@@ -250,6 +242,6 @@ void Post::createPostResponse()
 	else
 	{
 		// No "return" directive → default 201 Created
-		SendPostDefault();
+		SendDefaultRespense();
 	}
 }

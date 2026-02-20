@@ -14,6 +14,7 @@ Config::Server::Location::Location()
 	allowMethodExists = false;
 	clientMaxBodySize = 0;
 	isMaxBodySize = false;
+	deleteFiles = false;
 }
 
 bool Config::IsDuplicatedServer(int currServerIdx, const string &val, const string &srvName)

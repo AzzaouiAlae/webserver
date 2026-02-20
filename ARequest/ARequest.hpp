@@ -3,16 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   ARequest.hpp                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
+/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 06:22:09 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/19 11:29:51 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/20 05:06:20 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
-#include "../Headers.hpp"
-
+#include "iostream"
+#include <map>
+#include <vector>
+using namespace std;
 #define MAXHEADERSIZE 8192
 
 class ARequest
@@ -39,3 +41,5 @@ public:
     size_t		        getcontentlen();
     string              &getBody();
 };
+
+#include "../Headers.hpp"

@@ -19,7 +19,6 @@ class Post : public AMethod
 	bool GetLocationReturn(string &retCode, string &retBody);
 	void SendPostRedirection(const string &retCode, const string &retBody);
 	void SendPostCustomBody(const string &retCode, const string &retBody);
-	void SendPostDefault();
 	void createPostResponse();
 	void PostMethod();
 
