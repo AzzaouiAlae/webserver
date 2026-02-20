@@ -20,6 +20,8 @@ class ARequest
 protected:
     map<string, string> *_reqDirectives;
     map<string, string> _env;
+    map<string, string> _cookies;
+    Session* _currentSession;
     string _requestbuff;
 	size_t _content_len;
     bool _Thereisbody;
@@ -29,6 +31,8 @@ protected:
     void parseHeaderLine(const string &line);
     virtual bool ParseHeader() = 0;
     virtual void initReqDirectives() = 0;
+    virtual void parsLenTypeCont() = 0;
+    void parseCookies();
 public:
     ARequest();
     virtual ~ARequest();
@@ -38,4 +42,10 @@ public:
     bool 		        getthereisbody();
     size_t		        getcontentlen();
     string              &getBody();
+    private:
+    
+    void initSession();
+    Session* getSession();
+    string getCookie(const string &name);
+
 };

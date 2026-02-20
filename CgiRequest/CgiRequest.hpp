@@ -21,6 +21,10 @@ class CgiRequest : ARequest
     eCgiParsPos _parsPos;
     void initDirectives();
     bool ParseHeader();
+    void parseStatus();
+    void parseLocation();
+    void parsLenTypeCont();
+
 public:
     CgiRequest();
     ~CgiRequest();

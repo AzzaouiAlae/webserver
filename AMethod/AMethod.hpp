@@ -54,5 +54,5 @@ public:
 	// ──── Pure virtual: each HTTP method subclass must implement ────
 	virtual bool HandleResponse() = 0;
 	void   HandelErrorPages(const string &err);
-
+	static map<string, string>& getStatusMap();
 };
