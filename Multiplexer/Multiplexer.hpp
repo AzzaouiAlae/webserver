@@ -26,4 +26,8 @@ public:
 	static Multiplexer* GetCurrentMultiplexer();
 	void MainLoop();
 	void ClearToDelete();
+	bool ClearObj(epoll_event &event);
+	void handelEpollPipes(epoll_event &event);
+	void handelEpollEvent(epoll_event &event);
+
 };

@@ -106,7 +106,6 @@ void Multiplexer::ChangeToEpollInOut(AFd *fd)
 void Multiplexer::MainLoop()
 {
 	int timeout = 1;
-	AFd *obj;
 	long time = Utility::CurrentTime() + USEC * timeout;
 	(void)time;
 	// while(time > Utility::CurrentTime())
@@ -116,35 +115,11 @@ void Multiplexer::MainLoop()
 		int size = epoll_wait(epollFd, eventList, count, USEC * timeout / 1000);
 		
 		
-		for(int i = 0; i < size; i++)
-		{
-			obj = (AFd *)(eventList[i].data.ptr);
-			if (obj == (void *)7)
-				continue;
-			if (obj->GetType() == "Pipe") {
-				obj->Handle();
-			}
+		for(int i = 0; i < size; i++) {
+			handelEpollPipes(eventList[i]);
 		}
-		for(int i = 0; i < size; i++)
-		{
-			obj = (AFd *)(eventList[i].data.ptr);
-			if (obj->GetType() == "Pipe") {
-				continue;
-			}
-			else if (obj->cleanBody) {
-				obj->cleanFd();
-			}
-			else if (obj->MarkedToDelete || eventList->events & (EPOLLERR | EPOLLPRI | EPOLLRDHUP))
-			{
-				DEBUG() << "Socket fd: " << obj->GetFd() << ", MarkedToDelete";
-				obj->MarkedToDelete = true;
-				DeleteFromEpoll(obj);
-				toDelete.insert(obj);
-			}
-			else if (obj->MarkedToDelete == false && eventList->events & (EPOLLIN | EPOLLOUT)) {
-				
-				obj->Handle();
-			}
+		for(int i = 0; i < size; i++) {
+			handelEpollEvent(eventList[i]);
 		}
 		ClearToDelete();
 	}
@@ -157,7 +132,6 @@ bool Multiplexer::DeleteItem(AFd *item)
 	
 	if (item->deleteNow)
 	{
-		
 		delete item;
         toDelete.erase(item);
 		return true;
@@ -208,3 +182,41 @@ Multiplexer::~Multiplexer()
 	}
 	SocketIO::ClearPipePool();
 }
+
+bool Multiplexer::ClearObj(epoll_event &event)
+{
+	AFd *obj = (AFd *)(event.data.ptr);
+
+	if (obj->MarkedToDelete || event.events & (EPOLLERR | EPOLLPRI | EPOLLRDHUP))
+	{
+		DEBUG() << "Socket fd: " << obj->GetFd() << ", MarkedToDelete";
+		obj->MarkedToDelete = true;
+		DeleteFromEpoll(obj);
+		toDelete.insert(obj);
+		return true;
+	}
+	return false;
+}
+
+void Multiplexer::handelEpollPipes(epoll_event &event)
+{
+	AFd *obj = (AFd *)(event.data.ptr);
+
+	if (obj->GetType() == "Pipe") 
+		obj->Handle();
+}
+
+void Multiplexer::handelEpollEvent(epoll_event &event)
+{
+	AFd *obj = (AFd *)(event.data.ptr);
+	
+	if (obj->GetType() == "Pipe") 
+		return;
+	if (obj->cleanBody) {
+		obj->cleanFd();
+	}
+	else if (ClearObj(event) == false && event.events & (EPOLLIN | EPOLLOUT)) {
+		obj->Handle();
+	}
+}
+
