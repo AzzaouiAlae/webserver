@@ -1,4 +1,4 @@
-DATA := $(shell find ./DefaultPages/Pages -name "*.htm")
+DATA :=  $(shell find ./DefaultPages/Pages -name "*.htm")
 DATA_OBJ := $(DATA:.htm=.htm.o)
 
 SRC := $(shell find . -name "*.cpp" | grep -v "./main.cpp" | grep -v ".*Test.cpp" | grep -v ".*Cgi.cpp")
