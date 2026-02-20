@@ -1,7 +1,7 @@
-DATA := $(shell find ./DefaultPages/Pages -name "*.htm")
+DATA :=  $(shell find ./DefaultPages/Pages -name "*.htm")
 DATA_OBJ := $(DATA:.htm=.htm.o)
 
-SRC := $(shell find . -name "*.cpp" | grep -v "./main.cpp" | grep -v ".*Test.cpp")
+SRC := main.cpp $(shell find . -name "*.cpp" | grep -v "./main.cpp" | grep -v ".*Test.cpp")
 OBJ = $(SRC:%.cpp=%.o)
 
 CXX = c++
