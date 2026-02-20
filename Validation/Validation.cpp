@@ -1,589 +1,412 @@
 #include "Validation.hpp"
-#include "../Socket/Socket.hpp"
 
-std::vector<std::string> Validation::_skiped;
+// ═══════════════════════════════════════════════════════════════
+//  Constructor
+// ═══════════════════════════════════════════════════════════════
 
-void Validation::CreateMimeMap()
+Validation::Validation(AST<string> &astRoot)
+	: _root(astRoot)
 {
-	std::map<std::string, std::string> &mime = Singleton::GetMime();
-	bool ismaintype = false;
-	string maintype = "";
+}
 
-	while (++_idx < (int)_data.size() && _data[_idx] != "}")
+// ═══════════════════════════════════════════════════════════════
+//  PUBLIC – Validate
+//  Walk every top-level node in the AST root and validate it.
+// ═══════════════════════════════════════════════════════════════
+
+void Validation::Validate()
+{
+	vector<AST<string> > &topLevel = _root.GetChildren();
+
+	if (topLevel.empty())
+		Error::ThrowError("Config Error: no server blocks found");
+
+	for (int i = 0; i < (int)topLevel.size(); i++)
 	{
-		ismaintype = true;
-		maintype = "";
-		for (; _data[_idx] != ";"; _idx++)
+		const string &kind = topLevel[i].GetValue();
+
+		if (kind == "server")
+			validateServer(topLevel[i]);
+		else if (kind == "types")
+			; // types block is structural — already parsed, nothing to validate here
+		else
+			Error::ThrowError("Config Error: unexpected top-level block '" + kind + "'");
+	}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PRIVATE – validateServer
+//  Checks one complete server { … } node.
+// ═══════════════════════════════════════════════════════════════
+
+void Validation::validateServer(AST<string> &serverNode)
+{
+	ServerSeen seen;
+
+	vector<AST<string> > &children = serverNode.GetChildren();
+
+	for (int i = 0; i < (int)children.size(); i++)
+	{
+		AST<string> &node = children[i];
+		const string &directive = node.GetValue();
+
+		if (directive == "listen")
+			validateListen(node, seen);
+		else if (directive == "server_name")
+			validateServerName(node, seen);
+		else if (directive == "root")
+			validateRoot(node, seen.root);
+		else if (directive == "index")
+			validateIndex(node, seen.index);
+		else if (directive == "autoindex")
+			validateAutoindex(node, seen.autoindex);
+		else if (directive == "return")
+			validateReturn(node, seen.returnDir);
+		else if (directive == "client_max_body_size")
+			validateClientMaxBody(node, seen.clientMaxBodySize);
+		else if (directive == "allow_methods")
+			validateAllowMethods(node, seen.allowMethods);
+		else if (directive == "error_page")
+			validateErrorPage(node, seen.errorPage);
+		else if (directive == "location")
 		{
-			if (!ismaintype)
-				mime[_data[_idx]] = maintype;
-			else if (ismaintype && _data[_idx].find('/') == string::npos)
-				Error::ThrowError("Invalid Syntax");
-			else
-			{
-				maintype = _data[_idx];
-				ismaintype = false;
-			}
+			// location is a nested block — validate it separately
+			// its path is stored as its first argument (set by Parsing)
+			if (node.GetArguments().empty())
+				Error::ThrowError("Config Error: location block has no path");
+			const string &path = node.GetArguments()[0];
+			if (path.empty() || path[0] != '/')
+				Error::ThrowError("Config Error: location path must start with '/' — got '" + path + "'");
+
+			LocationSeen locSeen;
+			validateLocation(node, locSeen);
 		}
-	}
-}
-
-void Validation::IsValidTypes()
-{
-	if (_level != 0 || _data[++_idx] != "{")
-		Error::ThrowError("Invalid Syntax");
-	else
-		_level++;
-	CreateMimeMap();
-	CheckValidation();
-}
-
-void Validation::AddDirective(std::string value)
-{
-	if (_level == 1)
-		Parsing::AddDirective(*(Parsing::currentServer), value);
-	else if (_level == 2)
-		Parsing::AddDirective(*(Parsing::currentLocation), value);
-}
-
-Validation::Validation(std::vector<std::string> inputData)
-	: _idx(0), _level(0), _data(inputData)
-{
-	CreateMap();
-	CreateServerdMap();
-	CreateLocationMap();
-	CreateSkipedData();
-}
-
-void Validation::CreateLocationMap()
-{
-	_useLocation["Location"] = false;
-	_useLocation["Root"] = false;
-	_useLocation["Index"] = false;
-	_useLocation["Autoindex"] = false;
-	_useLocation["Return"] = false;
-	_useLocation["ClientMaxBodySize"] = false;
-	_useLocation["AllowMethods"] = false;
-	_useLocation["BodyInFile"] = false;
-    _useLocation["BodyTempPath"] = false;
-	_useLocation["CgiPass"] = false;
-	_useLocation["DeleteFiles"] = false;
-}
-
-void Validation::CreateServerdMap()
-{
-	_useServer["Server"] = false;
-	_useServer["Listen"] = false;
-	_useServer["Server_name"] = false;
-	_useServer["Root"] = false;
-	_useServer["Index"] = false;
-	_useServer["Autoindex"] = false;
-	_useServer["Return"] = false;
-	_useServer["ClientMaxBodySize"] = false;
-	_useServer["AllowMethods"] = false;
-}
-
-void Validation::CreateSkipedData()
-{
-	if (_skiped.empty())
-	{
-		_skiped.push_back("Return");
-		_skiped.push_back("Root");
-		_skiped.push_back("Index");
-		_skiped.push_back("Autoindex");
-		_skiped.push_back("Autoindex");
-		_skiped.push_back("ClientMaxBodySize");
-		_skiped.push_back("AllowMethods");
-	}
-}
-
-void Validation::CreateMap()
-{
-	_map["server"] = &Validation::IsValidServer;
-	_map["listen"] = &Validation::IsValidListen;
-	_map["server_name"] = &Validation::IsValidServerName;
-	_map["root"] = &Validation::IsValidRoot;
-	_map["index"] = &Validation::IsValidIndex;
-	_map["location"] = &Validation::IsValidLocation;
-	_map["autoindex"] = &Validation::IsValidAutoindex;
-	_map["return"] = &Validation::IsValidReturn;
-	_map["error_page"] = &Validation::IsErrorPage;
-	_map["client_max_body_size"] = &Validation::IsClientMaxBodySize;
-	_map["allow_methods"] = &Validation::IsValidAllowMethods;
-	_map["cgi_pass"] = &Validation::IsValidCGIPass;
-	_map["types"] = &Validation::IsValidTypes;
-	_map["client_body_in_file_only"] = &Validation::IsValidBodyInFile;
-	_map["delete_files"] = &Validation::isValidDeleteFiles;
-}
-
-bool Validation::SkipedOptions(std::string option)
-{
-	if (std::find(_skiped.begin(), _skiped.end(), option) != _skiped.end())
-		return (true);
-	return (false);
-}
-
-void Validation::CheckExistance(std::pair<std::string, bool> used)
-{
-	if (!SkipedOptions(used.first) && used.second == false)
-		Error::ThrowError("Invalid Syntax : (Missing Element in Server)");
-}
-
-void Validation::CheckLevelAndDuplication(bool &first, bool &second, std::string msg)
-{
-	if (_level == 0)
-	{
-		Error::ThrowError("Invalid Syntax : (Element out of scope)");
-	};
-	CkeckDuplication(first, second, "Invalid Syntax : ( Duplication In " + msg + " )");
-	_idx++;
-}
-
-void Validation::ResetServerSeting()
-{
-	std::for_each(_useServer.begin(), _useServer.end(), CheckExistance);
-
-	_useServer["Root"] = false;
-	_useServer["Index"] = false;
-	_useServer["ClientMaxBodySize"] = false;
-}
-
-void Validation::ResetLocationSeting()
-{
-	_useLocation["Root"] = false;
-	_useLocation["Index"] = false;
-
-	_useLocation["BodyInFile"] = false;
-    _useLocation["BodyTempPath"] = false;
-    _useLocation["CgiPass"] = false;
-	_useLocation["DeleteFiles"] = false;
-}
-
-//      SERVER
-void Validation::IsValidServer()
-{
-	_useServer["Server"] = true;
-	_idx++;
-	if (_level != 0 || _data[_idx] != "{")
-		Error::ThrowError("Invalid Syntax");
-	else
-		_level++;
-	_idx++;
-	Parsing::AddServer();
-	CheckValidation();
-	ResetServerSeting();
-}
-
-//      LOCATION
-void Validation::IsValidLocation()
-{
-	_useLocation["Location"] = true;
-	_idx++;
-	if (_level != 1 || IsSeparator() || _data[_idx][0] != '/')
-		Error::ThrowError("Invalid Syntax : (Invalid Location)");
-	string &s = _data[_idx];
-	_idx++;
-	if (_data[_idx] != "{")
-		Error::ThrowError("Invalid Syntax : (missing '{' In location )");
-	else
-		_level++;
-	_idx++;
-	Parsing::AddLocation(*(Parsing::currentServer));
-	Parsing::currentLocation->AddArgument(s);
-	CheckValidation();
-	ResetLocationSeting();
-}
-
-long Validation::ConvertToNumber(std::string num)
-{
-	char *endptr;
-	errno = 0;
-
-	long port = std::strtoll(num.c_str(), &endptr, 10);
-
-	if (num[0] == '+' || errno != 0 || *endptr != '\0')
-		Error::ThrowError("Invalid Syntax ( Number Not Valid )");
-	return (port);
-}
-
-void Validation::parseListen(string str, string &port, string &host)
-{
-	const char *s1 = strrchr(str.c_str(), ':');
-	bool isHost = false;
-
-	if (s1 != NULL)
-	{
-		host = str.c_str();
-		host = host.substr(0, (s1 - str.c_str()));
-		port = s1 + 1;
-		return;
-	}
-	for(int i = 0; i < (int)str.length(); i++)
-	{
-		if(isdigit(str[i]) == false)
-		{
-			isHost = true;
-			break;
-		}
-	}
-	if (isHost) {
-		host = str;
-		port = "80";
-	}
-	else
-		port = str;
-}
-
-//     LISTEN
-void Validation::IsValidListen()
-{
-	_useServer["Listen"] = true;
-	if (_level != 1)
-		Error::ThrowError("Invalid Syntax : (Element out of scope)");
-	Validation::AddDirective("listen");
-	_idx++;
-	if (_idx + 1 < (int)_data.size())
-	{
-		if (_data[_idx + 1] == ";")
-			Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
 		else
-			Error::ThrowError("Invalid Syntax");
-		_idx += 2;
+			Error::ThrowError("Config Error: unknown directive '" + directive + "' in server block");
 	}
-	else
-		Error::ThrowError("Invalid Syntax");
+
+	// ── Required field checks ─────────────────────────────────
+	if (!seen.listen)
+		Error::ThrowError("Config Error: server block is missing required 'listen' directive");
+	if (!seen.serverName)
+		Error::ThrowError("Config Error: server block is missing required 'server_name' directive");
 }
 
-bool Validation::IsSeparator()
+// ═══════════════════════════════════════════════════════════════
+//  PRIVATE – validateLocation
+//  Checks one location { … } node.
+// ═══════════════════════════════════════════════════════════════
+
+void Validation::validateLocation(AST<string> &locationNode,
+								  LocationSeen &seen)
 {
-	if (_data[_idx] == ";" || _data[_idx] == "}" || _data[_idx] == "{")
-		return (true);
-	return (false);
-}
+	vector<AST<string> > &children = locationNode.GetChildren();
 
-//      SEVERNAME
-void Validation::IsValidServerName()
-{
-	_useServer["Server_name"] = true;
-	if (_level != 1)
-		Error::ThrowError("Invalid Syntax : (Element out of scope)");
-	Validation::AddDirective("server_name");
-	_idx++;
-
-	if (_data[_idx] == ";")
-		Error::ThrowError("Invalid Syntax : (server_name Must Have a Name)");
-	while (_idx < (int)_data.size() && !IsSeparator())
-		Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
-	if (_data[_idx] == ";")
-		_idx++;
-}
-
-//upload files
-void Validation::IsValidBodyInFile()
-{
-    if (_level != 2)
-        Error::ThrowError("Invalid Syntax : (client_body_in_file_only must be inside a location block)");
-
-    if (_useLocation["BodyInFile"] == true)
-        Error::ThrowError("Invalid Syntax : ( Duplication In client_body_in_file_only )");
-
-    // --- CONFLICT CHECK ---
-    if (_useLocation["CgiPass"] == true)
-        Error::ThrowError("Invalid Syntax : (client_body_in_file_only cannot be used with cgi_pass)");
-    // ----------------------
-
-    _useLocation["BodyInFile"] = true;
-
-    Validation::AddDirective("client_body_in_file_only");
-
-	_idx++;
-
-    if (IsSeparator() || (_data[_idx] != "on" && _data[_idx] != "off"))
-        Error::ThrowError("Invalid Syntax : (client_body_in_file_only has invalid option)");
-
-    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
-    _idx++;
-
-    if (_data[_idx] == ";")
-        _idx++;
-    else
-        Error::ThrowError("Invalid Syntax : (Missing semicolon)");
-}
-
-
-void Validation::CkeckDuplication(bool &first, bool &second, std::string msg)
-{
-	if (_level == 1)
+	for (int i = 0; i < (int)children.size(); i++)
 	{
-		if (first == true)
-			Error::ThrowError(msg);
+		AST<string> &node = children[i];
+		const string &directive = node.GetValue();
+
+		if (directive == "root")
+			validateRoot(node, seen.root);
+		else if (directive == "index")
+			validateIndex(node, seen.index);
+		else if (directive == "autoindex")
+			validateAutoindex(node, seen.autoindex);
+		else if (directive == "return")
+			validateReturn(node, seen.returnDir);
+		else if (directive == "client_max_body_size")
+			validateClientMaxBody(node, seen.clientMaxBodySize);
+		else if (directive == "allow_methods")
+			validateAllowMethods(node, seen.allowMethods);
+		else if (directive == "cgi_pass")
+			validateCgiPass(node, seen);
+		else if (directive == "client_body_in_file_only")
+			validateBodyInFile(node, seen);
+		else if (directive == "delete_files")
+			validateDeleteFiles(node, seen);
 		else
-			first = true;
-		return;
+			Error::ThrowError("Config Error: unknown directive '" + directive + "' in location block");
 	}
-	else if (_level == 2)
-	{
-		if (second == true)
-			Error::ThrowError(msg);
-		else
-			second = true;
-		return;
-	}
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SERVER-SCOPE DIRECTIVE VALIDATORS
+// ═══════════════════════════════════════════════════════════════
+
+// ── listen ────────────────────────────────────────────────────
+// Allowed formats: "8080", "localhost", "0.0.0.0:8080"
+// Multiple listen directives are allowed in the same server block.
+
+void Validation::validateListen(AST<string> &node, ServerSeen &seen)
+{
+	seen.listen = true;
+	checkArgCount(node, 1, 1, "listen");
+
+	const string &val = node.GetArguments()[0];
+	string port;
+	string host; // unused here, just validates the split
+
+	// Find the port part
+	const char *colon = strrchr(val.c_str(), ':');
+	if (colon != NULL)
+		port = string(colon + 1);
 	else
-		Error::ThrowError("Invalid Syntax : (Element out of scope)");
-}
-
-//      ROOT
-void Validation::IsValidRoot()
-{
-	CheckLevelAndDuplication(_useServer["Root"], _useLocation["Root"], "Root");
-
-	Validation::AddDirective("root");
-	if (IsSeparator())
-		Error::ThrowError("Invalid Syntax : (Root Has Invalid Path)");
-	Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
-	_idx++;
-	if (_data[_idx] == ";")
-		_idx++;
-}
-
-//      INDEX
-void Validation::IsValidIndex()
-{
-	CheckLevelAndDuplication(_useServer["Index"], _useLocation["Index"], "Index");
-
-	Validation::AddDirective("index");
-	if (_data[_idx] == ";")
-		Error::ThrowError("Invalid Syntax : (Index Must Have a Name)");
-	while (_idx < (int)_data.size() && !IsSeparator())
 	{
-		if (_data[_idx].find("/") != std::string::npos)
-			Error::ThrowError("Invalid Syntax : (Index Is An Absolute Path)");
-
-		Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
-	}
-	if (_data[_idx] == ";")
-		_idx++;
-}
-
-//      AUTOINDEX
-void Validation::IsValidAutoindex()
-{
-	CheckLevelAndDuplication(_useServer["Autoindex"], _useLocation["Autoindex"], "Autoindex");
-
-	Validation::AddDirective("autoindex");
-	if (IsSeparator() || (_data[_idx] != "off" && _data[_idx] != "on"))
-		Error::ThrowError("Invalid Syntax : (autoindex Has Invalid option )");
-	Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
-	_idx++;
-	if (_data[_idx] == ";")
-		_idx++;
-}
-
-
-
-//      RETURN
-void Validation::IsValidReturn()
-{
-	CheckLevelAndDuplication(_useServer["Return"], _useLocation["Return"], "Return");
-
-	Validation::AddDirective("return");
-	long redirectCode = ConvertToNumber(_data[_idx]);
-	if (redirectCode != 301 && redirectCode != 302 && redirectCode != 200)
-		Error::ThrowError("Invalid Syntax : ( Invalid Redirection Code In return )");
-
-	Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
-	_idx++;
-
-	if (!IsSeparator())
-	{
-		Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
-		_idx++;
-	}
-
-	if (_data[_idx] == ";")
-		_idx++;
-	else {
-		Error::ThrowError("Invalid Syntax : ';' is missing");
-	}
-}
-
-//    ERRORPAGE
-void Validation::IsErrorPage()
-{
-	bool error_code = false;
-	bool error_file = false;
-
-	Validation::AddDirective("error_page");
-	_idx++;
-	while (_idx < (int)_data.size() && !IsSeparator())
-	{
-		try
-		{
-			long errorCode = ConvertToNumber(_data[_idx]);
-			if ((errorCode >= 400 && errorCode <= 404) || (errorCode >= 500 && errorCode <= 504))
+		// Check if it's purely numeric (port) or a hostname
+		bool numeric = true;
+		for (size_t i = 0; i < val.size(); i++)
+			if (!isdigit(val[i]))
 			{
-				Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
-				error_code = true;
-			}
-			else
+				numeric = false;
 				break;
-		}
-		catch (const std::exception &e)
-		{
-			Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
-			error_file = true;
-			break;
-		}
-	}
-	if (error_code == false || error_file == false)
-		Error::ThrowError("Invalid Syntax : ( Invalid Error Code Or File In Error_page )");
-	if (_data[_idx] == ";")
-		_idx++;
-}
-
-bool Validation::IsByteSizeUnit(std::string &data)
-{
-	return (strchr("bBKkMmGg", data[data.size() - 1]));
-}
-
-//     CLIENTMAXBODYSIZE
-void Validation::IsClientMaxBodySize()
-{
-	CheckLevelAndDuplication(_useServer["ClientMaxBodySize"], _useLocation["ClientMaxBodySize"], "ClientMaxBodySize");
-
-	Validation::AddDirective("client_max_body_size");
-
-	ConvertToNumber(_data[_idx].substr(0, _data[_idx].size() - 1));
-	if (!IsSeparator() && IsByteSizeUnit(_data[_idx]) == true)
-		Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
-	else
-		Error::ThrowError("Invalid Syntax : ( Client_max_body_size Not Valid )");
-	if (_data[_idx] == ";")
-		_idx++;
-}
-
-void Validation::isValidDeleteFiles() 
-{
-    // 1. Scope Check: Must be inside a location block
-    if (_level != 2)
-        Error::ThrowError("Invalid Syntax : (delete_files must be inside a location block)");
-
-    // 2. Duplication Check
-    if (_useLocation["DeleteFiles"] == true)
-        Error::ThrowError("Invalid Syntax : ( Duplication In delete_files )");
-
-    // 3. Conflict Check: Cannot exist if CGI is already defined
-    if (_useLocation["CgiPass"] == true)
-        Error::ThrowError("Invalid Syntax : (delete_files cannot be used with cgi_pass)");
-
-    // 4. Update State
-    _useLocation["DeleteFiles"] = true;
-
-    // 5. Add Directive to parsing structure
-    Validation::AddDirective("delete_files");
-
-    _idx++; // Move to the value
-
-    // 6. Validate Value ("on" or "off")
-    if (IsSeparator() || (_data[_idx] != "on" && _data[_idx] != "off"))
-        Error::ThrowError("Invalid Syntax : (delete_files has invalid option)");
-
-    // 7. Store the argument
-    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
-    _idx++;
-
-    // 8. Ensure it ends with a semicolon
-    if (_data[_idx] == ";")
-        _idx++;
-    else
-        Error::ThrowError("Invalid Syntax : (Missing semicolon in delete_files)");
-}
-
-
-bool Validation::IsAllowedMethods(std::string &method)
-{
-	if (method == "GET" || method == "POST" || method == "DELETE")
-		return (true);
-	return (false);
-}
-
-//     ALLOWMETHODS
-void Validation::IsValidAllowMethods()
-{
-	CheckLevelAndDuplication(_useServer["AllowMethods"], _useLocation["AllowMethods"], "AllowMethods");
-
-	Validation::AddDirective("allow_methods");
-	if (_data[_idx] == ";")
-		_idx++;
-	while (_idx < (int)_data.size() && !IsSeparator())
-	{
-		if (IsAllowedMethods(_data[_idx]) == false)
-			Error::ThrowError("Invalid Syntax : ( Invalid Method In allow_methods )");
-		Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
-	}
-
-	if (_data[_idx] == ";")
-		_idx++;
-}
-
-
-void Validation::IsValidCGIPass()
-{
-    if (_level != 2)
-        Error::ThrowError("Invalid Syntax : (Element out of scope)");
-
-    // --- CONFLICT CHECKS ---
-    if (_useLocation["BodyInFile"] == true)
-        Error::ThrowError("Invalid Syntax : (cgi_pass cannot be used with client_body_in_file_only)");
-    
-    if (_useLocation["CgiPass"] == true)
-        Error::ThrowError("Invalid Syntax : (Duplication In cgi_pass)");
-    // -----------------------
-
-    _useLocation["CgiPass"] = true; // Mark as used
-
-    Validation::AddDirective("cgi_pass");
-    _idx++;
-
-    if (_data[_idx].find(".") != 0)
-        Error::ThrowError("Invalid Syntax : (CgiPass Must Have an extension)");
-    
-    Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
-    
-    if (!IsSeparator())
-        Parsing::AddArg(*(Parsing::currentDirective), _data[_idx++]);
-    else
-        Error::ThrowError("Invalid Syntax : (CgiPass Must Have a Path)");
-    
-    if (_data[_idx] == ";")
-        _idx++;
-}
-
-void Validation::CheckValidation()
-{
-	while (_idx < (int)_data.size())
-	{
-		if (_data[this->_idx] == "}")
-		{
-			if (_level == 0)
-				Error::ThrowError("Invalid Syntax");
-			else
-			{
-				_level--;
-				_idx++;
-				return;
 			}
-		}
-		Map::iterator it = _map.find(_data[_idx]);
-		if (it == _map.end())
-			Error::ThrowError("Invalid Syntax");
-		(this->*it->second)();
+		port = numeric ? val : "80";
 	}
-	if (_level != 0)
-		Error::ThrowError("Invalid Syntax");
-	// if (Singleton::GetServers().size() == 0) {
-	// 	Error::ThrowError("Can't bind to any server");
-	// }
+
+	long portNum = parseNumber(port);
+	if (portNum < 1 || portNum > 65535)
+		Error::ThrowError("Config Error: listen port out of range (1-65535): " + port);
 }
 
+// ── server_name ───────────────────────────────────────────────
+
+void Validation::validateServerName(AST<string> &node, ServerSeen &seen)
+{
+	if (seen.serverName)
+		Error::ThrowError("Config Error: duplicate 'server_name' in server block");
+	seen.serverName = true;
+	requireArgs(node, "server_name");
+}
+
+// ── root ──────────────────────────────────────────────────────
+// Shared between server and location scope via bool& seen
+
+void Validation::validateRoot(AST<string> &node, bool &seen)
+{
+	if (seen)
+		Error::ThrowError("Config Error: duplicate 'root' directive");
+	seen = true;
+	checkArgCount(node, 1, 1, "root");
+}
+
+// ── index ─────────────────────────────────────────────────────
+
+void Validation::validateIndex(AST<string> &node, bool &seen)
+{
+	if (seen)
+		Error::ThrowError("Config Error: duplicate 'index' directive");
+	seen = true;
+	requireArgs(node, "index");
+
+	const vector<string> &args = node.GetArguments();
+	for (size_t i = 0; i < args.size(); i++)
+	{
+		if (args[i].find('/') != string::npos)
+			Error::ThrowError("Config Error: index value must not be an absolute path: '" + args[i] + "'");
+	}
+}
+
+// ── autoindex ─────────────────────────────────────────────────
+
+void Validation::validateAutoindex(AST<string> &node, bool &seen)
+{
+	if (seen)
+		Error::ThrowError("Config Error: duplicate 'autoindex' directive");
+	seen = true;
+	checkArgCount(node, 1, 1, "autoindex");
+
+	const string &val = node.GetArguments()[0];
+	if (val != "on" && val != "off")
+		Error::ThrowError("Config Error: autoindex value must be 'on' or 'off', got '" + val + "'");
+}
+
+// ── return ────────────────────────────────────────────────────
+
+void Validation::validateReturn(AST<string> &node, bool &seen)
+{
+	if (seen)
+		Error::ThrowError("Config Error: duplicate 'return' directive");
+	seen = true;
+	checkArgCount(node, 1, 2, "return");
+
+	long code = parseNumber(node.GetArguments()[0]);
+	if (code != 200 && code != 301 && code != 302)
+		Error::ThrowError("Config Error: return code must be 200, 301, or 302 — got '" +
+						  node.GetArguments()[0] + "'");
+}
+
+// ── client_max_body_size ──────────────────────────────────────
+
+void Validation::validateClientMaxBody(AST<string> &node, bool &seen)
+{
+	if (seen)
+		Error::ThrowError("Config Error: duplicate 'client_max_body_size' directive");
+	seen = true;
+	checkArgCount(node, 1, 1, "client_max_body_size");
+
+	const string &val = node.GetArguments()[0];
+	if (val.empty())
+		Error::ThrowError("Config Error: client_max_body_size has empty value");
+
+	char unit = val[val.size() - 1];
+	if (!isByteSizeUnit(unit))
+		Error::ThrowError("Config Error: client_max_body_size must end with a unit (b/k/m/g): '" + val + "'");
+
+	// Validate the numeric part
+	parseNumber(val.substr(0, val.size() - 1));
+}
+
+// ── allow_methods ─────────────────────────────────────────────
+
+void Validation::validateAllowMethods(AST<string> &node, bool &seen)
+{
+	if (seen)
+		Error::ThrowError("Config Error: duplicate 'allow_methods' directive");
+	seen = true;
+	requireArgs(node, "allow_methods");
+
+	const vector<string> &args = node.GetArguments();
+	for (size_t i = 0; i < args.size(); i++)
+	{
+		if (!isValidMethod(args[i]))
+			Error::ThrowError("Config Error: invalid HTTP method '" + args[i] +
+							  "' — allowed: GET, POST, DELETE");
+	}
+}
+
+// ── error_page ────────────────────────────────────────────────
+
+void Validation::validateErrorPage(AST<string> &node, bool &seen)
+{
+	seen = true; // multiple error_page directives are allowed — no duplicate check
+	checkArgCount(node, 2, 2, "error_page");
+
+	long code = parseNumber(node.GetArguments()[0]);
+	bool validCode = (code >= 400 && code <= 404) || (code >= 500 && code <= 504);
+	if (!validCode)
+		Error::ThrowError("Config Error: error_page code must be 4xx or 5xx — got '" +
+						  node.GetArguments()[0] + "'");
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOCATION-ONLY DIRECTIVE VALIDATORS
+// ═══════════════════════════════════════════════════════════════
+
+// ── cgi_pass ──────────────────────────────────────────────────
+
+void Validation::validateCgiPass(AST<string> &node, LocationSeen &seen)
+{
+	if (seen.cgiPass)
+		Error::ThrowError("Config Error: duplicate 'cgi_pass' in location block");
+	if (seen.bodyInFile)
+		Error::ThrowError("Config Error: 'cgi_pass' cannot be used with 'client_body_in_file_only'");
+	if (seen.deleteFiles)
+		Error::ThrowError("Config Error: 'cgi_pass' cannot be used with 'delete_files'");
+
+	seen.cgiPass = true;
+	checkArgCount(node, 2, 2, "cgi_pass");
+
+	// First arg is the extension, must contain a dot
+	const string &ext = node.GetArguments()[0];
+	if (ext.find('.') == string::npos)
+		Error::ThrowError("Config Error: cgi_pass extension must contain a dot — got '" + ext + "'");
+}
+
+// ── client_body_in_file_only ──────────────────────────────────
+
+void Validation::validateBodyInFile(AST<string> &node, LocationSeen &seen)
+{
+	if (seen.bodyInFile)
+		Error::ThrowError("Config Error: duplicate 'client_body_in_file_only' in location block");
+	if (seen.cgiPass)
+		Error::ThrowError("Config Error: 'client_body_in_file_only' cannot be used with 'cgi_pass'");
+
+	seen.bodyInFile = true;
+	checkArgCount(node, 1, 1, "client_body_in_file_only");
+
+	const string &val = node.GetArguments()[0];
+	if (val != "on" && val != "off")
+		Error::ThrowError("Config Error: client_body_in_file_only must be 'on' or 'off' — got '" + val + "'");
+}
+
+// ── delete_files ──────────────────────────────────────────────
+
+void Validation::validateDeleteFiles(AST<string> &node, LocationSeen &seen)
+{
+	if (seen.deleteFiles)
+		Error::ThrowError("Config Error: duplicate 'delete_files' in location block");
+	if (seen.cgiPass)
+		Error::ThrowError("Config Error: 'delete_files' cannot be used with 'cgi_pass'");
+
+	seen.deleteFiles = true;
+	checkArgCount(node, 1, 1, "delete_files");
+
+	const string &val = node.GetArguments()[0];
+	if (val != "on" && val != "off")
+		Error::ThrowError("Config Error: delete_files must be 'on' or 'off' — got '" + val + "'");
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  STATIC VALUE HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+long Validation::parseNumber(const string &s)
+{
+	if (s.empty())
+		Error::ThrowError("Config Error: expected a number, got empty string");
+
+	char *endptr = NULL;
+	errno = 0;
+	long val = strtol(s.c_str(), &endptr, 10);
+
+	if (errno != 0 || endptr == s.c_str() || *endptr != '\0' || s[0] == '+')
+		Error::ThrowError("Config Error: invalid number '" + s + "'");
+
+	return val;
+}
+
+bool Validation::isByteSizeUnit(char c)
+{
+	return (c == 'b' || c == 'B' ||
+			c == 'k' || c == 'K' ||
+			c == 'm' || c == 'M' ||
+			c == 'g' || c == 'G');
+}
+
+bool Validation::isValidMethod(const string &m)
+{
+	return (m == "GET" || m == "POST" || m == "DELETE");
+}
+
+// C++98-compatible int → string conversion
+static string intToStr(int n)
+{
+	ostringstream oss;
+	oss << n;
+	return oss.str();
+}
+
+// Throws if the node has fewer than min or more than max arguments.
+void Validation::checkArgCount(AST<string> &node,
+							   size_t min, size_t max,
+							   const string &name)
+{
+	size_t count = node.GetArguments().size();
+	if (count < min)
+		Error::ThrowError("Config Error: '" + name + "' expects at least " +
+						  intToStr((int)min) + " argument(s), got " +
+						  intToStr((int)count));
+	if (count > max)
+		Error::ThrowError("Config Error: '" + name + "' expects at most " +
+						  intToStr((int)max) + " argument(s), got " +
+						  intToStr((int)count));
+}
+
+// Throws if the node has zero arguments.
+void Validation::requireArgs(AST<string> &node,
+							 const string &name)
+{
+	if (node.GetArguments().empty())
+		Error::ThrowError("Config Error: '" + name + "' requires at least one argument");
+}

@@ -3,21 +3,21 @@
 /*                                                        :::      ::::::::   */
 /*   Environment.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
+/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/22 23:36:42 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/01/27 20:03:27 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/20 18:16:05 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Environment.hpp"
 
-void Environment::AddEnvPair(std::pair<std::string, std::string> pair)
+void Environment::AddEnvPair(pair<string, string> pair)
 {
     setenv(pair.first.c_str(), pair.second.c_str(), 1);
 }
 
-void Environment::CreateEnv(std::map<std::string, std::string> env)
+void Environment::CreateEnv(map<string, string> env)
 {
-    std::for_each(env.begin(), env.end(), AddEnvPair);
+    for_each(env.begin(), env.end(), AddEnvPair);
 }

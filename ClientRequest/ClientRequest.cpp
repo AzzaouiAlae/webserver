@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ClientRequest.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
+/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/19 11:48:48 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/20 18:13:13 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -133,7 +133,7 @@ void ClientRequest::parsLenTypeCont()
 void ClientRequest::parseHost()
 {
 	if (_env.find("Host") != _env.end())
-			Validation::parseListen(_env["Host"], _env["SERVER_PORT"], _env["SERVER_NAME"]);
+			Parsing::parseListen(_env["Host"], _env["SERVER_PORT"], _env["SERVER_NAME"]);
 	else
 		Error::ThrowError("Bad Request");	
 }

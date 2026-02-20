@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 		m.MainLoop();
 		Logging::Debug() << "The main loop stop";
 	}
-	catch (const std::exception &e)
+	catch (const exception &e)
 	{
 		Logging::Error() << e.what();
 

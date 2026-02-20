@@ -9,10 +9,10 @@ void tearDown(void)
 
 void Test1()
 {
-	std::string exp = "Hello";
+	string exp = "Hello";
 
 
-	std::string s1 = "Hello";
+	string s1 = "Hello";
 	TEST_ASSERT_EQUAL_STRING(exp.c_str(), s1.c_str());
 }
 

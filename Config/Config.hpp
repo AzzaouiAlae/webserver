@@ -29,6 +29,7 @@ public:
 		{
 		public:
 			Location();
+			bool autoindex;
 			bool isMaxBodySize;
 			size_t clientMaxBodySize;
 			bool clientBodyInFileOnly;

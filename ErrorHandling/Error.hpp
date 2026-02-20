@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Error.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
+/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/20 19:11:20 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/01/20 19:25:26 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/20 18:16:05 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,19 +27,19 @@ enum ErrorType
 class Error
 {
 private:
-    static std::string _REDCOLOR    ;
-    static std::string _GREENCOLOR  ;
-    static std::string _YELLOWCOLOR ;
-    static std::string _BLUECOLOR   ;
-    static std::string _MAGENTACOLOR;
-    static std::string _CYANCOLOR   ;
-    static std::string _BOLD        ;
-    static std::string _RESETCOLOR  ;
+    static string _REDCOLOR    ;
+    static string _GREENCOLOR  ;
+    static string _YELLOWCOLOR ;
+    static string _BLUECOLOR   ;
+    static string _MAGENTACOLOR;
+    static string _CYANCOLOR   ;
+    static string _BOLD        ;
+    static string _RESETCOLOR  ;
 
     Error();
 public:
     static ErrorType errorType;
-    static void printError(std::string custoMessage);
-    static void ThrowError(std::string custoMessage);
+    static void printError(string custoMessage);
+    static void ThrowError(string custoMessage);
 
 };

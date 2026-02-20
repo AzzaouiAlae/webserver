@@ -92,7 +92,7 @@ int Config::GetMaxBodySize(vector<Config::Server> &srvs)
 
 string Config::GetErrorPath(Config::Server &srv, const string &code)
 {
-	std::map<std::string, std::string>::iterator it = srv.errorPages.find(code);
+	map<string, string>::iterator it = srv.errorPages.find(code);
 	if (it != srv.errorPages.end())
 	{
 		return it->second;
