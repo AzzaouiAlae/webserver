@@ -30,8 +30,9 @@ bool GET::HandleResponse()
 	ClientRequest &req = router->GetRequest();
 	sock->SetStateByFd(sock->GetFd());
 	string method = req.getMethod();
+	ResolvePath();
 
-	
+
 
 	// Check allowed methods (shared logic from AMethod)
 	if (!readyToSend && !IsMethodAllowed(method))
@@ -40,7 +41,16 @@ bool GET::HandleResponse()
 			HandelErrorPages("405");
 	}
 
-	if (sendListFiles)
+	if (router->GetPath().emptyRoot()) {
+		if (router->GetRequest().getPath() == "/") {
+			GetStaticIndex();
+		}
+		else
+			HandelErrorPages("404");
+	}
+
+		
+	else if (sendListFiles)
 		SendListFilesResponse();
 	else if (readyToSend)
 	{
@@ -62,8 +72,6 @@ bool GET::HandleResponse()
 // Does one thing: resolves the path, then dispatches based on path state
 void GET::GetMethod()
 {
-	ResolvePath();
-	
 	if (router->GetPath().isRedirection())
 		SendRedirection();
 	else if (router->GetPath().isFound() == false)
@@ -78,8 +86,7 @@ void GET::GetMethod()
 	{
 		// CGI handling — to be implemented
 	}
-	else if (router->GetPath().emptyRoot() && router->GetRequest().getPath() == "/")
-		GetStaticIndex();
+
 }
 
 // ══════════════════════════════════════════════
