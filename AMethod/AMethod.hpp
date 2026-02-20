@@ -29,6 +29,7 @@ protected:
 	bool del;
 	Routing *router;
 	SocketIO *sock;
+	bool pathResolved;
 
 	// ──── Shared utilities (each does one thing) ────
 	string CreateDate();
@@ -47,6 +48,9 @@ protected:
 	// ──── Method validation ────
 	bool IsMethodAllowed(const string &method);
 
+	void ResolvePath();
+
+	string escapeForJS(const std::string& input);
 public:
 	AMethod(SocketIO *sock, Routing *router);
 	virtual ~AMethod();

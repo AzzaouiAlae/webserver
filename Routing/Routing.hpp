@@ -10,6 +10,7 @@ class Routing
 	bool RequestComplete;
 public:
 	Config::Server *srv;
+	Config::Server::Location *loc;
 	Request &GetRequest();
 	Path &GetPath();
 	Routing();

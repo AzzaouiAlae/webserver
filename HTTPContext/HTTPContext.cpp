@@ -53,7 +53,7 @@ int HTTPContext::_readFromSocket()
         buf = (char *)calloc(1, BUF_SIZE + 1);
     }
     int len = read(sock->GetFd(), buf, BUF_SIZE); 
-
+	ERR() << "socket fd: " << sock->GetFd() << ", HTTPContext::_readFromSocket: " << buf;
     if (len == 0 || Utility::SigPipe) {
         err = true;
         return 0;
@@ -65,10 +65,10 @@ void HTTPContext::setMaxBodySize()
 {
 	DEBUG() << "Socket fd: " << sock->GetFd() << ", HTTPContext::setMaxBodySize, err: " << err;
 	router.srv = &Config::GetServerName(*servers, router.GetRequest().getHost());
-	int i = Config::GetLocationIndex(*router.srv, router.GetRequest().getPath());
+	router.CreatePath(router.srv);
 
-	if (i != -1 && router.srv->Locations[i].isMaxBodySize) {
-		router.GetRequest().SetMaxBodySize(router.srv->Locations[i].clientMaxBodySize);
+	if (router.GetPath().getLocation() != NULL && router.GetPath().getLocation()->isMaxBodySize) {
+		router.GetRequest().SetMaxBodySize(router.GetPath().getLocation()->clientMaxBodySize);
 	} 
 	else if (router.srv->isMaxBodySize)
 	{

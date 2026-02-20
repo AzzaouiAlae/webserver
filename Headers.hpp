@@ -22,11 +22,14 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/sendfile.h>
+#include <sys/wait.h>
 #include <netinet/tcp.h>
 #include <sys/time.h>
 #include <signal.h>
 #include <sys/types.h> 
 #include <dirent.h>
+#include <iomanip>
+
 
 using namespace std;
 
@@ -40,18 +43,18 @@ using namespace std;
 #include "Tokenizing/Tokenizing.hpp"
 #include "Config/Config.hpp"
 #include "Parsing/Parsing.hpp"
-#include "Request/Request.hpp"
+#include "ClientRequest/ClientRequest.hpp"
 #include "Multiplexer/Multiplexer.hpp"
 #include "Path/Path.hpp"
 #include "IContext/IContext.hpp"
 #include "AFd/AFd.hpp"
 #include "Singleton/Singleton.hpp"
 #include "Logging/Logging.hpp"
+#include "Environment/Environment.hpp"
 #include "StaticFile/StaticFile.hpp"
 #include "ISocket/ISocket.hpp"
+#include "ARequest/ARequest.hpp"
 
-
-
+extern char **environ;
 
 #define DEFAULT_CONF "conf/engineX.conf"
-
