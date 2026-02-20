@@ -1,57 +1,63 @@
 #pragma once
 
 #include "../Headers.hpp"
+#include "../Config/Config.hpp" // Needs access to Server and Location structs
+#include <sys/stat.h> // For struct stat
 
 class Path {
     private:
-        AST<string> *_srvNode;
-        AST<string> *_requestPathNode;
-        string      _requestPath;
-        string      _srvRootPath, _srvIndex;
-        string      _locaRootPath, _locaArgPath, _locaIndex;
-        string      _FullPath;
-        string      _cgiPath, _reqExt, _pathInfo, _errorCode;
-        bool        _isExtention, _isLocationCGI, _isDir, _isErrorPath;
+        // --- RESULT DATA ---
+        string      _fullPath;      // The absolute path on the disk (e.g., /var/www/html/index.php)
+        string      _pathInfo;      // For CGI (e.g., /extra/data)
+        string      _cgiScriptPath; // Path to the interpreter or script
+		string 		_root;
+        
+        // --- FLAGS ---
+        bool        _isDir;         // Is the resulting path a directory?
+        bool        _isFile;        // Is the resulting path a file?
+        bool        _isCGI;         // Does it match a CGI extension?
+        bool        _found;         // Does the file exist on disk?
+		bool        _isRedir;       // <--- NEW FLAG
+		bool        _hasPermission;
+        string      _redirCode;     // <--- e.g., "301"
+        string      _redirPath;     // <--- e.g., "/home"
 
+        
+        // --- INTERNAL HELPERS ---
+        // Checks if a file/dir exists and fills _isDir/_isFile
+        void        checkFileExistence(const string &path);
+        
+        // Joins root + uri correctly, handling slashes
+        string      joinPath(const string &root, const string &uri);
+		void        checkPermissions(const string &path);
 
-        void            initData(AST<string> *node, string path);
-        vector<string>  SearchInTree(AST<std::string>& node, std::string value );
-        string          AttachPath(string rootPath, string addPath);
-        string          FullPath( AST<string>& currLocationNode );
-        string          AttachIndex( AST<string>& currLocationNode, string path, string type);
-        string          getCodePath(AST<string> & srvNode, string srvPath, string type, string errorCode);
-        void            fillLocationInfo( AST<string> & locaNode );
-        void            CheckPathExist(string& path);
-        void            IsRedirection(string& path);
-        void            IsDirectory(struct stat info, string& path);
-        void            IsFile(struct stat info, string& path);
-        void            HandleSRVPath();
-        void            HandleRequestPath(vector<string>& vReqPath);
-        void            HandleLocationArgPath( vector<string>& vLocaArgPath, string locationArg );
-        bool            IsIndexPath(string requestPath, string locArgPath);
-        void            CkeckPath(vector<string>& strs);
-        void            parsePath(vector<string>& strs, string& str,const string& sep);
-        int             vectorCmp(vector<string>& reqPath, vector<string>&  locationPath);
-        void            append_with_sep(string& result, vector<string>& vec, string sep, int pos = 0);
-        bool            checkCGI(string first, string second, string& Ext);
-        bool            IsExtention(string str);
-        string          getExtention(string path, string p);
-        string          findRootPath(AST<string>& currNode);
-        void            HandleCGI( AST<string> & locaNode, vector<string>& vreqPath );
+		void _setRootAndCGI(Config::Server &srv);
+        void _handleDirectoryIndex(Config::Server &srv);
+		void _handleRedirection(Config::Server &srv);
+
     public:
         Path();
-        string          CreatePath(AST<string> *node, string path);
-        AST<string>&    getRequestNode();
-        string          getLocationIndex();
-        string          getServerIndex();
-        string          getServerPath();
-        string          &getFullPath();
-        string          getPathInfo();
-        string          getCGiPath();
-        string          getExtantion();
-        bool            isLocationCGi();
-		string getErrorCode();
-		bool emptyRoot();
-		bool IsDir();
-		bool isErrorPath();
+        ~Path();
+
+        // --- MAIN LOGIC ---
+        // This replaces the old CreatePath. 
+        // It takes the pre-parsed Server config and the Request URI.
+        void        CreatePath(Config::Server &srv, const string &reqUrl);
+
+        // --- GETTERS ---
+        string      getFullPath() const;
+        string      getPathInfo() const;
+        string      getCgiPath() const;
+        bool        isCGI() const;
+        bool        isDirectory() const;
+        bool        isFile() const;
+        bool        isFound() const;
+		bool 		emptyRoot() const;
+		bool        hasPermission() const;
+		bool        isRedirection() const;
+		string      getRedirCode() const;
+        string      getRedirPath() const;
+        
+        // Returns the index of the location used (optional, if you need to know which block matched)
+        int         matchedLocationIndex; 
 };

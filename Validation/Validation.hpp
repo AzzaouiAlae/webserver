@@ -54,12 +54,9 @@ class Validation {
         bool            IsAllowedMethods(std::string& method);
 
         void            IsValidListen();
-        void            IpAndPort();
-        void            PortOnly();
-        void            ValidIP();
         long            ConvertToNumber(std::string num);
 
-		void IsValidVirtualServer();
+		void IsValidBodyInFile();
 
     public:
         static void parseListen(string str, string& port, string& host);

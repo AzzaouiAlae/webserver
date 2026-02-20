@@ -39,8 +39,9 @@ using namespace std;
 #include "Validation/Validation.hpp"
 #include "ErrorHandling/Error.hpp"
 #include "Tokenizing/Tokenizing.hpp"
+#include "Config/Config.hpp"
 #include "Parsing/Parsing.hpp"
-#include "Request/Request.hpp"
+#include "ClientRequest/ClientRequest.hpp"
 #include "Multiplexer/Multiplexer.hpp"
 #include "Path/Path.hpp"
 #include "IContext/IContext.hpp"
@@ -50,6 +51,7 @@ using namespace std;
 #include "Environment/Environment.hpp"
 #include "StaticFile/StaticFile.hpp"
 #include "ISocket/ISocket.hpp"
+#include "ARequest/ARequest.hpp"
 
 extern char **environ;
 

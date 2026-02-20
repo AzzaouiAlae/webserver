@@ -6,7 +6,7 @@
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:37:26 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/16 12:09:38 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/19 02:54:38 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ class Cgi
     Request     &_req;
     SocketIO    &_sok;
     pid_t       _pid;
-    bool        _status;
+    estatus     _status;
     bool        _parsheader;
     long        _time;
     bool        _eventexec;

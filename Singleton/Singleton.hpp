@@ -10,4 +10,6 @@ public:
 	static map<string, string>& GetMime();
 	static set<AFd* > &GetFds();
 	static map<int, vector<AST<string> > > &GetServers();
+	static map<int, vector<Config::Server> > &GetVirtualServers();
+	static Config &GetConf();
 };

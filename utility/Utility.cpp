@@ -130,3 +130,21 @@ bool Utility::isHexa(char hex)
 {
 	return ( isxdigit(static_cast<unsigned char>(hex)) );
 }
+
+void Utility::parseBySep(vector<string> &parsedPath, string str, string sep)
+{
+	char *s = strtok((char *)str.c_str(), sep.c_str());
+	while(s) {
+		parsedPath.push_back(s);
+		s = strtok(NULL, sep.c_str());
+	}
+}
+
+string lastToken(const string &str, char ch) 
+{
+	for(int i = str.length() - 1; i > 0; i++) {
+		if (str[i] == ch)
+			return str.substr(i + 1);
+	}
+	return str;
+}

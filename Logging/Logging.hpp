@@ -8,6 +8,11 @@
 #define YELLOW "\033[33m"
 #define BLUE "\033[34m"
 
+#define	DEBUG	Logging::Debug
+#define	INFO	Logging::Info
+#define	WARN	Logging::Warn
+#define	ERR		Logging::Error
+
 class Logging
 {
 	ofstream logFile;
@@ -30,6 +35,7 @@ public:
 		template <typename T>
 		LogBase &operator<<(const T &value)
 		{
+			
 			ss << value;
 			return *this;
 		}

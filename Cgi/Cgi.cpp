@@ -6,7 +6,7 @@
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/16 12:24:34 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/19 02:55:46 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,9 +55,9 @@ void Cgi::createChild()
     else if (!_pid)
     {
         Environment::CreateEnv(_req.getrequestenv());
-        dup2(0, _sok.pipefd[0]);
+        dup2(_sok.pipefd[0], 0);
         close(_sok.pipefd[0]);
-        dup2(1, _sok.pipefd[1]);
+        dup2(_sok.pipefd[1], 1);
         close(_sok.pipefd[1]);
         execve(_exec[0], _exec, environ);
         exit(1);
