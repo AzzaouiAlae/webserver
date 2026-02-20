@@ -12,7 +12,7 @@ enum IOState {
 	eSocket = 4,
 };
 
-#define KBYTE 1024
+#define KBYTE 1024 * 1024
 #define MBYTE 50
 
 class SocketIO : public ISocket {
@@ -24,12 +24,12 @@ class SocketIO : public ISocket {
 	int SendedBuffToPipe;
 	char *buff;
 public:
-	int SendBuffToPipe(void *buff, int size);
-	int SendPipeToSock();
 	static int GetPipePoolSize();
 	int pipefd[2];
 	SocketIO(int fd);
     ~SocketIO();
+	int SendBuffToPipe(void *buff, int size);
+	int SendPipeToSock();
 	static int errorNumber;
 	void SetStateByFd(int fd);
 	int Send(void *buff, int size);

@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Environment.hpp                                    :+:      :+:    :+:   */
+/*   CgiRequest.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/01/22 23:25:36 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/14 01:55:49 by oel-bann         ###   ########.fr       */
+/*   Created: 2026/02/19 08:51:20 by oel-bann          #+#    #+#             */
+/*   Updated: 2026/02/19 11:49:44 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,14 @@
 
 #include "../Headers.hpp"
 
-class Environment
+class CgiRequest : ARequest
 {
-    Environment();
-    static void AddEnvPair(std::pair<std::string, std::string> pair);
+    enum eCgiParsPos { eCgiHeaders, eCgiBody, eCgiComplete };
+    static map<string, string>_cgiDirectives;
+    eCgiParsPos _parsPos;
+    void initDirectives();
+    bool ParseHeader();
 public:
-    static void CreateEnv(std::map<std::string, std::string> env);
+    CgiRequest();
+    ~CgiRequest();
 };
