@@ -219,4 +219,3 @@ void Multiplexer::handelEpollEvent(epoll_event &event)
 		obj->Handle();
 	}
 }
-

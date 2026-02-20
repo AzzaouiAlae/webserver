@@ -29,25 +29,25 @@ bool Utility::isNotSquareBracket(char ch)
 	return ch != ']' && ch != '[';
 }
 
-void Utility::ltrim(std::string &s, bool (*f)(char ch))
+void Utility::ltrim(string &s, bool (*f)(char ch))
 {
-	s.erase(s.begin(), std::find_if(s.begin(), s.end(), f));
+	s.erase(s.begin(), find_if(s.begin(), s.end(), f));
 }
 
-void Utility::rtrim(std::string &s, bool (*f)(char ch))
+void Utility::rtrim(string &s, bool (*f)(char ch))
 {
-	string::reverse_iterator reverse_it = std::find_if(s.rbegin(), s.rend(), f);
+	string::reverse_iterator reverse_it = find_if(s.rbegin(), s.rend(), f);
 	string::iterator *it = (string::iterator *)&reverse_it;
 	s.erase(*it, s.end());
 }
 
-void Utility::trim(std::string &s, bool (*f)(char ch))
+void Utility::trim(string &s, bool (*f)(char ch))
 {
 	ltrim(s, f);
 	rtrim(s, f);
 }
 
-void Utility::trim(std::string &s, string toTrime)
+void Utility::trim(string &s, string toTrime)
 {
 	Utility::toTrime = toTrime;
 	trim(s, isStrToTrime);
@@ -73,7 +73,7 @@ string Utility::GetFileExtension(string filename)
 	return filename.substr(i + 1);
 }
 
-long Utility::getFileSize(const std::string &path)
+long Utility::getFileSize(const string &path)
 {
     struct stat st;
     if (stat(path.c_str(), &st) == 0)
@@ -82,7 +82,7 @@ long Utility::getFileSize(const std::string &path)
 }
 
 
-bool Utility::strtosize_t(const std::string& s, size_t& out)
+bool Utility::strtosize_t(const string& s, size_t& out)
 {
     if (s.empty())
         return false;

@@ -46,8 +46,8 @@ class Path {
         // It takes the pre-parsed Server config and the Request URI.
         void        CreatePath(Config::Server &srv, const string &reqUrl);
 
-		static std::string decodePath(const std::string& path);
-		static std::string encodePath(const std::string& path);
+		static string decodePath(const string& path);
+		static string encodePath(const string& path);
 
 
         // --- GETTERS ---

@@ -51,7 +51,7 @@ protected:
 
 	void ResolvePath();
 
-	string escapeForJS(const std::string& input);
+	string escapeForJS(const string& input);
 public:
 	AMethod(SocketIO *sock, Routing *router);
 	virtual ~AMethod();

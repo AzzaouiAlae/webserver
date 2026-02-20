@@ -38,8 +38,8 @@ void AMethod::ResolvePath()
 	}
 }
 
-string AMethod::escapeForJS(const std::string& input) {
-    std::string output;
+string AMethod::escapeForJS(const string& input) {
+    string output;
     for (size_t i = 0; i < input.length(); ++i) {
         if (input[i] == '\'') {
             output += "\\'";  // Escape single quotes

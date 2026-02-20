@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Environment.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
+/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/22 23:25:36 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/14 01:55:49 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/02/20 18:16:05 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 class Environment
 {
     Environment();
-    static void AddEnvPair(std::pair<std::string, std::string> pair);
+    static void AddEnvPair(pair<string, string> pair);
 public:
-    static void CreateEnv(std::map<std::string, std::string> env);
+    static void CreateEnv(map<string, string> env);
 };

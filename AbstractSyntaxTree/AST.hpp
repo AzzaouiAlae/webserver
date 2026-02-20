@@ -4,13 +4,15 @@
 #include <map>
 #include <vector>
 
+using namespace std;
+
 
 template <typename content>
 class AST
 {
 	content Value;
-	std::vector<AST<content> > Children;
-	std::vector<content> Arguments;
+	vector<AST<content> > Children;
+	vector<content> Arguments;
 
 public:
 	AST(content value)
@@ -33,12 +35,12 @@ public:
 		Arguments.push_back(value);
 	}
 
-	std::vector<AST<content> >& GetChildren()
+	vector<AST<content> >& GetChildren()
 	{
 		return Children;
 	}
 
-	std::vector<content>& GetArguments()
+	vector<content>& GetArguments()
 	{
 		return Arguments;
 	}
