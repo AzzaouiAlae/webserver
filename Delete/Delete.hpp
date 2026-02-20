@@ -5,6 +5,7 @@
 class Delete: AMethod
 {
 	void deleteFile();
+	Config::Server::Location *loc;
 public:
 	bool HandleResponse();
 };

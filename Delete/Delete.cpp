@@ -14,7 +14,7 @@ bool Delete::HandleResponse()
 	}
 
 	// 2. Check method is allowed
-	if (!IsMethodAllowed("Delete"))
+	if (!IsMethodAllowed("DELETE"))
 	{
 		HandelErrorPages("405");
 		return del;
@@ -37,16 +37,20 @@ bool Delete::HandleResponse()
 		return del;
 	}
 
+	loc = router->GetPath().getLocation();
+
+	if (loc == NULL || router->GetPath().emptyRoot() || loc->deleteFiles == false) {
+		HandelErrorPages("403");
+		return del;
+	}
+
 	deleteFile();
 
-	return false;
+	return del;
 }
 
 void Delete::deleteFile()
 {
-	Config::Server::Location *loc = router->GetPath().getLocation();
-
-	if (loc == NULL)
-		return;
+	unlink(filename.c_str());
 	
 }

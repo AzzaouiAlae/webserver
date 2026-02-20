@@ -146,6 +146,10 @@ void Parsing::parseLocation(AST<string> &location, Config::Server::Location &loc
 				loc.allowMethods.push_back(args[i]);
 			}
 		}
+		else if (val == "delete_files") 
+		{
+			loc.deleteFiles = args[0] == "on";
+		}
 		else if (val == "root")
 		{
 			loc.root = args[0];

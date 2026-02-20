@@ -43,6 +43,7 @@ public:
 			vector<string> parsedPath;
 			bool allowMethodExists;
 			vector<string> allowMethods;
+			bool deleteFiles;
 		};
 		vector<Location> Locations;
 	};
