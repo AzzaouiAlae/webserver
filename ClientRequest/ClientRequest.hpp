@@ -1,61 +1,45 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Request.hpp                                        :+:      :+:    :+:   */
+/*   ClientRequest.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:48 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/18 04:19:01 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/19 08:54:14 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
-
-#define MAXHEADERSIZE 8192
-
 #include "../Headers.hpp"
 
-enum eHeaderParsPos
-{
-	eParsStart,
-	eParsHttpStand,
-	eParsEnd,
-};
 
-class Request
+
+class ClientRequest : ARequest
 {
-	map<string, string> _env;
-	static map<string, string> _reqDirectives;
-	map<string, void (Request::*)(string)> _Handlers;
-	string _requestbuff;
-	size_t _content_len;
+
+	enum eHeaderParsPos {eParsStart, eParsHttpStand, eParsEnd};
+	static map<string, string> _clientreqDirectives;
+	eHeaderParsPos _Parspos;
 	size_t _maxbodysize;
-	string _request;
-	int _Parspos;
-	bool _Thereisbody;
 	void initReqDirectives();
-	bool ParseRequest(char *request_buff, int size);
 	bool ParseHeader();
 	void parsHttpStandard(string httpStandard);
 	bool parsPath(string path);
+	void parseHost();
 	void parsLenTypeCont();
-	bool fillBody();
-	bool getFullLine(string &line);
 
 public:
-	Request(size_t maxbodysze);
-	Request();
+	ClientRequest(size_t maxbodysze);
+	ClientRequest();
+	~ClientRequest();
 	bool isComplete(char *request, int size);
-	map<string, string> &getrequestenv();
 	const string &getMethod() const;
 	const string &getport() const;
 	const string &getHost() const;
 	const string &getServerName() const;
-	size_t getContentLen() ;
-	string &getBody();
-	string &getPath();
-	string &GetRequest();
+	void 		 setUrlPart(string scriptpath, string pathinfo);
+	string		 &getPath();
 	void SetMaxBodySize(int size);
 	bool isRequestHeaderComplete();
 };

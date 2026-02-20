@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Request.cpp                                        :+:      :+:    :+:   */
+/*   ClientRequest.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
+/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/18 07:14:50 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/19 11:48:48 by oel-bann         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Request.hpp"
+#include "ClientRequest.hpp"
 
 // GET /index.php HTTP/1.1
 // Host: localhost:8080
@@ -29,82 +29,56 @@
 // Accept-Encoding: gzip, deflate, br, zstd
 // Accept-Language: fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7
 
-map<string, string> Request::_reqDirectives;
+map<string, string> ClientRequest::_clientreqDirectives;
 
-void Request::initReqDirectives()
+void ClientRequest::initReqDirectives()
 {
-	if (_reqDirectives.size() != 0)
+	if (_clientreqDirectives.size() != 0)
 		return;
-	_reqDirectives["Content-Type"] = "CONTENT_TYPE";
-	_reqDirectives["Content-Length"] = "CONTENT_LENGTH";
+	_clientreqDirectives["Content-Type"] = "CONTENT_TYPE";
+	_clientreqDirectives["Content-Length"] = "CONTENT_LENGTH";
 
-	_reqDirectives["Host"] = "HTTP_HOST";
-	_reqDirectives["User-Agent"] = "HTTP_USER_AGENT";
-	_reqDirectives["Accept"] = "HTTP_ACCEPT";
-	_reqDirectives["Accept-Language"] = "HTTP_ACCEPT_LANGUAGE";
-	_reqDirectives["Accept-Encoding"] = "HTTP_ACCEPT_ENCODING";
-	_reqDirectives["Connection"] = "HTTP_CONNECTION";
-	_reqDirectives["Cookie"] = "HTTP_COOKIE";
-	_reqDirectives["Referer"] = "HTTP_REFERER";
-	_reqDirectives["Origin"] = "HTTP_ORIGIN";
+	_clientreqDirectives["Host"] = "HTTP_HOST";
+	_clientreqDirectives["User-Agent"] = "HTTP_USER_AGENT";
+	_clientreqDirectives["Accept"] = "HTTP_ACCEPT";
+	_clientreqDirectives["Accept-Language"] = "HTTP_ACCEPT_LANGUAGE";
+	_clientreqDirectives["Accept-Encoding"] = "HTTP_ACCEPT_ENCODING";
+	_clientreqDirectives["Connection"] = "HTTP_CONNECTION";
+	_clientreqDirectives["Cookie"] = "HTTP_COOKIE";
+	_clientreqDirectives["Referer"] = "HTTP_REFERER";
+	_clientreqDirectives["Origin"] = "HTTP_ORIGIN";
 }
 
-Request::Request(size_t maxbodysze)
+ClientRequest::ClientRequest(size_t maxbodysze) : ARequest()
 {
 	initReqDirectives();
-
+	
 	_Parspos = eParsStart;
-	_requestbuff = "";
 	_maxbodysize = maxbodysze;
 	_env["SERVER_SOFTWARE"] = "webserv/1.0";
 	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
+	_reqDirectives = &_clientreqDirectives;
 }
 
-Request::Request()
+ClientRequest::ClientRequest() : ARequest()
 {
 	initReqDirectives();
-
-	_maxbodysize = UINT64_MAX;
+	
 	_Parspos = eParsStart;
-	_requestbuff = "";
+	_maxbodysize = UINT64_MAX;
 	_env["SERVER_SOFTWARE"] = "webserv/1.0";
 	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
-	_content_len = 0;
+	_reqDirectives = &_clientreqDirectives;
 }
 
-bool Request::getFullLine(string &line)
-{
-	int index = 0;
-	line.clear();
+ClientRequest::~ClientRequest() {}
 
-	while (_requestbuff[index] && _requestbuff[index] != '\n')
-	{
-		if (index > MAXHEADERSIZE)
-			Error::ThrowError("The Header is Bigger Than Expected");
-		line += _requestbuff[index];
-		index++;
-	}
-	if (_requestbuff[index] == '\n' && (index == 0 || (index > 0 && _requestbuff[index - 1] != '\r')))
-		Error::ThrowError("The Request Line Invalid");
-	else if (_requestbuff[index] == '\n')
-	{
-		_requestbuff.erase(0, index + 1);
-		line += '\n';
-	}
-	else
-	{
-		line.clear();
-		return (false);
-	}
-	return true;
-}
-
-string &Request::getPath() 
+string &ClientRequest::getPath() 
 {
 	return _env["REQUEST_URI"];
 }
 
-bool Request::parsPath(string path)
+bool ClientRequest::parsPath(string path)
 {
 	size_t pos = path.find('?');
 
@@ -121,7 +95,7 @@ bool Request::parsPath(string path)
 	return (true);
 }
 
-void Request::parsHttpStandard(string httpStandard)
+void ClientRequest::parsHttpStandard(string httpStandard)
 {
 	stringstream ss(httpStandard);
 	string method, path, httpv;
@@ -140,7 +114,7 @@ void Request::parsHttpStandard(string httpStandard)
 	_Parspos = eParsHttpStand;
 }
 
-void Request::parsLenTypeCont()
+void ClientRequest::parsLenTypeCont()
 {
 	if (_env.find("CONTENT_LENGTH") != _env.end() && _env.find("CONTENT_TYPE") == _env.end())
 		Error::ThrowError("There is No Content Type");
@@ -149,135 +123,68 @@ void Request::parsLenTypeCont()
 
 	if (_env.find("CONTENT_TYPE") != _env.end() && _env.find("CONTENT_LENGTH") != _env.end())
 	{
-		if (Utility::strtosize_t(_env["CONTENT_LENGTH"], _content_len))
-			;
-		else
+		if (!getthereisbody())
+			Error::ThrowError("400");
+		if (!Utility::strtosize_t(_env["CONTENT_LENGTH"], _content_len))
 			Error::ThrowError("The Content Length Invalid");
-		_Thereisbody = true;
-		return;
 	}
-	_Thereisbody = false;
 }
 
-size_t Request::getContentLen() 
+void ClientRequest::parseHost()
 {
-	return _content_len;
+	if (_env.find("Host") != _env.end())
+			Validation::parseListen(_env["Host"], _env["SERVER_PORT"], _env["SERVER_NAME"]);
+	else
+		Error::ThrowError("Bad Request");	
 }
 
-bool Request::ParseHeader()
+bool ClientRequest::ParseHeader()
 {
 	string line = "";
-	string key;
-	string value;
 
 	if (_Parspos == eParsStart && getFullLine(line))
 		parsHttpStandard(line);
 	while (_Parspos == eParsHttpStand && getFullLine(line) && line != "\r\n")
-	{
-		if (line.find(':') != string::npos)
-		{
-			key = line.substr(0, line.find(':'));
-			value = line.substr(line.find(':') + 1);
-			Utility::trim(value, " \n\r");
-		}
-		else
-			Error::ThrowError("Bad Request Header");
-		if (key == "Host")
-			Validation::parseListen(value, _env["SERVER_PORT"], _env["SERVER_NAME"]);
-		if (_reqDirectives.find(key) != _reqDirectives.end())
-			key = _reqDirectives[key];
-		if (_env.find(key) != _env.end())
-			Error::ThrowError("A Request Directive is Duplicate");
-		else
-			_env[key] = value;
-	}
-	if (_Parspos == eParsHttpStand && _env["REQUEST_METHOD"] == "POST") {
+		parseHeaderLine(line);
+	if (_Parspos == eParsHttpStand && line == "\r\n" && _requestbuff.length() > 0) _Thereisbody = true;
+	if (_Parspos == eParsHttpStand && line == "\r\n" && 
+		(_env["REQUEST_METHOD"] == "POST" || _env["REQUEST_METHOD"] == "DELETE"))
 		parsLenTypeCont();
-	}
 	if (_Parspos == eParsHttpStand && line == "\r\n")
 	{
 		_Parspos = eParsEnd;
-		if (_env["REQUEST_METHOD"] == "POST") {
-			_env["Body"] = "";
-			return fillBody();
-		}
 		return (true);
 	}
 	return (false);
 }
 
-bool Request::isRequestHeaderComplete()
+bool ClientRequest::isRequestHeaderComplete()
 {
 	return _Parspos == eParsEnd;
 }
 
-string &Request::GetRequest()
+bool ClientRequest::isComplete(char *request, int size)
 {
-	return _requestbuff;
-}
-
-string &Request::getBody() 
-{
-	return _requestbuff;
-}
-
-bool Request::fillBody()
-{
-	if (_Parspos == eParsEnd && _env["REQUEST_METHOD"] == "POST" && _Thereisbody)
-	{
-		_env["Body"].append(_requestbuff, _requestbuff.length());
-		if (_env["Body"].length() < _content_len) {
-			
-			return (false);
-		}
-		else if (_env["Body"].length() > _content_len || _content_len > _maxbodysize)
-			Error::ThrowError("413");
-		
-	}
-	return (true);
-}
-
-bool Request::ParseRequest(char *request_buff, int size)
-{
-	_requestbuff.append(request_buff, size);
-	
+	_requestbuff.append(request, size);
 	if (_Parspos != eParsEnd)
 	{
 		if (!ParseHeader())
 			return (false);
 	}
-	else
-	{
-		if (!fillBody())
-			return (false);
-	}
-	return true;
-}
-
-bool Request::isComplete(char *request, int size)
-{
-	if (!ParseRequest(request, size))
-		return (false);
 	return true;
 }
 
 
-map<string, string> &Request::getrequestenv()
-{
-	return (_env);
-}
-
-const string &Request::getMethod() const
+const string &ClientRequest::getMethod() const
 {
 	static const string empty = "";
 
 	map<string, string>::const_iterator it =
 		_env.find("REQUEST_METHOD");
-
 	return (it != _env.end()) ? it->second : empty;
 }
 
-const string &Request::getHost() const
+const string &ClientRequest::getHost() const
 {
 	static const string empty = "";
 
@@ -287,7 +194,7 @@ const string &Request::getHost() const
 	return (it != _env.end()) ? it->second : empty;
 }
 
-const string &Request::getServerName() const
+const string &ClientRequest::getServerName() const
 {
 	static const string empty = "";
 
@@ -297,7 +204,7 @@ const string &Request::getServerName() const
 	return (it != _env.end()) ? it->second : empty;
 }
 
-const string &Request::getport() const
+const string &ClientRequest::getport() const
 {
 	static const string empty = "";
 
@@ -307,12 +214,17 @@ const string &Request::getport() const
 	return (it != _env.end()) ? it->second : empty;
 }
 
-void Request::SetMaxBodySize(int size)
+void ClientRequest::setUrlPart(string scriptpath, string pathinfo)
+{
+	_env["SCRIPT_NAME"] = scriptpath;
+	_env["PATH_INFO"] = pathinfo;
+}
+
+void ClientRequest::SetMaxBodySize(int size)
 {
 	_maxbodysize = size;
 	
-	string &s = _env["Body"];
-	if (s.size() > _maxbodysize || _content_len > _maxbodysize) {
+	if (_requestbuff.length() > _maxbodysize || _content_len > _maxbodysize){
 		Error::ThrowError("413");
 	}
 }
