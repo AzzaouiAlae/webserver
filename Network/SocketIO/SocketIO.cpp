@@ -1,5 +1,5 @@
 #include "SocketIO.hpp"
-#include "../HTTPContext/HTTPContext.hpp"
+#include "../../HTTP/HTTPContext/HTTPContext.hpp"
 
 int SocketIO::errorNumber = 0;
 

@@ -1,5 +1,5 @@
-#include "../../Headers.hpp"
-#include "../../Singleton/Singleton.hpp"
+#include "Headers.hpp"
+#include "Singleton.hpp"
 
 // ═══════════════════════════════════════════════════════════════
 //  Constructor

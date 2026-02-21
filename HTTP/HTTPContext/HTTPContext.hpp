@@ -1,9 +1,9 @@
 #pragma once
-#include "../Headers.hpp"
-#include "../Socket/Socket.hpp"
-#include "../SocketIO/SocketIO.hpp"
-#include "../Pipe/Pipe.hpp"
-#include "../Repsense/Repsense.hpp"
+#include "Headers.hpp"
+#include "Socket.hpp"
+#include "SocketIO.hpp"
+#include "Pipe.hpp"
+#include "Repsense.hpp"
 
 #define BUF_SIZE 1024 * 1024 * 10
 #define SAFE_MARGIN 1024 * 64
