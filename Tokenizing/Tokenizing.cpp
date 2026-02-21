@@ -7,11 +7,15 @@ Tokenizing::Tokenizing(string filepath): _filepath(filepath)
 
 void Tokenizing::openConfFile()
 {
+	DEBUG("Tokenizing") << "Attempting to open file stream for: " << _filepath;
+
     _file.open(_filepath.c_str());
     if (!_file.is_open())
     {
         Error::ThrowError("The ConfigFile Can't Open");
     }
+
+	DEBUG("Tokenizing") << "File stream opened successfully.";
 }
 
 const vector<string>& Tokenizing::get_tokens() const
@@ -37,6 +41,7 @@ char Tokenizing::shearch_delimiter(string& str, string delimiters)
 }
 void Tokenizing::split_tokens()
 {
+	INFO() << "Starting configuration tokenization for file: " << _filepath;
     char c;
     string token = "";
 
@@ -49,6 +54,7 @@ void Tokenizing::split_tokens()
             // If we were building a token (e.g., key="value"), push "key" first.
             if (!token.empty())
             {
+				DDEBUG("Tokenizing") << "  -> Generated Token (pre-quote): '" << token << "'";
                 _tokens.push_back(token);
                 token.clear();
             }
@@ -61,6 +67,7 @@ void Tokenizing::split_tokens()
                 token += c;
             }
 
+			DDEBUG("Tokenizing") << "  -> Generated Token (quoted): '" << token << "'";
             // We hit the closing quote or EOF. 
             // Push the content inside the quotes as a single token.
             _tokens.push_back(token);
@@ -72,11 +79,13 @@ void Tokenizing::split_tokens()
             // If we had a word before the delimiter, push it
             if (!token.empty())
             {
+				DDEBUG("Tokenizing") << "  -> Generated Token (word): '" << token << "'";
                 _tokens.push_back(token);
                 token.clear();
             }
             // Push the delimiter as its own token
             string delim(1, c);
+			DDEBUG("Tokenizing") << "  -> Generated Token (delimiter): '" << delim << "'";
             _tokens.push_back(delim);
         }
         // 3. Handle Whitespace (Space, Tab, Newline)
@@ -85,6 +94,7 @@ void Tokenizing::split_tokens()
             // Whitespace marks the end of a token
             if (!token.empty())
             {
+				DDEBUG("Tokenizing") << "  -> Generated Token (word): '" << token << "'";
                 _tokens.push_back(token);
                 token.clear();
             }
@@ -99,6 +109,9 @@ void Tokenizing::split_tokens()
     // Push any remaining token at the end of the file
     if (!token.empty())
     {
+		DDEBUG("Tokenizing") << "  -> Generated Token (EOF): '" << token << "'";
         _tokens.push_back(token);
     }
+
+	INFO() << "Tokenization complete. Total tokens generated: " << _tokens.size();
 }
