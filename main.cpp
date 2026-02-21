@@ -62,10 +62,8 @@ int ParseLoggingArgs(int argc, char *argv[])
 	return fileNameIdx;
 }
 
-int InitServer(int argc, char *argv[], string &filename)
+void InitServer(int argc, char *argv[], string &filename)
 {
-	Logging log("webserver.logs");
-	(void)log;
 	int fileNameIdx = ParseLoggingArgs(argc, argv);
 
 	signal(SIGPIPE, sigpipe_handler);
@@ -121,6 +119,8 @@ void HandelError(const char *what)
 
 int main(int argc, char *argv[])
 {
+	Logging log("webserver.logs");
+
 	string filename;
 	InitServer(argc, argv, filename);
 	try
