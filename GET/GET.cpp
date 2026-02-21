@@ -196,7 +196,7 @@ void GET::ListFiles(const string &path)
 		if (stat(fullPath.c_str(), &st) == 0)
 			filesList << FormatDirectoryEntry(entryName, st, requestPath);
 	}
-	ERR() << "Socket fd: " << sock->GetFd() << ", GET::ListFiles: " << filesList.str();
+	DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", GET::ListFiles: " << filesList.str();
 	closedir(dir);
 }
 

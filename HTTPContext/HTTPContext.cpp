@@ -53,7 +53,7 @@ int HTTPContext::_readFromSocket()
         buf = (char *)calloc(1, BUF_SIZE + 1);
     }
     int len = read(sock->GetFd(), buf, BUF_SIZE); 
-	ERR() << "socket fd: " << sock->GetFd() << ", HTTPContext::_readFromSocket: " << buf;
+	DDEBUG("HTTPContext") << "socket fd: " << sock->GetFd() << ", HTTPContext::_readFromSocket: " << buf;
     if (len == 0 || Utility::SigPipe) {
         err = true;
         return 0;
@@ -63,7 +63,7 @@ int HTTPContext::_readFromSocket()
 
 void HTTPContext::setMaxBodySize()
 {
-	DEBUG() << "Socket fd: " << sock->GetFd() << ", HTTPContext::setMaxBodySize, err: " << err;
+	DEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", HTTPContext::setMaxBodySize, err: " << err;
 	router.srv = &Config::GetServerName(*servers, router.GetRequest().getHost());
 	router.CreatePath(router.srv);
 
@@ -93,7 +93,7 @@ bool HTTPContext::_parseAndConfig(int len)
         return complete;
 
     } catch (exception &e) {
-		ERR() << "Socket fd: " << sock->GetFd() << ", HTTPContext::_parseAndConfig, exception: " << e.what();
+		DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", HTTPContext::_parseAndConfig, exception: " << e.what();
 		errNo = e.what();
         err = true;
         return true; // Return true to proceed to error handling
