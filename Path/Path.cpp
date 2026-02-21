@@ -22,7 +22,12 @@ Config::Server::Location *Path::getLocation()
 {
 	if (matchedLocationIndex == -1 || srv == NULL || 
 		(int)srv->Locations.size() <= matchedLocationIndex)
+	{
+		DDEBUG("Path") << "getLocation: no matched location (index=" << matchedLocationIndex << ")";
 		return NULL;
+	}
+	DDEBUG("Path") << "getLocation: matched location index=" << matchedLocationIndex
+					<< ", path='" << srv->Locations[matchedLocationIndex].path << "'";
 	return &(srv->Locations[matchedLocationIndex]);
 }
 
@@ -61,6 +66,8 @@ void Path::checkFileExistence(const string &path)
 		else if (info.st_mode & S_IFREG)
 			_isFile = true;
 	}
+	DDEBUG("Path") << "checkFileExistence('" << path << "'): found=" << _found
+					<< ", isDir=" << _isDir << ", isFile=" << _isFile;
 }
 
 // 2. The Check Function
@@ -74,6 +81,7 @@ void Path::checkPermissions(const string &path)
     } else {
         _hasPermission = false;
     }
+    DDEBUG("Path") << "checkPermissions('" << path << "'): hasPermission=" << _hasPermission;
 }
 
 void Path::_setRootAndCGI(Config::Server &srv)
@@ -88,14 +96,17 @@ void Path::_setRootAndCGI(Config::Server &srv)
         // Priority: Location Root overrides Server Root
         if (!loc.root.empty()) {
             _root = loc.root;
+            DDEBUG("Path") << "_setRootAndCGI: using location root '" << _root << "'";
         }
 
         // Check for CGI settings
         if (!loc.cgiPassExt.empty()) {
             _isCGI = true;
             _cgiScriptPath = loc.cgiPassPath;
+            DDEBUG("Path") << "_setRootAndCGI: CGI detected, ext='" << loc.cgiPassExt << "', script='" << _cgiScriptPath << "'";
         }
     }
+    DDEBUG("Path") << "_setRootAndCGI: root='" << _root << "', isCGI=" << _isCGI;
 }
 
 void Path::_handleRedirection(Config::Server &srv)
@@ -111,6 +122,7 @@ void Path::_handleRedirection(Config::Server &srv)
         _isRedir = true;
         _redirCode = loc.returnCode;
         _redirPath = loc.returnArg;
+        DDEBUG("Path") << "_handleRedirection: code=" << _redirCode << ", target='" << _redirPath << "'";
     }
 }
 
@@ -124,10 +136,13 @@ void Path::_handleDirectoryIndex(Config::Server &srv)
         indices = srv.Locations[matchedLocationIndex].index;
     }
 
+    DDEBUG("Path") << "_handleDirectoryIndex: trying " << indices.size() << " index file(s) in '" << _fullPath << "'";
+
     // Try every index file in the list
     for (size_t i = 0; i < indices.size(); ++i) 
     {
         string potentialIndex = joinPath(_fullPath, indices[i]);
+        DDEBUG("Path") << "  -> trying index[" << i << "]: '" << potentialIndex << "'";
         
         struct stat s;
         if (stat(potentialIndex.c_str(), &s) == 0 && (s.st_mode & S_IFREG)) 
@@ -140,6 +155,7 @@ void Path::_handleDirectoryIndex(Config::Server &srv)
             
             // IMPORTANT: We must re-check permissions for this specific file
             checkPermissions(_fullPath); 
+            DDEBUG("Path") << "  -> found index file: '" << _fullPath << "'";
             break; // Stop after finding the first valid index
         }
     }
@@ -152,6 +168,7 @@ void Path::CreatePath(Config::Server &srv, const string &reqUrl)
     // 1. Find the best matching Location block
     matchedLocationIndex = Config::GetLocationIndex(srv, decodedPath);
 	DEBUG("Path") << "Best matching location index: " << matchedLocationIndex;
+	DDEBUG("Path") << "  -> Server root='" << srv.root << "', locations=" << srv.Locations.size();
 	this->srv = &srv;
 
     // 2. NEW: Check for Redirection
@@ -166,6 +183,7 @@ void Path::CreatePath(Config::Server &srv, const string &reqUrl)
 
     // 4. Construct the Basic Full Path
     _fullPath = joinPath(_root, decodedPath);
+    DDEBUG("Path") << "  -> Constructed full path: '" << _fullPath << "'";
     
     // 5. Check Existence and Permissions
     checkFileExistence(_fullPath);
