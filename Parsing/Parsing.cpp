@@ -8,6 +8,7 @@
 Parsing::Parsing(const vector<string> &tokens)
 	: _tokens(tokens), _idx(0)
 {
+	DEBUG("Parsing") << "Parsing initialized with " << _tokens.size() << " tokens.";
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -17,9 +18,13 @@ Parsing::Parsing(const vector<string> &tokens)
 
 void Parsing::BuildAST()
 {
+	INFO() << "Starting AST construction from tokens.";
+
 	while (!atEnd())
 	{
 		const string &tok = current();
+
+		DDEBUG("Parsing") << "Evaluating top-level token: [" << tok << "]";
 
 		if (tok == "server")
 			parseServer();
@@ -28,6 +33,7 @@ void Parsing::BuildAST()
 		else
 			Error::ThrowError("Unexpected token at top level: " + tok);
 	}
+	INFO() << "AST construction complete.";
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -37,6 +43,7 @@ void Parsing::BuildAST()
 
 void Parsing::parseServer()
 {
+	DEBUG("Parsing") << "--> Entering 'server' block";
 	consume(); // eat "server"
 
 	if (current() != "{")
@@ -44,6 +51,7 @@ void Parsing::parseServer()
 	consume(); // eat "{"
 
 	// Add a server node to the root
+	DDEBUG("Parsing") << "  -> Creating 'server' node in AST";
 	AST<string> &root = Singleton::GetASTroot();
 	root.AddChild("server");
 	AST<string> &serverNode =
@@ -52,6 +60,8 @@ void Parsing::parseServer()
 	// Parse everything until the matching "}"
 	while (!atEnd() && current() != "}")
 	{
+		DDEBUG("Parsing") << "  [Server Block] Evaluating token: [" << current() << "]";
+
 		if (current() == "location")
 			parseLocation(serverNode);
 		else
@@ -61,6 +71,7 @@ void Parsing::parseServer()
 	if (atEnd())
 		Error::ThrowError("Unexpected end of file: missing '}' for server");
 	consume(); // eat "}"
+	DEBUG("Parsing") << "<-- Exiting 'server' block";
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -70,6 +81,7 @@ void Parsing::parseServer()
 
 void Parsing::parseLocation(AST<string> &server)
 {
+	DEBUG("Parsing") << "  --> Entering 'location' block";
 	consume(); // eat "location"
 
 	// The next token is the path  (e.g. "/", "/api/")
@@ -77,11 +89,12 @@ void Parsing::parseLocation(AST<string> &server)
 		Error::ThrowError("Expected a path after 'location'");
 
 	const string path = consume(); // save & eat path token
+	DDEBUG("Parsing") << "    -> Location path detected: [" << path << "]";
 
 	if (current() != "{")
 		Error::ThrowError("Expected '{' after location path");
 	consume(); // eat "{"
-
+	
 	// Add a location child to the server node
 	server.AddChild("location");
 	AST<string> &locationNode = server.GetChildren().back();
@@ -94,6 +107,7 @@ void Parsing::parseLocation(AST<string> &server)
 	if (atEnd())
 		Error::ThrowError("Unexpected end of file: missing '}' for location");
 	consume(); // eat "}"
+	DEBUG("Parsing") << "  <-- Exiting 'location' block";
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -104,6 +118,7 @@ void Parsing::parseLocation(AST<string> &server)
 
 void Parsing::parseTypes()
 {
+	DEBUG("Parsing") << "--> Entering 'types' block";
 	consume(); // eat "types"
 
 	if (current() != "{")
@@ -114,18 +129,23 @@ void Parsing::parseTypes()
 
 	while (!atEnd() && current() != "}")
 	{
+		DDEBUG("Parsing") << "  [Types Block] Evaluating token: [" << current() << "]";
+
 		// first token of each line is the mime type  (e.g. "text/html")
 		if (current().find('/') == string::npos)
 			Error::ThrowError("Invalid MIME type: " + current());
 
 		const string mimeType = consume();
+		DDEBUG("Parsing") << "    -> MIME type detected: [" << mimeType << "]";
 
 		// collect all extensions until ";"
 		while (!atEnd() && current() != ";")
 		{
 			if (current() == "}" || current() == "{")
 				Error::ThrowError("Invalid Syntax inside types block");
-			mime[consume()] = mimeType;
+			string ext = consume();
+			DDEBUG("Parsing") << "      -> Mapped extension: [" << ext << "] to [" << mimeType << "]";
+			mime[ext] = mimeType;
 		}
 
 		if (current() != ";")
@@ -136,6 +156,7 @@ void Parsing::parseTypes()
 	if (atEnd())
 		Error::ThrowError("Unexpected end of file: missing '}' for types");
 	consume(); // eat "}"
+	DEBUG("Parsing") << "<-- Exiting 'types' block";
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -151,6 +172,7 @@ void Parsing::parseDirective(AST<string> &parent)
 		Error::ThrowError("Unexpected separator: " + current());
 
 	const string keyword = consume(); // e.g. "listen", "root", …
+	DDEBUG("Parsing") << "  -> Parsing directive: [" << keyword << "]";
 
 	parent.AddChild(keyword);
 	AST<string> &node = parent.GetChildren().back();
@@ -160,12 +182,15 @@ void Parsing::parseDirective(AST<string> &parent)
 	{
 		if (current() == "{" || current() == "}")
 			Error::ThrowError("Missing ';' after directive: " + keyword);
-		node.AddArgument(consume());
+		string arg = consume();
+        DDEBUG("Parsing") << "    -> Argument added to [" << keyword << "]: [" << arg << "]";
+        node.AddArgument(arg);
 	}
 
 	if (current() != ";")
 		Error::ThrowError("Missing ';' after directive: " + keyword);
 	consume(); // eat ";"
+	DDEBUG("Parsing") << "  <- Directive [" << keyword << "] successfully parsed.";
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -175,6 +200,7 @@ void Parsing::parseDirective(AST<string> &parent)
 
 void Parsing::FillConf()
 {
+	INFO() << "Starting to fill Config structure from AST.";
 	Config &conf = Singleton::GetConf();
 
 	vector<AST<string> > &servers =
@@ -182,16 +208,23 @@ void Parsing::FillConf()
 
 	for (int i = 0; i < (int)servers.size(); i++)
 	{
+		DDEBUG("Parsing") << "Evaluating AST Node: [" << servers[i].GetValue() << "]";
+
 		// Skip non-server top-level nodes (e.g. types)
 		if (servers[i].GetValue() != "server")
 			continue;
 
+		DEBUG("Parsing") << "--> Populating a new Config::Server object.";
 		Config::Server srv;
+
 		fillServer(servers[i], srv);
 		conf.Servers.push_back(srv);
-	}
 
+		DEBUG("Parsing") << "<-- Config::Server object populated successfully.";
+	}
+	DEBUG("Parsing") << "Resolving 'listen to all hosts' configurations.";
 	conf.listenToAllHosts();
+	INFO() << "Config structure successfully populated.";
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -218,39 +251,52 @@ void Parsing::fillServer(AST<string> &serverNode, Config::Server &srv)
 			pair<string, string> p;
 			parseListen(args[0], p.second, p.first);
 			srv.hosts.push_back(p);
+			DDEBUG("Parsing") << "    -> Bound listen address: [" << args[0] << "]";
 		}
-		else if (val == "server_name")
+		else if (val == "server_name") {
 			srv.serverName = args[0];
-		else if (val == "root")
+			DDEBUG("Parsing") << "    -> Set server_name: [" << srv.serverName << "]";
+		}
+		else if (val == "root") {
 			srv.root = args[0];
-		else if (val == "index")
+			DDEBUG("Parsing") << "    -> Set root: [" << srv.root << "]";
+		}
+		else if (val == "index") {
 			srv.index.insert(srv.index.end(), args.begin(), args.end());
-		else if (val == "autoindex")
+			DDEBUG("Parsing") << "    -> Set server_name: [" << srv.serverName << "]";
+		}
+		else if (val == "autoindex") {
 			srv.autoindex = (args[0] == "on");
+			DDEBUG("Parsing") << "    -> Set autoindex: [" << (srv.autoindex ? "ON" : "OFF") << "]";
+		}
 		else if (val == "client_max_body_size")
 		{
 			srv.isMaxBodySize = true;
 			srv.clientMaxBodySize = parseByteSize(args[0]);
+			DDEBUG("Parsing") << "    -> Set client_max_body_size: [" << srv.clientMaxBodySize << " bytes]";
 		}
 		else if (val == "allow_methods")
 		{
 			srv.allowMethodExists = true;
 			srv.allowMethods.insert(srv.allowMethods.end(),
 									args.begin(), args.end());
+			DDEBUG("Parsing") << "    -> Set allow_methods with " << args.size() << " method(s).";
 		}
-		else if (val == "error_page")
+		else if (val == "error_page") {
 			srv.errorPages[args[0]] = args[1];
-		else if (val == "return")
-		{
-			// server-level return: stored as a special location-less entry
-			// (handled the same way Validation already accepts it)
+			DDEBUG("Parsing") << "    -> Mapped error_page: [" << args[0] << "] to [" << args[1] << "]";
 		}
 		else if (val == "location")
 		{
 			Config::Server::Location loc;
 			loc.path = node.GetArguments()[0]; // path was stored as argument
+			
+			DEBUG("Parsing") << "  --> Populating Location configuration for path: [" << loc.path << "]";
+			
 			fillLocation(node, loc);
 			srv.Locations.push_back(loc);
+			
+			DEBUG("Parsing") << "  <-- Location [" << loc.path << "] populated successfully.";
 		}
 		else
 			Error::ThrowError("Unknown directive in server block: " + val);
@@ -322,12 +368,15 @@ void Parsing::parseListen(const string &str,
 						  string &port,
 						  string &host)
 {
+	DDEBUG("Parsing") << "Parsing 'listen' directive value: [" << str << "]";
+
 	const char *colon = strrchr(str.c_str(), ':');
 
 	if (colon != NULL)
 	{
 		host = str.substr(0, colon - str.c_str());
 		port = colon + 1;
+		DDEBUG("Parsing") << "  -> Detected 'host:port' format => Host: [" << host << "], Port: [" << port << "]";
 		return;
 	}
 
@@ -343,11 +392,15 @@ void Parsing::parseListen(const string &str,
 	}
 
 	if (isNumeric)
+	{
 		port = str;
+		DDEBUG("Parsing") << "  -> Detected pure numeric format => Port: [" << port << "] (Host defaults to wildcard)";
+	}
 	else
 	{
 		host = str;
 		port = "80";
+		DDEBUG("Parsing") << "  -> Detected hostname format => Host: [" << host << "], Port: [" << port << "] (default)";
 	}
 }
 
@@ -381,11 +434,17 @@ size_t Parsing::parseByteSize(const string &raw)
 
 const string &Parsing::current() const
 {
+	// Safety check to prevent Segfaults if config file ends unexpectedly
+    if (atEnd())
+    {
+        Error::ThrowError("Unexpected end of file");
+    }
 	return _tokens[_idx];
 }
 
 const string &Parsing::consume()
 {
+	DDEBUG("Parsing") << "  [Consume] -> '" << _tokens[_idx] << "'";
 	return _tokens[_idx++];
 }
 
