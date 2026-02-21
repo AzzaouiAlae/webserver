@@ -268,15 +268,18 @@ void Config::fillServer(AST<string> &serverNode, Config::Server &srv)
 
 		if (val == "listen")
 		{
-			if (find(srv.listen.begin(), srv.listen.end(), args[0]) != srv.listen.end())
+			string listen = args[0];
+			if (args.size() > 1)
+				listen += ":" + args[1];
+			if (find(srv.listen.begin(), srv.listen.end(), listen) != srv.listen.end())
 				Error::ThrowError("Duplicate host:port in the same server");
 
-			srv.listen.push_back(args[0]);
+			srv.listen.push_back(listen);
 
 			pair<string, string> p;
-			parseListen(args[0], p.second, p.first);
+			parseListen(listen, p.second, p.first);
 			srv.hosts.push_back(p);
-			DDEBUG("Parsing") << "    -> Bound listen address: [" << args[0] << "]";
+			DDEBUG("Parsing") << "    -> Bound listen address: [" << listen << "]";
 		}
 		else if (val == "server_name") {
 			srv.serverName = args[0];
