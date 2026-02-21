@@ -1,13 +1,15 @@
 #include "Delete.hpp"
 
 Delete::Delete(SocketIO *sock, Routing *router) : AMethod(sock, router)
-{}
+{
+	DEBUG("Delete") << "Delete initialized, socket fd=" << sock->GetFd();
+}
 
 bool Delete::HandleResponse()
 {
 	sock->SetStateByFd(sock->GetFd());
 
-	Logging::Debug() << "Socket fd: " << sock->GetFd() << " try to Handle Delete Response";
+	DEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", Delete::HandleResponse() start";
 
 	// 1. Already sending response (success or error) → keep sending
 	if (readyToSend)
@@ -19,11 +21,18 @@ bool Delete::HandleResponse()
 	// 2. Check method is allowed
 	if (!IsMethodAllowed("DELETE"))
 	{
+		DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", DELETE method not allowed, sending 405.";
 		HandelErrorPages("405");
 		return del;
 	}
 
 	ResolvePath();
+
+	DDEBUG("Delete") << "Socket fd: " << sock->GetFd()
+					  << ", found=" << router->GetPath().isFound()
+					  << ", hasPerm=" << router->GetPath().hasPermission()
+					  << ", isCGI=" << router->GetPath().isCGI()
+					  << ", emptyRoot=" << router->GetPath().emptyRoot();
 
 	if (router->GetPath().isFound() == false) {
 		HandelErrorPages("404");
@@ -36,6 +45,7 @@ bool Delete::HandleResponse()
 	}
 
 	if (router->GetPath().isCGI()) {
+		DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", CGI path detected (not yet implemented).";
 		//
 		return del;
 	}
@@ -43,6 +53,10 @@ bool Delete::HandleResponse()
 	loc = router->GetPath().getLocation();
 
 	if (loc == NULL || router->GetPath().emptyRoot() || loc->deleteFiles == false) {
+		DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", delete not permitted (loc="
+						  << (loc != NULL ? "set" : "NULL")
+						  << ", emptyRoot=" << router->GetPath().emptyRoot()
+						  << ", deleteFiles=" << (loc != NULL ? (loc->deleteFiles ? "true" : "false") : "N/A") << ").";
 		HandelErrorPages("403");
 		return del;
 	}
@@ -54,10 +68,13 @@ bool Delete::HandleResponse()
 
 void Delete::deleteFile()
 {
+	DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", deleteFile: '" << filename << "'";
 	if (unlink(filename.c_str())) {
+		DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", unlink failed, sending 500.";
 		HandelErrorPages("500");
 	}
 	else {
+		DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", file deleted successfully.";
 		if (router->GetPath().isRedirection())
 			SendRedirection();
 		else {
