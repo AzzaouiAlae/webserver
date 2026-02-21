@@ -1,7 +1,7 @@
-#include "Config.hpp"
-#include "../Socket/Socket.hpp"
+#include "DeprecatedConfig.hpp"
+#include "../../Socket/Socket.hpp"
 
-Config::Server::Server()
+DeprecatedConfig::DeprecatedServer::DeprecatedServer()
 {
 	autoindex = true;
 	clientMaxBodySize = 0;
@@ -9,7 +9,7 @@ Config::Server::Server()
 	isMaxBodySize = false;
 }
 
-Config::Server::Location::Location()
+DeprecatedConfig::DeprecatedServer::DeprecatedLocation::DeprecatedLocation()
 {
 	allowMethodExists = false;
 	clientMaxBodySize = 0;
@@ -17,11 +17,11 @@ Config::Server::Location::Location()
 	deleteFiles = false;
 }
 
-bool Config::IsDuplicatedServer(int currServerIdx, const string &val, const string &srvName)
+bool DeprecatedConfig::IsDuplicatedServer(int currServerIdx, const string &val, const string &srvName)
 {
 	for (int i = 0; i < currServerIdx; i++)
 	{
-		Server srv = Servers[i];
+		DeprecatedServer srv = Servers[i];
 		if (srvName != srv.serverName)
 			continue;
 		for (int j = 0; j < (int)srv.listen.size(); j++)
@@ -35,12 +35,12 @@ bool Config::IsDuplicatedServer(int currServerIdx, const string &val, const stri
 	return false;
 }
 
-void Config::listenToAllHosts()
+void DeprecatedConfig::listenToAllHosts()
 {
 	INFO() << "Setting up listening sockets for " << Servers.size() << " server(s).";
 	for (int i = 0; i < (int)Servers.size(); i++)
 	{
-		Server srv = Servers[i];
+		DeprecatedServer srv = Servers[i];
 		for (int j = 0; j < (int)srv.listen.size(); j++)
 		{
 			if (IsDuplicatedServer(i, srv.listen[j], srv.serverName))
@@ -54,7 +54,7 @@ void Config::listenToAllHosts()
 	}
 }
 
-Config::Server &Config::GetServerName(vector<Config::Server> &srvs, const string &val)
+DeprecatedConfig::DeprecatedServer &DeprecatedConfig::GetServerName(vector<DeprecatedConfig::DeprecatedServer> &srvs, const string &val)
 {
 	for (int i = 0; i < (int)srvs.size(); i++)
 	{
@@ -73,7 +73,7 @@ Config::Server &Config::GetServerName(vector<Config::Server> &srvs, const string
 	return srvs[0];
 }
 
-int Config::GetMaxBodySize(vector<Config::Server> &srvs)
+int DeprecatedConfig::GetMaxBodySize(vector<DeprecatedConfig::DeprecatedServer> &srvs)
 {
 	size_t size = 0;
 	for (int i = 0; i < (int)srvs.size(); i++)
@@ -81,7 +81,7 @@ int Config::GetMaxBodySize(vector<Config::Server> &srvs)
 		if (size < srvs[i].clientMaxBodySize) {
 			size = srvs[i].clientMaxBodySize;
 		}
-		vector < Config::Server::Location> &loc = srvs[i].Locations;
+		vector < DeprecatedConfig::DeprecatedServer::DeprecatedLocation> &loc = srvs[i].Locations;
 		for(int j = 0; j < (int)loc.size(); j++)
 		{
 			if (size < loc[j].clientMaxBodySize) {
@@ -92,7 +92,7 @@ int Config::GetMaxBodySize(vector<Config::Server> &srvs)
 	return size;
 }
 
-string Config::GetErrorPath(Config::Server &srv, const string &code)
+string DeprecatedConfig::GetErrorPath(DeprecatedConfig::DeprecatedServer &srv, const string &code)
 {
 	map<string, string>::iterator it = srv.errorPages.find(code);
 	if (it != srv.errorPages.end())
@@ -103,7 +103,7 @@ string Config::GetErrorPath(Config::Server &srv, const string &code)
 }
 
 // Checks if locPath is a prefix of reqPath
-bool Config::isPrefixMatch(const vector<string> &locPath, const vector<string> &reqPath)
+bool DeprecatedConfig::isPrefixMatch(const vector<string> &locPath, const vector<string> &reqPath)
 {
     if (locPath.size() > reqPath.size())
         return false;
@@ -116,7 +116,7 @@ bool Config::isPrefixMatch(const vector<string> &locPath, const vector<string> &
 }
 
 // Checks if the request path ends with the CGI extension
-bool Config::pathMatchesCgiExt(const string &path, const string &cgiPassExt)
+bool DeprecatedConfig::pathMatchesCgiExt(const string &path, const string &cgiPassExt)
 {
     if (path.length() < cgiPassExt.length())
         return false;
@@ -125,14 +125,14 @@ bool Config::pathMatchesCgiExt(const string &path, const string &cgiPassExt)
 }
 
 // Returns the index of the best (longest prefix) CGI location match, or -1
-int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, const string &path)
+int DeprecatedConfig::findBestCgiMatch(DeprecatedConfig::DeprecatedServer &srv, const vector<string> &reqPath, const string &path)
 {
     int    bestIndex = -1;
     size_t maxLength = 0;
 
     for (size_t i = 0; i < srv.Locations.size(); ++i)
     {
-        const Config::Server::Location &loc = srv.Locations[i];
+        const DeprecatedConfig::DeprecatedServer::DeprecatedLocation &loc = srv.Locations[i];
         if (loc.cgiPassExt.empty())
             continue;
         if (!isPrefixMatch(loc.parsedPath, reqPath))
@@ -149,14 +149,14 @@ int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath,
 }
 
 // Returns the index of the best (longest prefix) static location match, or -1
-int Config::findBestStaticMatch(Config::Server &srv, const vector<string> &reqPath)
+int DeprecatedConfig::findBestStaticMatch(DeprecatedConfig::DeprecatedServer &srv, const vector<string> &reqPath)
 {
     int    bestIndex = -1;
     size_t maxLength = 0;
 
     for (size_t i = 0; i < srv.Locations.size(); ++i)
     {
-        const Config::Server::Location &loc = srv.Locations[i];
+        const DeprecatedConfig::DeprecatedServer::DeprecatedLocation &loc = srv.Locations[i];
         if (!loc.cgiPassExt.empty())
             continue;
         if (!isPrefixMatch(loc.parsedPath, reqPath))
@@ -171,7 +171,7 @@ int Config::findBestStaticMatch(Config::Server &srv, const vector<string> &reqPa
 }
 
 // Main orchestrator — now just coordinates the helpers
-int Config::GetLocationIndex(Config::Server &srv, const string &path)
+int DeprecatedConfig::GetLocationIndex(DeprecatedConfig::DeprecatedServer &srv, const string &path)
 {
     vector<string> reqPath;
     Utility::parseBySep(reqPath, path, "/");

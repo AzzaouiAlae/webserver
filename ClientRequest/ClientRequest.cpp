@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/20 18:13:13 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/21 05:19:35 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -144,7 +144,7 @@ void ClientRequest::parseHost()
 {
 	if (_env.find("Host") != _env.end())
 	{
-		Parsing::parseListen(_env["Host"], _env["SERVER_PORT"], _env["SERVER_NAME"]);
+		DeprecatedParsing::parseListen(_env["Host"], _env["SERVER_PORT"], _env["SERVER_NAME"]);
 		DDEBUG("ClientRequest") << "parseHost: SERVER_NAME='" << _env["SERVER_NAME"]
 								<< "', SERVER_PORT='" << _env["SERVER_PORT"] << "'";
 	}

@@ -1,15 +1,16 @@
 #pragma once
+
 #include "../Headers.hpp"
 
 class Tokenizing
 {
-	string _filepath;
-	vector<string> _tokens;
-	ifstream _file;
+	std::string _filepath;
+	std::vector<std::string> _tokens;
+	std::ifstream _file;
 	void openConfFile();
-	char shearch_delimiter(string& str, string delimiters);
+	char shearch_delimiter(std::string& str, std::string delimiters);
 public:
-	Tokenizing(string filepath);
-	const vector<string>& get_tokens() const;
+	Tokenizing(std::string filepath);
+	const std::vector<std::string>& get_tokens() const;
 	void split_tokens();
 };

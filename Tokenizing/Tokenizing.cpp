@@ -1,29 +1,25 @@
 #include "Tokenizing.hpp"
 
-Tokenizing::Tokenizing(string filepath): _filepath(filepath)
+Tokenizing::Tokenizing(std::string filepath): _filepath(filepath)
 {
     openConfFile();
 }
 
 void Tokenizing::openConfFile()
 {
-	DEBUG("Tokenizing") << "Attempting to open file stream for: " << _filepath;
-
     _file.open(_filepath.c_str());
     if (!_file.is_open())
     {
         Error::ThrowError("The ConfigFile Can't Open");
     }
-
-	DEBUG("Tokenizing") << "File stream opened successfully.";
 }
 
-const vector<string>& Tokenizing::get_tokens() const
+const std::vector<std::string>& Tokenizing::get_tokens() const
 {
     return (_tokens);
 }
 
-char Tokenizing::shearch_delimiter(string& str, string delimiters)
+char Tokenizing::shearch_delimiter(std::string& str, std::string delimiters)
 {   
     size_t pos = 0;
     size_t spos = str.find(delimiters[0]);
@@ -31,7 +27,7 @@ char Tokenizing::shearch_delimiter(string& str, string delimiters)
     for (size_t i = 0; i < delimiters.size(); i++)
     {
         pos = str.find(delimiters[i]);
-        if (pos != string::npos && pos <= spos)
+        if (pos != std::string::npos && pos <= spos)
         {
             spos = pos;
             delimiter = str[spos];
@@ -39,80 +35,23 @@ char Tokenizing::shearch_delimiter(string& str, string delimiters)
     }
     return (delimiter);
 }
+
 void Tokenizing::split_tokens()
 {
-	DEBUG("Tokenizing") << "Starting configuration tokenization for file: " << _filepath;
-    char c;
-    string token = "";
-
-    // Read the file character by character to control parsing manually
-    while (_file.get(c))
+    std::string word;
+    char c = '\0';
+    while (_file >> word)
     {
-        // 1. Handle Quotes (Start of string)
-        if (c == '\"' || c == '\'')
+        while ((c = shearch_delimiter(word, ";{}")) && c != '\0')
         {
-			
-            // If we were building a token (e.g., key="value"), push "key" first.
-            if (!token.empty())
-            {
-				DDEBUG("Tokenizing") << "  -> Generated Token (pre-quote): '" << token << "'";
-                _tokens.push_back(token);
-                token.clear();
-            }
-
-            char quoteType = c; // Remember if it was ' or "
-
-            // Loop until we find the closing quote
-            while (_file.get(c) && c != quoteType)
-            {
-                token += c;
-            }
-
-			DDEBUG("Tokenizing") << "  -> Generated Token (quoted): '" << token << "'";
-            // We hit the closing quote or EOF. 
-            // Push the content inside the quotes as a single token.
-            _tokens.push_back(token);
-            token.clear();
+            size_t pos = word.find(c);
+            if (pos > 0)
+                _tokens.push_back(word.substr(0, pos));
+            _tokens.push_back(word.substr(pos, 1));
+            word.erase(0, pos + 1);
         }
-        // 2. Handle Special Delimiters (; { })
-        else if (c == ';' || c == '{' || c == '}')
-        {
-            // If we had a word before the delimiter, push it
-            if (!token.empty())
-            {
-				DDEBUG("Tokenizing") << "  -> Generated Token (word): '" << token << "'";
-                _tokens.push_back(token);
-                token.clear();
-            }
-            // Push the delimiter as its own token
-            string delim(1, c);
-			DDEBUG("Tokenizing") << "  -> Generated Token (delimiter): '" << delim << "'";
-            _tokens.push_back(delim);
-        }
-        // 3. Handle Whitespace (Space, Tab, Newline)
-        else if (isspace(c))
-        {
-            // Whitespace marks the end of a token
-            if (!token.empty())
-            {
-				DDEBUG("Tokenizing") << "  -> Generated Token (word): '" << token << "'";
-                _tokens.push_back(token);
-                token.clear();
-            }
-        }
-        // 4. Regular Characters
-        else
-        {
-            token += c;
-        }
+        if (word.size() > 0)
+            _tokens.push_back(word);
     }
-
-    // Push any remaining token at the end of the file
-    if (!token.empty())
-    {
-		DDEBUG("Tokenizing") << "  -> Generated Token (EOF): '" << token << "'";
-        _tokens.push_back(token);
-    }
-
-	DEBUG("Tokenizing") << "Tokenization complete. Total tokens generated: " << _tokens.size();
 }
+

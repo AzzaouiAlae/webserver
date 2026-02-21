@@ -1,107 +1,66 @@
 #pragma once
+
 #include "../Headers.hpp"
 
-// ─────────────────────────────────────────────────────────────────
-//  Validation
-//
-//  Single responsibility: walk the completed AST produced by
-//  Parsing::BuildAST() and enforce all semantic rules.
-//
-//  Rules enforced:
-//    • Required directives are present  (listen, server_name)
-//    • No duplicated directives within the same block
-//    • Values are within legal ranges   (port, error codes, …)
-//    • Scope is respected               (some directives only in
-//      server blocks, others only in location blocks)
-//    • Conflict constraints             (cgi_pass ↔ delete_files,
-//      cgi_pass ↔ client_body_in_file_only)
-//
-//  What it does NOT do:
-//    • Build or modify the AST
-//    • Call Parsing::Add*
-//    • Walk raw tokens
-// ─────────────────────────────────────────────────────────────────
 
-class Validation
-{
-public:
-	// Takes the root of the already-built AST.
-	explicit Validation(AST<string> &astRoot);
+class Validation {
+    private:
+        int     _idx;
+        int     _level;
+        std::map<std::string, bool> _useServer;
+        std::map<std::string, bool> _useLocation;
+        std::vector<std::string> _data;
+        
+        static std::vector<std::string> _skiped;
+        
+        typedef std::map<std::string, void (Validation::*)() >Map;
+        Map _map;
+        
+        static void     CheckExistance(std::pair<std::string, bool>);
+        static bool     SkipedOptions(std::string option);
+        void            AddDirective( std::string value );
 
-	// Entry point — throws Error on the first rule violation found.
-	void Validate();
+        void            CreateMap();
+        void            CreateMimeMap();
+        bool            IsByteSizeUnit( std::string& data );
+        void            CreateServerdMap();
+        void            CreateLocationMap();
+        void            CreateSkipedData();
+        
+        void            IsValidTypes();
 
-private:
-	AST<string> &_root;
+        void            IsValidServer();
+        void            ResetServerSeting();
 
-	// ── per-block tracking structs ────────────────────────────
-	// Using a plain struct with named booleans prevents the silent
-	// map-insertion bug that happens with map<string,bool> and typos.
+        void            IsValidLocation();
+        void            ResetLocationSeting();
 
-	struct ServerSeen
-	{
-		bool listen;
-		bool serverName;
-		bool root;
-		bool index;
-		bool autoindex;
-		bool returnDir;
-		bool clientMaxBodySize;
-		bool allowMethods;
-		bool errorPage;
+        void            IsClientMaxBodySize();
 
-		ServerSeen() : listen(false), serverName(false), root(false),
-					   index(false), autoindex(false), returnDir(false),
-					   clientMaxBodySize(false), allowMethods(false),
-					   errorPage(false) {}
-	};
+        void            IsValidIndex();
+        void            IsValidRoot();
+        void            IsValidAutoindex();
+        void            CkeckDuplication(bool& first, bool& second, std::string msg);
+        void            CheckLevelAndDuplication(bool& first, bool& second, std::string msg);
+        
+        void            IsValidReturn();
+        void            IsValidServerName();
+        bool            IsSeparator();
 
-	struct LocationSeen
-	{
-		bool root;
-		bool index;
-		bool autoindex;
-		bool returnDir;
-		bool clientMaxBodySize;
-		bool allowMethods;
-		bool cgiPass;
-		bool bodyInFile;
-		bool deleteFiles;
+        void            IsErrorPage();
+        void            IsValidCGIPass();
 
-		LocationSeen() : root(false), index(false), autoindex(false),
-						 returnDir(false), clientMaxBodySize(false),
-						 allowMethods(false), cgiPass(false),
-						 bodyInFile(false), deleteFiles(false) {}
-	};
+        void            IsValidAllowMethods();
+        bool            IsAllowedMethods(std::string& method);
 
-	// ── top-level validators ──────────────────────────────────
-	void validateServer(AST<string> &serverNode);
-	void validateLocation(AST<string> &locationNode,
-						  LocationSeen &seen);
+        void            IsValidListen();
+        void            IpAndPort();
+        void            PortOnly();
+        void            ValidIP();
+        long            ConvertToNumber(std::string num);
 
-	// ── directive validators (server scope) ──────────────────
-	void validateListen(AST<string> &node, ServerSeen &seen);
-	void validateServerName(AST<string> &node, ServerSeen &seen);
-	void validateRoot(AST<string> &node, bool &seen);
-	void validateIndex(AST<string> &node, bool &seen);
-	void validateAutoindex(AST<string> &node, bool &seen);
-	void validateReturn(AST<string> &node, bool &seen);
-	void validateClientMaxBody(AST<string> &node, bool &seen);
-	void validateAllowMethods(AST<string> &node, bool &seen);
-	void validateErrorPage(AST<string> &node, bool &seen);
-
-	// ── directive validators (location-only scope) ────────────
-	void validateCgiPass(AST<string> &node, LocationSeen &seen);
-	void validateBodyInFile(AST<string> &node, LocationSeen &seen);
-	void validateDeleteFiles(AST<string> &node, LocationSeen &seen);
-
-	// ── value helpers ─────────────────────────────────────────
-	static long parseNumber(const string &s);
-	static bool isByteSizeUnit(char c);
-	static bool isValidMethod(const string &m);
-	static void checkArgCount(AST<string> &node,
-							  size_t min, size_t max,
-							  const string &name);
-	static void requireArgs(AST<string> &node,
-							const string &name);
+    public:
+        static void parseListen(string str, string& port, string& host);
+        Validation(std::vector<std::string> inputData);
+        void    CheckValidation();
 };

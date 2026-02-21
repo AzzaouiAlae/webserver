@@ -1,18 +1,18 @@
 #pragma once
 
-#include "../AbstractSyntaxTree/AST.hpp"
+#include "../../AbstractSyntaxTree/AST.hpp"
 #include <set>
 
 using namespace std;
 
-class Config
+class DeprecatedConfig
 {
 
 public:
-	class Server 
+	class DeprecatedServer 
 	{
 	public:
-		Server();
+		DeprecatedServer();
 		vector<string> listen;
 		vector<pair<string, string> > hosts;
 		map<string, string> errorPages;
@@ -25,10 +25,10 @@ public:
 		vector<string> allowMethods;
 		bool isMaxBodySize;
 
-		class Location
+		class DeprecatedLocation
 		{
 		public:
-			Location();
+			DeprecatedLocation();
 			bool autoindex;
 			bool isMaxBodySize;
 			size_t clientMaxBodySize;
@@ -46,19 +46,19 @@ public:
 			vector<string> allowMethods;
 			bool deleteFiles;
 		};
-		vector<Location> Locations;
+		vector<DeprecatedLocation> Locations;
 	};
-	vector<Server> Servers;
+	vector<DeprecatedServer> Servers;
 	void listenToAllHosts();
 	bool IsDuplicatedServer(int currServerIdx, const string& val, const string &srvName) ;
-	static Config::Server &GetServerName(vector<Config::Server> &srvs, const string &val);
-	static string GetErrorPath(Config::Server &srv, const string &code);
-	static int GetLocationIndex(Config::Server &srv, const string &path);
-	static int GetMaxBodySize(vector<Config::Server> &srvs);
+	static DeprecatedConfig::DeprecatedServer &GetServerName(vector<DeprecatedConfig::DeprecatedServer> &srvs, const string &val);
+	static string GetErrorPath(DeprecatedConfig::DeprecatedServer &srv, const string &code);
+	static int GetLocationIndex(DeprecatedConfig::DeprecatedServer &srv, const string &path);
+	static int GetMaxBodySize(vector<DeprecatedConfig::DeprecatedServer> &srvs);
 private:
 	static bool isPrefixMatch(const vector<string> &locPath, const vector<string> &reqPath);
     static bool pathMatchesCgiExt(const string &path, const string &cgiPassExt);
-    static int findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, const string &path);
-    static int findBestStaticMatch(Config::Server &srv, const vector<string> &reqPath);
+    static int findBestCgiMatch(DeprecatedConfig::DeprecatedServer &srv, const vector<string> &reqPath, const string &path);
+    static int findBestStaticMatch(DeprecatedConfig::DeprecatedServer &srv, const vector<string> &reqPath);
 };
-#include "../Headers.hpp"
+#include "../../Headers.hpp"
