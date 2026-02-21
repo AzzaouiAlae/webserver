@@ -20,7 +20,7 @@ class DeprecatedPath {
 		bool        _hasPermission;
         string      _redirCode;     // <--- e.g., "301"
         string      _redirPath;     // <--- e.g., "/home"
-		DeprecatedConfig::DeprecatedServer *srv;
+		Config::Server *srv;
 
         
         // --- INTERNAL HELPERS ---
@@ -31,9 +31,9 @@ class DeprecatedPath {
         string      joinPath(const string &root, const string &uri);
 		void        checkPermissions(const string &path);
 
-		void _setRootAndCGI(DeprecatedConfig::DeprecatedServer &srv);
-        void _handleDirectoryIndex(DeprecatedConfig::DeprecatedServer &srv);
-		void _handleRedirection(DeprecatedConfig::DeprecatedServer &srv);
+		void _setRootAndCGI(Config::Server &srv);
+        void _handleDirectoryIndex(Config::Server &srv);
+		void _handleRedirection(Config::Server &srv);
         int         matchedLocationIndex; 
 
     public:
@@ -43,7 +43,7 @@ class DeprecatedPath {
         // --- MAIN LOGIC ---
         // This replaces the old CreatePath. 
         // It takes the pre-parsed Server config and the Request URI.
-        void        CreatePath(DeprecatedConfig::DeprecatedServer &srv, const string &reqUrl);
+        void        CreatePath(Config::Server &srv, const string &reqUrl);
 
 		static string decodePath(const string& path);
 		static string encodePath(const string& path);
@@ -64,5 +64,5 @@ class DeprecatedPath {
         string      getRedirPath() const;
         
         // Returns the location used (optional, if you need to know which block matched)
-		DeprecatedConfig::DeprecatedServer::DeprecatedLocation *getLocation();
+		Config::Server::Location *getLocation();
 };

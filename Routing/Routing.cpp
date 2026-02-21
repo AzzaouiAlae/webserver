@@ -28,7 +28,7 @@ DeprecatedPath &Routing::GetPath()
 	return path;
 }
 
-string Routing::CreatePath(DeprecatedConfig::DeprecatedServer *srv)
+string Routing::CreatePath(Config::Server *srv)
 {
 	if (strPath != "")
 	{

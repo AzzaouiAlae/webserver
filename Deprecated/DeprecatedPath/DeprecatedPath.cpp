@@ -18,7 +18,7 @@ DeprecatedPath::~DeprecatedPath()
 {
 }
 
-DeprecatedConfig::DeprecatedServer::DeprecatedLocation *DeprecatedPath::getLocation()
+Config::Server::Location *DeprecatedPath::getLocation()
 {
 	if (matchedLocationIndex == -1 || srv == NULL || 
 		(int)srv->Locations.size() <= matchedLocationIndex)
@@ -84,14 +84,14 @@ void DeprecatedPath::checkPermissions(const string &path)
     DDEBUG("Path") << "checkPermissions('" << path << "'): hasPermission=" << _hasPermission;
 }
 
-void DeprecatedPath::_setRootAndCGI(DeprecatedConfig::DeprecatedServer &srv)
+void DeprecatedPath::_setRootAndCGI(Config::Server &srv)
 {
     // Default to Server root
     _root = srv.root; 
 
     if (matchedLocationIndex != -1) 
     {
-        const DeprecatedConfig::DeprecatedServer::DeprecatedLocation &loc = srv.Locations[matchedLocationIndex];
+        const Config::Server::Location &loc = srv.Locations[matchedLocationIndex];
         
         // Priority: Location Root overrides Server Root
         if (!loc.root.empty()) {
@@ -109,12 +109,12 @@ void DeprecatedPath::_setRootAndCGI(DeprecatedConfig::DeprecatedServer &srv)
     DDEBUG("Path") << "_setRootAndCGI: root='" << _root << "', isCGI=" << _isCGI;
 }
 
-void DeprecatedPath::_handleRedirection(DeprecatedConfig::DeprecatedServer &srv)
+void DeprecatedPath::_handleRedirection(Config::Server &srv)
 {
     // If no location matched, there can't be a location-based redirection
     if (matchedLocationIndex == -1) return;
 
-    const DeprecatedConfig::DeprecatedServer::DeprecatedLocation &loc = srv.Locations[matchedLocationIndex];
+    const Config::Server::Location &loc = srv.Locations[matchedLocationIndex];
 
     // Check if the location block has a "return" directive
     if (!loc.returnCode.empty()) 
@@ -126,7 +126,7 @@ void DeprecatedPath::_handleRedirection(DeprecatedConfig::DeprecatedServer &srv)
     }
 }
 
-void DeprecatedPath::_handleDirectoryIndex(DeprecatedConfig::DeprecatedServer &srv)
+void DeprecatedPath::_handleDirectoryIndex(Config::Server &srv)
 {
     // Get the list of indices (e.g., "index.html", "index.php")
     vector<string> indices = srv.index; // Default to Server indices
@@ -161,12 +161,12 @@ void DeprecatedPath::_handleDirectoryIndex(DeprecatedConfig::DeprecatedServer &s
     }
 }
 
-void DeprecatedPath::CreatePath(DeprecatedConfig::DeprecatedServer &srv, const string &reqUrl)
+void DeprecatedPath::CreatePath(Config::Server &srv, const string &reqUrl)
 {
 	string decodedPath = decodePath(reqUrl);
 	DEBUG("Path") << "Creating path for URL: '" << reqUrl << "', decoded: '" << decodedPath << "'";
     // 1. Find the best matching Location block
-    matchedLocationIndex = DeprecatedConfig::GetLocationIndex(srv, decodedPath);
+    matchedLocationIndex = Config::GetLocationIndex(srv, decodedPath);
 	DEBUG("Path") << "Best matching location index: " << matchedLocationIndex;
 	DDEBUG("Path") << "  -> Server root='" << srv.root << "', locations=" << srv.Locations.size();
 	this->srv = &srv;

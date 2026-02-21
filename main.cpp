@@ -80,21 +80,17 @@ void InitServer(int argc, char *argv[], string &filename)
 void LaunchServer(string &filename)
 {
 	DEBUG("main") << "Tokenizing start";
-	DeprecatedTokenizing token(filename);
+	Tokenizing token(filename);
 	token.split_tokens();
 	DEBUG("main") << "Tokenizing complete";
 
-	DEBUG("main") << "Parsing start";
-	DeprecatedParsing pars(token.get_tokens());
-	pars.BuildAST();
-	DEBUG("main") << "Parsing complete";
 
 	DEBUG("main") << "Validation start";
-	DeprecatedValidation val(Singleton::GetASTroot());
-	val.Validate();
+	Validation val(token.get_tokens());
+	val.CheckValidation();
 	DEBUG("main") << "Validation complete";
 
-	pars.FillConf();
+	Config::FillConf();
 
 	DefaultPages::InitDefaultPages();
 	DEBUG("main") << "The main loop start";

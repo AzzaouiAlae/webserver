@@ -201,7 +201,7 @@ void DeprecatedParsing::parseDirective(AST<string> &parent)
 void DeprecatedParsing::FillConf()
 {
 	DEBUG("Parsing") << "Starting to fill Config structure from AST.";
-	DeprecatedConfig &conf = Singleton::GetConf();
+	Config &conf = Singleton::GetConf();
 
 	vector<AST<string> > &servers =
 		Singleton::GetASTroot().GetChildren();
@@ -215,7 +215,7 @@ void DeprecatedParsing::FillConf()
 			continue;
 
 		DEBUG("Parsing") << "--> Populating a new Config::Server object.";
-		DeprecatedConfig::DeprecatedServer srv;
+		Config::Server srv;
 
 		fillServer(servers[i], srv);
 		conf.Servers.push_back(srv);
@@ -231,7 +231,7 @@ void DeprecatedParsing::FillConf()
 //  PRIVATE – fillServer
 // ═══════════════════════════════════════════════════════════════
 
-void DeprecatedParsing::fillServer(AST<string> &serverNode, DeprecatedConfig::DeprecatedServer &srv)
+void DeprecatedParsing::fillServer(AST<string> &serverNode, Config::Server &srv)
 {
 	vector<AST<string> > &children = serverNode.GetChildren();
 
@@ -288,7 +288,7 @@ void DeprecatedParsing::fillServer(AST<string> &serverNode, DeprecatedConfig::De
 		}
 		else if (val == "location")
 		{
-			DeprecatedConfig::DeprecatedServer::DeprecatedLocation loc;
+			Config::Server::Location loc;
 			loc.path = node.GetArguments()[0]; // path was stored as argument
 			
 			DEBUG("Parsing") << "  --> Populating Location configuration for path: [" << loc.path << "]";
@@ -308,7 +308,7 @@ void DeprecatedParsing::fillServer(AST<string> &serverNode, DeprecatedConfig::De
 // ═══════════════════════════════════════════════════════════════
 
 void DeprecatedParsing::fillLocation(AST<string> &locationNode,
-						   DeprecatedConfig::DeprecatedServer::DeprecatedLocation &loc)
+						   Config::Server::Location &loc)
 {
 	Utility::parseBySep(loc.parsedPath, loc.path, "/");
 	DDEBUG("Parsing") << "    Parsed location path segments: " << loc.parsedPath.size() << " part(s).";

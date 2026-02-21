@@ -30,7 +30,7 @@ protected:
 	Routing *router;
 	SocketIO *sock;
 	bool pathResolved;
-	DeprecatedConfig::DeprecatedServer::DeprecatedLocation *loc;
+	Config::Server::Location *loc;
 	// ──── Shared utilities (each does one thing) ────
 	string CreateDate();
 	void CreateResponseHeader();
