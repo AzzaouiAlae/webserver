@@ -33,7 +33,7 @@ public:
 	void activeOutPipe();
 	HTTPContext();
 	~HTTPContext();
-	vector<Config::Server > *servers;
+	vector<DeprecatedConfig::DeprecatedServer > *servers;
 	void Handle(AFd *fd);
 	void Handle(Socket *sock);
 	void Handle();

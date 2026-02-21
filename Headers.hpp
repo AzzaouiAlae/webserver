@@ -39,15 +39,26 @@ using namespace std;
 #include "utility/Utility.hpp"
 #include "Multiplexer/Multiplexer.hpp"
 #include "AbstractSyntaxTree/AST.hpp"
+#include "Deprecated/DeprecatedValidation/DeprecatedValidation.hpp"
 #include "Validation/Validation.hpp"
+
 #include "ErrorHandling/Error.hpp"
+#include "Deprecated/DeprecatedTokenizing/DeprecatedTokenizing.hpp"
 #include "Tokenizing/Tokenizing.hpp"
-#include "Config/Config.hpp"
+
+#include "Deprecated/DeprecatedConfig/DeprecatedConfig.hpp"
+
+#include "Deprecated/DeprecatedParsing/DeprecatedParsing.hpp"
 #include "Parsing/Parsing.hpp"
+
+
 #include "ARequest/ARequest.hpp"
 #include "ClientRequest/ClientRequest.hpp"
 #include "Multiplexer/Multiplexer.hpp"
+#include "Deprecated/DeprecatedPath/DeprecatedPath.hpp"
 #include "Path/Path.hpp"
+
+
 #include "IContext/IContext.hpp"
 #include "AFd/AFd.hpp"
 #include "Singleton/Singleton.hpp"

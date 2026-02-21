@@ -196,7 +196,7 @@ void Post::uploadFileToDisk()
 // Does one thing: gets the return directive from the matched location (if any)
 bool Post::GetLocationReturn(string &retCode, string &retBody)
 {
-	const Config::Server::Location *loc = router->GetPath().getLocation();
+	const DeprecatedConfig::DeprecatedServer::DeprecatedLocation *loc = router->GetPath().getLocation();
 	if (loc == NULL || loc->returnCode.empty())
 		return false;
 

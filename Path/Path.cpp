@@ -1,280 +1,425 @@
 #include "Path.hpp"
-#include <unistd.h> // for access and F_OK
 
-// Constructor: Initialize all flags to false/empty
-Path::Path()
-	: 	_isDir(false),
-		_isFile(false),
-		_isCGI(false),
-		_found(false),
-		_isRedir(false),
-		_hasPermission(false),
-		srv(NULL),
-		matchedLocationIndex(-1)
+Path::Path() : _isExtention(false), _isLocationCGI(false)
+{}
+
+void    Path::initData(AST<string> *node, string path)
 {
+	_srvNode = node;
+	_requestPath = path;
+	_srvRootPath = SearchInTree((*_srvNode), "root")[0];
+    _srvIndex = SearchInTree((*_srvNode), "index")[0];
 }
 
-Path::~Path()
+vector<string> Path::SearchInTree(AST<string>& node, string value )
 {
-}
-
-Config::Server::Location *Path::getLocation()
-{
-	if (matchedLocationIndex == -1 || srv == NULL || 
-		(int)srv->Locations.size() <= matchedLocationIndex)
+	vector<AST<string> >& ch = node.GetChildren();
+	for (int pos = 0; pos < (int)ch.size(); pos++)
 	{
-		DDEBUG("Path") << "getLocation: no matched location (index=" << matchedLocationIndex << ")";
-		return NULL;
+		if (ch[pos].GetValue() == value)
+		{
+			return (ch[pos].GetArguments());
+		}
 	}
-	DDEBUG("Path") << "getLocation: matched location index=" << matchedLocationIndex
-					<< ", path='" << srv->Locations[matchedLocationIndex].path << "'";
-	return &(srv->Locations[matchedLocationIndex]);
+	return vector<string>(1, "");
 }
 
-
-// Helper: Cleanly joins two paths (e.g., "/var/www" + "/index.html")
-string Path::joinPath(const string &root, const string &uri)
+string     Path::AttachPath(string rootPath, string addPath)
 {
-	if (root.empty())
-		return uri;
-	if (uri.empty())
-		return root;
-
-	if (root[root.length() - 1] == '/' && uri[0] == '/')
-		return root + uri.substr(1);
-	else if (root[root.length() - 1] != '/' && uri[0] != '/')
-		return root + "/" + uri;
-
-	return root + uri;
-}
-
-// Helper: Checks if path exists and determines if it is a Directory or File
-void Path::checkFileExistence(const string &path)
-{
-	struct stat info;
-
-	// reset defaults
-	_found = false;
-	_isDir = false;
-	_isFile = false;
-
-	if (stat(path.c_str(), &info) == 0)
-	{
-		_found = true;
-		if (info.st_mode & S_IFDIR)
-			_isDir = true;
-		else if (info.st_mode & S_IFREG)
-			_isFile = true;
+    if (rootPath.empty() && addPath.empty()) {
+        return "";
 	}
-	DDEBUG("Path") << "checkFileExistence('" << path << "'): found=" << _found
-					<< ", isDir=" << _isDir << ", isFile=" << _isFile;
+	if (rootPath == "") {
+		rootPath = "/";
+	}
+    int Back = rootPath.size() - 1;
+
+    if (rootPath[Back] == '/' && addPath[0] == '/')
+        return rootPath + addPath.substr(1);
+    else if (rootPath[Back] != '/' && addPath[0] != '/')
+        return rootPath + "/" + addPath;
+    else
+        return rootPath + addPath;
 }
 
-// 2. The Check Function
-void Path::checkPermissions(const string &path)
+bool Path::IsIndexPath(string requestPath, string locArgPath)
 {
-    // R_OK checks for Read permission. 
-    // For directories, this allows listing files (Autoindex).
-    // For files, this allows reading content.
-    if (access(path.c_str(), R_OK) == 0) {
-        _hasPermission = true;
-    } else {
-        _hasPermission = false;
-    }
-    DDEBUG("Path") << "checkPermissions('" << path << "'): hasPermission=" << _hasPermission;
+    if ( requestPath == locArgPath )
+        return ( true );
+    return ( false );
 }
-
-void Path::_setRootAndCGI(Config::Server &srv)
+string Path::findRootPath(AST<string>& currNode)
 {
-    // Default to Server root
-    _root = srv.root; 
+    _locaRootPath = SearchInTree( currNode, "root")[0];
 
-    if (matchedLocationIndex != -1) 
-    {
-        const Config::Server::Location &loc = srv.Locations[matchedLocationIndex];
-        
-        // Priority: Location Root overrides Server Root
-        if (!loc.root.empty()) {
-            _root = loc.root;
-            DDEBUG("Path") << "_setRootAndCGI: using location root '" << _root << "'";
-        }
-
-        // Check for CGI settings
-        if (!loc.cgiPassExt.empty()) {
-            _isCGI = true;
-            _cgiScriptPath = loc.cgiPassPath;
-            DDEBUG("Path") << "_setRootAndCGI: CGI detected, ext='" << loc.cgiPassExt << "', script='" << _cgiScriptPath << "'";
-        }
-    }
-    DDEBUG("Path") << "_setRootAndCGI: root='" << _root << "', isCGI=" << _isCGI;
-}
-
-void Path::_handleRedirection(Config::Server &srv)
-{
-    // If no location matched, there can't be a location-based redirection
-    if (matchedLocationIndex == -1) return;
-
-    const Config::Server::Location &loc = srv.Locations[matchedLocationIndex];
-
-    // Check if the location block has a "return" directive
-    if (!loc.returnCode.empty()) 
-    {
-        _isRedir = true;
-        _redirCode = loc.returnCode;
-        _redirPath = loc.returnArg;
-        DDEBUG("Path") << "_handleRedirection: code=" << _redirCode << ", target='" << _redirPath << "'";
-    }
-}
-
-void Path::_handleDirectoryIndex(Config::Server &srv)
-{
-    // Get the list of indices (e.g., "index.html", "index.php")
-    vector<string> indices = srv.index; // Default to Server indices
+    if ( _locaRootPath.empty() )
+         return ( _srvRootPath );
     
-    // Override with Location indices if available
-    if (matchedLocationIndex != -1 && !srv.Locations[matchedLocationIndex].index.empty()) {
-        indices = srv.Locations[matchedLocationIndex].index;
-    }
+    return ( _locaRootPath );
+}
+string     Path::FullPath( AST<string>& currNode )
+{
+    string rootPath, locationPath;
+    rootPath = findRootPath(currNode);
+    if ( IsIndexPath( _requestPath, _locaArgPath ) == true )
+        locationPath = AttachIndex( currNode, _requestPath, "location" );
+    else
+        locationPath = _requestPath;
+    _FullPath = AttachPath(rootPath, locationPath) ;
+    return _FullPath;
+}
 
-    DDEBUG("Path") << "_handleDirectoryIndex: trying " << indices.size() << " index file(s) in '" << _fullPath << "'";
+string    Path::AttachIndex( AST<string>& currLocationNode, string path, string type )
+{
+    string pathWithIndex;
+    _locaIndex = SearchInTree(currLocationNode, "index")[0];
 
-    // Try every index file in the list
-    for (size_t i = 0; i < indices.size(); ++i) 
+    if ( type == "server" )
+        pathWithIndex = AttachPath(path, _srvIndex);
+    else if ( type == "location" )
+        pathWithIndex = AttachPath(path, _locaIndex);
+    return ( pathWithIndex );
+}
+
+void    DecodeString(string& str)
+{
+    Logging::Debug() << "the encoded string befor decode: "  << str; 
+
+    string result;
+    string::size_type pos = 0;
+    string::size_type start = 0;
+
+    while ((pos = str.find('%', start)) != string::npos)
     {
-        string potentialIndex = joinPath(_fullPath, indices[i]);
-        DDEBUG("Path") << "  -> trying index[" << i << "]: '" << potentialIndex << "'";
-        
-        struct stat s;
-        if (stat(potentialIndex.c_str(), &s) == 0 && (s.st_mode & S_IFREG)) 
+        result += str.substr(start, pos - start);
+
+        if (pos + 2 < str.size() &&
+            Utility::isHexa(str.substr(pos + 1, 2)))
         {
-            // We found an index file! Update path.
-            _fullPath = potentialIndex;
-            _found = true;
-            _isFile = true;
-            _isDir = false;
-            
-            // IMPORTANT: We must re-check permissions for this specific file
-            checkPermissions(_fullPath); 
-            DDEBUG("Path") << "  -> found index file: '" << _fullPath << "'";
-            break; // Stop after finding the first valid index
+            string hex = str.substr(pos + 1, 2);
+            result += Utility::HexaToChar(hex);
+            start = pos + 3;
+        }
+        else
+        {
+            result += '%';
+            start = pos + 1;
         }
     }
+
+    if (start < str.size())
+        result += str.substr(start);
+
+    if (!result.empty() )
+        str = result;
+    Logging::Debug() << "the decoded string after: "  << str; 
 }
 
-void Path::CreatePath(Config::Server &srv, const string &reqUrl)
+void    Path::CkeckPath(vector<string>& strs)
 {
-	string decodedPath = decodePath(reqUrl);
-	DEBUG("Path") << "Creating path for URL: '" << reqUrl << "', decoded: '" << decodedPath << "'";
-    // 1. Find the best matching Location block
-    matchedLocationIndex = Config::GetLocationIndex(srv, decodedPath);
-	DEBUG("Path") << "Best matching location index: " << matchedLocationIndex;
-	DDEBUG("Path") << "  -> Server root='" << srv.root << "', locations=" << srv.Locations.size();
-	this->srv = &srv;
+    if ( strs.empty() || strs.size() == 1 )
+        return ;
 
-    // 2. NEW: Check for Redirection
-    _handleRedirection(srv);
-    if (_isRedir) {
-		DEBUG("Path") << "Redirection detected: " << _redirCode << " -> " << _redirPath;
-        return; // STOP HERE! No need to look for files on disk.
-    }
-
-    // 3. Set the Root and Check for CGI (Helper 1)
-    _setRootAndCGI(srv);
-
-    // 4. Construct the Basic Full Path
-    _fullPath = joinPath(_root, decodedPath);
-    DDEBUG("Path") << "  -> Constructed full path: '" << _fullPath << "'";
-    
-    // 5. Check Existence and Permissions
-    checkFileExistence(_fullPath);
-    if (_found) {
-        checkPermissions(_fullPath);
-    }
-
-    // 6. Handle Directory Indices if needed (Helper 2)
-    if (_isDir && _hasPermission) 
+    for (int i = 0; i < (int)strs.size(); i++)
     {
-        _handleDirectoryIndex(srv);
+        if ( strs[i] == ".." )
+        {
+            strs.erase(strs.begin() + i);
+            if ( i > 0)
+                strs.erase(strs.begin() + (i - 1));
+            i = -1;
+        }
+        else if ( strs[i] == "." )
+            strs.erase(strs.begin() + i);
+        else if ( strs[i].find('%') != string::npos )
+            DecodeString(strs[i]);
     }
-	DEBUG("Path") << "Resolved full path: '" << _fullPath << "' [found=" << _found
-				  << ", isDir=" << _isDir << ", isFile=" << _isFile
-				  << ", isCGI=" << _isCGI << ", hasPermission=" << _hasPermission << "]";
 }
 
-// 4. Implement Getter
-
-
-// --- The New Function ---
-bool Path::emptyRoot() const
+void Path::parsePath(vector<string>& strs, string& str,const string& sep)
 {
-    // Returns true ONLY if both Server root AND Location root resulted in an empty string.
-    return _root.empty();
+    char *s = strtok((char *)str.c_str(), sep.c_str());
+    if (s == NULL)
+        return;
+    strs.push_back(s);
+    while (true)
+    {
+        s = strtok(NULL, sep.c_str());
+        if (s == NULL)
+            break;
+        strs.push_back(s);
+    }
+    CkeckPath(strs);
 }
 
-string Path::encodePath(const string& path) {
-    ostringstream escaped;
-    escaped.fill('0');
-    escaped << hex << uppercase; // URL encoding uses uppercase hex (e.g., %2F)
-
-    for (size_t i = 0; i < path.length(); ++i) {
-        unsigned char c = path[i];
-
-        // Keep alphanumeric and unreserved characters intact
-        // We also keep '/' intact so we don't break the directory structure of the URL
-        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' || c == '/') {
-            escaped << c;
-        } else {
-            // Percent-encode any other character (e.g., space becomes %20, ' becomes %27)
-            escaped << '%' << setw(2) << static_cast<int>(c);
+int Path::vectorCmp( vector<string>& reqPath, vector<string>&  locationPath )
+{
+    if (locationPath.size() > reqPath.size())
+        return 0;
+    if ( locationPath.size() == 0 )
+        return 1;
+    int i;
+    for(i = 0; i < (int)reqPath.size(); i++)
+    {
+        if (reqPath[i] != locationPath[i])
+        {
+            if (i < (int)locationPath.size() && _isExtention == true  && locationPath[i] != _reqExt)
+                return 0;
+            return i + 1;
         }
     }
-
-    return escaped.str();
+    return i + 1;
 }
 
-// ... your existing constructor and methods ...
-
-string Path::decodePath(const string& path) 
+void    Path::append_with_sep(string& result, vector<string>& vec, string sep, int pos )
 {
-    string decoded;
-    decoded.reserve(path.length()); // Optimize memory allocation
+    if (vec.empty() )
+        return ;
 
-    for (size_t i = 0; i < path.length(); ++i) {
-        // Look for the '%' character followed by two valid hex digits
-        if (path[i] == '%' && i + 2 < path.length() && 
-            isxdigit(path[i + 1]) && isxdigit(path[i + 2])) {
-            
-            // Extract the two hex characters (e.g., "20")
-            string hexStr = path.substr(i + 1, 2);
-            
-            // Convert hex string to a char and append it
-            char decodedChar = static_cast<char>(strtol(hexStr.c_str(), NULL, 16));
-            decoded += decodedChar;
-            
-            // Skip the next two characters since we just processed them
-            i += 2;
-        } else if (path[i] == '+') {
-            // Note: In standard URIs, '+' in the query string means space, 
-            // but in the actual path it's usually just a literal '+'.
-            // If you want to treat '+' as space everywhere, change this to: decoded += ' ';
-            decoded += path[i]; 
-        } else {
-            // Regular character, just append it
-            decoded += path[i];
-        }
+    if ( pos > (int)vec.size() )
+        return ;
+    result += vec[pos];
+    pos++;
+    for ( ; pos < (int)vec.size(); pos++)
+        result += (sep + vec[pos]);
+}
+
+void    Path::fillLocationInfo( AST<string> & locaNode )
+{
+    Logging::Debug() << "Fill lication info : " << locaNode.GetValue() ;
+    FullPath( locaNode);
+    _requestPathNode = &locaNode;
+}
+
+string  Path::getCodePath(AST<string> & srvNode, string srvPath, string type, string errorCode)
+{
+    vector<AST<string> >& ch = srvNode.GetChildren();
+
+    for (int pos = 0; pos < (int)ch.size(); pos++)
+	{
+	    if (ch[pos].GetValue() == type)
+	    {
+	    	vector<string> errorpages = ch[pos].GetArguments();
+            if ( !errorpages.empty() && find(errorpages.begin(), errorpages.end(), errorCode) != errorpages.end() )
+                return ( AttachPath(srvPath, errorpages[errorpages.size() - 1]) );
+	    }
     }
+
+    return ( errorCode );
+}
+
+void    Path::IsDirectory(struct stat info, string& path)
+{
+    if (S_ISDIR(info.st_mode))
+    {
+        if (!(info.st_mode & S_IRUSR) || !(info.st_mode & S_IXUSR))
+            throw path = getCodePath((*_srvNode), _srvRootPath, "error_page", "403");
+    }
+}
+
+void    Path::IsFile(struct stat info, string& path)
+{
+    if ( S_ISREG(info.st_mode) )
+    {
+        int fd = open(path.c_str(), O_RDONLY);
+        if (fd < 0)
+            throw path = getCodePath((*_srvNode), _srvRootPath, "error_page", "403");
+        close(fd);
+    }
+}
+
+void Path::IsRedirection(string& path)
+{
+    (void)path;
+    // for (int i = 0; i < 3 ; i++)
+    // {
+        
+    // }
     
-    return decoded;
+    // getCodePath(*_requestPathNode, _locaRootPath, "return", to_string(i + 300));
+
 }
 
-string Path::getFullPath() const { return _fullPath; }
-string Path::getPathInfo() const { return _pathInfo; }
-string Path::getCgiPath() const { return _cgiScriptPath; }
-bool Path::isCGI() const { return _isCGI; }
-bool Path::isDirectory() const { return _isDir; }
-bool Path::isFile() const { return _isFile; }
-bool Path::isFound() const { return _found; }
-bool Path::hasPermission() const { return _hasPermission; }
-bool Path::isRedirection() const { return _isRedir; }
-string Path::getRedirCode() const { return _redirCode; }
-string Path::getRedirPath() const { return _redirPath; }
+void    Path::CheckPathExist(string& path)
+{
+    struct stat info;
+    if ( stat(path.c_str(), &info) != 0 )
+        throw path = getCodePath((*_srvNode), _srvRootPath, "error_page", "404");
+    IsDirectory(info, path);
+    IsFile(info, path);
+    // IsRedirection(path);
+}
+
+void    Path::HandleRequestPath(vector<string>& vecReqPath)
+{
+    parsePath(vecReqPath, _requestPath, "/");
+    _requestPath.clear();
+    append_with_sep(_requestPath, vecReqPath, "/");
+}
+
+void    Path::HandleLocationArgPath( vector<string>& vLocaArgPath, string locationArg )
+{
+    vLocaArgPath.clear();
+    _locaArgPath = locationArg;
+    if ( _locaArgPath[_locaArgPath.size() - 1] != '/' )
+        _locaArgPath += "/";
+    parsePath(vLocaArgPath, _locaArgPath, "/");
+    _locaArgPath.clear();
+    append_with_sep(_locaArgPath, vLocaArgPath, "/");
+}
+
+void    Path::HandleSRVPath()
+{
+    if ( _requestPath.empty() )
+        _FullPath = AttachPath(_srvRootPath, _srvIndex);
+    _FullPath = AttachPath(_srvRootPath, _requestPath);
+    _requestPathNode = &(*_srvNode);
+}
+
+string  Path::getExtention(string path, string p)
+{
+	string::size_type point = path.find_last_of(p);
+    if  (point == string::npos || ( point + 1 ) >= path.size() )
+		return ( "" );
+	if ( path[point + 1] == '/' )
+        return "";
+    string::size_type slash = path.find('/', point);
+    if ( slash == string::npos)
+        slash = path.size();
+
+
+    return ( path.substr(point, slash - point ) );
+}
+
+bool    Path::checkCGI(string first, string second, string& Extention)
+{
+    string reqExt = getExtention(first, ".");
+    string locaExt = getExtention(second, ".");
+    if ( reqExt.empty() || locaExt.empty() )
+        return ( false );
+    if ( reqExt != locaExt )
+        return ( false );
+    Extention = reqExt;
+    return ( true );
+}
+
+bool Path::IsExtention(string str)
+{
+    string reqExt = getExtention(str, ".");
+    if ( reqExt.empty() )
+        return ( false );
+    _reqExt = reqExt;
+    return ( true );
+}
+
+void    Path::HandleCGI(AST<string> & locaNode, vector<string>& vreqPath)
+{
+    string extention, path;
+    _requestPathNode = &locaNode;
+    path = findRootPath(locaNode);
+    Logging::Debug() << "Try to HandleCGI Path";
+    for (size_t i = 0; i < vreqPath.size() ; i++)
+    {
+        extention = getExtention(vreqPath[i], ".");
+        Logging::Debug() << "get Request Extention: " << extention;
+        if (extention.empty() )
+            path = AttachPath(path, vreqPath[i]);
+        else {
+            path = AttachPath(path, vreqPath[i++]);
+            if ( i < vreqPath.size() )
+                append_with_sep(_pathInfo, vreqPath, "/", i);
+            break;
+        }
+    }
+    Logging::Debug() << "Found CGI path: " << (_requestPathNode->GetArguments())[0];
+
+    vector<string> cgiArgs = SearchInTree(locaNode, "cgi_pass" );
+    if ( cgiArgs.empty() )
+        _isLocationCGI = false;
+    if ( _reqExt == cgiArgs[0] )
+    {
+        _cgiPath = cgiArgs[1];
+        _isLocationCGI = true;
+    }
+    _FullPath = path;
+}
+
+string     Path::CreatePath(AST<string> *node, string path)
+{
+    // path = "/app/hex%F0%9F%98%83in%20the%20midle%20%D9%85%D8%B1%D8%AD%D8%A7%D8%A7%D8%A7%D8%A7%D8%A7%D8%A7%D8%A7%D8%A7/";
+    Logging::Debug() << "request path in create path is: " << path;
+    initData(node, path);
+
+    int lastSize = 0;
+    vector<AST<string> >& child = (*_srvNode).GetChildren();
+    vector<string> vReqPath, vLocaArgPath;
+    HandleRequestPath(vReqPath);
+    _isExtention = IsExtention(_requestPath);
+    Logging::Debug() << "Path create reqPath list with size: " << vReqPath.size()
+     << " Path isCGI: " << _isExtention;
+    for (int i = 0; i < (int)child.size(); i++)
+    {
+
+        if ( child[i].GetValue() == "location" )
+        {
+            HandleLocationArgPath(vLocaArgPath, child[i].GetArguments()[0]);
+            int pos = vectorCmp(vReqPath, vLocaArgPath);
+            if ( pos > lastSize )
+            {
+                Logging::Debug() << "current location path: " << _locaArgPath ;
+                if (  _isExtention == true )
+                    HandleCGI( child[i], vReqPath );
+                else
+                    fillLocationInfo(child[i]);
+                lastSize = pos;
+            }
+        }
+    }
+    if ( _FullPath.empty() && _isExtention == false )
+        HandleSRVPath();
+    else if ( _FullPath.empty() && _isExtention == true )
+        HandleCGI(*_srvNode, vReqPath);
+    
+    Logging::Debug() << "full path befor check existance: <" << _FullPath ;
+    CheckPathExist(_FullPath);
+    Logging::Debug() << "path created in create path " << _FullPath << "        and path info: " << _pathInfo ; 
+    return ( _FullPath );
+}
+
+AST<string>&   Path::getRequestNode()
+{
+    return ( *_requestPathNode );
+}
+
+string     Path::getLocationIndex()
+{
+    return ( _locaIndex );
+}
+string     Path::getServerIndex()
+{
+    return ( _srvIndex );
+}
+
+string Path::getServerPath()
+{
+    return ( _srvRootPath );
+}
+string Path::getFullPath()
+{
+    return ( _FullPath );
+}
+
+string Path::getPathInfo()
+{
+    return ( _pathInfo );
+}
+
+string Path::getExtantion()
+{
+    return ( _reqExt );
+}
+bool Path::isLocationCGi()
+{
+    return ( _isLocationCGI );
+}
+

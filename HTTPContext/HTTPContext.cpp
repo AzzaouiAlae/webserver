@@ -18,7 +18,7 @@ void HTTPContext::Handle(Socket *sock)
 	fd->context = new HTTPContext();
 	((HTTPContext *)fd->context)->servers = servers;
 	((HTTPContext *)fd->context)->router.srv = &((*servers)[0]);
-	((HTTPContext *)fd->context)->router.GetRequest().SetMaxBodySize(Config::GetMaxBodySize(*servers));
+	((HTTPContext *)fd->context)->router.GetRequest().SetMaxBodySize(DeprecatedConfig::GetMaxBodySize(*servers));
 	((HTTPContext *)fd->context)->sock = fd;
 	((HTTPContext *)fd->context)->repsense.Init(fd, &(((HTTPContext *)fd->context)->router));
 	Multiplexer::GetCurrentMultiplexer()->AddAsEpollIn(fd);
@@ -69,7 +69,7 @@ int HTTPContext::_readFromSocket()
 void HTTPContext::setMaxBodySize()
 {
 	DEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", HTTPContext::setMaxBodySize, err: " << err;
-	router.srv = &Config::GetServerName(*servers, router.GetRequest().getHost());
+	router.srv = &DeprecatedConfig::GetServerName(*servers, router.GetRequest().getHost());
 	router.CreatePath(router.srv);
 
 	if (router.GetPath().getLocation() != NULL && router.GetPath().getLocation()->isMaxBodySize) {
@@ -101,7 +101,7 @@ bool HTTPContext::_parseAndConfig(int len)
         return complete;
 
     } catch (exception &e) {
-		ERR() << "Socket fd: " << sock->GetFd() << ", HTTPContext::_parseAndConfig, exception: " << e.what();
+		DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", HTTPContext::_parseAndConfig, exception: " << e.what();
 		errNo = e.what();
         err = true;
         return true; // Return true to proceed to error handling
@@ -155,7 +155,7 @@ void HTTPContext::HandleRequest()
         if (err) 
 		{
 			DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", error detected, errNo=" << errNo << ", handling error pages.";
-			if (Config::GetErrorPath(*router.srv, errNo) != "" || StaticFile::GetFileByName(errNo) != NULL ) {
+			if (DeprecatedConfig::GetErrorPath(*router.srv, errNo) != "" || StaticFile::GetFileByName(errNo) != NULL ) {
 				repsense.HandelErrorPages(errNo);
 			}
 			else {

@@ -162,7 +162,7 @@ void AMethod::CreateRedirectionHeader(const string &redirCode, const string &red
 // Does one thing: returns the configured error page path for the given code (or "")
 string AMethod::ResolveErrorFilePath(const string &errorCode)
 {
-	return Config::GetErrorPath(*router->srv, errorCode);
+	return DeprecatedConfig::GetErrorPath(*router->srv, errorCode);
 }
 
 // Does one thing: tries to open the error file, sets fileFd, returns true on success
@@ -282,7 +282,7 @@ void AMethod::SendResponse()
 // Does one thing: prepares and sends a redirection response
 void AMethod::SendRedirection()
 {
-	Path &path = router->GetPath();
+	DeprecatedPath &path = router->GetPath();
 	string redirCode = path.getRedirCode();
 	string redirLoc = path.getRedirPath();
 

@@ -23,12 +23,12 @@ void Routing::SetRequestComplete()
 	DEBUG("Routing") << "Request marked as complete.";
 }
 
-Path &Routing::GetPath()
+DeprecatedPath &Routing::GetPath()
 {
 	return path;
 }
 
-string Routing::CreatePath(Config::Server *srv)
+string Routing::CreatePath(DeprecatedConfig::DeprecatedServer *srv)
 {
 	if (strPath != "")
 	{

@@ -248,10 +248,10 @@ string Socket::getIpByHost(const string &host, const string &port, int type)
     return ip + ":" + Port;
 }
 
-void Socket::AddSocketNew(string &host, string &port, Config::Server srv)
+void Socket::AddSocketNew(string &host, string &port, DeprecatedConfig::DeprecatedServer srv)
 {
-	map<int, vector<Config::Server> > &sockets = Singleton::GetVirtualServers();
-	INFO() << "Attempting to bind listening socket on " << host << ":" << port;
+	map<int, vector<DeprecatedConfig::DeprecatedServer> > &sockets = Singleton::GetVirtualServers();
+	DEBUG("Socket") << "Attempting to bind listening socket on " << host << ":" << port;
 	int sock = inetListen(host.c_str(), port.c_str(), 1000);
 	set<AFd *> &fds = Singleton::GetFds();
 
@@ -261,7 +261,7 @@ void Socket::AddSocketNew(string &host, string &port, Config::Server srv)
 		Socket *NewFd = new Socket(sock);
 		NewFd->context = new HTTPContext();
 		fds.insert(NewFd);
-		vector<Config::Server> myVector;
+		vector<DeprecatedConfig::DeprecatedServer> myVector;
 		myVector.push_back(srv);
 		sockets[sock] = myVector;
 		
@@ -272,9 +272,9 @@ void Socket::AddSocketNew(string &host, string &port, Config::Server srv)
 	}
 }
 
-void Socket::FindServerNew(string &host, string &port, Config::Server srv)
+void Socket::FindServerNew(string &host, string &port, DeprecatedConfig::DeprecatedServer srv)
 {
-    map<int, vector<Config::Server> > &sockets = Singleton::GetVirtualServers();
+    map<int, vector<DeprecatedConfig::DeprecatedServer> > &sockets = Singleton::GetVirtualServers();
     stringstream strError;
     strError << "Bind to address: " << host << ":" << port << " fail";
 
@@ -292,7 +292,7 @@ void Socket::FindServerNew(string &host, string &port, Config::Server srv)
     }
 
     // 3. Iterate existing sockets to find a match
-    for (map<int, vector<Config::Server> >::iterator it = sockets.begin(); it != sockets.end(); ++it) 
+    for (map<int, vector<DeprecatedConfig::DeprecatedServer> >::iterator it = sockets.begin(); it != sockets.end(); ++it) 
     {
         string localIp, localPort;
         getLocalName(it->first, localIp, localPort);

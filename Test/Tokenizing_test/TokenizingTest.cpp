@@ -170,7 +170,7 @@ void TestConfigFile1()
     tab.push_back("}");
 
 	//act
-	Tokenizing ConfigFIle1("./conf/invalide1.conf");
+	DeprecatedTokenizing ConfigFIle1("./conf/invalide1.conf");
 	ConfigFIle1.split_tokens();
 	vector<string> mytab = ConfigFIle1.get_tokens();
 	
@@ -307,7 +307,7 @@ void TestConfigFile2()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIle2("./conf/invalide2.conf");
+    DeprecatedTokenizing ConfigFIle2("./conf/invalide2.conf");
     ConfigFIle2.split_tokens();
     vector<string> mytab = ConfigFIle2.get_tokens();
 
@@ -539,7 +539,7 @@ void TestConfigFile3()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIle3("./conf/invalide3.conf");
+    DeprecatedTokenizing ConfigFIle3("./conf/invalide3.conf");
     ConfigFIle3.split_tokens();
     vector<string> mytab = ConfigFIle3.get_tokens();
 
@@ -718,7 +718,7 @@ void TestConfigFileValide1()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIleValide1("./conf/valide1.conf");
+    DeprecatedTokenizing ConfigFIleValide1("./conf/valide1.conf");
     ConfigFIleValide1.split_tokens();
     vector<string> mytab = ConfigFIleValide1.get_tokens();
 
@@ -841,7 +841,7 @@ void TestConfigFileValide2()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIleValide2("./conf/valide2.conf");
+    DeprecatedTokenizing ConfigFIleValide2("./conf/valide2.conf");
     ConfigFIleValide2.split_tokens();
     vector<string> mytab = ConfigFIleValide2.get_tokens();
 
@@ -1004,7 +1004,7 @@ void TestConfigFileValide3()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIleValide3("./conf/valide3.conf");
+    DeprecatedTokenizing ConfigFIleValide3("./conf/valide3.conf");
     ConfigFIleValide3.split_tokens();
     vector<string> mytab = ConfigFIleValide3.get_tokens();
 
@@ -1021,7 +1021,7 @@ void TestInvalidFile()
 {
     try
     {
-        Tokenizing ConfigFIleValide3("./conf/invalid.conf");
+        DeprecatedTokenizing ConfigFIleValide3("./conf/invalid.conf");
     }
     catch(const exception& e)
     {
@@ -1037,7 +1037,7 @@ void TestEmptyFile()
 {
     try
     {
-        Tokenizing ConfigFIleValide3("./conf/emptyfile.conf");
+        DeprecatedTokenizing ConfigFIleValide3("./conf/emptyfile.conf");
     }
     catch(const exception& e)
     {

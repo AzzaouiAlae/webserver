@@ -35,16 +35,16 @@ map<int, vector<AST<string> > > &Singleton::GetServers()
 	return servers;
 }
 
-Config &Singleton::GetConf()
+DeprecatedConfig &Singleton::GetConf()
 {
-	static Config conf;
+	static DeprecatedConfig conf;
 
 	return conf;
 }
 
-map<int, vector<Config::Server> > &Singleton::GetVirtualServers()
+map<int, vector<DeprecatedConfig::DeprecatedServer> > &Singleton::GetVirtualServers()
 {
-	static map<int, vector<Config::Server> > virtualServers;
+	static map<int, vector<DeprecatedConfig::DeprecatedServer> > virtualServers;
 
 	return virtualServers;
 }

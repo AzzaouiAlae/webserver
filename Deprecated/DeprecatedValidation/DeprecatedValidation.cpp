@@ -1,0 +1,450 @@
+#include "DeprecatedValidation.hpp"
+
+// ═══════════════════════════════════════════════════════════════
+//  Constructor
+// ═══════════════════════════════════════════════════════════════
+
+DeprecatedValidation::DeprecatedValidation(AST<string> &astRoot)
+	: _root(astRoot)
+{
+	DEBUG("Validation") << "Validation initialized.";
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PUBLIC – Validate
+//  Walk every top-level node in the AST root and validate it.
+// ═══════════════════════════════════════════════════════════════
+
+void DeprecatedValidation::Validate()
+{
+	vector<AST<string> > &topLevel = _root.GetChildren();
+
+	if (topLevel.empty())
+		Error::ThrowError("Config Error: no server blocks found");
+
+	DEBUG("Validation") << "Starting AST validation: " << topLevel.size() << " top-level block(s) found.";
+
+	for (int i = 0; i < (int)topLevel.size(); i++)
+	{
+		const string &kind = topLevel[i].GetValue();
+		DDEBUG("Validation") << "Evaluating top-level block [" << i << "]: '" << kind << "'";
+
+		if (kind == "server")
+			validateServer(topLevel[i]);
+		else if (kind == "types")
+		{
+			DDEBUG("Validation") << "  Skipping 'types' block (structural only, no validation needed).";
+		}
+		else
+			Error::ThrowError("Config Error: unexpected top-level block '" + kind + "'");
+	}
+	DEBUG("Validation") << "Validation complete. All " << topLevel.size() << " block(s) passed.";
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PRIVATE – validateServer
+//  Checks one complete server { … } node.
+// ═══════════════════════════════════════════════════════════════
+
+void DeprecatedValidation::validateServer(AST<string> &serverNode)
+{
+	ServerSeen seen;
+
+	vector<AST<string> > &children = serverNode.GetChildren();
+
+	DEBUG("Validation") << "--> Validating 'server' block with " << children.size() << " directive(s).";
+
+	for (int i = 0; i < (int)children.size(); i++)
+	{
+		AST<string> &node = children[i];
+		const string &directive = node.GetValue();
+
+		DDEBUG("Validation") << "  [Server Block] Checking directive [" << i << "]: '" << directive << "'";
+
+		if (directive == "listen")
+			validateListen(node, seen);
+		else if (directive == "server_name")
+			validateServerName(node, seen);
+		else if (directive == "root")
+			validateRoot(node, seen.root);
+		else if (directive == "index")
+			validateIndex(node, seen.index);
+		else if (directive == "autoindex")
+			validateAutoindex(node, seen.autoindex);
+		else if (directive == "return")
+			validateReturn(node, seen.returnDir);
+		else if (directive == "client_max_body_size")
+			validateClientMaxBody(node, seen.clientMaxBodySize);
+		else if (directive == "allow_methods")
+			validateAllowMethods(node, seen.allowMethods);
+		else if (directive == "error_page")
+			validateErrorPage(node, seen.errorPage);
+		else if (directive == "location")
+		{
+			// location is a nested block — validate it separately
+			// its path is stored as its first argument (set by Parsing)
+			if (node.GetArguments().empty())
+				Error::ThrowError("Config Error: location block has no path");
+			const string &path = node.GetArguments()[0];
+			if (path.empty() || path[0] != '/')
+				Error::ThrowError("Config Error: location path must start with '/' — got '" + path + "'");
+
+			DEBUG("Validation") << "  --> Validating 'location' block: " << path;
+			LocationSeen locSeen;
+			validateLocation(node, locSeen);
+		}
+		else
+			Error::ThrowError("Config Error: unknown directive '" + directive + "' in server block");
+	}
+
+	// ── Required field checks ─────────────────────────────────
+	if (!seen.listen)
+		Error::ThrowError("Config Error: server block is missing required 'listen' directive");
+	if (!seen.serverName)
+		Error::ThrowError("Config Error: server block is missing required 'server_name' directive");
+	DEBUG("Validation") << "  'server' block validation passed.";
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PRIVATE – validateLocation
+//  Checks one location { … } node.
+// ═══════════════════════════════════════════════════════════════
+
+void DeprecatedValidation::validateLocation(AST<string> &locationNode,
+								  LocationSeen &seen)
+{
+	vector<AST<string> > &children = locationNode.GetChildren();
+
+	DDEBUG("Validation") << "    Location block has " << children.size() << " directive(s) to validate.";
+
+	for (int i = 0; i < (int)children.size(); i++)
+	{
+		AST<string> &node = children[i];
+		const string &directive = node.GetValue();
+
+		DDEBUG("Validation") << "    [Location Block] Checking directive [" << i << "]: '" << directive << "'";
+
+		if (directive == "root")
+			validateRoot(node, seen.root);
+		else if (directive == "index")
+			validateIndex(node, seen.index);
+		else if (directive == "autoindex")
+			validateAutoindex(node, seen.autoindex);
+		else if (directive == "return")
+			validateReturn(node, seen.returnDir);
+		else if (directive == "client_max_body_size")
+			validateClientMaxBody(node, seen.clientMaxBodySize);
+		else if (directive == "allow_methods")
+			validateAllowMethods(node, seen.allowMethods);
+		else if (directive == "cgi_pass")
+			validateCgiPass(node, seen);
+		else if (directive == "client_body_in_file_only")
+			validateBodyInFile(node, seen);
+		else if (directive == "delete_files")
+			validateDeleteFiles(node, seen);
+		else
+			Error::ThrowError("Config Error: unknown directive '" + directive + "' in location block");
+	}
+	DDEBUG("Validation") << "    Location block validation passed.";
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SERVER-SCOPE DIRECTIVE VALIDATORS
+// ═══════════════════════════════════════════════════════════════
+
+// ── listen ────────────────────────────────────────────────────
+// Allowed formats: "8080", "localhost", "0.0.0.0:8080"
+// Multiple listen directives are allowed in the same server block.
+
+void DeprecatedValidation::validateListen(AST<string> &node, ServerSeen &seen)
+{
+	seen.listen = true;
+	checkArgCount(node, 1, 1, "listen");
+
+	const string &val = node.GetArguments()[0];
+	string port;
+	string host; // unused here, just validates the split
+
+	// Find the port part
+	const char *colon = strrchr(val.c_str(), ':');
+	if (colon != NULL)
+		port = string(colon + 1);
+	else
+	{
+		// Check if it's purely numeric (port) or a hostname
+		bool numeric = true;
+		for (size_t i = 0; i < val.size(); i++)
+			if (!isdigit(val[i]))
+			{
+				numeric = false;
+				break;
+			}
+		port = numeric ? val : "80";
+	}
+
+	long portNum = parseNumber(port);
+	if (portNum < 1 || portNum > 65535)
+		Error::ThrowError("Config Error: listen port out of range (1-65535): " + port);
+	DDEBUG("Validation") << "    'listen' validated: " << val;
+}
+
+// ── server_name ───────────────────────────────────────────────
+
+void DeprecatedValidation::validateServerName(AST<string> &node, ServerSeen &seen)
+{
+	if (seen.serverName)
+		Error::ThrowError("Config Error: duplicate 'server_name' in server block");
+	seen.serverName = true;
+	requireArgs(node, "server_name");
+	DDEBUG("Validation") << "    'server_name' validated: " << node.GetArguments()[0];
+}
+
+// ── root ──────────────────────────────────────────────────────
+// Shared between server and location scope via bool& seen
+
+void DeprecatedValidation::validateRoot(AST<string> &node, bool &seen)
+{
+	if (seen)
+		Error::ThrowError("Config Error: duplicate 'root' directive");
+	seen = true;
+	checkArgCount(node, 1, 1, "root");
+	DDEBUG("Validation") << "    'root' validated: " << node.GetArguments()[0];
+}
+
+// ── index ─────────────────────────────────────────────────────
+
+void DeprecatedValidation::validateIndex(AST<string> &node, bool &seen)
+{
+	if (seen)
+		Error::ThrowError("Config Error: duplicate 'index' directive");
+	seen = true;
+	requireArgs(node, "index");
+
+	const vector<string> &args = node.GetArguments();
+	for (size_t i = 0; i < args.size(); i++)
+	{
+		if (args[i].find('/') != string::npos)
+			Error::ThrowError("Config Error: index value must not be an absolute path: '" + args[i] + "'");
+		DDEBUG("Validation") << "    'index' file [" << i << "] validated: " << args[i];
+	}
+	DDEBUG("Validation") << "    'index' validated with " << args.size() << " file(s).";
+}
+
+// ── autoindex ─────────────────────────────────────────────────
+
+void DeprecatedValidation::validateAutoindex(AST<string> &node, bool &seen)
+{
+	if (seen)
+		Error::ThrowError("Config Error: duplicate 'autoindex' directive");
+	seen = true;
+	checkArgCount(node, 1, 1, "autoindex");
+
+	const string &val = node.GetArguments()[0];
+	if (val != "on" && val != "off")
+		Error::ThrowError("Config Error: autoindex value must be 'on' or 'off', got '" + val + "'");
+	DDEBUG("Validation") << "    'autoindex' validated: " << val;
+}
+
+// ── return ────────────────────────────────────────────────────
+
+void DeprecatedValidation::validateReturn(AST<string> &node, bool &seen)
+{
+	if (seen)
+		Error::ThrowError("Config Error: duplicate 'return' directive");
+	seen = true;
+	checkArgCount(node, 1, 2, "return");
+
+	long code = parseNumber(node.GetArguments()[0]);
+	if (code != 200 && code != 301 && code != 302)
+		Error::ThrowError("Config Error: return code must be 200, 301, or 302 — got '" +
+						  node.GetArguments()[0] + "'");
+	DDEBUG("Validation") << "    'return' validated: code=" << node.GetArguments()[0]
+						  << (node.GetArguments().size() > 1
+								? string(", url=") + node.GetArguments()[1]
+								: string(""));
+}
+
+// ── client_max_body_size ──────────────────────────────────────
+
+void DeprecatedValidation::validateClientMaxBody(AST<string> &node, bool &seen)
+{
+	if (seen)
+		Error::ThrowError("Config Error: duplicate 'client_max_body_size' directive");
+	seen = true;
+	checkArgCount(node, 1, 1, "client_max_body_size");
+
+	const string &val = node.GetArguments()[0];
+	if (val.empty())
+		Error::ThrowError("Config Error: client_max_body_size has empty value");
+
+	char unit = val[val.size() - 1];
+	if (!isByteSizeUnit(unit))
+		Error::ThrowError("Config Error: client_max_body_size must end with a unit (b/k/m/g): '" + val + "'");
+
+	// Validate the numeric part
+	long numericPart = parseNumber(val.substr(0, val.size() - 1));
+	DDEBUG("Validation") << "    'client_max_body_size' validated: " << val
+						  << " (numeric=" << numericPart << ", unit=" << unit << ")";
+}
+
+// ── allow_methods ─────────────────────────────────────────────
+
+void DeprecatedValidation::validateAllowMethods(AST<string> &node, bool &seen)
+{
+	if (seen)
+		Error::ThrowError("Config Error: duplicate 'allow_methods' directive");
+	seen = true;
+	requireArgs(node, "allow_methods");
+
+	const vector<string> &args = node.GetArguments();
+	for (size_t i = 0; i < args.size(); i++)
+	{
+		if (!isValidMethod(args[i]))
+			Error::ThrowError("Config Error: invalid HTTP method '" + args[i] +
+							  "' — allowed: GET, POST, DELETE");
+		DDEBUG("Validation") << "    'allow_methods' method [" << i << "] validated: " << args[i];
+	}
+	DDEBUG("Validation") << "    'allow_methods' validated with " << args.size() << " method(s).";
+}
+
+// ── error_page ────────────────────────────────────────────────
+
+void DeprecatedValidation::validateErrorPage(AST<string> &node, bool &seen)
+{
+	seen = true; // multiple error_page directives are allowed — no duplicate check
+	checkArgCount(node, 2, 2, "error_page");
+
+	long code = parseNumber(node.GetArguments()[0]);
+	bool validCode = (code >= 400 && code <= 404) || (code >= 500 && code <= 504);
+	if (!validCode)
+		Error::ThrowError("Config Error: error_page code must be 4xx or 5xx — got '" +
+						  node.GetArguments()[0] + "'");
+	DDEBUG("Validation") << "    'error_page' validated: code=" << node.GetArguments()[0]
+						  << ", page=" << node.GetArguments()[1];
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOCATION-ONLY DIRECTIVE VALIDATORS
+// ═══════════════════════════════════════════════════════════════
+
+// ── cgi_pass ──────────────────────────────────────────────────
+
+void DeprecatedValidation::validateCgiPass(AST<string> &node, LocationSeen &seen)
+{
+	if (seen.cgiPass)
+		Error::ThrowError("Config Error: duplicate 'cgi_pass' in location block");
+	if (seen.bodyInFile)
+		Error::ThrowError("Config Error: 'cgi_pass' cannot be used with 'client_body_in_file_only'");
+	if (seen.deleteFiles)
+		Error::ThrowError("Config Error: 'cgi_pass' cannot be used with 'delete_files'");
+
+	seen.cgiPass = true;
+	checkArgCount(node, 2, 2, "cgi_pass");
+
+	// First arg is the extension, must contain a dot
+	const string &ext = node.GetArguments()[0];
+	if (ext.find('.') == string::npos)
+		Error::ThrowError("Config Error: cgi_pass extension must contain a dot — got '" + ext + "'");
+	DDEBUG("Validation") << "    'cgi_pass' validated: extension=" << ext
+						  << ", path=" << node.GetArguments()[1];
+}
+
+// ── client_body_in_file_only ──────────────────────────────────
+
+void DeprecatedValidation::validateBodyInFile(AST<string> &node, LocationSeen &seen)
+{
+	if (seen.bodyInFile)
+		Error::ThrowError("Config Error: duplicate 'client_body_in_file_only' in location block");
+	if (seen.cgiPass)
+		Error::ThrowError("Config Error: 'client_body_in_file_only' cannot be used with 'cgi_pass'");
+
+	seen.bodyInFile = true;
+	checkArgCount(node, 1, 1, "client_body_in_file_only");
+
+	const string &val = node.GetArguments()[0];
+	if (val != "on" && val != "off")
+		Error::ThrowError("Config Error: client_body_in_file_only must be 'on' or 'off' — got '" + val + "'");
+	DDEBUG("Validation") << "    'client_body_in_file_only' validated: " << val;
+}
+
+// ── delete_files ──────────────────────────────────────────────
+
+void DeprecatedValidation::validateDeleteFiles(AST<string> &node, LocationSeen &seen)
+{
+	if (seen.deleteFiles)
+		Error::ThrowError("Config Error: duplicate 'delete_files' in location block");
+	if (seen.cgiPass)
+		Error::ThrowError("Config Error: 'delete_files' cannot be used with 'cgi_pass'");
+
+	seen.deleteFiles = true;
+	checkArgCount(node, 1, 1, "delete_files");
+
+	const string &val = node.GetArguments()[0];
+	if (val != "on" && val != "off")
+		Error::ThrowError("Config Error: delete_files must be 'on' or 'off' — got '" + val + "'");
+	DDEBUG("Validation") << "    'delete_files' validated: " << val;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  STATIC VALUE HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+long DeprecatedValidation::parseNumber(const string &s)
+{
+	if (s.empty())
+		Error::ThrowError("Config Error: expected a number, got empty string");
+
+	char *endptr = NULL;
+	errno = 0;
+	long val = strtol(s.c_str(), &endptr, 10);
+
+	if (errno != 0 || endptr == s.c_str() || *endptr != '\0' || s[0] == '+')
+		Error::ThrowError("Config Error: invalid number '" + s + "'");
+
+	return val;
+}
+
+bool DeprecatedValidation::isByteSizeUnit(char c)
+{
+	return (c == 'b' || c == 'B' ||
+			c == 'k' || c == 'K' ||
+			c == 'm' || c == 'M' ||
+			c == 'g' || c == 'G');
+}
+
+bool DeprecatedValidation::isValidMethod(const string &m)
+{
+	return (m == "GET" || m == "POST" || m == "DELETE");
+}
+
+// C++98-compatible int → string conversion
+static string intToStr(int n)
+{
+	ostringstream oss;
+	oss << n;
+	return oss.str();
+}
+
+// Throws if the node has fewer than min or more than max arguments.
+void DeprecatedValidation::checkArgCount(AST<string> &node,
+							   size_t min, size_t max,
+							   const string &name)
+{
+	size_t count = node.GetArguments().size();
+	if (count < min)
+		Error::ThrowError("Config Error: '" + name + "' expects at least " +
+						  intToStr((int)min) + " argument(s), got " +
+						  intToStr((int)count));
+	if (count > max)
+		Error::ThrowError("Config Error: '" + name + "' expects at most " +
+						  intToStr((int)max) + " argument(s), got " +
+						  intToStr((int)count));
+}
+
+// Throws if the node has zero arguments.
+void DeprecatedValidation::requireArgs(AST<string> &node,
+							 const string &name)
+{
+	if (node.GetArguments().empty())
+		Error::ThrowError("Config Error: '" + name + "' requires at least one argument");
+}
