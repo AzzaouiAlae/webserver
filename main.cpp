@@ -1,6 +1,6 @@
 #include "Headers.hpp"
-#include "Socket/Socket.hpp"
-#include "DefaultPages/DefaultPages.hpp"
+#include "Socket.hpp"
+#include "DefaultPages.hpp"
 
 void sigpipe_handler(int signum)
 {
