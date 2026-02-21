@@ -273,23 +273,31 @@ void Validation::parseListen(string str, string &port, string &host)
 }
 
 //     LISTEN
-void Validation::IsValidListen()
+void    Validation::IsValidListen()
 {
-	_useServer["Listen"] = true;
-	if (_level != 1)
-		Error::ThrowError("Invalid Syntax : (Element out of scope)");
-	Validation::AddDirective("listen");
-	_idx++;
-	if (_idx + 1 < (int)_data.size())
-	{
-		if (_data[_idx + 1] == ";")
-			Parsing::AddArg(*(Parsing::currentDirective), _data[_idx]);
-		else
-			Error::ThrowError("Invalid Syntax");
-		_idx += 2;
-	}
-	else
-		Error::ThrowError("Invalid Syntax");
+    _useServer["Listen"] = true;
+    if ( _level != 1)
+        Error::ThrowError("Invalid Syntax : (Element out of scope)");
+    Validation::AddDirective("listen");
+    _idx++;
+    if (  _idx + 1 < (int)_data.size() )
+    {
+		string port, host;
+		parseListen(_data[_idx], port, host);
+        if (host != "")
+		{
+			Parsing::AddArg(*(Parsing::currentDirective), host);
+			Parsing::AddArg(*(Parsing::currentDirective), port);
+		}
+        else if ( _data[_idx + 1] == ";"  )
+			Parsing::AddArg(*(Parsing::currentDirective), port);
+        else
+            Error::ThrowError("Invalid Syntax");
+        _idx += 2;
+    }
+    else
+        Error::ThrowError("Invalid Syntax");
+
 }
 
 bool Validation::IsSeparator()
