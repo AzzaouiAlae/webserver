@@ -11,6 +11,7 @@ GET::GET(SocketIO *sock, Routing *router): AMethod(sock, router)
 	targetToSend = 0;
 	sent = -1;
 	filesListStr = "";
+	DEBUG("GET") << "GET initialized, socket fd=" << sock->GetFd();
 }
 
 // Does one thing: cleanup (base class ~AMethod handles fileFd)
@@ -25,28 +26,39 @@ GET::~GET()
 // Does one thing: dispatches to the correct sending/processing path for GET
 bool GET::HandleResponse()
 {
-	DEBUG() << "Socket fd: " << sock->GetFd() << ", GET::HandleResponse() start";
+	DEBUG("GET") << "Socket fd: " << sock->GetFd() << ", GET::HandleResponse() start";
 
 	ClientRequest &req = router->GetRequest();
 	sock->SetStateByFd(sock->GetFd());
 	string method = req.getMethod();
 	ResolvePath();
 
-
+	DDEBUG("GET") << "Socket fd: " << sock->GetFd()
+				   << ", method=" << method
+				   << ", readyToSend=" << readyToSend
+				   << ", sendListFiles=" << sendListFiles
+				   << ", emptyRoot=" << router->GetPath().emptyRoot();
 
 	// Check allowed methods (shared logic from AMethod)
 	if (!readyToSend && !IsMethodAllowed(method))
 	{
 		if (method == "GET" || method == "POST" || method == "DELETE")
+		{
+			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", method '" << method << "' not allowed, sending 405.";
 			HandelErrorPages("405");
+		}
 	}
 
 	if (router->GetPath().emptyRoot()) {
 		if (router->GetRequest().getPath() == "/") {
+			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", serving static index (empty root).";
 			GetStaticIndex();
 		}
 		else
+		{
+			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", empty root and path != '/', sending 404.";
 			HandelErrorPages("404");
+		}
 	}
 
 		
@@ -72,6 +84,13 @@ bool GET::HandleResponse()
 // Does one thing: resolves the path, then dispatches based on path state
 void GET::GetMethod()
 {
+	DDEBUG("GET") << "Socket fd: " << sock->GetFd()
+				   << ", GetMethod: isRedir=" << router->GetPath().isRedirection()
+				   << ", found=" << router->GetPath().isFound()
+				   << ", hasPerm=" << router->GetPath().hasPermission()
+				   << ", isDir=" << router->GetPath().isDirectory()
+				   << ", isFile=" << router->GetPath().isFile()
+				   << ", isCGI=" << router->GetPath().isCGI();
 	if (router->GetPath().isRedirection())
 		SendRedirection();
 	else if (router->GetPath().isFound() == false)
@@ -113,6 +132,7 @@ void GET::PrepareFileResponse()
 // Does one thing: orchestrates file serving (open → prepare → send)
 void GET::ServeFile()
 {
+	DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", ServeFile: '" << filename << "'";
 	OpenFile(filename);
 	PrepareFileResponse();
 	
@@ -196,7 +216,7 @@ void GET::ListFiles(const string &path)
 		if (stat(fullPath.c_str(), &st) == 0)
 			filesList << FormatDirectoryEntry(entryName, st, requestPath);
 	}
-	DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", GET::ListFiles: " << filesList.str();
+	DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", ListFiles: scanned directory '" << path << "'";
 	closedir(dir);
 }
 
@@ -215,6 +235,7 @@ int GET::CalculateAutoIndexSize()
 // Does one thing: orchestrates directory listing (scan → calculate → header → trigger send)
 void GET::CreateListFilesResponse()
 {
+	DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", CreateListFilesResponse for path: '" << router->GetPath().getFullPath() << "'";
 	ListFiles(router->GetPath().getFullPath());
 	filesListStr = filesList.str();
 

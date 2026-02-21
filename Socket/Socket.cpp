@@ -7,6 +7,7 @@ int Socket::errorNumber = 0;
 void Socket::Handle()
 {
 	acceptedSocket = accept4(fd, NULL, NULL, SOCK_NONBLOCK);
+	DDEBUG("Socket") << "Handle: accepted new connection, fd=" << acceptedSocket << " on listener fd=" << fd;
 	context->Handle(this);
 }
 
@@ -26,7 +27,10 @@ int Socket::inetConnect(const string &host, const string &service, int type)
 		s = (char *)service.c_str();
 
 	if (getaddrinfo(h, s, &hints, &result) != 0)
+	{
+		DDEBUG("Socket") << "inetConnect: getaddrinfo failed for host='" << host << "', service='" << service << "'";
 		return -1;
+	}
 
 	for (rp = result; rp != NULL; rp = rp->ai_next)
 	{
@@ -40,6 +44,7 @@ int Socket::inetConnect(const string &host, const string &service, int type)
 		close(sock);
 	}
 	freeaddrinfo(result);
+	DDEBUG("Socket") << "inetConnect: host='" << host << "', service='" << service << "', result fd=" << ((rp != NULL) ? sock : -1);
 	return (rp != NULL) ? sock : -1;
 }
 
@@ -104,7 +109,9 @@ int Socket::inetListen(const string &host, const string &service, int backlog)
 		h = NULL;
 	else
 		h = host.c_str();
-	return inetPassiveSocket(h, service.c_str(), SOCK_STREAM, true, backlog);
+	int result = inetPassiveSocket(h, service.c_str(), SOCK_STREAM, true, backlog);
+	DDEBUG("Socket") << "inetListen: host='" << host << "', port='" << service << "', backlog=" << backlog << ", result fd=" << result;
+	return result;
 }
 
 int Socket::inetBind(const string &host, const string &service, int type)
@@ -206,7 +213,9 @@ int Socket::getSocketType(int sock)
 }
 
 Socket::Socket(int sock): ISocket(sock, "Socket")
-{}
+{
+	DEBUG("Socket") << "Socket created, fd=" << sock;
+}
 
 string Socket::getIpByHost(const string &host, const string &port, int type)
 {
@@ -310,6 +319,7 @@ void Socket::FindServerNew(string &host, string &port, Config::Server srv)
 
 Socket::~Socket()
 {
+	DDEBUG("Socket") << "Socket destructor called, fd=" << fd;
 	delete context;
 	close(fd);
 	Singleton::GetFds().erase(this);

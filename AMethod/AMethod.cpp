@@ -24,6 +24,7 @@ AMethod::AMethod(SocketIO *sock, Routing *router)
 	this->router = router;
 	InitStatusMap();
 	pathResolved = false;
+	DEBUG("AMethod") << "AMethod initialized, socket fd=" << sock->GetFd();
 }
 
 void AMethod::ResolvePath()
@@ -32,9 +33,14 @@ void AMethod::ResolvePath()
 	{
 		filename = router->CreatePath(router->srv);
 		pathResolved = true;
-		Logging::Debug() << "Socket fd: " << sock->GetFd()
+		DEBUG("AMethod") << "Socket fd: " << sock->GetFd()
 						<< " " << router->GetRequest().getMethod() 
 						<< " resolved path: " << filename;
+		DDEBUG("AMethod") << "  -> isCGI=" << router->GetPath().isCGI()
+						   << ", isDir=" << router->GetPath().isDirectory()
+						   << ", isFile=" << router->GetPath().isFile()
+						   << ", isRedir=" << router->GetPath().isRedirection()
+						   << ", found=" << router->GetPath().isFound();
 	}
 }
 
@@ -113,11 +119,17 @@ void AMethod::CreateResponseHeader()
 		<< "\r\n";
 
 	responseHeaderStr = responseHeader.str();
+	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd()
+					   << ", CreateResponseHeader: code=" << code
+					   << ", status=" << statusMap[code]
+					   << ", Content-Length=" << bodySize
+					   << ", Content-Type=" << ResolveMimeType();
 }
 
 // Does one thing: sends the default 201 Created (no body)
 void AMethod::SendDefaultRespense()
 {
+	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendDefaultRespense: sending 201 Created.";
 	code = "201";
 	bodySize = 0;
 	filename = ".html";
@@ -179,24 +191,30 @@ void AMethod::LoadStaticErrorFile(const string &errorCode)
 // Does one thing: orchestrates error page resolution, then prepares for sending
 void AMethod::HandelErrorPages(const string &err)
 {
-	DEBUG() << "socket fd: " << sock->GetFd() << ", AMethod::HandelErrorPages";
+	ERR() << "Client " << Socket::getRemoteName(sock->GetFd()) << " error " << err << " " << statusMap[err];
+	DEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", AMethod::HandelErrorPages, code=" << err;
 	code = err;
 	string path = ResolveErrorFilePath(err);
 	bool isPath = (path != "");
 	filename = router->srv->root + "/" + path;
 
+	DDEBUG("AMethod") << "  -> errorFilePath='" << path << "', isPath=" << isPath << ", filename='" << filename << "'";
+
 	if (isPath)
 	{
 		if (!OpenErrorFile(filename))
 		{
+			DDEBUG("AMethod") << "  -> Failed to open error file, loading static fallback.";
 			LoadStaticErrorFile(err);
 			return;
 		}
 		bodySize = Utility::getFileSize(filename);
 		ShouldSend = bodySize;
+		DDEBUG("AMethod") << "  -> Opened error file, bodySize=" << bodySize;
 	}
 	else
 	{
+		DDEBUG("AMethod") << "  -> No custom error page, loading static fallback.";
 		LoadStaticErrorFile(err);
 	}
 	CreateResponseHeader();
@@ -251,8 +269,10 @@ void AMethod::SendResponse()
 		if (code == "413" || code == "409") {
 			sock->cleanBody = true;
 		}
+		INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " <- " << code << " " << statusMap[code];
+		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendResponse complete, code=" << code;
 	}
-	INFO() << "Sock fd: "<< sock->GetFd() <<", AMethod::SendResponse(): " << size << ", " << sended << "/"<< ShouldSend;
+	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendResponse: sent=" << size << ", progress=" << sended << "/" << ShouldSend;
 }
 
 // ══════════════════════════════════════════════
@@ -265,6 +285,9 @@ void AMethod::SendRedirection()
 	Path &path = router->GetPath();
 	string redirCode = path.getRedirCode();
 	string redirLoc = path.getRedirPath();
+
+	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd()
+					   << ", SendRedirection: code=" << redirCode << ", location='" << redirLoc << "'";
 
 	CreateRedirectionHeader(redirCode, redirLoc);
 
@@ -281,12 +304,17 @@ void AMethod::SendRedirection()
 bool AMethod::IsMethodAllowed(const string &method)
 {
 	if (!router->srv->allowMethodExists)
+	{
+		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed: no restrictions, all methods allowed.";
 		return true;
+	}
 
 	vector<string>::iterator start = router->srv->allowMethods.begin();
 	vector<string>::iterator end = router->srv->allowMethods.end();
 
-	return (find(start, end, method) != end);
+	bool allowed = (find(start, end, method) != end);
+	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
+	return allowed;
 }
 
 // ══════════════════════════════════════════════

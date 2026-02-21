@@ -41,7 +41,7 @@ char Tokenizing::shearch_delimiter(string& str, string delimiters)
 }
 void Tokenizing::split_tokens()
 {
-	INFO() << "Starting configuration tokenization for file: " << _filepath;
+	DEBUG("Tokenizing") << "Starting configuration tokenization for file: " << _filepath;
     char c;
     string token = "";
 
@@ -114,5 +114,5 @@ void Tokenizing::split_tokens()
         _tokens.push_back(token);
     }
 
-	INFO() << "Tokenization complete. Total tokens generated: " << _tokens.size();
+	DEBUG("Tokenizing") << "Tokenization complete. Total tokens generated: " << _tokens.size();
 }
