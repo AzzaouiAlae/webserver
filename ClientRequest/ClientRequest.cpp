@@ -58,6 +58,7 @@ ClientRequest::ClientRequest(size_t maxbodysze) : ARequest()
 	_env["SERVER_SOFTWARE"] = "webserv/1.0";
 	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	_reqDirectives = &_clientreqDirectives;
+	DEBUG("ClientRequest") << "ClientRequest initialized with maxBodySize=" << maxbodysze;
 }
 
 ClientRequest::ClientRequest() : ARequest()
@@ -69,6 +70,7 @@ ClientRequest::ClientRequest() : ARequest()
 	_env["SERVER_SOFTWARE"] = "webserv/1.0";
 	_env["GATEWAY_INTERFACE"] = "CGI/1.1";
 	_reqDirectives = &_clientreqDirectives;
+	DEBUG("ClientRequest") << "ClientRequest initialized with default maxBodySize.";
 }
 
 ClientRequest::~ClientRequest() {}
@@ -89,9 +91,14 @@ bool ClientRequest::parsPath(string path)
 	{
 		_env["SCRIPT_NAME"] = path.substr(0, pos);
 		_env["QUERY_STRING"] = path.substr(pos + 1);
+		DDEBUG("ClientRequest") << "parsPath: SCRIPT_NAME='" << _env["SCRIPT_NAME"]
+								<< "', QUERY_STRING='" << _env["QUERY_STRING"] << "'";
 	}
 	else
+	{
 		_env["SCRIPT_NAME"] = path;
+		DDEBUG("ClientRequest") << "parsPath: SCRIPT_NAME='" << _env["SCRIPT_NAME"] << "' (no query string)";
+	}
 	return (true);
 }
 
@@ -128,13 +135,19 @@ void ClientRequest::parsLenTypeCont()
 			Error::ThrowError("400");
 		if (!Utility::strtosize_t(_env["CONTENT_LENGTH"], _content_len))
 			Error::ThrowError("The Content Length Invalid");
+		DDEBUG("ClientRequest") << "parsLenTypeCont: Content-Type='" << _env["CONTENT_TYPE"]
+								<< "', Content-Length=" << _content_len;
 	}
 }
 
 void ClientRequest::parseHost()
 {
 	if (_env.find("Host") != _env.end())
-			Parsing::parseListen(_env["Host"], _env["SERVER_PORT"], _env["SERVER_NAME"]);
+	{
+		Parsing::parseListen(_env["Host"], _env["SERVER_PORT"], _env["SERVER_NAME"]);
+		DDEBUG("ClientRequest") << "parseHost: SERVER_NAME='" << _env["SERVER_NAME"]
+								<< "', SERVER_PORT='" << _env["SERVER_PORT"] << "'";
+	}
 	else
 		Error::ThrowError("Bad Request");	
 }
@@ -170,6 +183,7 @@ bool ClientRequest::isRequestHeaderComplete()
 bool ClientRequest::isComplete(char *request, int size)
 {
 	_requestbuff.append(request, size);
+	DDEBUG("ClientRequest") << "isComplete: appended " << size << " bytes, total buffer=" << _requestbuff.length();
 	if (_Parspos != eParsEnd)
 	{
 		if (!ParseHeader())
@@ -227,6 +241,9 @@ void ClientRequest::setUrlPart(string scriptpath, string pathinfo)
 void ClientRequest::SetMaxBodySize(int size)
 {
 	_maxbodysize = size;
+	DDEBUG("ClientRequest") << "SetMaxBodySize: maxBodySize=" << _maxbodysize
+							<< ", bufferLen=" << _requestbuff.length()
+							<< ", contentLen=" << _content_len;
 	
 	if (_requestbuff.length() > _maxbodysize || _content_len > _maxbodysize){
 		Error::ThrowError("413");
