@@ -9,13 +9,13 @@ class Routing
 	ClientRequest request;
 	bool RequestComplete;
 public:
-	DeprecatedConfig::DeprecatedServer *srv;
-	DeprecatedConfig::DeprecatedServer::DeprecatedLocation *loc;
+	Config::Server *srv;
+	Config::Server::Location *loc;
 	ClientRequest &GetRequest();
 	DeprecatedPath &GetPath();
 	Routing();
 	bool isRequestComplete();
 	void SetRequestComplete();
-	string CreatePath(DeprecatedConfig::DeprecatedServer *srv);
+	string CreatePath(Config::Server *srv);
 };
 

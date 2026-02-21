@@ -24,8 +24,9 @@ public:
 	static int getSocketType(int sock);
 	static string getIpByHost(const string& host, const string &port, int type = AF_INET);
 
-	static void AddSocketNew(string &host, string &port, DeprecatedConfig::DeprecatedServer srv);
-	static void FindServerNew(string &host, string &port, DeprecatedConfig::DeprecatedServer srv);
+	static void AddSocketNew(string &host, string &port, Config::Server srv);
+	static void FindServerNew(string &host, string &port, Config::Server srv);
+	
 
 	void Handle();
 	Socket(int sock);

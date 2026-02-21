@@ -44,8 +44,8 @@ private:
 	bool atEnd() const;
 
 	// ── FillConf helpers ─────────────────────────────────────
-	void fillServer(AST<string> &serverNode, DeprecatedConfig::DeprecatedServer &srv);
+	void fillServer(AST<string> &serverNode, Config::Server &srv);
 	void fillLocation(AST<string> &locationNode,
-					  DeprecatedConfig::DeprecatedServer::DeprecatedLocation &loc);
+					  Config::Server::Location &loc);
 	static size_t parseByteSize(const string &raw);
 };

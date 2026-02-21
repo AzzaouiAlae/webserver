@@ -31,7 +31,6 @@
 #include <iomanip>
 #include <ctime>
 
-
 using namespace std;
 
 #define USEC 1000000
@@ -39,6 +38,8 @@ using namespace std;
 #include "utility/Utility.hpp"
 #include "Multiplexer/Multiplexer.hpp"
 #include "AbstractSyntaxTree/AST.hpp"
+#include "Logging/Logging.hpp"
+
 #include "Deprecated/DeprecatedValidation/DeprecatedValidation.hpp"
 #include "Validation/Validation.hpp"
 
@@ -46,11 +47,10 @@ using namespace std;
 #include "Deprecated/DeprecatedTokenizing/DeprecatedTokenizing.hpp"
 #include "Tokenizing/Tokenizing.hpp"
 
-#include "Deprecated/DeprecatedConfig/DeprecatedConfig.hpp"
+#include "Config/Config.hpp"
 
 #include "Deprecated/DeprecatedParsing/DeprecatedParsing.hpp"
 #include "Parsing/Parsing.hpp"
-
 
 #include "ARequest/ARequest.hpp"
 #include "ClientRequest/ClientRequest.hpp"
@@ -58,11 +58,10 @@ using namespace std;
 #include "Deprecated/DeprecatedPath/DeprecatedPath.hpp"
 #include "Path/Path.hpp"
 
-
 #include "IContext/IContext.hpp"
 #include "AFd/AFd.hpp"
 #include "Singleton/Singleton.hpp"
-#include "Logging/Logging.hpp"
+
 #include "Environment/Environment.hpp"
 #include "StaticFile/StaticFile.hpp"
 #include "ISocket/ISocket.hpp"
