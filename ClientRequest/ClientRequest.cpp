@@ -112,6 +112,7 @@ void ClientRequest::parsHttpStandard(string httpStandard)
 	_env["REQUEST_METHOD"] = method;
 	_env["SERVER_PROTOCOL"] = httpv;
 	_Parspos = eParsHttpStand;
+	DEBUG("ClientRequest") << "Request line parsed: " << method << " " << path << " " << httpv;
 }
 
 void ClientRequest::parsLenTypeCont()
@@ -153,6 +154,9 @@ bool ClientRequest::ParseHeader()
 	if (_Parspos == eParsHttpStand && line == "\r\n")
 	{
 		_Parspos = eParsEnd;
+		DEBUG("ClientRequest") << "Request header parsing complete: method=" << _env["REQUEST_METHOD"]
+							   << ", path=" << _env["REQUEST_URI"]
+							   << ", host=" << _env["HTTP_HOST"];
 		return (true);
 	}
 	return (false);

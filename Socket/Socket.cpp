@@ -242,11 +242,13 @@ string Socket::getIpByHost(const string &host, const string &port, int type)
 void Socket::AddSocketNew(string &host, string &port, Config::Server srv)
 {
 	map<int, vector<Config::Server> > &sockets = Singleton::GetVirtualServers();
+	INFO() << "Attempting to bind listening socket on " << host << ":" << port;
 	int sock = inetListen(host.c_str(), port.c_str(), 1000);
 	set<AFd *> &fds = Singleton::GetFds();
 
 	if (sock != -1) 
 	{
+		INFO() << "Socket successfully bound on " << host << ":" << port << " (fd=" << sock << ")";
 		Socket *NewFd = new Socket(sock);
 		NewFd->context = new HTTPContext();
 		fds.insert(NewFd);
@@ -256,6 +258,7 @@ void Socket::AddSocketNew(string &host, string &port, Config::Server srv)
 		
 	}
 	else  {
+		DEBUG("Socket") << "Bind failed for " << host << ":" << port << ", searching for existing socket to share.";
 		FindServerNew(host, port, srv);
 	}
 }
@@ -295,13 +298,14 @@ void Socket::FindServerNew(string &host, string &port, Config::Server srv)
             if ((!targetV4.empty() && targetV4 == socketV4) || 
                 (!targetV6.empty() && targetV6 == socketV6))
             {
+				INFO() << "Sharing existing socket fd=" << it->first << " for server '" << srv.serverName << "' on " << host << ":" << port;
                 it->second.push_back(srv);
                 
                 return;
             }
         }
     }
-    
+    WARN() << "Could not find a socket to share for " << host << ":" << port << ", server '" << srv.serverName << "' will not be available.";
 }
 
 Socket::~Socket()

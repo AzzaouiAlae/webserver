@@ -148,13 +148,16 @@ void Path::_handleDirectoryIndex(Config::Server &srv)
 void Path::CreatePath(Config::Server &srv, const string &reqUrl)
 {
 	string decodedPath = decodePath(reqUrl);
+	DEBUG("Path") << "Creating path for URL: '" << reqUrl << "', decoded: '" << decodedPath << "'";
     // 1. Find the best matching Location block
     matchedLocationIndex = Config::GetLocationIndex(srv, decodedPath);
+	DEBUG("Path") << "Best matching location index: " << matchedLocationIndex;
 	this->srv = &srv;
 
     // 2. NEW: Check for Redirection
     _handleRedirection(srv);
     if (_isRedir) {
+		DEBUG("Path") << "Redirection detected: " << _redirCode << " -> " << _redirPath;
         return; // STOP HERE! No need to look for files on disk.
     }
 
@@ -175,6 +178,9 @@ void Path::CreatePath(Config::Server &srv, const string &reqUrl)
     {
         _handleDirectoryIndex(srv);
     }
+	DEBUG("Path") << "Resolved full path: '" << _fullPath << "' [found=" << _found
+				  << ", isDir=" << _isDir << ", isFile=" << _isFile
+				  << ", isCGI=" << _isCGI << ", hasPermission=" << _hasPermission << "]";
 }
 
 // 4. Implement Getter

@@ -37,6 +37,7 @@ bool Config::IsDuplicatedServer(int currServerIdx, const string &val, const stri
 
 void Config::listenToAllHosts()
 {
+	INFO() << "Setting up listening sockets for " << Servers.size() << " server(s).";
 	for (int i = 0; i < (int)Servers.size(); i++)
 	{
 		Server srv = Servers[i];
@@ -44,9 +45,10 @@ void Config::listenToAllHosts()
 		{
 			if (IsDuplicatedServer(i, srv.listen[j], srv.serverName))
 			{
-				
+				DEBUG("Config") << "Skipping duplicate server '" << srv.serverName << "' on " << srv.listen[j];
 				continue;
 			}
+			DEBUG("Config") << "Adding socket for server '" << srv.serverName << "' on " << srv.listen[j];
 			Socket::AddSocketNew(srv.hosts[j].first, srv.hosts[j].second, srv);
 		}
 	}
@@ -176,7 +178,12 @@ int Config::GetLocationIndex(Config::Server &srv, const string &path)
 
     int bestCgiIndex = findBestCgiMatch(srv, reqPath, path);
     if (bestCgiIndex != -1)
+	{
+        DDEBUG("Config") << "Location match for '" << path << "': CGI location index " << bestCgiIndex;
         return bestCgiIndex;
+	}
 
-    return findBestStaticMatch(srv, reqPath);
+    int bestStaticIndex = findBestStaticMatch(srv, reqPath);
+    DDEBUG("Config") << "Location match for '" << path << "': static location index " << bestStaticIndex;
+    return bestStaticIndex;
 }
