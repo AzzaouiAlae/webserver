@@ -82,6 +82,7 @@ ssize_t SocketIO::sendFileWithHeader(const char *httpHeader, int headerLen, int 
     optval = 1;
     if (setsockopt(this->fd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) < 0)
 	{
+		DDEBUG("SocketIO") << "sendFileWithHeader: TCP_CORK set failed, fd=" << this->fd;
         return -1;
 	}
     ssize_t headerSent = Send((char *)httpHeader, headerLen);
@@ -99,6 +100,7 @@ ssize_t SocketIO::sendFileWithHeader(const char *httpHeader, int headerLen, int 
     optval = 0;
     setsockopt(this->fd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval));
 
+	DDEBUG("SocketIO") << "sendFileWithHeader: fd=" << this->fd << ", headerSent=" << headerSent << ", fileSent=" << fileSent;
     return headerSent + fileSent;
 }
 
@@ -176,7 +178,7 @@ int SocketIO::SocketToFile(int fileFD, int size)
 			return -1;
 		pendingInPipe -= len;
 	}
-	DEBUG() << "SocketIO::SocketToFile, pendingInPipe: " << pendingInPipe;
+	DDEBUG("SocketIO") << "SocketToFile: fd=" << this->fd << ", pendingInPipe=" << pendingInPipe << ", written=" << len;
 	return len;
 }
 
@@ -190,6 +192,7 @@ int SocketIO::SendSocketToPipe(int size)
 		if (len == -1)
 			return -1;
 		pendingInPipe += len;
+		DDEBUG("SocketIO") << "SendSocketToPipe: fd=" << fd << ", spliced=" << len << ", pendingInPipe=" << pendingInPipe;
 	}
 	return len;
 }
@@ -252,22 +255,35 @@ SocketIO::SocketIO(int fd): ISocket(fd, "SocketIO"), pipeInitialized(false), pen
 		pipefd[1] = p.second;
 		pipePool.pop_back();
 		pipeInitialized = true;
+		DDEBUG("SocketIO") << "SocketIO created fd=" << fd << ", reused pipe from pool [" << pipefd[0] << ", " << pipefd[1] << "]";
 	}
 	else if (pipe2(pipefd, O_NONBLOCK) == -1)
+	{
 		SocketIO::errorNumber = 1;
+		DDEBUG("SocketIO") << "SocketIO created fd=" << fd << ", pipe2 failed!";
+	}
 	else
+	{
 		pipeInitialized = true;
+		DDEBUG("SocketIO") << "SocketIO created fd=" << fd << ", new pipe [" << pipefd[0] << ", " << pipefd[1] << "]";
+	}
+	DEBUG("SocketIO") << "SocketIO initialized, fd=" << fd;
 }
 
 SocketIO::~SocketIO()
 {
+	DDEBUG("SocketIO") << "SocketIO destructor, fd=" << this->fd << ", pendingInPipe=" << pendingInPipe;
 	CloseSockFD(this->fd);
 	if (pendingInPipe == 0 && pipeInitialized && pipePool.size() < 100)
+	{
 		pipePool.push_back(pair<int, int>(pipefd[0], pipefd[1]));
+		DDEBUG("SocketIO") << "  -> Returned pipe [" << pipefd[0] << ", " << pipefd[1] << "] to pool (size=" << pipePool.size() << ")";
+	}
 	else if (pipeInitialized)
 	{
 		close(pipefd[0]);
 		close(pipefd[1]);
+		DDEBUG("SocketIO") << "  -> Closed pipe [" << pipefd[0] << ", " << pipefd[1] << "]";
 	}
 	delete context;
 	Singleton::GetFds().erase(this);

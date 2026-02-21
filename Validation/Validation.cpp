@@ -27,11 +27,14 @@ void Validation::Validate()
 	for (int i = 0; i < (int)topLevel.size(); i++)
 	{
 		const string &kind = topLevel[i].GetValue();
+		DDEBUG("Validation") << "Evaluating top-level block [" << i << "]: '" << kind << "'";
 
 		if (kind == "server")
 			validateServer(topLevel[i]);
 		else if (kind == "types")
-			; // types block is structural — already parsed, nothing to validate here
+		{
+			DDEBUG("Validation") << "  Skipping 'types' block (structural only, no validation needed).";
+		}
 		else
 			Error::ThrowError("Config Error: unexpected top-level block '" + kind + "'");
 	}
@@ -55,6 +58,8 @@ void Validation::validateServer(AST<string> &serverNode)
 	{
 		AST<string> &node = children[i];
 		const string &directive = node.GetValue();
+
+		DDEBUG("Validation") << "  [Server Block] Checking directive [" << i << "]: '" << directive << "'";
 
 		if (directive == "listen")
 			validateListen(node, seen);
@@ -110,10 +115,14 @@ void Validation::validateLocation(AST<string> &locationNode,
 {
 	vector<AST<string> > &children = locationNode.GetChildren();
 
+	DDEBUG("Validation") << "    Location block has " << children.size() << " directive(s) to validate.";
+
 	for (int i = 0; i < (int)children.size(); i++)
 	{
 		AST<string> &node = children[i];
 		const string &directive = node.GetValue();
+
+		DDEBUG("Validation") << "    [Location Block] Checking directive [" << i << "]: '" << directive << "'";
 
 		if (directive == "root")
 			validateRoot(node, seen.root);
@@ -136,6 +145,7 @@ void Validation::validateLocation(AST<string> &locationNode,
 		else
 			Error::ThrowError("Config Error: unknown directive '" + directive + "' in location block");
 	}
+	DDEBUG("Validation") << "    Location block validation passed.";
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -198,6 +208,7 @@ void Validation::validateRoot(AST<string> &node, bool &seen)
 		Error::ThrowError("Config Error: duplicate 'root' directive");
 	seen = true;
 	checkArgCount(node, 1, 1, "root");
+	DDEBUG("Validation") << "    'root' validated: " << node.GetArguments()[0];
 }
 
 // ── index ─────────────────────────────────────────────────────
@@ -214,7 +225,9 @@ void Validation::validateIndex(AST<string> &node, bool &seen)
 	{
 		if (args[i].find('/') != string::npos)
 			Error::ThrowError("Config Error: index value must not be an absolute path: '" + args[i] + "'");
+		DDEBUG("Validation") << "    'index' file [" << i << "] validated: " << args[i];
 	}
+	DDEBUG("Validation") << "    'index' validated with " << args.size() << " file(s).";
 }
 
 // ── autoindex ─────────────────────────────────────────────────
@@ -229,6 +242,7 @@ void Validation::validateAutoindex(AST<string> &node, bool &seen)
 	const string &val = node.GetArguments()[0];
 	if (val != "on" && val != "off")
 		Error::ThrowError("Config Error: autoindex value must be 'on' or 'off', got '" + val + "'");
+	DDEBUG("Validation") << "    'autoindex' validated: " << val;
 }
 
 // ── return ────────────────────────────────────────────────────
@@ -244,6 +258,10 @@ void Validation::validateReturn(AST<string> &node, bool &seen)
 	if (code != 200 && code != 301 && code != 302)
 		Error::ThrowError("Config Error: return code must be 200, 301, or 302 — got '" +
 						  node.GetArguments()[0] + "'");
+	DDEBUG("Validation") << "    'return' validated: code=" << node.GetArguments()[0]
+						  << (node.GetArguments().size() > 1
+								? string(", url=") + node.GetArguments()[1]
+								: string(""));
 }
 
 // ── client_max_body_size ──────────────────────────────────────
@@ -264,7 +282,9 @@ void Validation::validateClientMaxBody(AST<string> &node, bool &seen)
 		Error::ThrowError("Config Error: client_max_body_size must end with a unit (b/k/m/g): '" + val + "'");
 
 	// Validate the numeric part
-	parseNumber(val.substr(0, val.size() - 1));
+	long numericPart = parseNumber(val.substr(0, val.size() - 1));
+	DDEBUG("Validation") << "    'client_max_body_size' validated: " << val
+						  << " (numeric=" << numericPart << ", unit=" << unit << ")";
 }
 
 // ── allow_methods ─────────────────────────────────────────────
@@ -282,7 +302,9 @@ void Validation::validateAllowMethods(AST<string> &node, bool &seen)
 		if (!isValidMethod(args[i]))
 			Error::ThrowError("Config Error: invalid HTTP method '" + args[i] +
 							  "' — allowed: GET, POST, DELETE");
+		DDEBUG("Validation") << "    'allow_methods' method [" << i << "] validated: " << args[i];
 	}
+	DDEBUG("Validation") << "    'allow_methods' validated with " << args.size() << " method(s).";
 }
 
 // ── error_page ────────────────────────────────────────────────
@@ -297,6 +319,8 @@ void Validation::validateErrorPage(AST<string> &node, bool &seen)
 	if (!validCode)
 		Error::ThrowError("Config Error: error_page code must be 4xx or 5xx — got '" +
 						  node.GetArguments()[0] + "'");
+	DDEBUG("Validation") << "    'error_page' validated: code=" << node.GetArguments()[0]
+						  << ", page=" << node.GetArguments()[1];
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -321,6 +345,8 @@ void Validation::validateCgiPass(AST<string> &node, LocationSeen &seen)
 	const string &ext = node.GetArguments()[0];
 	if (ext.find('.') == string::npos)
 		Error::ThrowError("Config Error: cgi_pass extension must contain a dot — got '" + ext + "'");
+	DDEBUG("Validation") << "    'cgi_pass' validated: extension=" << ext
+						  << ", path=" << node.GetArguments()[1];
 }
 
 // ── client_body_in_file_only ──────────────────────────────────
@@ -338,6 +364,7 @@ void Validation::validateBodyInFile(AST<string> &node, LocationSeen &seen)
 	const string &val = node.GetArguments()[0];
 	if (val != "on" && val != "off")
 		Error::ThrowError("Config Error: client_body_in_file_only must be 'on' or 'off' — got '" + val + "'");
+	DDEBUG("Validation") << "    'client_body_in_file_only' validated: " << val;
 }
 
 // ── delete_files ──────────────────────────────────────────────
@@ -355,6 +382,7 @@ void Validation::validateDeleteFiles(AST<string> &node, LocationSeen &seen)
 	const string &val = node.GetArguments()[0];
 	if (val != "on" && val != "off")
 		Error::ThrowError("Config Error: delete_files must be 'on' or 'off' — got '" + val + "'");
+	DDEBUG("Validation") << "    'delete_files' validated: " << val;
 }
 
 // ═══════════════════════════════════════════════════════════════

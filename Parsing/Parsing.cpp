@@ -311,6 +311,7 @@ void Parsing::fillLocation(AST<string> &locationNode,
 						   Config::Server::Location &loc)
 {
 	Utility::parseBySep(loc.parsedPath, loc.path, "/");
+	DDEBUG("Parsing") << "    Parsed location path segments: " << loc.parsedPath.size() << " part(s).";
 
 	vector<AST<string> > &children = locationNode.GetChildren();
 
@@ -320,43 +321,68 @@ void Parsing::fillLocation(AST<string> &locationNode,
 		const string val = node.GetValue();
 		vector<string> &args = node.GetArguments();
 
+		DDEBUG("Parsing") << "    [Location] Processing directive [" << i << "]: '" << val << "'";
+
 		if (val == "root")
+		{
 			loc.root = args[0];
+			DDEBUG("Parsing") << "      -> Set root: [" << loc.root << "]";
+		}
 		else if (val == "index")
+		{
 			loc.index.insert(loc.index.end(), args.begin(), args.end());
+			DDEBUG("Parsing") << "      -> Set index with " << args.size() << " file(s).";
+		}
 		else if (val == "autoindex")
+		{
 			loc.autoindex = (args[0] == "on");
+			DDEBUG("Parsing") << "      -> Set autoindex: [" << (loc.autoindex ? "ON" : "OFF") << "]";
+		}
 		else if (val == "allow_methods")
 		{
 			loc.allowMethodExists = true;
 			loc.allowMethods.insert(loc.allowMethods.end(),
 									args.begin(), args.end());
+			DDEBUG("Parsing") << "      -> Set allow_methods with " << args.size() << " method(s).";
 		}
 		else if (val == "cgi_pass")
 		{
 			loc.cgiPassExt = args[0];
 			loc.cgiPassPath = args[1];
+			DDEBUG("Parsing") << "      -> Set cgi_pass: extension=[" << loc.cgiPassExt << "], path=[" << loc.cgiPassPath << "]";
 		}
 		else if (val == "return")
 		{
 			loc.returnCode = args[0];
 			if (args.size() > 1)
 				loc.returnArg = args[1];
+			DDEBUG("Parsing") << "      -> Set return: code=[" << loc.returnCode << "]"
+							  << (loc.returnArg.empty() ? "" : string(", url=[") + loc.returnArg + "]");
 		}
 		else if (val == "client_max_body_size")
 		{
 			loc.isMaxBodySize = true;
 			loc.clientMaxBodySize = parseByteSize(args[0]);
+			DDEBUG("Parsing") << "      -> Set client_max_body_size: [" << loc.clientMaxBodySize << " bytes]";
 		}
 		else if (val == "client_body_in_file_only")
+		{
 			loc.clientBodyInFileOnly = (args[0] == "on");
+			DDEBUG("Parsing") << "      -> Set client_body_in_file_only: [" << (loc.clientBodyInFileOnly ? "ON" : "OFF") << "]";
+		}
 		else if (val == "delete_files")
+		{
 			loc.deleteFiles = (args[0] == "on");
+			DDEBUG("Parsing") << "      -> Set delete_files: [" << (loc.deleteFiles ? "ON" : "OFF") << "]";
+		}
 		else if (val == "error_page")
-			; // location-level error pages could be supported here
+		{
+			DDEBUG("Parsing") << "      -> Skipping location-level error_page (not yet supported).";
+		}
 		else
 			Error::ThrowError("Unknown directive in location block: " + val);
 	}
+	DDEBUG("Parsing") << "    fillLocation complete for path: [" << loc.path << "]";
 }
 
 // ═══════════════════════════════════════════════════════════════
