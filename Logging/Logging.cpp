@@ -1,5 +1,10 @@
 #include "Logging.hpp"
 
+set<string> Logging::activeDebugClasses;
+set<string> Logging::activeDetailClasses;
+bool Logging::globalDebug = false;
+bool Logging::globalDetail = false;
+
 Logging *Logging::current = NULL;
 
 Logging::Logging(string filename)
@@ -15,72 +20,145 @@ Logging::~Logging()
 		logFile.close();
 	}
 }
+void Logging::EnableDebug(const string &className)
+{
+	if (className == "")
+		globalDebug = true;
+	else
+		activeDebugClasses.insert(className);
+	
+}
 
-Logging::LogBase::LogBase(int lvl) : level(lvl)
+void Logging::EnableDetailDebug(const string &className)
+{
+	if (className == "")
+		globalDetail = true;
+	else
+		activeDetailClasses.insert(className);
+}
+
+Logging::LogBase::LogBase() 
 {
 }
 
-Logging::Debug::Debug() : LogBase(0)
+// Specific destructor handles the writing
+Logging::Debug::~Debug()
+{
+	if (isActive && Logging::current)
+		Logging::current->WriteDebug(ss.str());
+}
+
+Logging::Info::Info()
 {
 }
 
-Logging::Info::Info() : LogBase(1)
-{
-}
-
-Logging::Warn::Warn() : LogBase(2)
-{
-}
-
-Logging::Error::Error() : LogBase(3)
-{
-}
-
-Logging::LogBase::~LogBase()
+Logging::Info::~Info()
 {
 	if (Logging::current)
+		Logging::current->WriteInfo(ss.str());
+}
+
+Logging::Warn::Warn()
+{
+}
+
+Logging::Warn::~Warn()
+{
+	if (Logging::current)
+		Logging::current->WriteWarn(ss.str());
+}
+
+Logging::Error::Error()
+{
+}
+
+Logging::Error::~Error()
+{
+	if (Logging::current)
+		Logging::current->WriteError(ss.str());
+}
+
+Logging::Debug::Debug()
+{
+	isActive = false;
+}
+
+
+Logging::Debug::Debug(string ClsName, bool isDetail)
+{
+	isActive = false;
+
+	if (isDetail)
 	{
-		Logging::current->Write(level, ss.str());
+		if (Logging::globalDetail || 
+			Logging::activeDetailClasses.find(ClsName) != activeDetailClasses.end())
+		{
+			isActive = true;
+		}
+	}
+	else
+	{
+		if (Logging::globalDebug || Logging::globalDetail ||
+			Logging::activeDebugClasses.find(ClsName) != activeDebugClasses.end() ||
+			Logging::activeDetailClasses.find(ClsName) != activeDetailClasses.end())
+		{
+			isActive = true;
+		}
 	}
 }
 
-void Logging::Write(int level, const string &msg)
+
+
+Logging::LogBase::~LogBase()
+{
+	
+}
+
+string Logging::getTime()
 {
 	time_t now = time(0);
 	tm *ltm = localtime(&now);
 	char buffer[80];
 	strftime(buffer, 80, "%Y-%m-%d %H:%M:%S", ltm);
-	string timeStr(buffer);
-	string prefix, color;
-	switch (level)
-	{
-	case 0:
-		prefix = "[DEBUG] ";
-		color = BLUE;
-		break;
-	case 1:
-		prefix = "[INFO]  ";
-		color = GREEN;
-		break;
-	case 2:
-		prefix = "[WARN]  ";
-		color = YELLOW;
-		break;
-	case 3:
-		prefix = "[ERROR] ";
-		color = RED;
-		break;
-	}
+	return string(buffer);
+}
 
-	string finalMsg = prefix + timeStr + " : " + msg;
-
-	if (level != 3)
-		cout << color << finalMsg << RESET << endl;
-	else
-		cerr << color << finalMsg << RESET << endl;
+void Logging::WriteDebug(const string &msg)
+{
+	string timeStr = getTime();
+	string prefix = "[DEBUG] ";
+	
+	cout << BLUE << timeStr << " " << prefix << msg << RESET << endl;
 	if (logFile.is_open())
-	{
-		logFile << finalMsg << endl;
-		logFile.flush();
-	}
+		logFile << timeStr << " " << prefix << msg << endl;
+}
+
+void Logging::WriteInfo(const string &msg)
+{
+	string timeStr = getTime();
+	string prefix = "[INFO]  ";
+	
+	cout << GREEN << timeStr << " " << prefix << msg << RESET << endl;
+	if (logFile.is_open())
+		logFile << timeStr << " " << prefix << msg << endl;
+}
+
+void Logging::WriteWarn(const string &msg)
+{
+	string timeStr = getTime();
+	string prefix = "[WARN]  ";
+	
+	cout << YELLOW << timeStr << " " << prefix << msg << RESET << endl;
+	if (logFile.is_open())
+		logFile << timeStr << " " << prefix << msg << endl;
+}
+
+void Logging::WriteError(const string &msg)
+{
+	string timeStr = getTime();
+	string prefix = "[ERROR] ";
+	
+	cout << RED << timeStr << " " << prefix << msg << RESET << endl;
+	if (logFile.is_open())
+		logFile << timeStr << " " << prefix << msg << endl;
 }

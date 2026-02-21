@@ -45,5 +45,5 @@ void AFd::cleanFd()
 		cleanBody = false;
 		MarkedToDelete = true;
 	}
-	DEBUG() << "sock fd: " << fd << ", AFd::cleanFd() read " << size;
+	DEBUG("AFd") << "sock fd: " << fd << ", AFd::cleanFd() read " << size;
 }

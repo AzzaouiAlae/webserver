@@ -13,12 +13,26 @@
 #define	WARN	Logging::Warn
 #define	ERR		Logging::Error
 
+#define DDEBUG(className) Logging::Debug(className, true)
+
 class Logging
 {
 	ofstream logFile;
-	void Write(int level, const string &msg);
+	static set<string> activeDebugClasses;
+	static set<string> activeDetailClasses;
+	static bool globalDebug;
+    static bool globalDetail;
+
+	string getTime();
+	void WriteDebug(const string &msg);
+	void WriteInfo(const string &msg);
+	void WriteWarn(const string &msg);
+	void WriteError(const string &msg);
 
 public:
+
+	static void EnableDebug(const string &filename);
+	static void EnableDetailDebug(const string &filename);
 	static Logging *current;
 	Logging(string filename);
 	~Logging();
@@ -27,10 +41,9 @@ public:
 	{
 	protected:
 		stringstream ss;
-		int level;
 
 	public:
-		LogBase(int lvl);
+		LogBase();
 		virtual ~LogBase();
 		template <typename T>
 		LogBase &operator<<(const T &value)
@@ -43,25 +56,31 @@ public:
 
 	class Debug : public LogBase
 	{
+		bool isActive;
 	public:
 		Debug();
+		Debug(string ClsName, bool isDetail = false);
+		~Debug();
 	};
 
 	class Info : public LogBase
 	{
 	public:
 		Info();
+		~Info();
 	};
 
 	class Warn : public LogBase
 	{
 	public:
 		Warn();
+		~Warn();
 	};
 
 	class Error : public LogBase
 	{
 	public:
 		Error();
+		~Error();
 	};
 };
