@@ -7,6 +7,7 @@
 Validation::Validation(AST<string> &astRoot)
 	: _root(astRoot)
 {
+	DEBUG("Validation") << "Validation initialized.";
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -21,6 +22,8 @@ void Validation::Validate()
 	if (topLevel.empty())
 		Error::ThrowError("Config Error: no server blocks found");
 
+	INFO() << "Starting AST validation: " << topLevel.size() << " top-level block(s) found.";
+
 	for (int i = 0; i < (int)topLevel.size(); i++)
 	{
 		const string &kind = topLevel[i].GetValue();
@@ -32,6 +35,7 @@ void Validation::Validate()
 		else
 			Error::ThrowError("Config Error: unexpected top-level block '" + kind + "'");
 	}
+	INFO() << "Validation complete. All " << topLevel.size() << " block(s) passed.";
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -44,6 +48,8 @@ void Validation::validateServer(AST<string> &serverNode)
 	ServerSeen seen;
 
 	vector<AST<string> > &children = serverNode.GetChildren();
+
+	DEBUG("Validation") << "--> Validating 'server' block with " << children.size() << " directive(s).";
 
 	for (int i = 0; i < (int)children.size(); i++)
 	{
@@ -78,6 +84,7 @@ void Validation::validateServer(AST<string> &serverNode)
 			if (path.empty() || path[0] != '/')
 				Error::ThrowError("Config Error: location path must start with '/' — got '" + path + "'");
 
+			DEBUG("Validation") << "  --> Validating 'location' block: " << path;
 			LocationSeen locSeen;
 			validateLocation(node, locSeen);
 		}
@@ -90,6 +97,7 @@ void Validation::validateServer(AST<string> &serverNode)
 		Error::ThrowError("Config Error: server block is missing required 'listen' directive");
 	if (!seen.serverName)
 		Error::ThrowError("Config Error: server block is missing required 'server_name' directive");
+	DEBUG("Validation") << "  'server' block validation passed.";
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -167,6 +175,7 @@ void Validation::validateListen(AST<string> &node, ServerSeen &seen)
 	long portNum = parseNumber(port);
 	if (portNum < 1 || portNum > 65535)
 		Error::ThrowError("Config Error: listen port out of range (1-65535): " + port);
+	DDEBUG("Validation") << "    'listen' validated: " << val;
 }
 
 // ── server_name ───────────────────────────────────────────────
@@ -177,6 +186,7 @@ void Validation::validateServerName(AST<string> &node, ServerSeen &seen)
 		Error::ThrowError("Config Error: duplicate 'server_name' in server block");
 	seen.serverName = true;
 	requireArgs(node, "server_name");
+	DDEBUG("Validation") << "    'server_name' validated: " << node.GetArguments()[0];
 }
 
 // ── root ──────────────────────────────────────────────────────

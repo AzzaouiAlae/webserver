@@ -32,7 +32,9 @@ string Routing::CreatePath(Config::Server *srv)
 	string h = request.getHost();
 	this->srv = srv;
 	
+	DEBUG("Routing") << "Creating path for request '" << request.getPath() << "' on server '" << srv->serverName << "'";
 	path.CreatePath(*srv, request.getPath());
 	strPath = path.getFullPath();
+	DEBUG("Routing") << "Path resolved: '" << strPath << "'";
 	return strPath;
 }
