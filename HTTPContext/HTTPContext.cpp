@@ -22,7 +22,7 @@ void HTTPContext::Handle(Socket *sock)
 	((HTTPContext *)fd->context)->sock = fd;
 	((HTTPContext *)fd->context)->repsense.Init(fd, &(((HTTPContext *)fd->context)->router));
 	Multiplexer::GetCurrentMultiplexer()->AddAsEpollIn(fd);
-	DDEBUG("HTTPContext") << "  -> New SocketIO fd=" << fd->GetFd() << " created and registered as EPOLLIN.";
+	INFO() << "New client connected from " << Socket::getRemoteName(fd->GetFd());
 }
 
 void HTTPContext::Handle()
@@ -148,6 +148,7 @@ void HTTPContext::HandleRequest()
     // 3. Check for Completion or Errors
     if (isComplete || router.GetRequest().isRequestHeaderComplete())
     {
+		INFO() << Socket::getRemoteName(sock->GetFd()) << " " << router.GetRequest().getMethod() << " " << router.GetRequest().getPath();
 		DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", request parsing done, setting up pipeline.";
 		_setupPipeline();
 	
@@ -182,6 +183,7 @@ HTTPContext::HTTPContext()
 
 void HTTPContext::MarkedSocketToFree()
 {
+	INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " disconnected";
 	DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", MarkedSocketToFree: shutting down and marking for deletion.";
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 

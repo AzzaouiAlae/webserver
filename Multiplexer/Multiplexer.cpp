@@ -130,6 +130,7 @@ void Multiplexer::MainLoop()
 	int timeout = 1;
 	long time = Utility::CurrentTime() + USEC * timeout;
 	(void)time;
+	INFO() << "Server is ready, waiting for connections...";
 	// while(time > Utility::CurrentTime())
 	while(true)
 	{

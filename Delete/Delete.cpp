@@ -70,10 +70,12 @@ void Delete::deleteFile()
 {
 	DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", deleteFile: '" << filename << "'";
 	if (unlink(filename.c_str())) {
+		ERR() << "Client " << Socket::getRemoteName(sock->GetFd()) << " delete failed: " << filename;
 		DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", unlink failed, sending 500.";
 		HandelErrorPages("500");
 	}
 	else {
+		INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " file deleted: " << filename;
 		DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", file deleted successfully.";
 		if (router->GetPath().isRedirection())
 			SendRedirection();

@@ -181,6 +181,7 @@ void Post::uploadFileToDisk()
 	// Check if upload is complete
 	if (uploadedSize >= contentBodySize)
 	{
+		INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " upload complete: " << filename << " (" << contentBodySize << " bytes)";
 		close(uploadFd);
 		uploadFd = -1;
 		readyToUpload = false;

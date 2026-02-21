@@ -191,6 +191,7 @@ void AMethod::LoadStaticErrorFile(const string &errorCode)
 // Does one thing: orchestrates error page resolution, then prepares for sending
 void AMethod::HandelErrorPages(const string &err)
 {
+	ERR() << "Client " << Socket::getRemoteName(sock->GetFd()) << " error " << err << " " << statusMap[err];
 	DEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", AMethod::HandelErrorPages, code=" << err;
 	code = err;
 	string path = ResolveErrorFilePath(err);
@@ -268,6 +269,7 @@ void AMethod::SendResponse()
 		if (code == "413" || code == "409") {
 			sock->cleanBody = true;
 		}
+		INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " <- " << code << " " << statusMap[code];
 		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendResponse complete, code=" << code;
 	}
 	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendResponse: sent=" << size << ", progress=" << sended << "/" << ShouldSend;
