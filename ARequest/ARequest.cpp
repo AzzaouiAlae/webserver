@@ -33,7 +33,7 @@ bool ARequest::getFullLine(string &line)
 	while (_requestbuff[index] && _requestbuff[index] != '\n')
 	{
 		if (index > MAXHEADERSIZE)
-			Error::ThrowError("The Header is Bigger Than Expected");
+			Error::ThrowError("502");
 		line += _requestbuff[index];
 		index++;
 	}
@@ -57,7 +57,7 @@ void ARequest::parseHeaderLine(const string &line)
 {
     size_t colonPos = line.find(':');
     if (colonPos == string::npos)
-        Error::ThrowError("Bad Request Header");
+        Error::ThrowError("502");
 
     string key   = line.substr(0, colonPos);
     string value = line.substr(colonPos + 1);
@@ -67,7 +67,10 @@ void ARequest::parseHeaderLine(const string &line)
         key = (*_reqDirectives)[key];
 
     if (_env.find(key) != _env.end())
-        Error::ThrowError("Duplicate header: " + key);
+    {
+        if (key != "Cookie")
+            Error::ThrowError("502");
+    }
     _env[key] = value;
 }
 
@@ -90,4 +93,53 @@ size_t		 ARequest::getcontentlen()
 map<string, string> &ARequest::getrequestenv()
 {
 	return (_env);
+}
+
+void ARequest::parseCookies() {
+    string cookieHeader = _env["HTTP_COOKIE"];
+    if (cookieHeader.empty()) return;
+    
+    stringstream ss(cookieHeader);
+    string cookie;
+    while (getline(ss, cookie, ';')) {
+        size_t start = cookie.find_first_not_of(" \t");
+        if (start == string::npos) continue;
+        cookie = cookie.substr(start);
+        
+        size_t eqPos = cookie.find('=');
+        if (eqPos != string::npos) {
+            string name = cookie.substr(0, eqPos);
+            string value = cookie.substr(eqPos + 1);
+            _cookies[name] = value;
+        }
+    }
+}
+
+string ARequest::getCookie(const string &name) {
+    return _cookies[name];
+}
+
+void ARequest::initSession() {
+    parseCookies();
+    
+    SessionManager* sm = SessionManager::getInstance();
+    string sessionId = getCookie("SESSIONID");
+    
+    if (!sessionId.empty()) {
+        _currentSession = sm->getSession(sessionId);
+    }
+    
+    if (_currentSession == NULL) {
+        _currentSession = sm->createSession();
+    }
+    
+    _env["SESSIONID"] = _currentSession->id;
+    _env["HTTP_SESSIONID"] = _currentSession->id;
+}
+
+Session* ARequest::getSession() {
+    if (_currentSession == NULL) {
+        initSession();
+    }
+    return _currentSession;
 }

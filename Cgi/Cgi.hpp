@@ -28,7 +28,7 @@ enum estatus
 
 class Cgi
 {
-    Request     &_req;
+    ClientRequest     &_req;
     SocketIO    &_sok;
     pid_t       _pid;
     estatus     _status;
@@ -42,8 +42,8 @@ class Cgi
     void writetocgi();
     void readfromcgi();
 public:
-    Cgi(Request &req, char** exec, SocketIO &sok);
-    void run_cgi(int infd, int outfd, Request &req, char** exec);
+    Cgi(ClientRequest &req, char** exec, SocketIO &sok);
+    void run_cgi(int infd, int outfd, char** exec);
     bool isExeted();
     void Handle();
     void resetTime();

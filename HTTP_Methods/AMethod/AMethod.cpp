@@ -405,3 +405,4 @@ void AMethod::addCookies(Session &session)
 	}
 	responseHeader << "\r\n";
 }
+map<string, string>& AMethod::getStatusMap(){return (statusMap);}
