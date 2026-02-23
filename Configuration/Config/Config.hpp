@@ -9,7 +9,7 @@ class Config
 {
 
 public:
-	class Server 
+	class Server
 	{
 	public:
 		Server();
@@ -66,6 +66,5 @@ private:
     static int findBestStaticMatch(Config::Server &srv, const vector<string> &reqPath);
 	static void fillServer(AST<string> &serverNode, Config::Server &srv);
 	static void fillLocation(AST<string> &locationNode, Config::Server::Location &loc);
-	static size_t parseByteSize(const string &raw);
 };
 #include "../Headers.hpp"

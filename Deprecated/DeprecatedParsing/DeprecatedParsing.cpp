@@ -272,7 +272,7 @@ void DeprecatedParsing::fillServer(AST<string> &serverNode, Config::Server &srv)
 		else if (val == "client_max_body_size")
 		{
 			srv.isMaxBodySize = true;
-			srv.clientMaxBodySize = parseByteSize(args[0]);
+			srv.clientMaxBodySize = Utility::parseByteSize(args[0]);
 			DDEBUG("Parsing") << "    -> Set client_max_body_size: [" << srv.clientMaxBodySize << " bytes]";
 		}
 		else if (val == "allow_methods")
@@ -362,7 +362,7 @@ void DeprecatedParsing::fillLocation(AST<string> &locationNode,
 		else if (val == "client_max_body_size")
 		{
 			loc.isMaxBodySize = true;
-			loc.clientMaxBodySize = parseByteSize(args[0]);
+			loc.clientMaxBodySize = Utility::parseByteSize(args[0]);
 			DDEBUG("Parsing") << "      -> Set client_max_body_size: [" << loc.clientMaxBodySize << " bytes]";
 		}
 		else if (val == "client_body_in_file_only")
@@ -430,12 +430,7 @@ void DeprecatedParsing::parseListen(const string &str,
 	}
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  STATIC – parseByteSize
-//  Converts "512k", "10M", "1G", "1024" → bytes.
-// ═══════════════════════════════════════════════════════════════
-
-size_t DeprecatedParsing::parseByteSize(const string &raw)
+size_t DeprecatedParsing::Utility::parseByteSize(const string &raw)
 {
 	char *endptr = NULL;
 	size_t value = (size_t)strtoll(raw.c_str(), &endptr, 10);

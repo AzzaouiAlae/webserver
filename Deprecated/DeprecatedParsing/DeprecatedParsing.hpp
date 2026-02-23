@@ -47,5 +47,5 @@ private:
 	void fillServer(AST<string> &serverNode, Config::Server &srv);
 	void fillLocation(AST<string> &locationNode,
 					  Config::Server::Location &loc);
-	static size_t parseByteSize(const string &raw);
+	static size_t Utility::parseByteSize(const string &raw);
 };

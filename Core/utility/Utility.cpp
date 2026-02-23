@@ -136,11 +136,30 @@ void Utility::parseBySep(vector<string> &parsedPath, string str, string sep)
 	}
 }
 
-string lastToken(const string &str, char ch) 
+string Utility::lastToken(const string &str, char ch) 
 {
 	for(int i = str.length() - 1; i > 0; i++) {
 		if (str[i] == ch)
 			return str.substr(i + 1);
 	}
 	return str;
+}
+
+size_t Utility::parseByteSize(const string &raw)
+{
+	char *endptr = NULL;
+	size_t value = (size_t)strtoll(raw.c_str(), &endptr, 10);
+
+	if (endptr && *endptr != '\0')
+	{
+		char unit = *endptr;
+		if (unit == 'k' || unit == 'K')
+			value *= 1024;
+		else if (unit == 'm' || unit == 'M')
+			value *= 1024 * 1024;
+		else if (unit == 'g' || unit == 'G')
+			value *= 1024 * 1024 * 1024;
+	}
+
+	return value;
 }

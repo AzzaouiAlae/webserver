@@ -84,19 +84,18 @@ void LaunchServer(string &filename)
 	token.split_tokens();
 	DEBUG("main") << "Tokenizing complete";
 
-	DEBUG("main") << "Parsing start";
-	Parsing p(token.get_tokens());
-
-	DEBUG("main") << "Validation start";
-	Validation val(Singleton::GetASTroot());
-	val.CheckValidation();
-	DEBUG("main") << "Validation complete";
-
+	Logging::Debug() << "Parsing start";
+	Parsing pars(token.get_tokens());
+	pars.BuildAST();
+	Logging::Debug() << "Parsing complete";
 	Config::FillConf();
 
+	Logging::Debug() << "Validation start";
+	Validation val(Singleton::GetASTroot());
+	val.Validate();
+	Logging::Debug() << "Validation complete";
 	DefaultPages::InitDefaultPages();
 	DEBUG("main") << "The main loop start";
-
 	Multiplexer m;
 	m.MainLoop();
 	DEBUG("main") << "The main loop stop";

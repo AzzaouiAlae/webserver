@@ -1,19 +1,10 @@
 #include "Parsing.hpp"
 
-// ═══════════════════════════════════════════════════════════════
-//  Constructor
-// ═══════════════════════════════════════════════════════════════
-
 Parsing::Parsing(const vector<string> &tokens)
 	: _tokens(tokens), _idx(0)
 {
 	DEBUG("Parsing") << "Parsing initialized with " << _tokens.size() << " tokens.";
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  PUBLIC – BuildAST
-//  Entry point: walk every top-level token and build the tree.
-// ═══════════════════════════════════════════════════════════════
 
 void Parsing::BuildAST()
 {
@@ -35,28 +26,20 @@ void Parsing::BuildAST()
 	DEBUG("Parsing") << "AST construction complete.";
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  PRIVATE – parseServer
-//  Handles:  server { <directives…> }
-// ═══════════════════════════════════════════════════════════════
-
 void Parsing::parseServer()
 {
 	DEBUG("Parsing") << "--> Entering 'server' block";
-	consume(); // eat "server"
+	consume();
 
 	if (current() != "{")
 		Error::ThrowError("Expected '{' after server");
-	consume(); // eat "{"
+	consume();
 
-	// Add a server node to the root
 	DDEBUG("Parsing") << "  -> Creating 'server' node in AST";
 	AST<string> &root = Singleton::GetASTroot();
 	root.AddChild("server");
-	AST<string> &serverNode =
-		root.GetChildren().back();
+	AST<string> &serverNode = root.GetChildren().back();
 
-	// Parse everything until the matching "}"
 	while (!atEnd() && current() != "}")
 	{
 		DDEBUG("Parsing") << "  [Server Block] Evaluating token: [" << current() << "]";
@@ -66,63 +49,48 @@ void Parsing::parseServer()
 		else
 			parseDirective(serverNode);
 	}
-
 	if (atEnd())
 		Error::ThrowError("Unexpected end of file: missing '}' for server");
-	consume(); // eat "}"
+	consume();
 	DEBUG("Parsing") << "<-- Exiting 'server' block";
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  PRIVATE – parseLocation
-//  Handles:  location /path { <directives…> }
-// ═══════════════════════════════════════════════════════════════
 
 void Parsing::parseLocation(AST<string> &server)
 {
 	DEBUG("Parsing") << "  --> Entering 'location' block";
-	consume(); // eat "location"
+	consume();
 
-	// The next token is the path  (e.g. "/", "/api/")
 	if (isSeparator())
 		Error::ThrowError("Expected a path after 'location'");
 
-	const string path = consume(); // save & eat path token
+	const string path = consume();
 	DDEBUG("Parsing") << "    -> Location path detected: [" << path << "]";
 
 	if (current() != "{")
 		Error::ThrowError("Expected '{' after location path");
-	consume(); // eat "{"
-	
-	// Add a location child to the server node
+	consume();
+
 	server.AddChild("location");
 	AST<string> &locationNode = server.GetChildren().back();
-	locationNode.AddArgument(path); // store the path as an argument
+	locationNode.AddArgument(path);
 
-	// Parse directives inside the location block
 	while (!atEnd() && current() != "}")
 		parseDirective(locationNode);
 
 	if (atEnd())
 		Error::ThrowError("Unexpected end of file: missing '}' for location");
-	consume(); // eat "}"
+	consume();
 	DEBUG("Parsing") << "  <-- Exiting 'location' block";
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  PRIVATE – parseTypes
-//  Handles:  types { mime/type ext… ; … }
-//  Populates Singleton::GetMime() directly (same as before).
-// ═══════════════════════════════════════════════════════════════
 
 void Parsing::parseTypes()
 {
 	DEBUG("Parsing") << "--> Entering 'types' block";
-	consume(); // eat "types"
+	consume();
 
 	if (current() != "{")
 		Error::ThrowError("Expected '{' after types");
-	consume(); // eat "{"
+	consume();
 
 	map<string, string> &mime = Singleton::GetMime();
 
@@ -130,14 +98,12 @@ void Parsing::parseTypes()
 	{
 		DDEBUG("Parsing") << "  [Types Block] Evaluating token: [" << current() << "]";
 
-		// first token of each line is the mime type  (e.g. "text/html")
 		if (current().find('/') == string::npos)
 			Error::ThrowError("Invalid MIME type: " + current());
 
 		const string mimeType = consume();
 		DDEBUG("Parsing") << "    -> MIME type detected: [" << mimeType << "]";
 
-		// collect all extensions until ";"
 		while (!atEnd() && current() != ";")
 		{
 			if (current() == "}" || current() == "{")
@@ -149,34 +115,26 @@ void Parsing::parseTypes()
 
 		if (current() != ";")
 			Error::ThrowError("Missing ';' in types block");
-		consume(); // eat ";"
+		consume();
 	}
 
 	if (atEnd())
 		Error::ThrowError("Unexpected end of file: missing '}' for types");
-	consume(); // eat "}"
+	consume();
 	DEBUG("Parsing") << "<-- Exiting 'types' block";
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  PRIVATE – parseDirective
-//  Handles:  keyword  value1 value2 … ;
-//  Creates a child node on `parent` whose value is the keyword,
-//  and stores each value as an argument of that node.
-// ═══════════════════════════════════════════════════════════════
 
 void Parsing::parseDirective(AST<string> &parent)
 {
 	if (isSeparator())
 		Error::ThrowError("Unexpected separator: " + current());
 
-	const string keyword = consume(); // e.g. "listen", "root", …
+	const string keyword = consume();
 	DDEBUG("Parsing") << "  -> Parsing directive: [" << keyword << "]";
 
 	parent.AddChild(keyword);
 	AST<string> &node = parent.GetChildren().back();
 
-	// Collect all tokens until ";"
 	while (!atEnd() && current() != ";")
 	{
 		if (current() == "{" || current() == "}")
@@ -188,28 +146,23 @@ void Parsing::parseDirective(AST<string> &parent)
 
 	if (current() != ";")
 		Error::ThrowError("Missing ';' after directive: " + keyword);
-	consume(); // eat ";"
+	if ( node.GetArguments().empty() )
+		Error::ThrowError("Directive [" + keyword + "] requires at least one argument");
+	consume();
 	DDEBUG("Parsing") << "  <- Directive [" << keyword << "] successfully parsed.";
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  PUBLIC – FillConf
-//  Walks the validated AST and fills Singleton::GetConf().
-// ═══════════════════════════════════════════════════════════════
 
 void Parsing::FillConf()
 {
 	DEBUG("Parsing") << "Starting to fill Config structure from AST.";
 	Config &conf = Singleton::GetConf();
 
-	vector<AST<string> > &servers =
-		Singleton::GetASTroot().GetChildren();
+	vector<AST<string> > &servers = Singleton::GetASTroot().GetChildren();
 
 	for (int i = 0; i < (int)servers.size(); i++)
 	{
 		DDEBUG("Parsing") << "Evaluating AST Node: [" << servers[i].GetValue() << "]";
 
-		// Skip non-server top-level nodes (e.g. types)
 		if (servers[i].GetValue() != "server")
 			continue;
 
@@ -225,10 +178,6 @@ void Parsing::FillConf()
 	conf.listenToAllHosts();
 	INFO() << "Config structure successfully populated.";
 }
-
-// ═══════════════════════════════════════════════════════════════
-//  PRIVATE – fillServer
-// ═══════════════════════════════════════════════════════════════
 
 void Parsing::fillServer(AST<string> &serverNode, Config::Server &srv)
 {
@@ -271,14 +220,13 @@ void Parsing::fillServer(AST<string> &serverNode, Config::Server &srv)
 		else if (val == "client_max_body_size")
 		{
 			srv.isMaxBodySize = true;
-			srv.clientMaxBodySize = parseByteSize(args[0]);
+			srv.clientMaxBodySize = Utility::parseByteSize(args[0]);
 			DDEBUG("Parsing") << "    -> Set client_max_body_size: [" << srv.clientMaxBodySize << " bytes]";
 		}
 		else if (val == "allow_methods")
 		{
 			srv.allowMethodExists = true;
-			srv.allowMethods.insert(srv.allowMethods.end(),
-									args.begin(), args.end());
+			srv.allowMethods.insert(srv.allowMethods.end(), args.begin(), args.end());
 			DDEBUG("Parsing") << "    -> Set allow_methods with " << args.size() << " method(s).";
 		}
 		else if (val == "error_page") {
@@ -288,7 +236,7 @@ void Parsing::fillServer(AST<string> &serverNode, Config::Server &srv)
 		else if (val == "location")
 		{
 			Config::Server::Location loc;
-			loc.path = node.GetArguments()[0]; // path was stored as argument
+			loc.path = node.GetArguments()[0];
 			
 			DEBUG("Parsing") << "  --> Populating Location configuration for path: [" << loc.path << "]";
 			
@@ -302,12 +250,7 @@ void Parsing::fillServer(AST<string> &serverNode, Config::Server &srv)
 	}
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  PRIVATE – fillLocation
-// ═══════════════════════════════════════════════════════════════
-
-void Parsing::fillLocation(AST<string> &locationNode,
-						   Config::Server::Location &loc)
+void Parsing::fillLocation(AST<string> &locationNode, Config::Server::Location &loc)
 {
 	Utility::parseBySep(loc.parsedPath, loc.path, "/");
 	DDEBUG("Parsing") << "    Parsed location path segments: " << loc.parsedPath.size() << " part(s).";
@@ -340,12 +283,13 @@ void Parsing::fillLocation(AST<string> &locationNode,
 		else if (val == "allow_methods")
 		{
 			loc.allowMethodExists = true;
-			loc.allowMethods.insert(loc.allowMethods.end(),
-									args.begin(), args.end());
+			loc.allowMethods.insert(loc.allowMethods.end(), args.begin(), args.end());
 			DDEBUG("Parsing") << "      -> Set allow_methods with " << args.size() << " method(s).";
 		}
 		else if (val == "cgi_pass")
 		{
+			if (args.size() < 2)
+				Error::ThrowError("cgi_pass directive requires at least 2 arguments: extension and path");
 			loc.cgiPassExt = args[0];
 			loc.cgiPassPath = args[1];
 			DDEBUG("Parsing") << "      -> Set cgi_pass: extension=[" << loc.cgiPassExt << "], path=[" << loc.cgiPassPath << "]";
@@ -361,7 +305,7 @@ void Parsing::fillLocation(AST<string> &locationNode,
 		else if (val == "client_max_body_size")
 		{
 			loc.isMaxBodySize = true;
-			loc.clientMaxBodySize = parseByteSize(args[0]);
+			loc.clientMaxBodySize = Utility::parseByteSize(args[0]);
 			DDEBUG("Parsing") << "      -> Set client_max_body_size: [" << loc.clientMaxBodySize << " bytes]";
 		}
 		else if (val == "client_body_in_file_only")
@@ -384,28 +328,22 @@ void Parsing::fillLocation(AST<string> &locationNode,
 	DDEBUG("Parsing") << "    fillLocation complete for path: [" << loc.path << "]";
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  STATIC – parseListen
-//  Splits "host:port", "host", or "port" into components.
-// ═══════════════════════════════════════════════════════════════
-
-void Parsing::parseListen(const string &str,
-						  string &port,
-						  string &host)
+void Parsing::parseListen(const string &str, string &port, string &host)
 {
 	DDEBUG("Parsing") << "Parsing 'listen' directive value: [" << str << "]";
 
-	const char *colon = strrchr(str.c_str(), ':');
 
-	if (colon != NULL)
+	std::string::size_type pos = str.rfind(':');
+
+	if (pos != std::string::npos)
 	{
-		host = str.substr(0, colon - str.c_str());
-		port = colon + 1;
-		DDEBUG("Parsing") << "  -> Detected 'host:port' format => Host: [" << host << "], Port: [" << port << "]";
-		return;
+	    host = str.substr(0, pos);
+	    port = str.substr(pos + 1);
+
+	    DDEBUG("Parsing") << "  -> Detected 'host:port' format => Host: [" << host << "], Port: [" << port << "]";
+	    return;
 	}
 
-	// No colon — decide if it is a pure numeric port or a hostname
 	bool isNumeric = true;
 	for (size_t i = 0; i < str.size(); i++)
 	{
@@ -429,37 +367,9 @@ void Parsing::parseListen(const string &str,
 	}
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  STATIC – parseByteSize
-//  Converts "512k", "10M", "1G", "1024" → bytes.
-// ═══════════════════════════════════════════════════════════════
-
-size_t Parsing::parseByteSize(const string &raw)
-{
-	char *endptr = NULL;
-	size_t value = (size_t)strtoll(raw.c_str(), &endptr, 10);
-
-	if (endptr && *endptr != '\0')
-	{
-		char unit = *endptr;
-		if (unit == 'k' || unit == 'K')
-			value *= 1024;
-		else if (unit == 'm' || unit == 'M')
-			value *= 1024 * 1024;
-		else if (unit == 'g' || unit == 'G')
-			value *= 1024 * 1024 * 1024;
-	}
-
-	return value;
-}
-
-// ═══════════════════════════════════════════════════════════════
-//  Token stream helpers
-// ═══════════════════════════════════════════════════════════════
-
+//  --- helpers ---
 const string &Parsing::current() const
 {
-	// Safety check to prevent Segfaults if config file ends unexpectedly
     if (atEnd())
     {
         Error::ThrowError("Unexpected end of file");

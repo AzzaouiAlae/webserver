@@ -300,7 +300,7 @@ void Config::fillServer(AST<string> &serverNode, Config::Server &srv)
 		else if (val == "client_max_body_size")
 		{
 			srv.isMaxBodySize = true;
-			srv.clientMaxBodySize = parseByteSize(args[0]);
+			srv.clientMaxBodySize = Utility::parseByteSize(args[0]);
 			DDEBUG("Parsing") << "    -> Set client_max_body_size: [" << srv.clientMaxBodySize << " bytes]";
 		}
 		else if (val == "allow_methods")
@@ -387,7 +387,7 @@ void Config::fillLocation(AST<string> &locationNode,
 		else if (val == "client_max_body_size")
 		{
 			loc.isMaxBodySize = true;
-			loc.clientMaxBodySize = parseByteSize(args[0]);
+			loc.clientMaxBodySize = Utility::parseByteSize(args[0]);
 			DDEBUG("Parsing") << "      -> Set client_max_body_size: [" << loc.clientMaxBodySize << " bytes]";
 		}
 		else if (val == "client_body_in_file_only")
@@ -410,21 +410,4 @@ void Config::fillLocation(AST<string> &locationNode,
 	DDEBUG("Parsing") << "    fillLocation complete for path: [" << loc.path << "]";
 }
 
-size_t Config::parseByteSize(const string &raw)
-{
-	char *endptr = NULL;
-	size_t value = (size_t)strtoll(raw.c_str(), &endptr, 10);
 
-	if (endptr && *endptr != '\0')
-	{
-		char unit = *endptr;
-		if (unit == 'k' || unit == 'K')
-			value *= 1024;
-		else if (unit == 'm' || unit == 'M')
-			value *= 1024 * 1024;
-		else if (unit == 'g' || unit == 'G')
-			value *= 1024 * 1024 * 1024;
-	}
-
-	return value;
-}
