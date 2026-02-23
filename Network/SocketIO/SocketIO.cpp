@@ -5,6 +5,8 @@ int SocketIO::errorNumber = 0;
 
 vector<pair<int, int> > SocketIO::pipePool;
 
+priority_queue<SocketIO*, vector<SocketIO*>, SocketIO::CompareTimeout> SocketIO::timeoutList;
+
 void SocketIO::Handle()
 {
 	context->Handle(this);
@@ -75,34 +77,7 @@ int SocketIO::SendPipeToSock()
 	return sent;
 }
 
-ssize_t SocketIO::sendFileWithHeader(const char *httpHeader, int headerLen, int fileFd, int size)
-{
-    int optval;
 
-    optval = 1;
-    if (setsockopt(this->fd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) < 0)
-	{
-		DDEBUG("SocketIO") << "sendFileWithHeader: TCP_CORK set failed, fd=" << this->fd;
-        return -1;
-	}
-    ssize_t headerSent = Send((char *)httpHeader, headerLen);
-    if (headerSent <= 0 || size <= (int)headerSent) 
-	{
-        return headerSent;
-	}
-	size -= (int)headerSent;
-
-    ssize_t fileSent = sendfile(this->fd, fileFd, NULL, size);
-
-    if (fileSent < 0)
-        return headerSent;
-
-    optval = 0;
-    setsockopt(this->fd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval));
-
-	DDEBUG("SocketIO") << "sendFileWithHeader: fd=" << this->fd << ", headerSent=" << headerSent << ", fileSent=" << fileSent;
-    return headerSent + fileSent;
-}
 
 ssize_t SocketIO::FileToSocket(int fileFd, int size)
 {
@@ -268,6 +243,9 @@ SocketIO::SocketIO(int fd): ISocket(fd, "SocketIO"), pipeInitialized(false), pen
 		DDEBUG("SocketIO") << "SocketIO created fd=" << fd << ", new pipe [" << pipefd[0] << ", " << pipefd[1] << "]";
 	}
 	DEBUG("SocketIO") << "SocketIO initialized, fd=" << fd;
+	lastTime = time(NULL);
+	timeout = TIMEOUT;
+	timeoutList.push(this);
 }
 
 SocketIO::~SocketIO()
@@ -298,3 +276,46 @@ void SocketIO::ClearPipePool()
 	}
 }
 
+bool SocketIO::isTimeOut()
+{
+	time_t now = time(NULL);
+	if (GetEndTime() < now)
+		return true;
+	UpdateTime();
+	return false;
+}
+
+void SocketIO::clearTimeout()
+{
+	time_t now = time(NULL);
+	set<AFd *> &fds = Singleton::GetFds();
+
+	while(timeoutList.empty() == false)
+	{
+		SocketIO *sock = timeoutList.top();
+		if (fds.find(sock) == fds.end())
+			timeoutList.pop();
+		else if (sock->GetEndTime() < now)
+		{
+			Multiplexer::GetCurrentMultiplexer()->ChangeToEpollOut(sock);
+			timeoutList.pop();
+		}
+		else
+			break;
+	}
+}
+
+bool SocketIO::CompareTimeout::operator()(const SocketIO *a, const SocketIO *b) const 
+{
+    return (a->GetEndTime()) > (b->GetEndTime());
+}
+
+time_t SocketIO::GetEndTime() const
+{
+	return lastTime + timeout;
+}
+
+void SocketIO::UpdateTime()
+{
+	lastTime = time(NULL);
+}
