@@ -13,6 +13,15 @@ enum IOState {
 	eSocket = 4,
 };
 
+enum IOError {
+	eSuccess = 0,
+	eReadError = 1,
+	eWriteError = 2,
+	ePipe0Error = 3,
+	ePipe1Error = 4,
+	ePipeCreateError = 5,
+};
+
 #define KBYTE 1024 * 1024
 #define MBYTE 50
 
@@ -27,6 +36,8 @@ class SocketIO : public ISocket {
 	time_t timeout;
 	time_t lastTime;
 public:
+	bool CanUsePipe0();
+	bool CanUsePipe1();
 	bool isTimeOut();
 	void UpdateTime();
 	time_t GetEndTime() const;
@@ -37,13 +48,11 @@ public:
     ~SocketIO();
 	int SendBuffToPipe(void *buff, int size);
 	int SendPipeToSock();
-	static int errorNumber;
+	int errorNumber;
 	void SetStateByFd(int fd);
 	int Send(void *buff, int size);
 	ssize_t FileToSocket(int fileFd, int size);
 	int SocketToFile(int fileFD, int size);
-	int SocketToSocketRead(int socket, int size);
-	int SocketToSocketWrite(int socket, int size);
 	void Handle();
 	static int CloseSockFD(int fd);
 	static void ClearPipePool();

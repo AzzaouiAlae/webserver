@@ -20,6 +20,7 @@ class HTTPContext : public IContext
 	bool err;
 	string errNo;
 	bool isMaxBodyInit;
+	static vector<char *> buffPoll;
 
 	// Helper to handle buffer allocation and raw socket reading
     int  _readFromSocket();
@@ -31,6 +32,7 @@ class HTTPContext : public IContext
     void _setupPipeline();
 	string logPrefix();
 public:
+	static void ClearBuffPoll();
 	void activeInPipe();
 	void activeOutPipe();
 	HTTPContext();

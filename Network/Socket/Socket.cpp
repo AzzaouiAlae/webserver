@@ -7,6 +7,11 @@ int Socket::errorNumber = 0;
 void Socket::Handle()
 {
 	acceptedSocket = accept4(fd, NULL, NULL, SOCK_NONBLOCK);
+	if (acceptedSocket == -1)
+	{
+		ERR() << "Fail to accepte new conection from socket fd: " << fd;
+		return;
+	}
 	DDEBUG("Socket") << "Handle: accepted new connection, fd=" << acceptedSocket << " on listener fd=" << fd;
 	context->Handle(this);
 }
@@ -122,7 +127,7 @@ int Socket::inetBind(const string &host, const string &service, int type)
 string Socket::inetAddressStr(sockaddr *addr, socklen_t addrlen)
 {
 	stringstream addrStr;
-	char host[NI_MAXHOST], service[NI_MAXSERV];
+	char host[NI_MAXHOST] = {0}, service[NI_MAXSERV] = {0};
 	errorNumber = 0;
 
 	if (getnameinfo(addr, addrlen, host, NI_MAXHOST, service,
@@ -155,6 +160,7 @@ sockaddr_storage Socket::getLocalAddress(int sock)
 {
 	sockaddr_storage addr;
 	socklen_t len = sizeof(addr);
+	memset(&addr, 0, len);
 	errorNumber = 0;
 
 	if (getsockname(sock, (sockaddr *)&addr, &len) == -1)
@@ -173,6 +179,7 @@ sockaddr_storage Socket::getRemoteAddress(int sock)
 {
 	sockaddr_storage addr;
 	socklen_t len = sizeof(addr);
+	memset(&addr, 0, len);
 	errorNumber = 0;
 
 	if (getpeername(sock, (sockaddr *)&addr, &len) == -1)
@@ -252,7 +259,7 @@ void Socket::AddSocketNew(string &host, string &port, Config::Server srv)
 {
 	map<int, vector<Config::Server> > &sockets = Singleton::GetVirtualServers();
 	DEBUG("Socket") << "Attempting to bind listening socket on " << host << ":" << port;
-	int sock = inetListen(host.c_str(), port.c_str(), 1000);
+	int sock = inetListen(host.c_str(), port.c_str(), 1000000);
 	set<AFd *> &fds = Singleton::GetFds();
 
 	if (sock != -1) 
@@ -264,7 +271,6 @@ void Socket::AddSocketNew(string &host, string &port, Config::Server srv)
 		vector<Config::Server> myVector;
 		myVector.push_back(srv);
 		sockets[sock] = myVector;
-		
 	}
 	else  {
 		DEBUG("Socket") << "Bind failed for " << host << ":" << port << ", searching for existing socket to share.";

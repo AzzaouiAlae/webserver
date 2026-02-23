@@ -279,13 +279,12 @@ void AMethod::SendResponse()
 	if (size > 0)
 		sended += size;
 
-	if (ShouldSend <= sended || Utility::SigPipe)
+	if (ShouldSend <= sended || Utility::SigPipe || sock->errorNumber == eWriteError)
 	{
+		if (sock->errorNumber == eWriteError)
+			ERR() << "Error to write to socket";
 		del = true;
-		if (code == "413" || code == "409")
-		{
-			sock->cleanBody = true;
-		}
+		sock->cleanBody = true;
 		INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " <- " << code << " " << statusMap[code];
 		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendResponse complete, code=" << code;
 	}
