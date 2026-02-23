@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/22 04:26:38 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/23 01:08:33 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,8 +110,6 @@ void ClientRequest::parsHttpStandard(string httpStandard)
 
 	if (!(ss >> method >> path >> httpv) || (ss >> extra))
 		Error::ThrowError("The Request HttpStandard is Invalid");
-	if (!(method == "GET" || method == "POST" || method == "DELETE"))
-		Error::ThrowError("400");
 	if (!(httpv == "HTTP/1.1" || httpv == "HTTP/1.0"))
 		Error::ThrowError("The Request Protocol version Invalid");
 	if (!parsPath(path))

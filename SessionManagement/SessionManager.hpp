@@ -1,5 +1,10 @@
 #pragma once
-#include "../Headers.hpp"
+#include "iostream"
+#include <map>
+#include <vector>
+
+using namespace std;
+#define MAXHEADERSIZE 8192
 
 struct Session {
     string id;
