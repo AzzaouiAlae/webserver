@@ -1,0 +1,20 @@
+services:
+  php:
+    build: .
+    ports:
+      - "9000:1337" # Maps port 8000 on your host to port 80 in the container
+    volumes:
+      - ./www:/var/www/html # Mounts your local 'www' directory to the web root
+      - ./webse:/app
+    stdin_open: true
+    tty: true
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: your_root_password
+      MYSQL_DATABASE: your_database
+    volumes:
+      - db_data:/var/lib/mysql
+volumes:
+  db_data:

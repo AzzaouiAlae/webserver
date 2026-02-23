@@ -1,15 +1,25 @@
-SRC = main.cpp $(shell find . -name "*.cpp" | grep -v "main" | grep -v ".*Test.cpp")
-OBJ = $(SRC:.cpp=.o)
-CXXFLAGS = -g3 -Wall -Wextra -Werror -std=c++98 
+DATA :=  $(shell find ./HTTP/DefaultPages/Pages -name "*.htm")
+DATA_OBJ := $(DATA:.htm=.htm.o)
+
+SRC := $(shell find . -name "*.cpp" | grep -v "./mainAlae.cpp" | grep -v ".*Test.cpp" | grep -v ".*Cgi.cpp")
+OBJ = $(SRC:%.cpp=%.o)
+
+INCLUDES := $(shell find . -name "*.hpp" -exec dirname {} \; | sort -u | awk '{printf "-I%s ", $$1}')
+
+CXX = c++
+CXXFLAGS = $(INCLUDES)  -Wall -Wextra -Werror -std=c++98  -g3 #-Ofast
 NAME = websrv.out
 
 all : $(NAME)
 
-$(NAME): $(OBJ)
-	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
+$(NAME): $(OBJ) $(DATA_OBJ)
+	$(CXX) $(CXXFLAGS) $(DATA_OBJ) $(OBJ) -o $(NAME)
+
+%.htm.o: %.htm
+	ld -r -b binary $< -o $@
 
 clean :
-	-rm $(OBJ)
+	-rm $(OBJ) $(DATA_OBJ)
 
 fclean : clean
 	-rm $(NAME)

@@ -11,7 +11,7 @@ void tearDown(void)
 void TestConfigFile1()
 {
 	//arrange
-	std::vector<std::string> tab;
+	vector<string> tab;
 
     tab.push_back("server");
     tab.push_back("{");
@@ -170,15 +170,15 @@ void TestConfigFile1()
     tab.push_back("}");
 
 	//act
-	Tokenizing ConfigFIle1("./conf/invalide1.conf");
+	DeprecatedTokenizing ConfigFIle1("./conf/invalide1.conf");
 	ConfigFIle1.split_tokens();
-	std::vector<std::string> mytab = ConfigFIle1.get_tokens();
+	vector<string> mytab = ConfigFIle1.get_tokens();
 	
 	//assert
-    std::vector<std::string>::iterator exp = tab.begin();
-    for (std::vector<std::string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
+    vector<string>::iterator exp = tab.begin();
+    for (vector<string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
     {
-        // std::cout << *exp << "|" << *str << std::endl;
+        // cout << *exp << "|" << *str << endl;
         TEST_ASSERT_EQUAL_STRING((*exp).c_str(), (*str).c_str());
         exp++;
     }
@@ -189,7 +189,7 @@ void TestConfigFile1()
 void TestConfigFile2()
 {
     // arrange
-    std::vector<std::string> tab;
+    vector<string> tab;
 
     tab.push_back("server");
     tab.push_back("{");
@@ -307,13 +307,13 @@ void TestConfigFile2()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIle2("./conf/invalide2.conf");
+    DeprecatedTokenizing ConfigFIle2("./conf/invalide2.conf");
     ConfigFIle2.split_tokens();
-    std::vector<std::string> mytab = ConfigFIle2.get_tokens();
+    vector<string> mytab = ConfigFIle2.get_tokens();
 
     // assert
-    std::vector<std::string>::iterator exp = tab.begin();
-    for (std::vector<std::string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
+    vector<string>::iterator exp = tab.begin();
+    for (vector<string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
     {
         TEST_ASSERT_EQUAL_STRING((*exp).c_str(), (*str).c_str());
         exp++;
@@ -324,7 +324,7 @@ void TestConfigFile2()
 void TestConfigFile3()
 {
     // arrange
-    std::vector<std::string> tab;
+    vector<string> tab;
 
     tab.push_back("root");
     tab.push_back("/path/target");
@@ -539,14 +539,14 @@ void TestConfigFile3()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIle3("./conf/invalide3.conf");
+    DeprecatedTokenizing ConfigFIle3("./conf/invalide3.conf");
     ConfigFIle3.split_tokens();
-    std::vector<std::string> mytab = ConfigFIle3.get_tokens();
+    vector<string> mytab = ConfigFIle3.get_tokens();
 
     // assert
-    std::vector<std::string>::iterator exp = tab.begin();
+    vector<string>::iterator exp = tab.begin();
 	
-    for (std::vector<std::string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
+    for (vector<string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
     {
 		
         TEST_ASSERT_EQUAL_STRING((*exp).c_str(), (*str).c_str());
@@ -558,7 +558,7 @@ void TestConfigFile3()
 void TestConfigFileValide1()
 {
     // arrange
-    std::vector<std::string> tab;
+    vector<string> tab;
 
     tab.push_back("server");
     tab.push_back("{");
@@ -718,18 +718,18 @@ void TestConfigFileValide1()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIleValide1("./conf/valide1.conf");
+    DeprecatedTokenizing ConfigFIleValide1("./conf/valide1.conf");
     ConfigFIleValide1.split_tokens();
-    std::vector<std::string> mytab = ConfigFIleValide1.get_tokens();
+    vector<string> mytab = ConfigFIleValide1.get_tokens();
 
     // assert
-    std::vector<std::string>::iterator exp = tab.begin();
+    vector<string>::iterator exp = tab.begin();
     int i = 0;
-	for (std::vector<std::string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
+	for (vector<string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
     {
 		if ((*exp) != (*str))
 		{
-			std::cerr << i << " ";
+			cerr << i << " ";
 		}
         TEST_ASSERT_EQUAL_STRING((*exp).c_str(), (*str).c_str());
 		i++;
@@ -740,7 +740,7 @@ void TestConfigFileValide1()
 void TestConfigFileValide2()
 {
     // arrange
-    std::vector<std::string> tab;
+    vector<string> tab;
 
     tab.push_back("server");
     tab.push_back("{");
@@ -841,13 +841,13 @@ void TestConfigFileValide2()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIleValide2("./conf/valide2.conf");
+    DeprecatedTokenizing ConfigFIleValide2("./conf/valide2.conf");
     ConfigFIleValide2.split_tokens();
-    std::vector<std::string> mytab = ConfigFIleValide2.get_tokens();
+    vector<string> mytab = ConfigFIleValide2.get_tokens();
 
     // assert
-    std::vector<std::string>::iterator exp = tab.begin();
-    for (std::vector<std::string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
+    vector<string>::iterator exp = tab.begin();
+    for (vector<string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
     {
         TEST_ASSERT_EQUAL_STRING((*exp).c_str(), (*str).c_str());
         exp++;
@@ -857,7 +857,7 @@ void TestConfigFileValide2()
 void TestConfigFileValide3()
 {
     // arrange
-    std::vector<std::string> tab;
+    vector<string> tab;
 
     tab.push_back("server");
     tab.push_back("{");
@@ -1004,13 +1004,13 @@ void TestConfigFileValide3()
     tab.push_back("}");
 
     // act
-    Tokenizing ConfigFIleValide3("./conf/valide3.conf");
+    DeprecatedTokenizing ConfigFIleValide3("./conf/valide3.conf");
     ConfigFIleValide3.split_tokens();
-    std::vector<std::string> mytab = ConfigFIleValide3.get_tokens();
+    vector<string> mytab = ConfigFIleValide3.get_tokens();
 
     // assert
-    std::vector<std::string>::iterator exp = tab.begin();
-    for (std::vector<std::string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
+    vector<string>::iterator exp = tab.begin();
+    for (vector<string>::iterator str = mytab.begin(); str != mytab.end(); ++str)
     {
         TEST_ASSERT_EQUAL_STRING((*exp).c_str(), (*str).c_str());
         exp++;
@@ -1021,9 +1021,9 @@ void TestInvalidFile()
 {
     try
     {
-        Tokenizing ConfigFIleValide3("./conf/invalid.conf");
+        DeprecatedTokenizing ConfigFIleValide3("./conf/invalid.conf");
     }
-    catch(const std::exception& e)
+    catch(const exception& e)
     {
         Error::printError(e.what());
     }
@@ -1037,9 +1037,9 @@ void TestEmptyFile()
 {
     try
     {
-        Tokenizing ConfigFIleValide3("./conf/emptyfile.conf");
+        DeprecatedTokenizing ConfigFIleValide3("./conf/emptyfile.conf");
     }
-    catch(const std::exception& e)
+    catch(const exception& e)
     {
         Error::printError(e.what());
     }
