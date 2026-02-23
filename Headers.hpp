@@ -55,7 +55,9 @@ using namespace std;
 #include "Environment/Environment.hpp"
 #include "StaticFile/StaticFile.hpp"
 #include "ISocket/ISocket.hpp"
-
+#include "SessionManagement/SessionManager.hpp"
+#include "AMethod/AMethod.hpp"
+#include "CgiRequest/CgiRequest.hpp"
 extern char **environ;
 
 #define DEFAULT_CONF "conf/engineX.conf"

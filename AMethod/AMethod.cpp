@@ -347,5 +347,4 @@ void AMethod::InitStatusMap()
 	statusMap["504"] = "Gateway Timeout";
 	statusMap["505"] = "HTTP Version Not Supported";
 }
-
-map<string, string>&  AMethod::getStatus() {return (statusMap);}
+map<string, string>& AMethod::getStatusMap(){return (statusMap);}

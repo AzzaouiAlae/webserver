@@ -33,7 +33,7 @@ bool ARequest::getFullLine(string &line)
 	while (_requestbuff[index] && _requestbuff[index] != '\n')
 	{
 		if (index > MAXHEADERSIZE)
-			Error::ThrowError("The Header is Bigger Than Expected");
+			Error::ThrowError("502");
 		line += _requestbuff[index];
 		index++;
 	}
@@ -57,7 +57,7 @@ void ARequest::parseHeaderLine(const string &line)
 {
     size_t colonPos = line.find(':');
     if (colonPos == string::npos)
-        Error::ThrowError("Bad Request Header");
+        Error::ThrowError("502");
 
     string key   = line.substr(0, colonPos);
     string value = line.substr(colonPos + 1);
@@ -67,7 +67,10 @@ void ARequest::parseHeaderLine(const string &line)
         key = (*_reqDirectives)[key];
 
     if (_env.find(key) != _env.end())
-        Error::ThrowError("Duplicate header: " + key);
+    {
+        if (key != "Cookie")
+            Error::ThrowError("502");
+    }
     _env[key] = value;
 }
 

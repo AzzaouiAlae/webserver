@@ -12,7 +12,7 @@
 
 #include "Cgi.hpp"
 
-Cgi::Cgi(Request &req, char** exec, SocketIO &sok) : _req(req), _sok(sok)
+Cgi::Cgi(CgiRequest &req, char** exec, SocketIO &sok) : _req(req), _sok(sok)
 {
     _exec = exec;
     _reqlen  = 0;

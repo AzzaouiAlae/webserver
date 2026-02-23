@@ -16,13 +16,10 @@ void CgiRequest::initDirectives()
 {
     if (_cgiDirectives.size() != 0)
         return;
-    _cgiDirectives["Status"]            = "CGI_STATUS";
-    _cgiDirectives["Location"]          = "CGI_LOCATION";
-    _cgiDirectives["Content-Type"]      = "CONTENT_TYPE";
-    _cgiDirectives["Content-Length"]    = "CONTENT_LENGTH";
-    _cgiDirectives["Set-Cookie"]        = "CGI_SET_COOKIE";
-    _cgiDirectives["Expires"]           = "EXPIRES";
-    _cgiDirectives["Last-Modified"]     = "LAST_MODIFIED";
+    _cgiDirectives["Status"]            = "Status";
+    _cgiDirectives["Location"]          = "Location";
+    _cgiDirectives["Content-Type"]      = "Content-Type";
+    _cgiDirectives["Content-Length"]    = "Content-Length";
 }
 
 CgiRequest::CgiRequest()
@@ -31,6 +28,56 @@ CgiRequest::CgiRequest()
 }
 CgiRequest::~CgiRequest() {}
 
+void CgiRequest::parseStatus()
+{
+    map<string, string> statusMap = AMethod::getStatusMap();
+    if (_env.find("Status") != _env.end())
+    {
+        stringstream ss(_env["Status"]);
+        string status;
+        string optionalmsg;
+        string extra;
+    
+        if (!(ss >> status) || ((ss >> optionalmsg) && (ss >> extra)))
+            Error::ThrowError("502");
+        if (statusMap.find(status) == statusMap.end())
+            Error::ThrowError("502");
+        _statusCode = status;
+        if (status[0] != '2' || status[0] != '3')
+            Error::ThrowError(status);
+    }
+    if (_env.find("Location") == _env.end())
+        _statusCode = "200";
+    else
+        _statusCode = "302";
+}
+
+void CgiRequest::parseLocation()
+{
+    if (_env["Location"].empty())
+        Error::ThrowError("502");
+    if (!(_env["Location"].find("http://") == 0 || _env["Location"].find("https://") == 0 || _env["Location"].find("/") == 0))
+        Error::ThrowError("502");
+    if (_env.find("Location") != _env.end() && (!_Thereisbody || _env.find("Content-Type") == _env.end()))
+        Error::ThrowError(_statusCode);
+}
+
+void CgiRequest::parsLenTypeCont()
+{
+    if (_Thereisbody && _env.find("Content-Type") == _env.end())
+        Error::ThrowError("502");
+    if (_env.find("Content-Length") != _env.end())
+        if (!Utility::strtosize_t(_env["Content-Length"], _content_len))
+			Error::ThrowError("502");
+}
+
+void CgiRequest::checkCgiMinimum()
+{
+    if (_env.find("Location") != _env.end() || _env.find("Content-Type") != _env.end())
+        return;
+    Error::ThrowError("502");
+}
+
 bool CgiRequest::ParseHeader()
 {
     string line = "";
@@ -38,4 +85,27 @@ bool CgiRequest::ParseHeader()
     while (_parsPos == eCgiHeaders && getFullLine(line) && line != "\r\n")
 		parseHeaderLine(line);
     if (_parsPos == eCgiHeaders && line == "\r\n" && _requestbuff.length() > 0) _Thereisbody = true;
+    if (_parsPos == eCgiHeaders && line == "\r\n")
+        _parsPos = eCgiHeadersEnd;
+    if (eCgiHeadersEnd)
+    {
+        checkCgiMinimum();
+        parsLenTypeCont();
+        parseLocation();
+        parseStatus();
+        _parsPos = eCgiParsEnd;
+        return (true);
+    }
+    return (false);
+}
+
+bool CgiRequest::isComplete(char *request, int size)
+{
+	_requestbuff.append(request, size);
+	if (_parsPos != eCgiParsEnd)
+	{
+		if (!ParseHeader())
+			return (false);
+	}
+	return true;
 }

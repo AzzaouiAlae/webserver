@@ -1,9 +1,6 @@
 #include "../Headers.hpp"
 #include "../Singleton/Singleton.hpp"
 
-// ═══════════════════════════════════════════════════════════════
-//  Constructor
-// ═══════════════════════════════════════════════════════════════
 
 Parsing::Parsing(const vector<string> &tokens)
 	: _tokens(tokens), _idx(0)
