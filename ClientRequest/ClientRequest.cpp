@@ -110,8 +110,6 @@ void ClientRequest::parsHttpStandard(string httpStandard)
 
 	if (!(ss >> method >> path >> httpv) || (ss >> extra))
 		Error::ThrowError("The Request HttpStandard is Invalid");
-	if (!(method == "GET" || method == "POST" || method == "DELETE"))
-		Error::ThrowError("501");
 	if (!(httpv == "HTTP/1.1" || httpv == "HTTP/1.0"))
 		Error::ThrowError("The Request Protocol version Invalid");
 	if (!parsPath(path))
