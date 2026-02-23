@@ -7,6 +7,7 @@
 
 #define BUF_SIZE 1024 * 1024 * 10
 #define SAFE_MARGIN 1024 * 64
+#define HTTPLog(lvl) lvl("HTTPContext") << logPrefix() << "HTTPContext, "
 
 class HTTPContext : public IContext
 {
@@ -28,6 +29,7 @@ class HTTPContext : public IContext
 
     // Helper to set up Pipes and switch Epoll state when request is done
     void _setupPipeline();
+	string logPrefix();
 public:
 	void activeInPipe();
 	void activeOutPipe();
