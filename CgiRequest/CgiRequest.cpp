@@ -11,6 +11,9 @@
 /* ************************************************************************** */
 
 #include "CgiRequest.hpp"
+#include "AMethod.hpp"
+
+map<string, string> CgiRequest::_cgiDirectives;
 
 void CgiRequest::initDirectives()
 {

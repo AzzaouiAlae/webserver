@@ -35,6 +35,7 @@ long Cgi::getTime()   { return _time; }
 // ─────────────────────────────────────────────
 void Cgi::createChild()
 {
+    INFO() << "Forking CGI process: " << _exec[0];
     _pid = fork();
     if (_pid == -1)
         Error::ThrowError("Fork Failed");
@@ -56,6 +57,7 @@ void Cgi::createChild()
         exit(1); // execve failed
     }
     // parent continues
+    DEBUG("Cgi") << "CGI process forked successfully, pid=" << _pid;
     _status = eFORK;
 }
 
@@ -80,6 +82,7 @@ void Cgi::writetocgi()
         int len = _sok.SendBuffToPipe((void *)body.c_str(), body.size());
         if (len > 0)
             _reqlen += len;
+        DEBUG("Cgi") << "Sent buffered body to CGI pipe: " << len << " bytes (total=" << _reqlen << "/" << _req.getcontentlen() << ")";
         _status = eSENDBUFFTOPIPE;
     }
     else if (_status == eSENDBUFFTOPIPE && !_eventexec)
@@ -91,6 +94,7 @@ void Cgi::writetocgi()
 
         if (_reqlen >= _req.getcontentlen())
         {
+            DEBUG("Cgi") << "Finished writing body to CGI (total=" << _reqlen << " bytes).";
             _status = eFINISHWRITING; // ✅ was _status == (assignment bug fixed)
         }
         else
@@ -106,7 +110,10 @@ void Cgi::writetocgi()
             _reqlen += len;
 
         if (_reqlen >= _req.getcontentlen())
+        {
+            DEBUG("Cgi") << "Finished streaming body to CGI pipe (total=" << _reqlen << " bytes).";
             _status = eFINISHWRITING;
+        }
     }
 }
 
@@ -148,11 +155,13 @@ void Cgi::readfromcgi()
         if (len > 0)
         {
             _cgiResponseBuf.append(buf, len);
+            DDEBUG("Cgi") << "Read " << len << " bytes from CGI output (buffer total=" << _cgiResponseBuf.size() << ").";
             parseCgiHeader(); // try to find end of CGI headers
         }
         else if (len == 0 && isExeted())
         {
             // CGI exited without sending valid headers → 502 Bad Gateway
+            WARN() << "CGI process (pid=" << _pid << ") exited without valid headers — treating as 502.";
             // TODO: call HandelErrorPages("502") via a callback or store error code
             _status = eCOMPLETE;
         }
@@ -164,14 +173,20 @@ void Cgi::readfromcgi()
         // HTTP/1.1 response using _sok.Send() or SendPipeToSock()
         int len = _sok.SendPipeToSock();
         if (len == 0 && isExeted())
+        {
+            DEBUG("Cgi") << "CGI header parsed and sent, switching to body forwarding.";
             _status = eSENDPIPETOSOCKET;
+        }
     }
     else if (_status == eSENDPIPETOSOCKET)
     {
         // Drain anything remaining in the pipe
         int len = _sok.SendPipeToSock();
         if (len == 0)
+        {
+            DEBUG("Cgi") << "CGI response fully forwarded to client.";
             _status = eCOMPLETE;
+        }
     }
 }
 
@@ -190,6 +205,8 @@ void Cgi::Handle()
 
     if (_status >= eFINISHWRITING && _status < eCOMPLETE)
         readfromcgi();
+    
+    DDEBUG("Cgi") << "Handle() completed, status=" << _status;
 }
 
 Cgi::~Cgi()

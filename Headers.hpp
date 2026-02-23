@@ -31,33 +31,45 @@
 #include <iomanip>
 #include <ctime>
 
-
 using namespace std;
 
 #define USEC 1000000
 
-#include "utility/Utility.hpp"
-#include "Multiplexer/Multiplexer.hpp"
-#include "AbstractSyntaxTree/AST.hpp"
-#include "Validation/Validation.hpp"
-#include "ErrorHandling/Error.hpp"
-#include "Tokenizing/Tokenizing.hpp"
-#include "Config/Config.hpp"
-#include "Parsing/Parsing.hpp"
+#include "Utility.hpp"
+#include "Multiplexer.hpp"
+#include "AST.hpp"
+#include "Logging.hpp"
+
+#include "DeprecatedValidation.hpp"
+#include "Validation.hpp"
+
+#include "Error.hpp"
+#include "SessionManagement/SessionManager.hpp"
 #include "ARequest/ARequest.hpp"
 #include "ClientRequest/ClientRequest.hpp"
-#include "Multiplexer/Multiplexer.hpp"
-#include "Path/Path.hpp"
-#include "IContext/IContext.hpp"
-#include "AFd/AFd.hpp"
-#include "Singleton/Singleton.hpp"
-#include "Logging/Logging.hpp"
-#include "Environment/Environment.hpp"
-#include "StaticFile/StaticFile.hpp"
-#include "ISocket/ISocket.hpp"
-#include "SessionManagement/SessionManager.hpp"
-#include "AMethod/AMethod.hpp"
 #include "CgiRequest/CgiRequest.hpp"
+
+
+#include "Config.hpp"
+
+#include "DeprecatedParsing.hpp"
+#include "Parsing.hpp"
+
+#include "ARequest.hpp"
+#include "ClientRequest.hpp"
+#include "Multiplexer.hpp"
+#include "DeprecatedPath.hpp"
+#include "Path.hpp"
+
+#include "IContext.hpp"
+#include "AFd.hpp"
+#include "Singleton.hpp"
+
+#include "Environment.hpp"
+#include "StaticFile.hpp"
+#include "ISocket.hpp"
+#include "Tokenizing.hpp"
+
 extern char **environ;
 
 #define DEFAULT_CONF "conf/engineX.conf"

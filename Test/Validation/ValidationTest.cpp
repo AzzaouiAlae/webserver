@@ -11,7 +11,7 @@ void Test1()
 {
 	Tokenizing file("ConfigFilesTESTS/valid1.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -27,7 +27,7 @@ void Test2()
 {
 	Tokenizing file("ConfigFilesTESTS/valid2.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -43,7 +43,7 @@ void Test3()
 {
 	Tokenizing file("ConfigFilesTESTS/valid3.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -59,7 +59,7 @@ void Test4()
 {
 	Tokenizing file("ConfigFilesTESTS/valid4.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -75,7 +75,7 @@ void Test5()
 {
 	Tokenizing file("ConfigFilesTESTS/valid5.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -91,7 +91,7 @@ void Test6()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid1.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -107,7 +107,7 @@ void Test7()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid2.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -123,7 +123,7 @@ void Test8()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid3.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -139,7 +139,7 @@ void Test9()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid4.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -155,7 +155,7 @@ void Test10()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid5.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -171,7 +171,7 @@ void Test11()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid6.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -187,7 +187,7 @@ void Test12()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid7.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -203,7 +203,7 @@ void Test13()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid8.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -219,7 +219,7 @@ void Test14()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid9.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -235,7 +235,7 @@ void Test15()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid10.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -251,7 +251,7 @@ void Test16()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid11.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -267,7 +267,7 @@ void Test17()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid12.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -283,7 +283,7 @@ void Test18()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid13.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -299,7 +299,7 @@ void Test19()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid14.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -315,7 +315,7 @@ void Test20()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid15.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -331,7 +331,7 @@ void Test21()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid16.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -347,7 +347,7 @@ void Test22()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid17.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -364,7 +364,7 @@ void Test23()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid18.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -380,7 +380,7 @@ void Test24()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid19.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -396,7 +396,7 @@ void Test25()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid20.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -412,7 +412,7 @@ void Test26()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid21.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -428,7 +428,7 @@ void Test27()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid22.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -444,7 +444,7 @@ void Test28()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid23.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -460,7 +460,7 @@ void Test29()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid24.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -476,7 +476,7 @@ void Test30()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid25.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -492,7 +492,7 @@ void Test31()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid26.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -508,7 +508,7 @@ void Test32()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid27.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -524,7 +524,7 @@ void Test33()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid28.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -540,7 +540,7 @@ void Test34()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid29.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -556,7 +556,7 @@ void Test35()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid30.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -572,7 +572,7 @@ void Test36()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid31.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -588,7 +588,7 @@ void Test37()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid32.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -604,7 +604,7 @@ void Test38()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid33.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -620,7 +620,7 @@ void Test39()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid34.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -636,7 +636,7 @@ void Test40()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid35.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -652,7 +652,7 @@ void Test41()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid36.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -668,7 +668,7 @@ void Test42()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid37.conf");
     file.split_tokens();
-    Validation valid(file.get_tokens());
+    DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 	    valid.CheckValidation();
@@ -684,7 +684,7 @@ void Test43()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid38.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -700,7 +700,7 @@ void Test44()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid39.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -716,7 +716,7 @@ void Test45()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid40.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -732,7 +732,7 @@ void Test46()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid41.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -748,7 +748,7 @@ void Test47()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid42.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -764,7 +764,7 @@ void Test48()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid43.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -780,7 +780,7 @@ void Test49()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid44.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -796,7 +796,7 @@ void Test50()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid45.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -812,7 +812,7 @@ void Test51()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid46.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -828,7 +828,7 @@ void Test52()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid47.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -844,7 +844,7 @@ void Test53()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid48.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -860,7 +860,7 @@ void Test54()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid49.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -876,7 +876,7 @@ void Test55()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid50.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -893,7 +893,7 @@ void Test56()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid51.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -909,7 +909,7 @@ void Test57()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid52.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -925,7 +925,7 @@ void Test58()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid53.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -941,7 +941,7 @@ void Test59()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid54.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();
@@ -957,7 +957,7 @@ void Test60()
 {
 	Tokenizing file("ConfigFilesTESTS/invalid55.conf");
 	file.split_tokens();
-	Validation valid(file.get_tokens());
+	DeprecatedValidation valid(file.get_tokens());
 	try
 	{
 		valid.CheckValidation();

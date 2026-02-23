@@ -14,6 +14,8 @@
 #include "iostream"
 #include <map>
 #include <vector>
+#include "SessionManager.hpp"
+
 using namespace std;
 #define MAXHEADERSIZE 8192
 

@@ -143,10 +143,3 @@ Session* ARequest::getSession() {
     }
     return _currentSession;
 }
-
-Session* ARequest::getSession() {
-    if (_currentSession == NULL) {
-        initSession();
-    }
-    return _currentSession;
-}

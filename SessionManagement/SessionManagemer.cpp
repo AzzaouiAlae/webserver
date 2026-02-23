@@ -1,4 +1,7 @@
 #include "SessionManager.hpp"
+#include "sstream"
+#include "Logging.hpp"
+
 
 SessionManager *SessionManager::instance = NULL;
 
@@ -39,6 +42,7 @@ Session *SessionManager::createSession()
 	string sessionId = generateSessionId();
 	Session *session = new Session(sessionId);
 	sessions[sessionId] = session;
+	DEBUG("SessionManager") << "Session created: id=" << sessionId;
 	return session;
 }
 
@@ -47,6 +51,7 @@ Session *SessionManager::getSession(const string &sessionId)
 	map<string, Session *>::iterator it = sessions.find(sessionId);
 	if (it == sessions.end())
 	{
+		DDEBUG("SessionManager") << "Session not found: id=" << sessionId;
 		return NULL;
 	}
 
@@ -56,6 +61,7 @@ Session *SessionManager::getSession(const string &sessionId)
 	time_t now = time(NULL);
 	if (now - session->lastAccessedAt > SESSION_TIMEOUT)
 	{
+		DEBUG("SessionManager") << "Session expired and removed: id=" << sessionId;
 		delete session;
 		sessions.erase(it);
 		return NULL;
@@ -71,6 +77,7 @@ void SessionManager::destroySession(const string &sessionId)
 	map<string, Session *>::iterator it = sessions.find(sessionId);
 	if (it != sessions.end())
 	{
+		DEBUG("SessionManager") << "Session destroyed: id=" << sessionId;
 		delete it->second;
 		sessions.erase(it);
 	}
@@ -79,18 +86,22 @@ void SessionManager::destroySession(const string &sessionId)
 void SessionManager::cleanupExpiredSessions()
 {
 	time_t now = time(NULL);
+	int removed = 0;
 	for (map<string, Session *>::iterator it = sessions.begin(); it != sessions.end();)
 	{
 		if (now - it->second->lastAccessedAt > SESSION_TIMEOUT)
 		{
 			delete it->second;
-			sessions.erase(it);
+			sessions.erase(it++);
+			removed++;
 		}
 		else
 		{
 			++it;
 		}
 	}
+	if (removed > 0)
+		DEBUG("SessionManager") << "Cleaned up " << removed << " expired session(s). Active sessions: " << sessions.size();
 }
 
 void SessionManager::setSessionData(const string &sessionId, const string &key, const string &value)
