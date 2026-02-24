@@ -4,10 +4,6 @@
 
 class AFd;
 
-
-
-
-
 class Multiplexer
 {
 	int epollFd;

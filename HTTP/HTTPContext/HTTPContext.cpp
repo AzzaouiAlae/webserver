@@ -1,8 +1,10 @@
 #include "HTTPContext.hpp"
 
+vector<char *> HTTPContext::buffPoll;
+
 void HTTPContext::Handle(AFd *fd)
 {
-	DDEBUG("HTTPContext") << "Handle(AFd) called, fd=" << fd->GetFd() << ", type=" << fd->GetType();
+	HTTPLog(DDEBUG) << ", Handle(AFd) type: " << fd->GetType();
 	if (fd->GetType() == "Socket")
 		Handle((Socket *)fd);
 	else if (fd->GetType() == "SocketIO")
@@ -11,7 +13,7 @@ void HTTPContext::Handle(AFd *fd)
 
 void HTTPContext::Handle(Socket *sock)
 {
-	DDEBUG("HTTPContext") << "Handle(Socket) called, accepting new connection on socket fd=" << sock->GetFd();
+	HTTPLog(DEBUG) << "Handle(Socket) called, accepting new connection on socket fd: " << sock->GetFd();
 	SocketIO *fd = new SocketIO(sock->acceptedSocket);
 	Singleton::GetFds().insert(fd);
 	servers = &((Singleton::GetVirtualServers())[sock->GetFd()]);
@@ -58,31 +60,24 @@ void HTTPContext::Handle()
 	}
 }
 
-string HTTPContext::logPrefix() 
-{ 
-	stringstream s;
-	s << "Socket fd: " << sock->GetFd() << ", ";
-	return s.str(); 
-}
+
 
 int HTTPContext::_readFromSocket()
 {
 	if (buf == NULL)
 	{
 		buf = (char *)calloc(1, BUF_SIZE + 1);
-		DDEBUG("HTTPContext")
-			<< "Socket fd: " << sock->GetFd()
+		HTTPLog(DDEBUG)
 			<< ", allocated read buffer (" << BUF_SIZE
 			<< " bytes).";
 	}
 	int len = read(sock->GetFd(), buf, BUF_SIZE);
-	DDEBUG("HTTPContext")
-		<< "Socket fd: " << sock->GetFd()
+	HTTPLog(DDEBUG)
 		<< ", _readFromSocket: read returned "
 		<< len;
-	if (len == 0 || Utility::SigPipe)
+	if (len <= 0 || Utility::SigPipe)
 	{
-		DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", _readFromSocket: connection closed or SigPipe, setting err=true.";
+		HTTPLog(DDEBUG) << ", _readFromSocket: connection closed or SigPipe, setting err=true.";
 		err = true;
 		return 0;
 	}
@@ -91,19 +86,23 @@ int HTTPContext::_readFromSocket()
 
 void HTTPContext::setMaxBodySize()
 {
-	DEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", HTTPContext::setMaxBodySize, err: " << err;
+	HTTPLog(DEBUG) << ", HTTPContext::setMaxBodySize, err: " << err;
 	router.srv = &Config::GetServerName(*servers, router.GetRequest().getHost());
 	router.CreatePath(router.srv);
 
 	if (router.GetPath().getLocation() != NULL && router.GetPath().getLocation()->isMaxBodySize)
 	{
 		router.GetRequest().SetMaxBodySize(router.GetPath().getLocation()->clientMaxBodySize);
-		DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", max body size set from location: " << router.GetPath().getLocation()->clientMaxBodySize;
+		HTTPLog(DDEBUG) 
+			<< ", max body size set from location: " 
+			<< router.GetPath().getLocation()->clientMaxBodySize;
 	}
 	else if (router.srv->isMaxBodySize)
 	{
 		router.GetRequest().SetMaxBodySize(router.srv->clientMaxBodySize);
-		DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", max body size set from server: " << router.srv->clientMaxBodySize;
+		HTTPLog(DDEBUG) 
+			<< ", max body size set from server: " 
+			<< router.srv->clientMaxBodySize;
 	}
 	isMaxBodyInit = true;
 }
@@ -117,12 +116,12 @@ bool HTTPContext::_parseAndConfig(int len)
 
 		// 1. Parse buffer
 		bool complete = router.GetRequest().isComplete(buf, len);
-		DEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", HTTPContext::_parseAndConfig, " << complete;
+		HTTPLog(DEBUG) << ", HTTPContext::_parseAndConfig, " << complete;
 		// 2. Configure Server Block logic
 		// We do this immediately so we can check MaxBodySize during parsing if needed
 		if (!isMaxBodyInit && router.GetRequest().getHost() != "")
 		{
-			DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", host detected: [" << router.GetRequest().getHost() << "], initializing max body size.";
+			HTTPLog(DEBUG) << ", host detected: [" << router.GetRequest().getHost() << "], initializing max body size.";
 			setMaxBodySize();
 		}
 		return complete;
@@ -138,7 +137,7 @@ bool HTTPContext::_parseAndConfig(int len)
 
 void HTTPContext::_setupPipeline()
 {
-	DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", _setupPipeline: setting up pipes and switching epoll state.";
+	HTTPLog(DDEBUG) << ", _setupPipeline: setting up pipes and switching epoll state.";
 
 	router.SetRequestComplete();
 
@@ -153,7 +152,9 @@ void HTTPContext::_setupPipeline()
 
 	out = new Pipe(sock->pipefd[1], sock);
 	MulObj->AddAsEpollOut(out);
-	DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", _setupPipeline complete: in_pipe_fd=" << sock->pipefd[0] << ", out_pipe_fd=" << sock->pipefd[1];
+	HTTPLog(DDEBUG) 
+		<< ", _setupPipeline complete: in_pipe_fd=" 
+		<< sock->pipefd[0] << ", out_pipe_fd=" << sock->pipefd[1];
 }
 
 void HTTPContext::HandleRequest()
@@ -165,18 +166,16 @@ void HTTPContext::HandleRequest()
 	{
 		buff.append(buf, len);
 	}
-	DEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", HTTPContext::HandleRequest(), len: " << len;
+	HTTPLog(DEBUG) << ", HTTPContext::HandleRequest(), len: " << len;
 	// If read failed (-1) or nothing to process, return
 	if (len == -1 && !err)
 	{
 		return;
 	}
-	DDEBUG("HTTPContext") << "\n"
-						  << buff;
+	HTTPLog(DDEBUG) << "\n" << buff;
 	// 2. Parse Data
 	bool isComplete = _parseAndConfig(len);
-	DEBUG("HTTPContext")
-		<< "Socket fd: " << sock->GetFd()
+	HTTPLog(DDEBUG)
 		<< ", HTTPContext::HandleRequest(), isComplete: "
 		<< isComplete << ", err: " << err;
 
@@ -184,7 +183,7 @@ void HTTPContext::HandleRequest()
 	if (isComplete || router.GetRequest().isRequestHeaderComplete())
 	{
 		INFO() << Socket::getRemoteName(sock->GetFd()) << " " << router.GetRequest().getMethod() << " " << router.GetRequest().getPath();
-		DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", request parsing done, setting up pipeline.";
+		HTTPLog(DDEBUG) << ", request parsing done, setting up pipeline.";
 
 		_setupPipeline();
 
@@ -210,6 +209,14 @@ void HTTPContext::HandleRequest()
 	}
 }
 
+void HTTPContext::ClearBuffPoll()
+{
+	for(size_t i = 0; i < buffPoll.size(); i++)
+	{
+		free(buffPoll[i]);
+	}
+}
+
 HTTPContext::HTTPContext()
 {
 	in = NULL;
@@ -218,12 +225,16 @@ HTTPContext::HTTPContext()
 	buf = NULL;
 	err = false;
 	isMaxBodyInit = false;
+	if (buffPoll.size() > 0) {
+		buf = buffPoll[buffPoll.size() - 1];
+		buffPoll.pop_back();
+	}
 }
 
 void HTTPContext::MarkedSocketToFree()
 {
 	INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " disconnected";
-	DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", MarkedSocketToFree: shutting down and marking for deletion.";
+	HTTPLog(DDEBUG) << ", MarkedSocketToFree: shutting down and marking for deletion.";
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 
 	Utility::SigPipe = false;
@@ -252,14 +263,17 @@ HTTPContext::~HTTPContext()
 		MulObj->DeleteFromEpoll(out);
 		delete out;
 	}
-	free(buf);
+	if (buffPoll.size() > 100)
+		free(buf);
+	else
+		buffPoll.push_back(buf);
 }
 
 void HTTPContext::activeInPipe()
 {
 	if (in == NULL)
 		return;
-	DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", activeInPipe: activating in-pipe fd=" << in->GetFd();
+	HTTPLog(DDEBUG) << ", activeInPipe: activating in-pipe fd=" << in->GetFd();
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 
 	MulObj->ChangeToEpollIn(in);
@@ -269,8 +283,18 @@ void HTTPContext::activeOutPipe()
 {
 	if (out == NULL)
 		return;
-	DDEBUG("HTTPContext") << "Socket fd: " << sock->GetFd() << ", activeOutPipe: activating out-pipe fd=" << out->GetFd();
+	HTTPLog(DDEBUG) << ", activeOutPipe: activating out-pipe fd=" << out->GetFd();
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 
 	MulObj->ChangeToEpollOut(out);
+}
+
+
+string HTTPContext::logPrefix() 
+{ 
+	stringstream s;
+	if (sock == NULL)
+		return "";
+	s << "Socket fd: " << sock->GetFd() << ", ";
+	return s.str(); 
 }

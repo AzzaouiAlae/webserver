@@ -1,8 +1,7 @@
 #include "Multiplexer.hpp"
 #include "../SocketIO/SocketIO.hpp"
 #include "SessionManager.hpp"
-
-
+#include "HTTPContext.hpp"
 
 set<AFd *> Multiplexer::toDelete;
 
@@ -130,7 +129,7 @@ void Multiplexer::ChangeToEpollInOut(AFd *fd)
 
 void Multiplexer::MainLoop()
 {
-	int timeout = 1;
+	int timeout = 10;
 	long time = Utility::CurrentTime() + USEC * timeout;
 	(void)time;
 	INFO() << "Server is ready, waiting for connections...";
@@ -194,7 +193,6 @@ void Multiplexer::ClearToDelete()
 		next++;
 		DeleteItem(*it);
 	}
-	
 }
 
 Multiplexer::~Multiplexer()
@@ -217,6 +215,10 @@ Multiplexer::~Multiplexer()
 		usleep(10000);
 	}
 	SocketIO::ClearPipePool();
+	SessionManager *p = SessionManager::getInstance();
+	delete p;
+	free(AFd::buff);
+	HTTPContext::ClearBuffPoll();
 	DEBUG("Multiplexer") << "Multiplexer cleanup complete.";
 }
 
@@ -268,7 +270,9 @@ void Multiplexer::handelEpollEvent(epoll_event &event)
 		DDEBUG("Multiplexer") << "  -> cleanFd() for fd=" << obj->GetFd();
 		obj->cleanFd();
 	}
-	else if (ClearEventObj(event) == false && event.events & (EPOLLIN | EPOLLOUT)) {
+	else if (ClearEventObj(event))
+		return;
+	else if (event.events & (EPOLLIN | EPOLLOUT)) {
 		DDEBUG("Multiplexer") << "  -> Handle() for fd=" << obj->GetFd();
 		obj->Handle();
 	}
