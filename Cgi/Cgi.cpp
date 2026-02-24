@@ -10,9 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <sys/types.h>
 #include "Cgi.hpp"
 
-Cgi::Cgi(CgiRequest &req, char** exec, SocketIO &sok) : _req(req), _sok(sok)
+Cgi::Cgi(ClientRequest &req, char** exec, SocketIO &sok) : _req(req), _sok(sok)
 {
     _exec = exec;
     _reqlen  = 0;
@@ -85,7 +86,7 @@ void Cgi::writetocgi()
             {
                 if (_reqlen != _req.getcontentlen())
                     Error::ThrowError("Bad Request");
-                _status == eFINISHWRITING;
+                _status = eFINISHWRITING;
             }
             _status = eSENDSOCKETOPIPE;
             _reqlen += len;
@@ -95,11 +96,11 @@ void Cgi::writetocgi()
 
 void Cgi::readfromcgi()
 {
-    if (_status < ePARSEDCGIHEADER)
+    if (_status == eFINISHWRITING)
     {
         while (_status != ePARSEDCGIHEADER)
         {
-            int len = read(_sok.pipefd[0], )
+            int len = read(_sok.pipefd[0], );
         }
     }
     
