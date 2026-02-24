@@ -102,7 +102,6 @@ string Config::GetErrorPath(Config::Server &srv, const string &code)
 	return "";
 }
 
-// Checks if locPath is a prefix of reqPath
 bool Config::isPrefixMatch(const vector<string> &locPath, const vector<string> &reqPath)
 {
     if (locPath.size() > reqPath.size())
@@ -115,7 +114,6 @@ bool Config::isPrefixMatch(const vector<string> &locPath, const vector<string> &
     return true;
 }
 
-// Checks if the request path ends with the CGI extension
 bool Config::pathMatchesCgiExt(const string &path, const string &cgiPassExt)
 {
     if (path.length() < cgiPassExt.length())
@@ -124,7 +122,6 @@ bool Config::pathMatchesCgiExt(const string &path, const string &cgiPassExt)
                         cgiPassExt.length(), cgiPassExt) == 0;
 }
 
-// Returns the index of the best (longest prefix) CGI location match, or -1
 int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, const string &path)
 {
     int    bestIndex = -1;
@@ -170,7 +167,6 @@ int Config::findBestStaticMatch(Config::Server &srv, const vector<string> &reqPa
     return bestIndex;
 }
 
-// Main orchestrator — now just coordinates the helpers
 int Config::GetLocationIndex(Config::Server &srv, const string &path)
 {
     vector<string> reqPath;

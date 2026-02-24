@@ -144,7 +144,7 @@ void ClientRequest::parseHost()
 {
 	if (_env.find("Host") != _env.end())
 	{
-		DeprecatedParsing::parseListen(_env["Host"], _env["SERVER_PORT"], _env["SERVER_NAME"]);
+		Parsing::parseListen(_env["Host"], _env["SERVER_PORT"], _env["SERVER_NAME"]);
 		DDEBUG("ClientRequest") << "parseHost: SERVER_NAME='" << _env["SERVER_NAME"]
 								<< "', SERVER_PORT='" << _env["SERVER_PORT"] << "'";
 	}

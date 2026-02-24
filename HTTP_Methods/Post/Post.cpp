@@ -189,10 +189,6 @@ void Post::uploadFileToDisk()
 	}
 }
 
-// ══════════════════════════════════════════════
-//  Success Response
-// ══════════════════════════════════════════════
-
 // Does one thing: gets the return directive from the matched location (if any)
 bool Post::GetLocationReturn(string &retCode, string &retBody)
 {

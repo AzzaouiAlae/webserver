@@ -43,7 +43,6 @@ using namespace std;
 #include "Validation.hpp"
 
 #include "Error.hpp"
-#include "DeprecatedTokenizing.hpp"
 #include "Tokenizing/Tokenizing.hpp"
 
 #include "Config.hpp"
@@ -53,7 +52,6 @@ using namespace std;
 #include "ARequest.hpp"
 #include "ClientRequest.hpp"
 #include "Multiplexer.hpp"
-#include "DeprecatedPath.hpp"
 #include "Path.hpp"
 
 #include "IContext.hpp"

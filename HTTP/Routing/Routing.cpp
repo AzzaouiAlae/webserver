@@ -23,7 +23,7 @@ void Routing::SetRequestComplete()
 	DEBUG("Routing") << "Request marked as complete.";
 }
 
-DeprecatedPath &Routing::GetPath()
+Path &Routing::GetPath()
 {
 	return path;
 }

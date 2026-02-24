@@ -19,7 +19,7 @@ void TestRootPath()
 		TEST_FAIL_MESSAGE(e.what());
         return;
 	}
-	DeprecatedPath path(Singleton::GetASTroot().GetChildren()[0], "/");
+	Path path(Singleton::GetASTroot().GetChildren()[0], "/");
 	TEST_ASSERT_EQUAL_STRING("/usr/bin/index.html", path.CreatePath().c_str());
 }
 
@@ -35,7 +35,7 @@ void TestLocationPath()
 		TEST_FAIL_MESSAGE(e.what());
         return;
 	}
-	DeprecatedPath path(Singleton::GetASTroot().GetChildren()[0], "/site1");
+	Path path(Singleton::GetASTroot().GetChildren()[0], "/site1");
 	TEST_ASSERT_EQUAL_STRING("/home/usr1/site1/site1.html", path.CreatePath().c_str());
 }
 
@@ -51,7 +51,7 @@ void TestLocationRootPath()
 		TEST_FAIL_MESSAGE(e.what());
         return;
 	}
-	DeprecatedPath path(Singleton::GetASTroot().GetChildren()[0], "/");
+	Path path(Singleton::GetASTroot().GetChildren()[0], "/");
 	TEST_ASSERT_EQUAL_STRING("/home/usr/site.html", path.CreatePath().c_str());
 }
 
@@ -67,7 +67,7 @@ void TestLocationRootPath()
 		TEST_FAIL_MESSAGE(e.what());
         return;
 	}
-	DeprecatedPath path(Singleton::GetASTroot().GetChildren()[0], "/");
+	Path path(Singleton::GetASTroot().GetChildren()[0], "/");
 	TEST_ASSERT_EQUAL_STRING("/home/usr/site.html", path.CreatePath().c_str());
 }
 
@@ -83,7 +83,7 @@ void TestLocationSubDir()
         TEST_FAIL_MESSAGE(e.what());
         return;
     }
-    DeprecatedPath path(Singleton::GetASTroot().GetChildren()[0], "/site2/subdir/index.html");
+    Path path(Singleton::GetASTroot().GetChildren()[0], "/site2/subdir/index.html");
     TEST_ASSERT_EQUAL_STRING("/home/usr2/site2/subdir/index.html", path.CreatePath().c_str());
 }
 
@@ -99,7 +99,7 @@ void TestNonExistionPath()
         TEST_FAIL_MESSAGE(e.what());
         return;
     }
-    DeprecatedPath path(Singleton::GetASTroot().GetChildren()[0], "/nonexistion/path/index.html");
+    Path path(Singleton::GetASTroot().GetChildren()[0], "/nonexistion/path/index.html");
     TEST_ASSERT_EQUAL_STRING("/usr/bin/nonexistion/path/index.html", path.CreatePath().c_str());
 }
 
@@ -115,7 +115,7 @@ void TestNonExistionPathWithLocationRootPath()
         TEST_FAIL_MESSAGE(e.what());
         return;
     }
-    DeprecatedPath path(Singleton::GetASTroot().GetChildren()[0], "/nonexistion/path/index.html");
+    Path path(Singleton::GetASTroot().GetChildren()[0], "/nonexistion/path/index.html");
     TEST_ASSERT_EQUAL_STRING("/home/usr/nonexistion/path/index.html", path.CreatePath().c_str());
 }
 
