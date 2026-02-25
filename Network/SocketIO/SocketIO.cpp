@@ -248,8 +248,10 @@ void SocketIO::ClearPipePool()
 	}
 }
 
-bool SocketIO::isTimeOut()
+bool SocketIO::isTimeOut(bool isCGI)
 {
+	if (isCGI)
+		return false;
 	time_t now = time(NULL);
 	if (GetEndTime() < now)
 		return true;

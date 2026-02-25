@@ -237,7 +237,7 @@ void AMethod::HandelErrorPages(const string &err)
 	CreateResponseHeader();
 	ShouldSend += responseHeaderStr.length();
 	readyToSend = true;
-	SendResponse();
+	// SendResponse();
 }
 
 // ══════════════════════════════════════════════

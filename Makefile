@@ -7,7 +7,7 @@ OBJ = $(SRC:%.cpp=%.o)
 INCLUDES := $(shell find . -name "*.hpp" -exec dirname {} \; | sort -u | awk '{printf "-I%s ", $$1}')
 
 CXX = c++
-CXXFLAGS = $(INCLUDES)  -Wall -Wextra -Werror -std=c++98 -Ofast
+CXXFLAGS = $(INCLUDES)  -Wall -Wextra -Werror -std=c++98 -g
 NAME = websrv.out
 
 all : $(NAME)

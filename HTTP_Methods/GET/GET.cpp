@@ -39,7 +39,7 @@ bool GET::HandleResponse()
 				   << ", sendListFiles=" << sendListFiles
 				   << ", emptyRoot=" << router->GetPath().emptyRoot();
 
-	if (sock->isTimeOut()) 
+	if (sock->isTimeOut(router->GetPath().isCGI())) 
 	{
 		DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", method '" << method << "' timeout, sending 408.";
 		HandelErrorPages("408");
@@ -54,28 +54,16 @@ bool GET::HandleResponse()
 			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", method '" << method << "' not allowed, sending 405.";
 			HandelErrorPages("405");
 		}
-	}
-
-	if (router->GetPath().emptyRoot()) {
-		if (router->GetRequest().getPath() == "/") {
-			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", serving static index (empty root).";
-			GetStaticIndex();
-		}
-		else
+		else 
 		{
-			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", empty root and path != '/', sending 404.";
-			HandelErrorPages("404");
+			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", method '" << method << "' not allowed, sending 405.";
+			HandelErrorPages("501");
 		}
 	}
-
-		
-	else if (sendListFiles)
+	if (sendListFiles)
 		SendListFilesResponse();
 	else if (readyToSend)
-	{
-		
 		SendResponse();
-	}
 	else if (method == "GET")
 		GetMethod();
 	else
@@ -100,12 +88,27 @@ void GET::GetMethod()
 				   << ", isCGI=" << router->GetPath().isCGI();
 	if (router->GetPath().isRedirection())
 		SendRedirection();
+	else if (router->GetPath().emptyRoot()) {
+		if (router->GetRequest().getPath() == "/") {
+			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", serving static index (empty root).";
+			GetStaticIndex();
+		}
+		else
+		{
+			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", empty root and path != '/', sending 404.";
+			HandelErrorPages("404");
+		}
+	}
 	else if (router->GetPath().isFound() == false)
 		HandelErrorPages("404");
 	else if (router->GetPath().hasPermission() == false)
 		HandelErrorPages("403");
-	else if (router->GetPath().isDirectory())
-		CreateListFilesResponse();
+	else if (router->GetPath().isDirectory()) {
+		if (router->GetPath().getLocation()->autoindex == false)
+			HandelErrorPages("403");
+		else
+			CreateListFilesResponse();
+	}
 	else if (router->GetPath().isFile())
 		ServeFile();
 	else if (router->GetPath().isCGI())

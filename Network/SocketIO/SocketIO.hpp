@@ -38,7 +38,7 @@ class SocketIO : public ISocket {
 public:
 	bool CanUsePipe0();
 	bool CanUsePipe1();
-	bool isTimeOut();
+	bool isTimeOut(bool isCGI);
 	void UpdateTime();
 	time_t GetEndTime() const;
 	static void clearTimeout();
