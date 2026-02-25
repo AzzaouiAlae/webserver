@@ -7,6 +7,7 @@ Config::Server::Server()
 	clientMaxBodySize = 0;
 	allowMethodExists = false;
 	isMaxBodySize = false;
+	autoindex = -1;
 }
 
 Config::Server::Location::Location()
@@ -15,6 +16,7 @@ Config::Server::Location::Location()
 	clientMaxBodySize = 0;
 	isMaxBodySize = false;
 	deleteFiles = false;
+	autoindex = -1;
 }
 
 bool Config::IsDuplicatedServer(int currServerIdx, const string &val, const string &srvName)
@@ -313,6 +315,7 @@ void Config::fillServer(AST<string> &serverNode, Config::Server &srv)
 			DDEBUG("Parsing") << "    -> Set server_name: [" << srv.serverName << "]";
 		}
 		else if (val == "autoindex") {
+
 			srv.autoindex = (args[0] == "on");
 			DDEBUG("Parsing") << "    -> Set autoindex: [" << (srv.autoindex ? "ON" : "OFF") << "]";
 		}
