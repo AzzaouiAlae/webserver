@@ -1,15 +1,5 @@
 #pragma once
 #include "../Headers.hpp"
-// ─────────────────────────────────────────────────────────────────
-//  Rules enforced:
-//    • Required directives are present  (listen, server_name)
-//    • No duplicated directives within the same block
-//    • Values are within legal ranges   (port, error codes, …)
-//    • Scope is respected               (some directives only in
-//      server blocks, others only in location blocks)
-//    • Conflict constraints             (cgi_pass ↔ delete_files,
-//      cgi_pass ↔ client_body_in_file_only)
-// ─────────────────────────────────────────────────────────────────
 
 class Validation
 {
