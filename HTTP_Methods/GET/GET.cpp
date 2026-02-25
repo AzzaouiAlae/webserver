@@ -39,7 +39,7 @@ bool GET::HandleResponse()
 				   << ", sendListFiles=" << sendListFiles
 				   << ", emptyRoot=" << router->GetPath().emptyRoot();
 
-	if (sock->isTimeOut()) 
+	if (sock->isTimeOut(router->GetPath().isCGI())) 
 	{
 		DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", method '" << method << "' timeout, sending 408.";
 		HandelErrorPages("408");
@@ -53,6 +53,11 @@ bool GET::HandleResponse()
 		{
 			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", method '" << method << "' not allowed, sending 405.";
 			HandelErrorPages("405");
+		}
+		else 
+		{
+			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", method '" << method << "' not allowed, sending 405.";
+			HandelErrorPages("501");
 		}
 	}
 
