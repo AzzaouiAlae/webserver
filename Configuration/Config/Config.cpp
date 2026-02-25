@@ -222,6 +222,25 @@ void Config::parseListen(const string &str, string &port, string &host)
 {
 	DDEBUG("Parsing") << "Parsing 'listen' directive value: [" << str << "]";
 
+	if (str[0] == '[')
+	{
+		std::string::size_type endBracket = str.find(']');
+
+		if (endBracket != std::string::npos)
+		{
+			host = str.substr(1, endBracket - 1);
+			if (endBracket + 1 < str.length() && str[endBracket + 1] == ':')
+				port = str.substr(endBracket + 2);
+			else
+				port = "80";
+
+			DDEBUG("Parsing") << "  -> Detected IPv6 format => Host: [" << host << "], Port: [" << port << "]";
+			return;
+		}
+		else
+			Error::ThrowError("Invalid host format: " + str);
+	}
+
 	const char *colon = strrchr(str.c_str(), ':');
 
 	if (colon != NULL)

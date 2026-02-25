@@ -39,7 +39,6 @@ string DeprecatedPath::joinPath(const string &root, const string &uri)
 		return uri;
 	if (uri.empty())
 		return root;
-
 	if (root[root.length() - 1] == '/' && uri[0] == '/')
 		return root + uri.substr(1);
 	else if (root[root.length() - 1] != '/' && uri[0] != '/')
