@@ -5,8 +5,9 @@
 #include "Pipe.hpp"
 #include "Repsense.hpp"
 
-#define BUF_SIZE 1024 * 1024 * 10
+#define BUF_SIZE 1024 * 1024 * 5
 #define SAFE_MARGIN 1024 * 64
+#define HTTPLog(lvl) lvl("HTTPContext") << logPrefix() << "HTTPContext, "
 
 class HTTPContext : public IContext
 {
@@ -19,6 +20,7 @@ class HTTPContext : public IContext
 	bool err;
 	string errNo;
 	bool isMaxBodyInit;
+	static vector<char *> buffPoll;
 
 	// Helper to handle buffer allocation and raw socket reading
     int  _readFromSocket();
@@ -28,7 +30,9 @@ class HTTPContext : public IContext
 
     // Helper to set up Pipes and switch Epoll state when request is done
     void _setupPipeline();
+	string logPrefix();
 public:
+	static void ClearBuffPoll();
 	void activeInPipe();
 	void activeOutPipe();
 	HTTPContext();

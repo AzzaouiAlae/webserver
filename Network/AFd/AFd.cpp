@@ -10,6 +10,7 @@ AFd::AFd(int fd, string type)
 	MarkedToDelete = false;
 	deleteNow = false;
 	cleanBody = false;
+	maxToClean = 1024 * 1024 * 10;
 	totalClean = 0;
 }
 
@@ -39,7 +40,7 @@ void AFd::cleanFd()
 	size = read(fd, buff, 1024 * 1024 * 5);
 	if (size > 0)
 		totalClean += size;
-	if (totalClean  >= maxToClean || size == 0 || Utility::SigPipe) 
+	if (totalClean  >= maxToClean || size <= 0 || Utility::SigPipe) 
 	{
 		Utility::SigPipe = false;
 		cleanBody = false;

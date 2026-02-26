@@ -11,8 +11,8 @@
 /* ************************************************************************** */
 
 #pragma once
-#include "../Headers.hpp"
 #include "../SocketIO/SocketIO.hpp"
+#include "../Headers.hpp"
 
 enum estatus
 {
@@ -22,6 +22,7 @@ enum estatus
     eSENDSOCKETOPIPE,
     eFINISHWRITING,
     ePARSEDCGIHEADER,
+
     eSENDPIPETOSOCKET,
     eCOMPLETE
 };
@@ -29,25 +30,27 @@ enum estatus
 class Cgi
 {
     ClientRequest     &_req;
+    CgiRequest        _cgireq;
     SocketIO    &_sok;
     pid_t       _pid;
     estatus     _status;
     bool        _parsheader;
     long        _time;
+    bool        _TimeSeted;
     bool        _eventexec;
-    char        **_exec;
+    char        *_exec;
     size_t      _reqlen;
-    Cgi();
     void createChild();
     void writetocgi();
     void readfromcgi();
+    Cgi();
 public:
-    Cgi(ClientRequest &req, char** exec, SocketIO &sok);
-    void run_cgi(int infd, int outfd, char** exec);
+    Cgi(ClientRequest &req, char* exec, SocketIO &sok);
     bool isExeted();
     void Handle();
     void resetTime();
     long getTime();
+    CgiRequest   &getCgiReq();
     ~Cgi();
     
 };

@@ -31,11 +31,9 @@ protected:
     bool _Thereisbody;
     int  _headersize;
 
-    bool getFullLine(string &line);
-    void parseHeaderLine(const string &line);
-    virtual bool ParseHeader() = 0;
-    virtual void initReqDirectives() = 0;
-    virtual void parsLenTypeCont() = 0;
+    bool getFullLine(string reqtype, string &line);
+    void parseHeaderLine(string reqtype, const string &line);
+    
     void parseCookies();
 public:
     ARequest();

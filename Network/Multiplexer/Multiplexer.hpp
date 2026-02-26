@@ -4,10 +4,6 @@
 
 class AFd;
 
-#define TIMEOUT_SEC 20
-
-
-
 class Multiplexer
 {
 	int epollFd;
@@ -31,7 +27,8 @@ public:
 	static Multiplexer *GetCurrentMultiplexer();
 	void MainLoop();
 	void ClearToDelete();
-	bool ClearObj(epoll_event &event);
+	bool ClearEventObj(epoll_event &event);
+	static void ClearObj(AFd *obj);
 	void handelEpollPipes(epoll_event &event);
 	void handelEpollEvent(epoll_event &event);
 };

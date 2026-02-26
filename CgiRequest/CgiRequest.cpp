@@ -15,7 +15,7 @@
 
 map<string, string> CgiRequest::_cgiDirectives;
 
-void CgiRequest::initDirectives()
+void CgiRequest::initReqDirectives()
 {
     if (_cgiDirectives.size() != 0)
         return;
@@ -49,10 +49,13 @@ void CgiRequest::parseStatus()
         if (status[0] != '2' || status[0] != '3')
             Error::ThrowError(status);
     }
-    if (_env.find("Location") == _env.end())
-        _statusCode = "200";
     else
-        _statusCode = "302";
+    {
+        if (_env.find("Location") == _env.end())
+            _statusCode = "200";
+        else
+            _statusCode = "302";
+    }
 }
 
 void CgiRequest::parseLocation()
@@ -85,8 +88,8 @@ bool CgiRequest::ParseHeader()
 {
     string line = "";
 
-    while (_parsPos == eCgiHeaders && getFullLine(line) && line != "\r\n")
-		parseHeaderLine(line);
+    while (_parsPos == eCgiHeaders && getFullLine("cgi", line) && line != "\r\n")
+		parseHeaderLine("cgi", line);
     if (_parsPos == eCgiHeaders && line == "\r\n" && _requestbuff.length() > 0) _Thereisbody = true;
     if (_parsPos == eCgiHeaders && line == "\r\n")
         _parsPos = eCgiHeadersEnd;
@@ -94,8 +97,8 @@ bool CgiRequest::ParseHeader()
     {
         checkCgiMinimum();
         parsLenTypeCont();
-        parseLocation();
         parseStatus();
+        parseLocation();
         _parsPos = eCgiParsEnd;
         return (true);
     }

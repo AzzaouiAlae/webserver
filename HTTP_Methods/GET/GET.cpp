@@ -39,8 +39,15 @@ bool GET::HandleResponse()
 				   << ", sendListFiles=" << sendListFiles
 				   << ", emptyRoot=" << router->GetPath().emptyRoot();
 
+	if (sock->isTimeOut()) 
+	{
+		DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", method '" << method << "' timeout, sending 408.";
+		HandelErrorPages("408");
+		sock->UpdateTime();
+		return del;
+	}
 	// Check allowed methods (shared logic from AMethod)
-	if (!readyToSend && !IsMethodAllowed(method))
+	else if (!readyToSend && !IsMethodAllowed(method))
 	{
 		if (method == "GET" || method == "POST" || method == "DELETE")
 		{

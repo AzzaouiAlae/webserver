@@ -10,12 +10,14 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <sys/types.h>
 #include "Cgi.hpp"
+#include <string.h>
 
-Cgi::Cgi(ClientRequest &req, char** exec, SocketIO &sok) : _req(req), _sok(sok)
+
+Cgi::Cgi(ClientRequest &req, char* exec, SocketIO &sok) : _req(req), _sok(sok)
 {
     _exec = exec;
+    _TimeSeted = false;
     _reqlen  = 0;
 }
 
@@ -60,7 +62,7 @@ void Cgi::createChild()
         close(_sok.pipefd[0]);
         dup2(_sok.pipefd[1], 1);
         close(_sok.pipefd[1]);
-        execve(_exec[0], _exec, environ);
+        execve(_exec, &_exec, environ);
         exit(1);
     }
     _status = eFORK;
@@ -94,29 +96,51 @@ void Cgi::writetocgi()
     }
 }
 
+
 void Cgi::readfromcgi()
 {
+    char buf[MAXHEADERSIZE];
+    char *copybuf;
+
     if (_status == eFINISHWRITING)
     {
-        while (_status != ePARSEDCGIHEADER)
+        if (_status < ePARSEDCGIHEADER)
         {
-            int len = read(_sok.pipefd[0], );
+            int len = 0;
+            if (_sok.CanUsePipe0())
+                len = read(_sok.pipefd[0], buf, MAXHEADERSIZE - 1);
+            if (len <= 0)
+                Error::ThrowError("504");
+            buf[len + 1] = '\0';
+            copybuf = strdup(buf);
+            if (_cgireq.isComplete(buf, len + 1))
+                _status = ePARSEDCGIHEADER;
         }
-    }
-    
-    if (_finishwriting && !_finishreading)
-    {
-        if (_sok.SendPipeToSock() == 0)
-            _complete = true;
     }
 }
 
 void Cgi::Handle()
 {
-    _eventexec = false;
+    if (!_TimeSeted)
+    {
+        resetTime();
+        _TimeSeted = true;
+    }
+    if (_time - Utility::CurrentTime() > TIMEOUT * 1000000)
+        Error::ThrowError("504");
     if (_status == eSTART)
         createChild();
     if (_status < eFINISHWRITING)
         writetocgi();
-    
+    if (_status >= eFINISHWRITING)
+        readfromcgi();
+}
+
+Cgi::~Cgi()
+{
+}
+
+CgiRequest   &Cgi::getCgiReq()
+{
+    return (_cgireq);
 }

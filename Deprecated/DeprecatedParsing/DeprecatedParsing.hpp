@@ -20,11 +20,6 @@ public:
 	DeprecatedParsing(const vector<string> &tokens);
 
 	void BuildAST();
-	void FillConf();
-
-	static void parseListen(const string &str,
-							string &port,
-							string &host);
 
 private:
 	// ── token stream state ──────────────────────────────────
@@ -43,9 +38,4 @@ private:
 	bool isSeparator() const; // ; { }
 	bool atEnd() const;
 
-	// ── FillConf helpers ─────────────────────────────────────
-	void fillServer(AST<string> &serverNode, Config::Server &srv);
-	void fillLocation(AST<string> &locationNode,
-					  Config::Server::Location &loc);
-	static size_t parseByteSize(const string &raw);
 };

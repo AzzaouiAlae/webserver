@@ -25,7 +25,7 @@ ARequest::~ARequest()
 {
 }
 
-bool ARequest::getFullLine(string &line)
+bool ARequest::getFullLine(string reqtype, string &line)
 {
 	int index = 0;
 	line.clear();
@@ -33,12 +33,20 @@ bool ARequest::getFullLine(string &line)
 	while (_requestbuff[index] && _requestbuff[index] != '\n')
 	{
 		if (index > MAXHEADERSIZE)
-			Error::ThrowError("502");
+        {
+            if (reqtype == "cgi")
+			    Error::ThrowError("502");
+            Error::ThrowError("431");
+        }
 		line += _requestbuff[index];
 		index++;
 	}
 	if (_requestbuff[index] == '\n' && (index == 0 || (index > 0 && _requestbuff[index - 1] != '\r')))
-		Error::ThrowError("The Request Line Invalid");
+    {
+        if (reqtype == "cgi")
+			Error::ThrowError("502");
+        Error::ThrowError("400");
+    }
 	else if (_requestbuff[index] == '\n')
 	{
 		_headersize += index;
@@ -53,12 +61,15 @@ bool ARequest::getFullLine(string &line)
 	return true;
 }
 
-void ARequest::parseHeaderLine(const string &line)
+void ARequest::parseHeaderLine(string reqtype, const string &line)
 {
     size_t colonPos = line.find(':');
     if (colonPos == string::npos)
-        Error::ThrowError("502");
-
+    {
+        if (reqtype == "cgi")
+			Error::ThrowError("502");
+        Error::ThrowError("400");
+    }
     string key   = line.substr(0, colonPos);
     string value = line.substr(colonPos + 1);
     Utility::trim(value, " \n\r");
@@ -69,7 +80,11 @@ void ARequest::parseHeaderLine(const string &line)
     if (_env.find(key) != _env.end())
     {
         if (key != "Cookie")
-            Error::ThrowError("502");
+        {
+            if (reqtype == "cgi")
+			    Error::ThrowError("502");
+            Error::ThrowError("400");
+        }
     }
     _env[key] = value;
 }

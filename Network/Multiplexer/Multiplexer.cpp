@@ -1,5 +1,7 @@
 #include "Multiplexer.hpp"
 #include "../SocketIO/SocketIO.hpp"
+#include "SessionManager.hpp"
+#include "HTTPContext.hpp"
 
 set<AFd *> Multiplexer::toDelete;
 
@@ -127,7 +129,7 @@ void Multiplexer::ChangeToEpollInOut(AFd *fd)
 
 void Multiplexer::MainLoop()
 {
-	int timeout = 1;
+	int timeout = 10;
 	long time = Utility::CurrentTime() + USEC * timeout;
 	(void)time;
 	INFO() << "Server is ready, waiting for connections...";
@@ -173,12 +175,18 @@ bool Multiplexer::DeleteItem(AFd *item)
 void Multiplexer::ClearToDelete()
 {
 	SocketIO::CloseSockFD(-1);
+	SocketIO::clearTimeout();
 	
 	if (toDelete.size() == 0)
 		return;
 	DDEBUG("Multiplexer") << "ClearToDelete: " << toDelete.size() << " item(s) pending deletion.";
 	set<AFd *>::iterator it = toDelete.begin();
 	set<AFd *>::iterator next;
+	SessionManager *p = SessionManager::getInstance();
+	if (p != NULL)
+	{
+		p->cleanupExpiredSessions();
+	}
 	for(; it != toDelete.end(); it = next)
 	{
 		next = it;
@@ -207,22 +215,33 @@ Multiplexer::~Multiplexer()
 		usleep(10000);
 	}
 	SocketIO::ClearPipePool();
+	SessionManager *p = SessionManager::getInstance();
+	delete p;
+	free(AFd::buff);
+	HTTPContext::ClearBuffPoll();
 	DEBUG("Multiplexer") << "Multiplexer cleanup complete.";
 }
 
-bool Multiplexer::ClearObj(epoll_event &event)
+bool Multiplexer::ClearEventObj(epoll_event &event)
 {
 	AFd *obj = (AFd *)(event.data.ptr);
 
 	if (obj->MarkedToDelete || event.events & (EPOLLERR | EPOLLPRI | EPOLLRDHUP))
 	{
-		DEBUG("Multiplexer") << "Socket fd: " << obj->GetFd() << ", MarkedToDelete";
-		obj->MarkedToDelete = true;
-		DeleteFromEpoll(obj);
-		toDelete.insert(obj);
+		ClearObj(obj);
 		return true;
 	}
 	return false;
+}
+
+void Multiplexer::ClearObj(AFd *obj)
+{
+	DEBUG("Multiplexer") << "Socket fd: " << obj->GetFd() << ", MarkedToDelete";
+	obj->MarkedToDelete = true;
+	if (currentMultiplexer == NULL)
+		return;
+	currentMultiplexer->DeleteFromEpoll(obj);
+	toDelete.insert(obj);
 }
 
 void Multiplexer::handelEpollPipes(epoll_event &event)
@@ -242,15 +261,18 @@ void Multiplexer::handelEpollEvent(epoll_event &event)
 	
 	if (obj->GetType() == "Pipe") 
 		return;
-	DDEBUG("Multiplexer") << "handelEpollEvent: fd=" << obj->GetFd()
-						   << ", type=" << obj->GetType()
-						   << ", events=" << event.events
-						   << ", cleanBody=" << obj->cleanBody;
+	DDEBUG("Multiplexer") 
+		<< "handelEpollEvent: fd=" << obj->GetFd()
+		<< ", type=" << obj->GetType()
+		<< ", events=" << event.events
+		<< ", cleanBody=" << obj->cleanBody;
 	if (obj->cleanBody) {
 		DDEBUG("Multiplexer") << "  -> cleanFd() for fd=" << obj->GetFd();
 		obj->cleanFd();
 	}
-	else if (ClearObj(event) == false && event.events & (EPOLLIN | EPOLLOUT)) {
+	else if (ClearEventObj(event))
+		return;
+	else if (event.events & (EPOLLIN | EPOLLOUT)) {
 		DDEBUG("Multiplexer") << "  -> Handle() for fd=" << obj->GetFd();
 		obj->Handle();
 	}

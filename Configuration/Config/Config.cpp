@@ -332,8 +332,7 @@ void Config::fillServer(AST<string> &serverNode, Config::Server &srv)
 	}
 }
 
-void Config::fillLocation(AST<string> &locationNode,
-						   Config::Server::Location &loc)
+void Config::fillLocation(AST<string> &locationNode, Config::Server::Location &loc)
 {
 	Utility::parseBySep(loc.parsedPath, loc.path, "/");
 	DDEBUG("Parsing") << "    Parsed location path segments: " << loc.parsedPath.size() << " part(s).";

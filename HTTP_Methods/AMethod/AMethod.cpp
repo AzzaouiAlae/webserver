@@ -34,28 +34,35 @@ void AMethod::ResolvePath()
 		filename = router->CreatePath(router->srv);
 		pathResolved = true;
 		DEBUG("AMethod") << "Socket fd: " << sock->GetFd()
-						<< " " << router->GetRequest().getMethod() 
-						<< " resolved path: " << filename;
+						 << " " << router->GetRequest().getMethod()
+						 << " resolved path: " << filename;
 		DDEBUG("AMethod") << "  -> isCGI=" << router->GetPath().isCGI()
-						   << ", isDir=" << router->GetPath().isDirectory()
-						   << ", isFile=" << router->GetPath().isFile()
-						   << ", isRedir=" << router->GetPath().isRedirection()
-						   << ", found=" << router->GetPath().isFound();
+						  << ", isDir=" << router->GetPath().isDirectory()
+						  << ", isFile=" << router->GetPath().isFile()
+						  << ", isRedir=" << router->GetPath().isRedirection()
+						  << ", found=" << router->GetPath().isFound();
 	}
 }
 
-string AMethod::escapeForJS(const string& input) {
-    string output;
-    for (size_t i = 0; i < input.length(); ++i) {
-        if (input[i] == '\'') {
-            output += "\\'";  // Escape single quotes
-        } else if (input[i] == '\\') {
-            output += "\\\\"; // Escape backslashes
-        } else {
-            output += input[i];
-        }
-    }
-    return output;
+string AMethod::escapeForJS(const string &input)
+{
+	string output;
+	for (size_t i = 0; i < input.length(); ++i)
+	{
+		if (input[i] == '\'')
+		{
+			output += "\\'"; // Escape single quotes
+		}
+		else if (input[i] == '\\')
+		{
+			output += "\\\\"; // Escape backslashes
+		}
+		else
+		{
+			output += input[i];
+		}
+	}
+	return output;
 }
 
 // Does one thing: closes the file descriptor if it was opened
@@ -66,7 +73,6 @@ AMethod::~AMethod()
 		close(fileFd);
 	}
 }
-
 
 // ══════════════════════════════════════════════
 //  Date Formatting
@@ -114,16 +120,23 @@ void AMethod::CreateResponseHeader()
 		<< "Server: " << ResolveServerName() << "\r\n"
 		<< "Content-Type: " << ResolveMimeType() << "\r\n"
 		<< "Content-Length: " << bodySize << "\r\n"
-		<< "Connection: close\r\n"
+		<< "Connection: close\r\n";
+	Session* session = NULL;
+	// session = router->GetRequest().getSession();
+	if (session != NULL) {
+		addCookies(*session);
+	}
+	responseHeader
 		<< "X-Content-Type-Options: nosniff\r\n"
 		<< "\r\n";
 
 	responseHeaderStr = responseHeader.str();
-	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd()
-					   << ", CreateResponseHeader: code=" << code
-					   << ", status=" << statusMap[code]
-					   << ", Content-Length=" << bodySize
-					   << ", Content-Type=" << ResolveMimeType();
+	DDEBUG("AMethod")
+		<< "Socket fd: " << sock->GetFd()
+		<< ", CreateResponseHeader: code=" << code
+		<< ", status=" << statusMap[code]
+		<< ", Content-Length=" << bodySize
+		<< ", Content-Type=" << ResolveMimeType();
 }
 
 // Does one thing: sends the default 201 Created (no body)
@@ -149,7 +162,13 @@ void AMethod::CreateRedirectionHeader(const string &redirCode, const string &red
 		<< "Location: " << redirLocation << "\r\n"
 		<< "Date: " << CreateDate() << "\r\n"
 		<< "Content-Length: 0\r\n"
-		<< "Connection: close\r\n"
+		<< "Connection: close\r\n";
+	Session* session = NULL;
+	// session = router->GetRequest().getSession();
+	if (session != NULL) {
+		addCookies(*session);
+	}
+	responseHeader
 		<< "\r\n";
 
 	responseHeaderStr = responseHeader.str();
@@ -185,8 +204,6 @@ void AMethod::LoadStaticErrorFile(const string &errorCode)
 	ShouldSend = bodySize;
 	filename = ".html";
 }
-
-
 
 // Does one thing: orchestrates error page resolution, then prepares for sending
 void AMethod::HandelErrorPages(const string &err)
@@ -227,7 +244,6 @@ void AMethod::HandelErrorPages(const string &err)
 //  Sending Response
 // ══════════════════════════════════════════════
 
-
 // Does one thing: sends the next chunk of data (header + body) to the socket
 void AMethod::SendResponse()
 {
@@ -253,7 +269,7 @@ void AMethod::SendResponse()
 	{
 		h = &((responseHeaderStr.c_str())[sended]);
 		len = responseHeaderStr.length() - sended;
-		size = sock->sendFileWithHeader(h, len, fileFd, ShouldSend - sended);
+		size = sock->Send((void *)h, len);
 	}
 	else if (sended >= (int)responseHeaderStr.length())
 	{
@@ -263,16 +279,33 @@ void AMethod::SendResponse()
 	if (size > 0)
 		sended += size;
 
-	if (ShouldSend <= sended || Utility::SigPipe) 
+	if (ShouldSend <= sended || Utility::SigPipe || sock->errorNumber == eWriteError)
 	{
+		if (sock->errorNumber == eWriteError)
+			ERR() << "Error to write to socket";
 		del = true;
-		if (code == "413" || code == "409") {
-			sock->cleanBody = true;
-		}
+		sock->cleanBody = true;
 		INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " <- " << code << " " << statusMap[code];
 		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendResponse complete, code=" << code;
 	}
 	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendResponse: sent=" << size << ", progress=" << sended << "/" << ShouldSend;
+}
+
+void AMethod::HandelCGI()
+{
+	if (_cgi == NULL)
+		_cgi = new Cgi(router->GetRequest(), router->GetPath().getLocation()->cgiPassPath.c_str(), (*this).sock);
+	try
+	{
+		_cgi->Handle();
+	}
+	catch(const std::string& status)
+	{
+		if (status[0] == '5' || status[0] == '4')
+			HandelErrorPages(status);
+		if (status[0] == '3')
+	}
+	
 }
 
 // ══════════════════════════════════════════════
@@ -287,7 +320,7 @@ void AMethod::SendRedirection()
 	string redirLoc = path.getRedirPath();
 
 	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd()
-					   << ", SendRedirection: code=" << redirCode << ", location='" << redirLoc << "'";
+					  << ", SendRedirection: code=" << redirCode << ", location='" << redirLoc << "'";
 
 	CreateRedirectionHeader(redirCode, redirLoc);
 
@@ -316,6 +349,8 @@ bool AMethod::IsMethodAllowed(const string &method)
 	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
 	return allowed;
 }
+
+
 
 // ══════════════════════════════════════════════
 //  Status Map Initialization
@@ -374,5 +409,16 @@ void AMethod::InitStatusMap()
 	statusMap["503"] = "Service Unavailable";
 	statusMap["504"] = "Gateway Timeout";
 	statusMap["505"] = "HTTP Version Not Supported";
+}
+
+void AMethod::addCookies(Session &session)
+{
+	responseHeader << "Set-Cookie:";
+	map<string, string>::iterator it = session.data.begin(); 
+	for (;it != session.data.end(); ++it)
+	{
+		responseHeader << " " << it->first << "=" << it->second << ";";
+	}
+	responseHeader << "\r\n";
 }
 map<string, string>& AMethod::getStatusMap(){return (statusMap);}

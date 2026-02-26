@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/21 05:19:35 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/23 01:08:33 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -142,7 +142,7 @@ void ClientRequest::parseHost()
 {
 	if (_env.find("Host") != _env.end())
 	{
-		DeprecatedParsing::parseListen(_env["Host"], _env["SERVER_PORT"], _env["SERVER_NAME"]);
+		Config::parseListen(_env["Host"], _env["SERVER_PORT"], _env["SERVER_NAME"]);
 		DDEBUG("ClientRequest") << "parseHost: SERVER_NAME='" << _env["SERVER_NAME"]
 								<< "', SERVER_PORT='" << _env["SERVER_PORT"] << "'";
 	}
@@ -154,10 +154,10 @@ bool ClientRequest::ParseHeader()
 {
 	string line = "";
 
-	if (_Parspos == eParsStart && getFullLine(line))
+	if (_Parspos == eParsStart && getFullLine("client", line))
 		parsHttpStandard(line);
-	while (_Parspos == eParsHttpStand && getFullLine(line) && line != "\r\n")
-		parseHeaderLine(line);
+	while (_Parspos == eParsHttpStand && getFullLine("client", line) && line != "\r\n")
+		parseHeaderLine("client", line);
 	if (_Parspos == eParsHttpStand && line == "\r\n" && _requestbuff.length() > 0) _Thereisbody = true;
 	if (_Parspos == eParsHttpStand && line == "\r\n" && 
 		(_env["REQUEST_METHOD"] == "POST" || _env["REQUEST_METHOD"] == "DELETE"))

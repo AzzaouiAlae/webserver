@@ -30,6 +30,7 @@
 #include <dirent.h>
 #include <iomanip>
 #include <ctime>
+#include <queue>
 
 using namespace std;
 
@@ -48,6 +49,7 @@ using namespace std;
 #include "ARequest/ARequest.hpp"
 #include "ClientRequest/ClientRequest.hpp"
 #include "CgiRequest/CgiRequest.hpp"
+#include "Cgi/Cgi.hpp"
 
 
 #include "Config.hpp"
