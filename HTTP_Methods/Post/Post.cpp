@@ -12,7 +12,9 @@ Post::Post(SocketIO *sock, Routing *router) : AMethod(sock, router)
 	uploadedSize = 0;
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
     MulObj->ChangeToEpollIn(sock);
-	DEBUG("Post") << "Post initialized, socket fd=" << sock->GetFd();
+	DEBUG("Post") 
+		<< "Post initialized, socket fd="
+		<< sock->GetFd();
 }
 
 Post::~Post()
@@ -30,7 +32,9 @@ bool Post::HandleResponse()
 {
 	sock->SetStateByFd(sock->GetFd());
 
-	DEBUG("Post") << "Socket fd: " << sock->GetFd() << ", Post::HandleResponse() start";
+	DEBUG("Post") 
+		<< "Socket fd: " << sock->GetFd() 
+		<< ", Post::HandleResponse() start";
 	DDEBUG("Post") << "Socket fd: " << sock->GetFd()
 					<< ", readyToSend=" << readyToSend
 					<< ", readyToUpload=" << readyToUpload
@@ -54,7 +58,9 @@ bool Post::HandleResponse()
 	// 3. Check method is allowed
 	if (!IsMethodAllowed("POST"))
 	{
-		DDEBUG("Post") << "Socket fd: " << sock->GetFd() << ", POST method not allowed, sending 405.";
+		DDEBUG("Post") 
+			<< "Socket fd: " << sock->GetFd() 
+			<< ", POST method not allowed, sending 405.";
 		HandelErrorPages("405");
 		return del;
 	}
@@ -65,7 +71,9 @@ bool Post::HandleResponse()
 	// 5. Redirection
 	if (router->GetPath().isRedirection())
 	{
-		DDEBUG("Post") << "Socket fd: " << sock->GetFd() << ", redirection detected.";
+		DDEBUG("Post") 
+			<< "Socket fd: " << sock->GetFd() 
+			<< ", redirection detected.";
 		SendRedirection();
 		return del;
 	}
@@ -73,7 +81,9 @@ bool Post::HandleResponse()
 	// 6. File already exists → 409
 	if (router->GetPath().isFound() && router->GetPath().isFile())
 	{
-		DDEBUG("Post") << "Socket fd: " << sock->GetFd() << ", file already exists, sending 409.";
+		DDEBUG("Post") 
+			<< "Socket fd: " << sock->GetFd() 
+			<< ", file already exists, sending 409.";
 		HandelErrorPages("409");
 		return del;
 	}
@@ -81,7 +91,9 @@ bool Post::HandleResponse()
 	// 7. CGI (to be implemented)
 	if (router->GetPath().isCGI())
 	{
-		DDEBUG("Post") << "Socket fd: " << sock->GetFd() << ", CGI path detected (not yet implemented).";
+		DDEBUG("Post") 
+			<< "Socket fd: " << sock->GetFd() 
+			<< ", CGI path detected (not yet implemented).";
 		// TODO: forward body to CGI via stdin
 		return del;
 	}
@@ -100,7 +112,10 @@ bool Post::HandleResponse()
 void Post::OpenUploadFile()
 {
 	uploadFd = open(filename.c_str(), O_CREAT | O_WRONLY, 0644);
-	DDEBUG("Post") << "Socket fd: " << sock->GetFd() << ", OpenUploadFile: '" << filename << "', fd=" << uploadFd;
+	DDEBUG("Post") 
+		<< "Socket fd: " << sock->GetFd() 
+		<< ", OpenUploadFile: '" << filename 
+		<< "', fd=" << uploadFd;
 }
 
 // ══════════════════════════════════════════════
@@ -112,7 +127,9 @@ void Post::PostMethod()
 {
 	if (router->GetPath().getLocation() == NULL)
 	{
-		DDEBUG("Post") << "Socket fd: " << sock->GetFd() << ", PostMethod: no location matched, sending 403.";
+		DDEBUG("Post") 
+			<< "Socket fd: " << sock->GetFd() 
+			<< ", PostMethod: no location matched, sending 403.";
 		HandelErrorPages("403");
 		return;
 	}
@@ -120,14 +137,19 @@ void Post::PostMethod()
 	OpenUploadFile();
 	if (uploadFd == -1)
 	{
-		DDEBUG("Post") << "Socket fd: " << sock->GetFd() << ", PostMethod: failed to open upload file, sending 403.";
+		DDEBUG("Post") 
+			<< "Socket fd: " << sock->GetFd() 
+			<< ", PostMethod: failed to open upload file, sending 403.";
 		HandelErrorPages("403");
 		return;
 	}
 
 	contentBodySize = router->GetRequest().getcontentlen();
 	readyToUpload = true;
-	DDEBUG("Post") << "Socket fd: " << sock->GetFd() << ", PostMethod: starting upload, contentBodySize=" << contentBodySize;
+	DDEBUG("Post") 
+		<< "Socket fd: " << sock->GetFd() 
+		<< ", PostMethod: starting upload, contentBodySize=" 
+		<< contentBodySize;
 	uploadFileToDisk();
 }
 
@@ -174,14 +196,18 @@ void Post::uploadFileToDisk()
 		WriteBodyFromSocket();
 	}
 
-	DEBUG("Post") << "Socket fd: " << sock->GetFd()
-				 << " POST uploaded " << uploadedSize
-				 << " / " << contentBodySize << " bytes";
+	DEBUG("Post")
+		<< "Socket fd: " << sock->GetFd()
+		<< " POST uploaded " << uploadedSize
+		<< " / " << contentBodySize << " bytes";
 
 	// Check if upload is complete
 	if (uploadedSize >= contentBodySize)
 	{
-		INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " upload complete: " << filename << " (" << contentBodySize << " bytes)";
+		INFO() 
+			<< "Client " << Socket::getRemoteName(sock->GetFd()) 
+			<< " upload complete: " << filename << " (" 
+			<< contentBodySize << " bytes)";
 		close(uploadFd);
 		uploadFd = -1;
 		readyToUpload = false;
@@ -209,8 +235,10 @@ bool Post::GetLocationReturn(string &retCode, string &retBody)
 void Post::SendPostRedirection(const string &retCode, const string &retBody)
 {
 	CreateRedirectionHeader(retCode, retBody);
-	DEBUG("Post") << "Socket fd: " << sock->GetFd()
-				  << " POST redirect " << retCode << " to " << retBody;
+	DEBUG("Post") 
+		<< "Socket fd: " << sock->GetFd()
+		<< " POST redirect " << retCode 
+		<< " to " << retBody;
 	ShouldSend = responseHeaderStr.length();
 	readyToSend = true;
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
@@ -220,8 +248,11 @@ void Post::SendPostRedirection(const string &retCode, const string &retBody)
 // Does one thing: sends a custom body response (e.g., return 200 '{"status":"ok"}')
 void Post::SendPostCustomBody(const string &retCode, const string &retBody)
 {
-	DDEBUG("Post") << "Socket fd: " << sock->GetFd()
-					<< ", SendPostCustomBody: code=" << retCode << ", bodyLen=" << retBody.length();
+	DDEBUG("Post") 
+		<< "Socket fd: " << sock->GetFd()
+		<< ", SendPostCustomBody: code=" 
+		<< retCode << ", bodyLen=" 
+		<< retBody.length();
 	code = retCode;
 	bodySize = retBody.length();
 	filename = ".json";
@@ -232,8 +263,6 @@ void Post::SendPostCustomBody(const string &retCode, const string &retBody)
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 	MulObj->ChangeToEpollOut(sock);
 }
-
-
 
 // Does one thing: orchestrates which response to send after upload completes
 void Post::createPostResponse()
@@ -246,25 +275,21 @@ void Post::createPostResponse()
 
 	if (GetLocationReturn(retCode, retBody))
 	{
-		DDEBUG("Post") << "Socket fd: " << sock->GetFd()
-						<< ", createPostResponse: location return code=" << retCode;
-		// Location has a "return" directive
+		DDEBUG("Post") 
+			<< "Socket fd: " << sock->GetFd()
+			<< ", createPostResponse: location return code=" 
+			<< retCode;
+		
 		if (retCode == "301" || retCode == "302")
-		{
-			// return 301 /new-path;  → redirect
 			SendPostRedirection(retCode, retBody);
-		}
 		else
-		{
-			// return 200 '{"status": "success"}';  → custom body
 			SendPostCustomBody(retCode, retBody);
-		}
 	}
 	else
 	{
-		DDEBUG("Post") << "Socket fd: " << sock->GetFd()
-						<< ", createPostResponse: no return directive, sending 201 Created.";
-		// No "return" directive → default 201 Created
+		DDEBUG("Post") 
+			<< "Socket fd: " << sock->GetFd()
+			<< ", createPostResponse: no return directive, sending 201 Created.";
 		SendDefaultRespense();
 	}
 }

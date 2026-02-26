@@ -322,17 +322,22 @@ void AMethod::SendRedirection()
 // Does one thing: checks if the given method is in the server's allowed methods list
 bool AMethod::IsMethodAllowed(const string &method)
 {
-	if (!router->srv->allowMethodExists)
+	bool allowed = true;
+	if (router->loc != NULL && router->loc->allowMethodExists)
 	{
-		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed: no restrictions, all methods allowed.";
-		return true;
+		vector<string>::iterator start = router->loc->allowMethods.begin();
+		vector<string>::iterator end = router->loc->allowMethods.end();
+		allowed = (find(start, end, method) != end);
+		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
 	}
-
-	vector<string>::iterator start = router->srv->allowMethods.begin();
-	vector<string>::iterator end = router->srv->allowMethods.end();
-
-	bool allowed = (find(start, end, method) != end);
-	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
+	else if (router->srv != NULL && router->srv->allowMethodExists)
+	{
+		vector<string>::iterator start = router->srv->allowMethods.begin();
+		vector<string>::iterator end = router->srv->allowMethods.end();
+		
+		allowed = (find(start, end, method) != end);
+		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
+	}
 	return allowed;
 }
 
