@@ -110,6 +110,13 @@ void GET::GetMethod()
 		}
 		if ((idxSrv >= 0 && idxLoc == -1) || idxLoc == 0 )
 			HandelErrorPages("403");
+		else if (router->GetPath().getLocation()->autoindex == -1)
+		{
+			if (router->srv->autoindex <= 0)
+				HandelErrorPages("403");
+			else
+				CreateListFilesResponse();
+		}
 		else
 			CreateListFilesResponse();
 	}
