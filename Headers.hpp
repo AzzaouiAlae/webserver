@@ -67,6 +67,7 @@ using namespace std;
 #include "StaticFile.hpp"
 #include "ISocket.hpp"
 #include "Tokenizing.hpp"
+#include "ConnectionContext.hpp"
 
 extern char **environ;
 

@@ -110,13 +110,6 @@ void GET::GetMethod()
 		}
 		if ((idxSrv >= 0 && idxLoc == -1) || idxLoc == 0 )
 			HandelErrorPages("403");
-		else if (router->GetPath().getLocation()->autoindex == -1)
-		{
-			if (router->srv->autoindex <= 0)
-				HandelErrorPages("403");
-			else
-				CreateListFilesResponse();
-		}
 		else
 			CreateListFilesResponse();
 	}
@@ -148,6 +141,8 @@ void GET::PrepareFileResponse()
 	CreateResponseHeader();
 	ShouldSend += responseHeaderStr.length();
 	readyToSend = true;
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	MulObj->ChangeToEpollOut(sock);
 }
 
 // Does one thing: orchestrates file serving (open → prepare → send)
@@ -156,8 +151,6 @@ void GET::ServeFile()
 	DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", ServeFile: '" << filename << "'";
 	OpenFile(filename);
 	PrepareFileResponse();
-	
-	SendResponse();
 }
 
 // ══════════════════════════════════════════════
@@ -175,7 +168,8 @@ void GET::GetStaticIndex()
 	CreateResponseHeader();
 	ShouldSend += responseHeaderStr.length();
 	readyToSend = true;
-	SendResponse();
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	MulObj->ChangeToEpollOut(sock);
 }
 
 // ══════════════════════════════════════════════
@@ -270,7 +264,8 @@ void GET::CreateListFilesResponse()
 	ShouldSend += responseHeaderStr.length();
 
 	sendListFiles = 1;
-	SendListFilesResponse();
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	MulObj->ChangeToEpollOut(sock);
 }
 
 // ══════════════════════════════════════════════
