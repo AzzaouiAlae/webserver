@@ -16,12 +16,19 @@
 
 class CgiRequest : ARequest
 {
-    enum eCgiParsPos { eCgiHeaders, eCgiBody, eCgiComplete };
+    enum eCgiParsPos { eCgiHeaders, eCgiHeadersEnd, eCgiParsEnd};
     static map<string, string>_cgiDirectives;
     eCgiParsPos _parsPos;
+    string _statusCode;
     void initDirectives();
     bool ParseHeader();
+    void parseStatus();
+    void parseLocation();
+    void parsLenTypeCont();
+    void checkCgiMinimum();
+
 public:
     CgiRequest();
     ~CgiRequest();
+    bool isComplete(char *request, int size);
 };

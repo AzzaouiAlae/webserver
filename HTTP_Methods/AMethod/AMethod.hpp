@@ -2,6 +2,7 @@
 #include "../Headers.hpp"
 #include "../SocketIO/SocketIO.hpp"
 #include "../Socket/Socket.hpp"
+#include "SessionManager.hpp"
 
 class AMethod
 {
@@ -52,6 +53,7 @@ protected:
 	void ResolvePath();
 
 	string escapeForJS(const string& input);
+	void addCookies(Session &session);
 public:
 	AMethod(SocketIO *sock, Routing *router);
 	virtual ~AMethod();
@@ -59,5 +61,5 @@ public:
 	// ──── Pure virtual: each HTTP method subclass must implement ────
 	virtual bool HandleResponse() = 0;
 	void   HandelErrorPages(const string &err);
-
+	static map<string, string>& getStatusMap();
 };

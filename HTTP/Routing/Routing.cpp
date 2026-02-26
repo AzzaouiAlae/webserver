@@ -43,11 +43,13 @@ string Routing::CreatePath(Config::Server *srv)
 	// path.CreatePath(srv->srvNode, request.getPath());
 	path.CreatePath(*srv, request.getPath());
 	strPath = path.getFullPath();
-	DDEBUG("Routing") << "  -> isCGI=" << path.isCGI()
-					   << ", isDir=" << path.isDirectory()
-					   << ", isFile=" << path.isFile()
-					   << ", isRedir=" << path.isRedirection()
-					   << ", found=" << path.isFound();
+	DDEBUG("Routing") 
+		<< "  -> isCGI=" << path.isCGI()
+		<< ", isDir=" << path.isDirectory()
+		<< ", isFile=" << path.isFile()
+		<< ", isRedir=" << path.isRedirection()
+		<< ", found=" << path.isFound();
 	DEBUG("Routing") << "Path resolved: '" << strPath << "'";
+	loc = path.getLocation();
 	return strPath;
 }

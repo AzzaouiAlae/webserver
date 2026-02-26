@@ -1,9 +1,9 @@
 #include "SocketIO.hpp"
 #include "../../HTTP/HTTPContext/HTTPContext.hpp"
 
-int SocketIO::errorNumber = 0;
-
 vector<pair<int, int> > SocketIO::pipePool;
+
+priority_queue<SocketIO*, vector<SocketIO*>, SocketIO::CompareTimeout> SocketIO::timeoutList;
 
 void SocketIO::Handle()
 {
@@ -22,17 +22,15 @@ void SocketIO::SetStateByFd(int fd)
 
 int SocketIO::Send(void *buff, int size)
 {
-	// return write(fd, buff, size);
 	char *b = (char *)buff;
 	ssize_t sent = 0;
-	int flag = (ePipe0 | eSocket);
+	
 	if (&(b[0]) != &((this->buff)[0]))
 	{
 		SendedBuffToPipe = 0;
 		this->buff = (char *)buff;
 	}
-
-	if (status & ePipe1 && SendedBuffToPipe < size)
+	if (SendedBuffToPipe < size)
 	{
 		sent = SendBuffToPipe(&((this->buff)[SendedBuffToPipe]), size - SendedBuffToPipe);
 		if (sent > 0)
@@ -41,33 +39,44 @@ int SocketIO::Send(void *buff, int size)
 			sent = 0;
 		}
 	}
-	if ((status & flag) == flag)
-	{
-		sent = SendPipeToSock();
-	}
+	sent = SendPipeToSock();
 	return sent;
 }
 
 int SocketIO::SendBuffToPipe(void *buff, int size)
 {
+	if ((status & ePipe1) == 0)
+		return 0;
 	struct iovec iov;
 	iov.iov_base = buff;
 	iov.iov_len  = size;
 
 	ssize_t n = vmsplice(pipefd[1], &iov, 1, SPLICE_F_NONBLOCK);
+	if (n <= 0) {
+		ERR() << "Socket fd: " << fd << " SendBuffToPipe";
+		errorNumber = ePipe1Error;
+	}
 	status &= ~ePipe1;
 	((HTTPContext *)context)->activeOutPipe();
 	if (n <= 0)
-		return n;
+		return -1;
 	pendingInPipe += n;
 	return n;
 }
 
 int SocketIO::SendPipeToSock()
 {
+	int flag = (ePipe0 | eSocket);
+
+	if ((status & flag) != flag)
+		return 0;
 	if (pendingInPipe <= 0)
 		return 0;
 	ssize_t sent = splice(pipefd[0], NULL, this->fd, NULL, pendingInPipe, SPLICE_F_NONBLOCK);
+	if (sent <= 0) {
+		ERR() << "Socket fd: " << fd << " SendPipeToSock";
+		errorNumber = eWriteError;
+	}
 	status &= ~(ePipe0 | eSocket);
 	if (sent < 0)
 		return -1;
@@ -75,38 +84,14 @@ int SocketIO::SendPipeToSock()
 	return sent;
 }
 
-ssize_t SocketIO::sendFileWithHeader(const char *httpHeader, int headerLen, int fileFd, int size)
-{
-    int optval;
-
-    optval = 1;
-    if (setsockopt(this->fd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval)) < 0)
-	{
-		DDEBUG("SocketIO") << "sendFileWithHeader: TCP_CORK set failed, fd=" << this->fd;
-        return -1;
-	}
-    ssize_t headerSent = Send((char *)httpHeader, headerLen);
-    if (headerSent <= 0 || size <= (int)headerSent) 
-	{
-        return headerSent;
-	}
-	size -= (int)headerSent;
-
-    ssize_t fileSent = sendfile(this->fd, fileFd, NULL, size);
-
-    if (fileSent < 0)
-        return headerSent;
-
-    optval = 0;
-    setsockopt(this->fd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval));
-
-	DDEBUG("SocketIO") << "sendFileWithHeader: fd=" << this->fd << ", headerSent=" << headerSent << ", fileSent=" << fileSent;
-    return headerSent + fileSent;
-}
-
 ssize_t SocketIO::FileToSocket(int fileFd, int size)
 {
-	return sendfile(this->fd, fileFd, NULL, size);
+	ssize_t len = sendfile(this->fd, fileFd, NULL, size);
+	if (len <= 0) {
+		ERR() << "Socket fd: " << fd << " FileToSocket eWriteError";
+		errorNumber = eWriteError;
+	}
+	return len;
 }
 
 int SocketIO::GetPipePoolSize()
@@ -167,15 +152,21 @@ int SocketIO::SocketToFile(int fileFD, int size)
 		status &= ~flag;
 		if (len > 0)
 			pendingInPipe += len;
+		else {
+			ERR() << "Socket fd: " << fd << " SocketToFile eReadError";
+			errorNumber = eReadError;
+		}
 		len = 0;
 	}
-	if (status & ePipe0 && pendingInPipe > 0)
+	if ((status & ePipe0) && pendingInPipe > 0)
 	{
 		len = splice(pipefd[0], NULL, fileFD, NULL, pendingInPipe, 0);
 		status &= ~ePipe0;
 		((HTTPContext *)context)->activeInPipe();
-		if (len == -1)
-			return -1;
+		if (len <= 0) {
+			ERR() << "Socket fd: " << fd << " SocketToFile ePipe0Error";
+			errorNumber = ePipe0Error;
+		}
 		pendingInPipe -= len;
 	}
 	DDEBUG("SocketIO") << "SocketToFile: fd=" << this->fd << ", pendingInPipe=" << pendingInPipe << ", written=" << len;
@@ -187,6 +178,10 @@ int SocketIO::SendSocketToPipe(int size)
 	int len = 0;
 	if (status & ePipe1) {
 		len = splice(fd, NULL, pipefd[1], NULL, size, 0);
+		if (len <= 0) {
+			ERR() << "Socket fd: " << fd << " SendSocketToPipe eReadError";
+			errorNumber = eReadError;
+		}
 		status &= ~ePipe1;
 		((HTTPContext *)context)->activeOutPipe();
 		if (len == -1)
@@ -197,55 +192,7 @@ int SocketIO::SendSocketToPipe(int size)
 	return len;
 }
 
-int SocketIO::SocketToSocketRead(int socket, int size)
-{
-	int len = 0, flag = (eSocket | ePipe0);
-
-	if (status & ePipe1)
-	{
-		len = splice(socket, NULL, pipefd[1], NULL, size, 0);
-		status &= ~ePipe1;
-		((HTTPContext *)context)->activeOutPipe();
-		if (len == -1)
-			return -1;
-		pendingInPipe += len;
-	}
-	if ((status & flag) == flag && pendingInPipe > 0)
-	{
-		len = splice(pipefd[0], NULL, this->fd, NULL, pendingInPipe, 0);
-		status &= ~flag;
-		if (len == -1)
-			return -1;
-		pendingInPipe -= len;
-	}
-	return len;
-}
-
-int SocketIO::SocketToSocketWrite(int socket, int size)
-{
-	int len = 0, flag = (eSocket | ePipe1);
-
-	if ((status & flag) == flag)
-	{
-		len = splice(this->fd, NULL, pipefd[1], NULL, size, 0);
-		status &= ~flag;
-		if (len == -1)
-			return -1;
-		pendingInPipe += len;
-	}
-	if (status & ePipe0 && pendingInPipe > 0)
-	{
-		len = splice(pipefd[0], NULL, socket, NULL, pendingInPipe, 0);
-		status &= ~ePipe0;
-		((HTTPContext *)context)->activeInPipe();
-		if (len == -1)
-			return -1;
-		pendingInPipe -= len;
-	}
-	return len;
-}
-
-SocketIO::SocketIO(int fd): ISocket(fd, "SocketIO"), pipeInitialized(false), pendingInPipe(0), status(0)
+SocketIO::SocketIO(int fd): ISocket(fd, "SocketIO"), pipeInitialized(false), pendingInPipe(0), status(0), errorNumber(0)
 {
 	buff = NULL;
 	if (pipePool.size() > 0)
@@ -259,7 +206,7 @@ SocketIO::SocketIO(int fd): ISocket(fd, "SocketIO"), pipeInitialized(false), pen
 	}
 	else if (pipe2(pipefd, O_NONBLOCK) == -1)
 	{
-		SocketIO::errorNumber = 1;
+		SocketIO::errorNumber = ePipeCreateError;
 		DDEBUG("SocketIO") << "SocketIO created fd=" << fd << ", pipe2 failed!";
 	}
 	else
@@ -268,6 +215,9 @@ SocketIO::SocketIO(int fd): ISocket(fd, "SocketIO"), pipeInitialized(false), pen
 		DDEBUG("SocketIO") << "SocketIO created fd=" << fd << ", new pipe [" << pipefd[0] << ", " << pipefd[1] << "]";
 	}
 	DEBUG("SocketIO") << "SocketIO initialized, fd=" << fd;
+	lastTime = time(NULL);
+	timeout = TIMEOUT;
+	timeoutList.push(this);
 }
 
 SocketIO::~SocketIO()
@@ -298,3 +248,63 @@ void SocketIO::ClearPipePool()
 	}
 }
 
+bool SocketIO::isTimeOut(bool isCGI)
+{
+	if (isCGI)
+		return false;
+	time_t now = time(NULL);
+	if (GetEndTime() < now)
+		return true;
+	UpdateTime();
+	return false;
+}
+
+void SocketIO::clearTimeout()
+{
+	time_t now = time(NULL);
+	set<AFd *> &fds = Singleton::GetFds();
+
+	while(timeoutList.empty() == false)
+	{
+		SocketIO *sock = timeoutList.top();
+		if (fds.find(sock) == fds.end())
+			timeoutList.pop();
+		else if (sock->GetEndTime() < now)
+		{
+			Multiplexer::GetCurrentMultiplexer()->ChangeToEpollOut(sock);
+			timeoutList.pop();
+		}
+		else
+			break;
+	}
+}
+
+bool SocketIO::CompareTimeout::operator()(const SocketIO *a, const SocketIO *b) const 
+{
+	set<AFd *> &fds = Singleton::GetFds();
+
+	if (fds.find((SocketIO *)a) == fds.end())
+		return false;
+	if (fds.find((SocketIO *)b) == fds.end())
+		return true;
+    return (a->GetEndTime()) > (b->GetEndTime());
+}
+
+time_t SocketIO::GetEndTime() const
+{
+	return lastTime + timeout;
+}
+
+void SocketIO::UpdateTime()
+{
+	lastTime = time(NULL);
+}
+
+bool SocketIO::CanUsePipe0()
+{
+	return (status & ePipe0);
+}
+bool SocketIO::CanUsePipe1()
+{
+	return (status & ePipe1);
+}

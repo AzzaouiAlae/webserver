@@ -3,10 +3,11 @@
 
 Config::Server::Server()
 {
-	autoindex = true;
+	autoindex = -1;
 	clientMaxBodySize = 0;
 	allowMethodExists = false;
 	isMaxBodySize = false;
+	autoindex = -1;
 }
 
 Config::Server::Location::Location()
@@ -15,6 +16,8 @@ Config::Server::Location::Location()
 	clientMaxBodySize = 0;
 	isMaxBodySize = false;
 	deleteFiles = false;
+	autoindex = -1;
+	clientBodyInFileOnly = false;
 }
 
 bool Config::IsDuplicatedServer(int currServerIdx, const string &val, const string &srvName)
@@ -102,6 +105,7 @@ string Config::GetErrorPath(Config::Server &srv, const string &code)
 	return "";
 }
 
+// Checks if locPath is a prefix of reqPath
 bool Config::isPrefixMatch(const vector<string> &locPath, const vector<string> &reqPath)
 {
     if (locPath.size() > reqPath.size())
@@ -114,6 +118,7 @@ bool Config::isPrefixMatch(const vector<string> &locPath, const vector<string> &
     return true;
 }
 
+// Checks if the request path ends with the CGI extension
 bool Config::pathMatchesCgiExt(const string &path, const string &cgiPassExt)
 {
     if (path.length() < cgiPassExt.length())
@@ -122,6 +127,7 @@ bool Config::pathMatchesCgiExt(const string &path, const string &cgiPassExt)
                         cgiPassExt.length(), cgiPassExt) == 0;
 }
 
+// Returns the index of the best (longest prefix) CGI location match, or -1
 int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, const string &path)
 {
     int    bestIndex = -1;
@@ -167,6 +173,7 @@ int Config::findBestStaticMatch(Config::Server &srv, const vector<string> &reqPa
     return bestIndex;
 }
 
+// Main orchestrator — now just coordinates the helpers
 int Config::GetLocationIndex(Config::Server &srv, const string &path)
 {
     vector<string> reqPath;
@@ -217,6 +224,25 @@ void Config::FillConf()
 void Config::parseListen(const string &str, string &port, string &host)
 {
 	DDEBUG("Parsing") << "Parsing 'listen' directive value: [" << str << "]";
+
+	if (str[0] == '[')
+	{
+		std::string::size_type endBracket = str.find(']');
+
+		if (endBracket != std::string::npos)
+		{
+			host = str.substr(1, endBracket - 1);
+			if (endBracket + 1 < str.length() && str[endBracket + 1] == ':')
+				port = str.substr(endBracket + 2);
+			else
+				port = "80";
+
+			DDEBUG("Parsing") << "  -> Detected IPv6 format => Host: [" << host << "], Port: [" << port << "]";
+			return;
+		}
+		else
+			Error::ThrowError("Invalid host format: " + str);
+	}
 
 	const char *colon = strrchr(str.c_str(), ':');
 
@@ -290,13 +316,14 @@ void Config::fillServer(AST<string> &serverNode, Config::Server &srv)
 			DDEBUG("Parsing") << "    -> Set server_name: [" << srv.serverName << "]";
 		}
 		else if (val == "autoindex") {
+
 			srv.autoindex = (args[0] == "on");
 			DDEBUG("Parsing") << "    -> Set autoindex: [" << (srv.autoindex ? "ON" : "OFF") << "]";
 		}
 		else if (val == "client_max_body_size")
 		{
 			srv.isMaxBodySize = true;
-			srv.clientMaxBodySize = Utility::parseByteSize(args[0]);
+			srv.clientMaxBodySize = parseByteSize(args[0]);
 			DDEBUG("Parsing") << "    -> Set client_max_body_size: [" << srv.clientMaxBodySize << " bytes]";
 		}
 		else if (val == "allow_methods")
@@ -328,8 +355,7 @@ void Config::fillServer(AST<string> &serverNode, Config::Server &srv)
 	}
 }
 
-void Config::fillLocation(AST<string> &locationNode,
-						   Config::Server::Location &loc)
+void Config::fillLocation(AST<string> &locationNode, Config::Server::Location &loc)
 {
 	Utility::parseBySep(loc.parsedPath, loc.path, "/");
 	DDEBUG("Parsing") << "    Parsed location path segments: " << loc.parsedPath.size() << " part(s).";
@@ -383,7 +409,7 @@ void Config::fillLocation(AST<string> &locationNode,
 		else if (val == "client_max_body_size")
 		{
 			loc.isMaxBodySize = true;
-			loc.clientMaxBodySize = Utility::parseByteSize(args[0]);
+			loc.clientMaxBodySize = parseByteSize(args[0]);
 			DDEBUG("Parsing") << "      -> Set client_max_body_size: [" << loc.clientMaxBodySize << " bytes]";
 		}
 		else if (val == "client_body_in_file_only")
@@ -406,4 +432,21 @@ void Config::fillLocation(AST<string> &locationNode,
 	DDEBUG("Parsing") << "    fillLocation complete for path: [" << loc.path << "]";
 }
 
+size_t Config::parseByteSize(const string &raw)
+{
+	char *endptr = NULL;
+	size_t value = (size_t)strtoll(raw.c_str(), &endptr, 10);
 
+	if (endptr && *endptr != '\0')
+	{
+		char unit = *endptr;
+		if (unit == 'k' || unit == 'K')
+			value *= 1024;
+		else if (unit == 'm' || unit == 'M')
+			value *= 1024 * 1024;
+		else if (unit == 'g' || unit == 'G')
+			value *= 1024 * 1024 * 1024;
+	}
+
+	return value;
+}

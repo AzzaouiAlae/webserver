@@ -106,7 +106,6 @@ bool Utility::strtosize_t(const string& s, size_t& out)
     return true;
 }
 
-
 char Utility::HexaToChar(string hex)
 {
 	return ( static_cast< char >( strtol(hex.c_str(), NULL, 16) ) );

@@ -30,6 +30,7 @@
 #include <dirent.h>
 #include <iomanip>
 #include <ctime>
+#include <queue>
 
 using namespace std;
 
@@ -43,7 +44,11 @@ using namespace std;
 #include "Validation.hpp"
 
 #include "Error.hpp"
-#include "Tokenizing/Tokenizing.hpp"
+#include "SessionManagement/SessionManager.hpp"
+#include "ARequest/ARequest.hpp"
+#include "ClientRequest/ClientRequest.hpp"
+#include "CgiRequest/CgiRequest.hpp"
+
 
 #include "Config.hpp"
 
@@ -61,6 +66,7 @@ using namespace std;
 #include "Environment.hpp"
 #include "StaticFile.hpp"
 #include "ISocket.hpp"
+#include "Tokenizing.hpp"
 
 extern char **environ;
 
