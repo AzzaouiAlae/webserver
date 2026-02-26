@@ -8,7 +8,6 @@ class Parsing
 
 		void BuildAST();
 
-		static void parseListen(const string &str, string &port, string &host);
 
 	private:
 		const vector<string> &_tokens;
