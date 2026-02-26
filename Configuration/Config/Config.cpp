@@ -3,7 +3,7 @@
 
 Config::Server::Server()
 {
-	autoindex = true;
+	autoindex = -1;
 	clientMaxBodySize = 0;
 	allowMethodExists = false;
 	isMaxBodySize = false;
@@ -17,6 +17,7 @@ Config::Server::Location::Location()
 	isMaxBodySize = false;
 	deleteFiles = false;
 	autoindex = -1;
+	clientBodyInFileOnly = false;
 }
 
 bool Config::IsDuplicatedServer(int currServerIdx, const string &val, const string &srvName)

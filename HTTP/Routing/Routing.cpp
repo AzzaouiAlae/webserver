@@ -23,7 +23,7 @@ void Routing::SetRequestComplete()
 	DEBUG("Routing") << "Request marked as complete.";
 }
 
-DeprecatedPath &Routing::GetPath()
+Path &Routing::GetPath()
 {
 	return path;
 }
@@ -50,5 +50,6 @@ string Routing::CreatePath(Config::Server *srv)
 		<< ", isRedir=" << path.isRedirection()
 		<< ", found=" << path.isFound();
 	DEBUG("Routing") << "Path resolved: '" << strPath << "'";
+	loc = path.getLocation();
 	return strPath;
 }

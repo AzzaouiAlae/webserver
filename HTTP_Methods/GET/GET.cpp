@@ -104,7 +104,11 @@ void GET::GetMethod()
 	else if (router->GetPath().hasPermission() == false)
 		HandelErrorPages("403");
 	else if (router->GetPath().isDirectory()) {
-		if (router->GetPath().getLocation()->autoindex == 0)
+		int idxSrv = router->srv->autoindex, idxLoc = -1;
+		if (router->loc) {
+			idxSrv = router->loc->autoindex;
+		}
+		if ((idxSrv >= 0 && idxLoc == -1) || idxLoc == 0 )
 			HandelErrorPages("403");
 		else if (router->GetPath().getLocation()->autoindex == -1)
 		{
@@ -184,9 +188,9 @@ string GET::FormatDirectoryEntry(const string &name, const struct stat &st, cons
 	stringstream entry;
 
 	entry << "{ name: '" << escapeForJS(name)
-		  << "', href: '" << DeprecatedPath::encodePath(requestPath)
+		  << "', href: '" << Path::encodePath(requestPath)
 		  << (requestPath[requestPath.size() - 1] == '/' ? "" : "/")
-		  << DeprecatedPath::encodePath(name)
+		  << Path::encodePath(name)
 		  << "', isDir: ";
 
 	if (S_ISDIR(st.st_mode))

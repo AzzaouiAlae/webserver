@@ -298,7 +298,7 @@ void AMethod::SendResponse()
 // Does one thing: prepares and sends a redirection response
 void AMethod::SendRedirection()
 {
-	DeprecatedPath &path = router->GetPath();
+	Path &path = router->GetPath();
 	string redirCode = path.getRedirCode();
 	string redirLoc = path.getRedirPath();
 
