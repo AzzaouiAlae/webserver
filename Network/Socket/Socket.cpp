@@ -266,11 +266,13 @@ void Socket::AddSocketNew(string &host, string &port, Config::Server srv)
 	{
 		INFO() << "Socket successfully bound on " << host << ":" << port << " (fd=" << sock << ")";
 		Socket *NewFd = new Socket(sock);
-		NewFd->context = new HTTPContext();
+		NewFd->context = new ConnectionContext();
+		ConnectionContext *cont = (ConnectionContext*)NewFd->context;
 		fds.insert(NewFd);
 		vector<Config::Server> myVector;
 		myVector.push_back(srv);
 		sockets[sock] = myVector;
+		cont->servers = &(sockets[sock]);
 	}
 	else  {
 		DEBUG("Socket") << "Bind failed for " << host << ":" << port << ", searching for existing socket to share.";

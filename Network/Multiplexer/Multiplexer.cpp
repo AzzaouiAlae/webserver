@@ -139,12 +139,11 @@ void Multiplexer::MainLoop()
 		epoll_event eventList[count];
 		int size = epoll_wait(epollFd, eventList, count, USEC * timeout / 1000);
 		
-		
 		for(int i = 0; i < size; i++) {
 			handelEpollPipes(eventList[i]);
 		}
 		for(int i = 0; i < size; i++) {
-			handelEpollEvent(eventList[i]);
+			handelEpollSocket(eventList[i]);
 		}
 		ClearToDelete();
 	}
@@ -255,14 +254,14 @@ void Multiplexer::handelEpollPipes(epoll_event &event)
 	}
 }
 
-void Multiplexer::handelEpollEvent(epoll_event &event)
+void Multiplexer::handelEpollSocket(epoll_event &event)
 {
 	AFd *obj = (AFd *)(event.data.ptr);
 	
 	if (obj->GetType() == "Pipe") 
 		return;
 	DDEBUG("Multiplexer") 
-		<< "handelEpollEvent: fd=" << obj->GetFd()
+		<< "handelEpollSocket: fd=" << obj->GetFd()
 		<< ", type=" << obj->GetType()
 		<< ", events=" << event.events
 		<< ", cleanBody=" << obj->cleanBody;

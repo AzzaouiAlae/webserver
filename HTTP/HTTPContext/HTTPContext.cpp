@@ -4,32 +4,7 @@ vector<char *> HTTPContext::buffPoll;
 
 void HTTPContext::Handle(AFd *fd)
 {
-	HTTPLog(DDEBUG) << ", Handle(AFd) type: " << fd->GetType();
-	if (fd->GetType() == "Socket")
-		Handle((Socket *)fd);
-	else if (fd->GetType() == "SocketIO")
-		Handle();
-}
-
-void HTTPContext::Handle(Socket *sock)
-{
-	HTTPLog(DEBUG) << "Handle(Socket) called, accepting new connection on socket fd: " << sock->GetFd();
-	SocketIO *fd = new SocketIO(sock->acceptedSocket);
-	Singleton::GetFds().insert(fd);
-	servers = &((Singleton::GetVirtualServers())[sock->GetFd()]);
-	fd->context = new HTTPContext();
-	HTTPContext *cont = (HTTPContext *)fd->context;
-	cont->servers = servers;
-	cont->router.srv = &((*servers)[0]);
-	cont->router.GetRequest().SetMaxBodySize(Config::GetMaxBodySize(*servers));
-	cont->sock = fd;
-	cont->repsense.Init(fd, &(cont->router));
-	Multiplexer::GetCurrentMultiplexer()->AddAsEpollIn(fd);
-	INFO() << "New client connected from " << Socket::getRemoteName(fd->GetFd());
-}
-
-void HTTPContext::Handle()
-{
+	(void)fd;
 	HTTPLog(DDEBUG) << ", Handle() start";
 	if (router.isRequestComplete() == false &&
 		sock->isTimeOut(router.GetPath().isCGI()) == false && err == false)
@@ -39,7 +14,7 @@ void HTTPContext::Handle()
 			<< router.isRequestComplete() << ", err: " << err;
 		HandleRequest();
 	}
-	else
+	if (router.isRequestComplete())
 	{
 		if (sock->isTimeOut(router.GetPath().isCGI()))
 		{
@@ -140,7 +115,7 @@ void HTTPContext::_setupPipeline()
 
 	// Switch Multiplexer state
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	MulObj->ChangeToEpollOut(sock);
+	// MulObj->ChangeToEpollOut(sock);
 
 	// Create Pipes
 	// Note: Ensure you manage memory for 'in' and 'out' properly (e.g., delete in destructor)
@@ -201,7 +176,6 @@ void HTTPContext::HandleRequest()
 			}
 			else
 				sock->maxToClean = router.GetRequest().getcontentlen();
-			Multiplexer::GetCurrentMultiplexer()->ChangeToEpollOut(sock);
 		}
 	}
 }
@@ -214,18 +188,20 @@ void HTTPContext::ClearBuffPoll()
 	}
 }
 
-HTTPContext::HTTPContext()
+HTTPContext::HTTPContext(vector<Config::Server > *servers, size_t maxBodySize, SocketIO *sock): sock(sock), servers(servers)
 {
 	in = NULL;
 	out = NULL;
-	sock = NULL;
 	buf = NULL;
 	err = false;
-	isMaxBodyInit = false;
+	router.srv = &((*servers)[0]);
+	router.GetRequest().SetMaxBodySize(maxBodySize);
+	repsense.Init(sock, &(router));
 	if (buffPoll.size() > 0) {
 		buf = buffPoll[buffPoll.size() - 1];
 		buffPoll.pop_back();
 	}
+	// isMaxBodyInit = false;
 }
 
 void HTTPContext::MarkedSocketToFree()
