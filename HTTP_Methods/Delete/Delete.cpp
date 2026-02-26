@@ -77,10 +77,6 @@ void Delete::deleteFile()
 	else {
 		INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " file deleted: " << filename;
 		DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", file deleted successfully.";
-		if (router->GetPath().isRedirection())
-			SendRedirection();
-		else {
-			SendDefaultRespense();
-		}
+		SendDefaultRespense();
 	}
 }

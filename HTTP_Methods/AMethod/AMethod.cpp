@@ -149,7 +149,8 @@ void AMethod::SendDefaultRespense()
 	CreateResponseHeader();
 	ShouldSend = responseHeaderStr.length();
 	readyToSend = true;
-	SendResponse();
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	MulObj->ChangeToEpollOut(sock);
 }
 
 // Does one thing: builds a redirection-specific header (no body, includes Location)
@@ -237,7 +238,8 @@ void AMethod::HandelErrorPages(const string &err)
 	CreateResponseHeader();
 	ShouldSend += responseHeaderStr.length();
 	readyToSend = true;
-	// SendResponse();
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	MulObj->ChangeToEpollOut(sock);
 }
 
 // ══════════════════════════════════════════════
@@ -309,7 +311,8 @@ void AMethod::SendRedirection()
 
 	ShouldSend = responseHeaderStr.length();
 	readyToSend = true;
-	SendResponse();
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	MulObj->ChangeToEpollOut(sock);
 }
 
 // ══════════════════════════════════════════════

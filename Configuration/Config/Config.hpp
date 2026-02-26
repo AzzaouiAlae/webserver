@@ -56,7 +56,7 @@ public:
 	static Config::Server &GetServerName(vector<Config::Server> &srvs, const string &val);
 	static string GetErrorPath(Config::Server &srv, const string &code);
 	static int GetLocationIndex(Config::Server &srv, const string &path);
-	static int GetMaxBodySize(vector<Config::Server> &srvs);
+	static size_t GetMaxBodySize(vector<Config::Server> &srvs);
 	static void FillConf();
 	static void parseListen(const string &str, string &port, string &host);
 private:

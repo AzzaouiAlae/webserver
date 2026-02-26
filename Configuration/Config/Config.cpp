@@ -76,7 +76,7 @@ Config::Server &Config::GetServerName(vector<Config::Server> &srvs, const string
 	return srvs[0];
 }
 
-int Config::GetMaxBodySize(vector<Config::Server> &srvs)
+size_t Config::GetMaxBodySize(vector<Config::Server> &srvs)
 {
 	size_t size = 0;
 	for (int i = 0; i < (int)srvs.size(); i++)

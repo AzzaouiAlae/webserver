@@ -99,7 +99,7 @@ bool Post::HandleResponse()
 // Does one thing: creates/opens the upload file for writing
 void Post::OpenUploadFile()
 {
-	uploadFd = open(filename.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644);
+	uploadFd = open(filename.c_str(), O_CREAT | O_WRONLY, 0644);
 	DDEBUG("Post") << "Socket fd: " << sock->GetFd() << ", OpenUploadFile: '" << filename << "', fd=" << uploadFd;
 }
 
@@ -213,7 +213,8 @@ void Post::SendPostRedirection(const string &retCode, const string &retBody)
 				  << " POST redirect " << retCode << " to " << retBody;
 	ShouldSend = responseHeaderStr.length();
 	readyToSend = true;
-	SendResponse();
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	MulObj->ChangeToEpollOut(sock);
 }
 
 // Does one thing: sends a custom body response (e.g., return 200 '{"status":"ok"}')
@@ -228,7 +229,8 @@ void Post::SendPostCustomBody(const string &retCode, const string &retBody)
 	responseHeaderStr += retBody;
 	ShouldSend = responseHeaderStr.length();
 	readyToSend = true;
-	SendResponse();
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	MulObj->ChangeToEpollOut(sock);
 }
 
 
