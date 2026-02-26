@@ -20,7 +20,7 @@ public:
 		string serverName;
 		vector<string> index;
 		string root;
-		bool autoindex;
+		int autoindex;
 		size_t clientMaxBodySize;
 		bool allowMethodExists;
 		vector<string> allowMethods;
@@ -31,7 +31,7 @@ public:
 		public:
 			AST<string> *locNode;
 			Location();
-			bool autoindex;
+			int autoindex;
 			bool isMaxBodySize;
 			size_t clientMaxBodySize;
 			bool clientBodyInFileOnly;

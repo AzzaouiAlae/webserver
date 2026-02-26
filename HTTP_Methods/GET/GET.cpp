@@ -104,8 +104,15 @@ void GET::GetMethod()
 	else if (router->GetPath().hasPermission() == false)
 		HandelErrorPages("403");
 	else if (router->GetPath().isDirectory()) {
-		if (router->GetPath().getLocation()->autoindex == false)
+		if (router->GetPath().getLocation()->autoindex == 0)
 			HandelErrorPages("403");
+		else if (router->GetPath().getLocation()->autoindex == -1)
+		{
+			if (router->srv->autoindex <= 0)
+				HandelErrorPages("403");
+			else
+				CreateListFilesResponse();
+		}
 		else
 			CreateListFilesResponse();
 	}
