@@ -7,7 +7,6 @@ class Parsing
 		Parsing(const vector<string> &tokens);
 
 		void BuildAST();
-		void FillConf();
 
 		static void parseListen(const string &str, string &port, string &host);
 
@@ -24,8 +23,5 @@ class Parsing
 		const string &consume();
 		bool isSeparator() const;
 		bool atEnd() const;
-
-		void fillServer(AST<string> &serverNode, Config::Server &srv);
-		void fillLocation(AST<string> &locationNode, Config::Server::Location &loc);
 		
 };
