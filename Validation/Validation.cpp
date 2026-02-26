@@ -6,7 +6,6 @@ Validation::Validation(AST<string> &astRoot)
 	DEBUG("Validation") << "Validation initialized.";
 }
 
-//  --- Walk every top-level node in the AST root and validate it. ---
 void Validation::Validate()
 {
 	vector<AST<string> > &topLevel = _root.GetChildren();
@@ -31,7 +30,6 @@ void Validation::Validate()
 	DEBUG("Validation") << "Validation complete. All " << topLevel.size() << " block(s) passed.";
 }
 
-//  --- Checks one complete server ---
 void Validation::validateServer(AST<string> &serverNode)
 {
 	ServerSeen seen;
@@ -81,7 +79,6 @@ void Validation::validateServer(AST<string> &serverNode)
 			Error::ThrowError("Config Error: unknown directive '" + directive + "' in server block");
 	}
 
-	// --- Required field checks ---
 	if (!seen.listen)
 		Error::ThrowError("Config Error: server block is missing required 'listen' directive");
 	if (!seen.serverName)
@@ -89,8 +86,6 @@ void Validation::validateServer(AST<string> &serverNode)
 	DEBUG("Validation") << "  'server' block validation passed.";
 }
 
-
-//  --- Checks one location ---
 void Validation::validateLocation(AST<string> &locationNode, LocationSeen &seen)
 {
 	vector<AST<string> > &children = locationNode.GetChildren();
@@ -111,7 +106,7 @@ void Validation::validateLocation(AST<string> &locationNode, LocationSeen &seen)
 		else if (directive == "autoindex")
 			validateAutoindex(node, seen.autoindex);
 		else if (directive == "return")
-			validateReturn(node, seen.returnDir);
+			validateReturn(node, seen);
 		else if (directive == "client_max_body_size")
 			validateClientMaxBody(node, seen.clientMaxBodySize);
 		else if (directive == "allow_methods")
@@ -223,6 +218,7 @@ void Validation::validateAutoindex(AST<string> &node, bool &seen)
 // --- return ---
 void Validation::validateReturn(AST<string> &node, bool &seen)
 {
+	DDEBUG("Validation") << "ENTER validateReturn(server)";
 	if (seen)
 		Error::ThrowError("Config Error: duplicate 'return' directive");
 	seen = true;
@@ -230,12 +226,34 @@ void Validation::validateReturn(AST<string> &node, bool &seen)
 
 	long code = parseNumber(node.GetArguments()[0]);
 	if (code != 200 && code != 301 && code != 302)
-		Error::ThrowError("Config Error: return code must be 200, 301, or 302 — got '" +
-						  node.GetArguments()[0] + "'");
+		Error::ThrowError("Config Error: return code must be 200, 301, or 302 — got '" + node.GetArguments()[0] + "'");
+	
 	string str;
 	if ( node.GetArguments().size() > 1)
 		str = ", url=" + node.GetArguments()[1];
 	DDEBUG("Validation") << "    'return' validated: code=" << node.GetArguments()[0] << str;
+}
+
+void Validation::validateReturn(AST<string> &node, LocationSeen &seen)
+{
+	DDEBUG("Validation") << "ENTER validateReturn(location)";
+	if (seen.returnDir)
+		Error::ThrowError("Config Error: duplicate 'return' directive");
+	seen.returnDir = true;
+	checkArgCount(node, 1, 2, "return");
+
+	long code = parseNumber(node.GetArguments()[0]);
+	if (code != 200 && code != 301 && code != 302)
+		Error::ThrowError("Config Error: return code must be 200, 301, or 302 — got '" + node.GetArguments()[0] + "'");
+	
+	if ( seen.bodyInFile && code != 200 )
+		Error::ThrowError("Config Error: 'return 301/302' cannot be used with 'client_body_in_file_only' in the same location block");
+
+	seen.returnKind = classifyReturnCode(code);
+	string str;
+	if ( node.GetArguments().size() > 1)
+		str = ", url=" + node.GetArguments()[1];
+	DDEBUG("Validation") << "    'return' validated: code=" << node.GetArguments()[0] << " with returnKind=" << seen.returnKind << str;
 }
 
 // --- client_max_body_size ---
@@ -324,6 +342,8 @@ void Validation::validateBodyInFile(AST<string> &node, LocationSeen &seen)
 		Error::ThrowError("Config Error: duplicate 'client_body_in_file_only' in location block");
 	if (seen.cgiPass)
 		Error::ThrowError("Config Error: 'client_body_in_file_only' cannot be used with 'cgi_pass'");
+	if ( seen.returnKind == RETURN_REDIRECT )
+		Error::ThrowError("Config Error: 'client_body_in_file_only' cannot be used with 'return 301/302' in the same location block");
 
 	seen.bodyInFile = true;
 	checkArgCount(node, 1, 1, "client_body_in_file_only");
@@ -354,6 +374,15 @@ void Validation::validateDeleteFiles(AST<string> &node, LocationSeen &seen)
 // ──────────────────────────────────────
 //  HELPERS
 // ──────────────────────────────────────
+
+ReturnKind Validation::classifyReturnCode(long code)
+{
+    if (code == 200) 
+		return RETURN_200;
+	if ( code == 301 || code == 302)
+	    return RETURN_REDIRECT;
+	return RETURN_NONE;
+}
 
 long Validation::parseNumber(const string &s)
 {

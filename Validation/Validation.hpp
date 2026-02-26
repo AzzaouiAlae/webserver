@@ -1,6 +1,12 @@
 #pragma once
 #include "../Headers.hpp"
 
+enum ReturnKind
+{
+    RETURN_NONE,
+    RETURN_200,
+    RETURN_REDIRECT
+};
 class Validation
 {
 	public:
@@ -39,11 +45,12 @@ class Validation
 			bool cgiPass;
 			bool bodyInFile;
 			bool deleteFiles;
+			ReturnKind returnKind;
 
 			LocationSeen() : root(false), index(false), autoindex(false),
 							 returnDir(false), clientMaxBodySize(false),
 							 allowMethods(false), cgiPass(false),
-							 bodyInFile(false), deleteFiles(false) {}
+							 bodyInFile(false), deleteFiles(false), returnKind(RETURN_NONE) {}
 		};
 
 		// --- top-level validators ---
@@ -60,13 +67,16 @@ class Validation
 		void validateClientMaxBody(AST<string> &node, bool &seen);
 		void validateAllowMethods(AST<string> &node, bool &seen);
 		void validateErrorPage(AST<string> &node, bool &seen);
+		
 
 		// --- directive validators (location-only scope) ---
 		void validateCgiPass(AST<string> &node, LocationSeen &seen);
 		void validateBodyInFile(AST<string> &node, LocationSeen &seen);
 		void validateDeleteFiles(AST<string> &node, LocationSeen &seen);
+		void validateReturn(AST<string> &node, LocationSeen &seen);
 
 		// --- helpers ---
+		ReturnKind classifyReturnCode(long code);
 		static long parseNumber(const string &s);
 		static bool isByteSizeUnit(char c);
 		static bool isValidMethod(const string &m);
