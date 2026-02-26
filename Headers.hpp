@@ -41,7 +41,6 @@ using namespace std;
 #include "AST.hpp"
 #include "Logging.hpp"
 
-#include "DeprecatedValidation.hpp"
 #include "Validation.hpp"
 
 #include "Error.hpp"
@@ -53,13 +52,11 @@ using namespace std;
 
 #include "Config.hpp"
 
-#include "DeprecatedParsing.hpp"
 #include "Parsing.hpp"
 
 #include "ARequest.hpp"
 #include "ClientRequest.hpp"
 #include "Multiplexer.hpp"
-#include "DeprecatedPath.hpp"
 #include "Path.hpp"
 
 #include "IContext.hpp"

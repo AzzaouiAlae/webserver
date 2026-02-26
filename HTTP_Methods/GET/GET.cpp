@@ -181,9 +181,9 @@ string GET::FormatDirectoryEntry(const string &name, const struct stat &st, cons
 	stringstream entry;
 
 	entry << "{ name: '" << escapeForJS(name)
-		  << "', href: '" << DeprecatedPath::encodePath(requestPath)
+		  << "', href: '" << Path::encodePath(requestPath)
 		  << (requestPath[requestPath.size() - 1] == '/' ? "" : "/")
-		  << DeprecatedPath::encodePath(name)
+		  << Path::encodePath(name)
 		  << "', isDir: ";
 
 	if (S_ISDIR(st.st_mode))
