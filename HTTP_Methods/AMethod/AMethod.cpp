@@ -29,7 +29,7 @@ AMethod::AMethod(SocketIO *sock, Routing *router)
 
 void AMethod::ResolvePath()
 {
-	if (!pathResolved)
+	if (pathResolved == false)
 	{
 		filename = router->CreatePath(router->srv);
 		pathResolved = true;
@@ -140,10 +140,10 @@ void AMethod::CreateResponseHeader()
 }
 
 // Does one thing: sends the default 201 Created (no body)
-void AMethod::SendDefaultRespense()
+void AMethod::SendDefaultRespense(const string &code)
 {
 	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendDefaultRespense: sending 201 Created.";
-	code = "201";
+	this->code = code;
 	bodySize = 0;
 	filename = ".html";
 	CreateResponseHeader();
@@ -224,11 +224,13 @@ void AMethod::HandelErrorPages(const string &err)
 		{
 			DDEBUG("AMethod") << "  -> Failed to open error file, loading static fallback.";
 			LoadStaticErrorFile(err);
-			return;
 		}
-		bodySize = Utility::getFileSize(filename);
-		ShouldSend = bodySize;
-		DDEBUG("AMethod") << "  -> Opened error file, bodySize=" << bodySize;
+		else 
+		{
+			bodySize = Utility::getFileSize(filename);
+			ShouldSend = bodySize;
+			DDEBUG("AMethod") << "  -> Opened error file, bodySize=" << bodySize;
+		}
 	}
 	else
 	{

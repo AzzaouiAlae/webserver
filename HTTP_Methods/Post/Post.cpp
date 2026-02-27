@@ -55,7 +55,10 @@ bool Post::HandleResponse()
 		return del;
 	}
 
-	// 3. Check method is allowed
+	// 3. Resolve path (only once)
+	ResolvePath();
+	
+	// 4. Check method is allowed
 	if (!IsMethodAllowed("POST"))
 	{
 		DDEBUG("Post") 
@@ -64,9 +67,6 @@ bool Post::HandleResponse()
 		HandelErrorPages("405");
 		return del;
 	}
-
-	// 4. Resolve path (only once)
-	ResolvePath();
 
 	// 5. Redirection
 	if (router->GetPath().isRedirection())
@@ -95,6 +95,7 @@ bool Post::HandleResponse()
 			<< "Socket fd: " << sock->GetFd() 
 			<< ", CGI path detected (not yet implemented).";
 		// TODO: forward body to CGI via stdin
+		HandelErrorPages("501");
 		return del;
 	}
 
@@ -290,6 +291,6 @@ void Post::createPostResponse()
 		DDEBUG("Post") 
 			<< "Socket fd: " << sock->GetFd()
 			<< ", createPostResponse: no return directive, sending 201 Created.";
-		SendDefaultRespense();
+		SendDefaultRespense("201");
 	}
 }

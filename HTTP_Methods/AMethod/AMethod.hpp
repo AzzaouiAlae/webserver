@@ -45,7 +45,7 @@ protected:
 	// ──── Sending ────
 	void SendResponse();
 	void SendRedirection();
-	void SendDefaultRespense();
+	void SendDefaultRespense(const string &code);
 
 	// ──── Method validation ────
 	bool IsMethodAllowed(const string &method);
