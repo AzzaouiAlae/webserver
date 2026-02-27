@@ -3,6 +3,7 @@
 #include "../SocketIO/SocketIO.hpp"
 #include "../Socket/Socket.hpp"
 #include "SessionManager.hpp"
+#include "Cgi.hpp"
 
 class AMethod
 {

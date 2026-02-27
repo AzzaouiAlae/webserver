@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/20 05:01:27 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/02/27 03:56:04 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,12 +57,14 @@ void Cgi::createChild()
         Error::ThrowError("Fork Failed");
     else if (!_pid)
     {
+		char *args[] = {(char *)_exec, NULL};
+		
         Environment::CreateEnv(_req.getrequestenv());
         dup2(_sok->pipefd[0], 0);
         close(_sok->pipefd[0]);
         dup2(_sok->pipefd[1], 1);
         close(_sok->pipefd[1]);
-        execve(_exec, NULL, environ);
+        execve(_exec, args, environ);
         exit(1);
     }
     _status = eFORK;
@@ -100,7 +102,7 @@ void Cgi::writetocgi()
 void Cgi::readfromcgi()
 {
     char buf[MAXHEADERSIZE];
-    char *copybuf;
+    // char *copybuf;
 
     if (_status == eFINISHWRITING)
     {
@@ -112,7 +114,7 @@ void Cgi::readfromcgi()
             if (len <= 0)
                 Error::ThrowError("504");
             buf[len + 1] = '\0';
-            copybuf = strdup(buf);
+            // copybuf = strdup(buf);
             if (_cgireq.isComplete(buf, len + 1))
                 _status = ePARSEDCGIHEADER;
         }
