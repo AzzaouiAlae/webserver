@@ -106,7 +106,7 @@ void GET::GetMethod()
 	else if (router->GetPath().isDirectory()) {
 		int idxSrv = router->srv->autoindex, idxLoc = -1;
 		if (router->loc) {
-			idxSrv = router->loc->autoindex;
+			idxLoc = router->loc->autoindex;
 		}
 		if ((idxSrv >= 0 && idxLoc == -1) || idxLoc == 0 )
 			HandelErrorPages("403");
@@ -117,7 +117,7 @@ void GET::GetMethod()
 		ServeFile();
 	else if (router->GetPath().isCGI())
 	{
-		// CGI handling — to be implemented
+		HandelErrorPages("501");
 	}
 
 }

@@ -40,7 +40,6 @@ string Routing::CreatePath(Config::Server *srv)
 	
 	DEBUG("Routing") << "Creating path for request '" << request.getPath() << "' on server '" << srv->serverName << "'";
 	DDEBUG("Routing") << "  -> Host: '" << h << "', request method: '" << request.getMethod() << "'";
-	// path.CreatePath(srv->srvNode, request.getPath());
 	path.CreatePath(*srv, request.getPath());
 	strPath = path.getFullPath();
 	DDEBUG("Routing") 

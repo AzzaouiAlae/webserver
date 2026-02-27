@@ -38,7 +38,7 @@ int HTTPContext::_readFromSocket()
 {
 	if (buf == NULL)
 	{
-		buf = (char *)calloc(1, BUF_SIZE + 1);
+		buf = new char[BUF_SIZE + 1];
 		HTTPLog(DDEBUG)
 			<< ", allocated read buffer (" << BUF_SIZE
 			<< " bytes).";
@@ -58,13 +58,13 @@ int HTTPContext::_readFromSocket()
 
 void HTTPContext::setMaxBodySize()
 {
-	HTTPLog(DEBUG) << ", HTTPContext::setMaxBodySize, err: " << err;
+	HTTPLog(DEBUG) << "setMaxBodySize, err: " << err;
 	router.srv = &Config::GetServerName(*servers, router.GetRequest().getHost());
 	router.CreatePath(router.srv);
 
-	if (router.GetPath().getLocation() != NULL && router.GetPath().getLocation()->isMaxBodySize)
+	if (router.loc != NULL && router.loc->isMaxBodySize)
 	{
-		router.GetRequest().SetMaxBodySize(router.GetPath().getLocation()->clientMaxBodySize);
+		router.GetRequest().SetMaxBodySize(router.loc->clientMaxBodySize);
 		HTTPLog(DDEBUG) 
 			<< ", max body size set from location: " 
 			<< router.GetPath().getLocation()->clientMaxBodySize;
@@ -88,7 +88,7 @@ bool HTTPContext::_parseAndConfig(int len)
 
 		// 1. Parse buffer
 		bool complete = router.GetRequest().isComplete(buf, len);
-		HTTPLog(DEBUG) << ", HTTPContext::_parseAndConfig, " << complete;
+		HTTPLog(DEBUG) << "_parseAndConfig, " << complete;
 		// 2. Configure Server Block logic
 		// We do this immediately so we can check MaxBodySize during parsing if needed
 		if (!isMaxBodyInit && router.GetRequest().getHost() != "")
@@ -100,7 +100,7 @@ bool HTTPContext::_parseAndConfig(int len)
 	}
 	catch (exception &e)
 	{
-		ERR() << "Socket fd: " << sock->GetFd() << ", HTTPContext::_parseAndConfig, exception: " << e.what();
+		ERR() << "Socket fd: " << sock->GetFd() << "_parseAndConfig, exception: " << e.what();
 		errNo = e.what();
 		err = true;
 		return true; // Return true to proceed to error handling
@@ -138,7 +138,7 @@ void HTTPContext::HandleRequest()
 	{
 		buff.append(buf, len);
 	}
-	HTTPLog(DEBUG) << ", HTTPContext::HandleRequest(), len: " << len;
+	HTTPLog(DEBUG) << "HandleRequest, len: " << len;
 	// If read failed (-1) or nothing to process, return
 	if (len == -1 && !err)
 	{
@@ -148,7 +148,7 @@ void HTTPContext::HandleRequest()
 	// 2. Parse Data
 	bool isComplete = _parseAndConfig(len);
 	HTTPLog(DDEBUG)
-		<< ", HTTPContext::HandleRequest(), isComplete: "
+		<< "HandleRequest(), isComplete: "
 		<< isComplete << ", err: " << err;
 
 	// 3. Check for Completion or Errors
@@ -184,7 +184,7 @@ void HTTPContext::ClearBuffPoll()
 {
 	for(size_t i = 0; i < buffPoll.size(); i++)
 	{
-		free(buffPoll[i]);
+		delete[] buffPoll[i];
 	}
 }
 
@@ -201,7 +201,7 @@ HTTPContext::HTTPContext(vector<Config::Server > *servers, size_t maxBodySize, S
 		buf = buffPoll[buffPoll.size() - 1];
 		buffPoll.pop_back();
 	}
-	// isMaxBodyInit = false;
+	isMaxBodyInit = false;
 }
 
 void HTTPContext::MarkedSocketToFree()
@@ -237,7 +237,7 @@ HTTPContext::~HTTPContext()
 		delete out;
 	}
 	if (buffPoll.size() > 100)
-		free(buf);
+		delete[] buf;
 	else
 		buffPoll.push_back(buf);
 }
