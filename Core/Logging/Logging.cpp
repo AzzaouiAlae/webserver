@@ -54,6 +54,7 @@ Logging::Info::Info()
 
 Logging::Info::~Info()
 {
+	return;
 	if (Logging::current)
 		Logging::current->WriteInfo(ss.str());
 }

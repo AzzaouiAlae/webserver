@@ -1,7 +1,7 @@
 DATA :=  $(shell find ./HTTP/DefaultPages/Pages -name "*.htm")
 DATA_OBJ := $(DATA:.htm=.htm.o)
 
-SRC := $(shell find . -name "*.cpp" | grep -v "./mainAlae.cpp" | grep -v ".*Test.cpp" | grep -v ".*Cgi.cpp")
+SRC := $(shell find . -name "*.cpp" | grep -v "./mainAlae.cpp" | grep -v ".*Test.cpp")
 OBJ = $(SRC:%.cpp=%.o)
 
 INCLUDES := $(shell find . -name "*.hpp" -exec dirname {} \; | sort -u | awk '{printf "-I%s ", $$1}')

@@ -14,13 +14,13 @@
 
 #include "../Headers.hpp"
 
-class CgiRequest : ARequest
+class CgiRequest : public ARequest
 {
     enum eCgiParsPos { eCgiHeaders, eCgiHeadersEnd, eCgiParsEnd};
     static map<string, string>_cgiDirectives;
     eCgiParsPos _parsPos;
     string _statusCode;
-    void initDirectives();
+    void initReqDirectives();
     bool ParseHeader();
     void parseStatus();
     void parseLocation();
