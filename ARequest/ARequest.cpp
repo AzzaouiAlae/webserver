@@ -81,7 +81,19 @@ void ARequest::parseHeaderLine(string reqtype, const string &line)
         Error::ThrowError("400");
     }
     string key   = line.substr(0, colonPos);
+    if (!key.empty() && key[key.size() - 1] == ' ')
+    {
+        if (reqtype == "cgi")
+			Error::ThrowError("502");
+        Error::ThrowError("400");
+    }
     string value = line.substr(colonPos + 1);
+    if (si&& key[key.size() - 1] == ' ')
+    {
+        if (reqtype == "cgi")
+			Error::ThrowError("502");
+        Error::ThrowError("400");
+    }
     Utility::trim(value, " \n\r");
 
     if (_reqDirectives && _reqDirectives->find(key) != _reqDirectives->end())

@@ -124,8 +124,9 @@ void ClientRequest::parsLenTypeCont()
 {
 	if (getthereisbody())
 	{
-		if (!Utility::strtosize_t(_env["CONTENT_LENGTH"], _content_len))
-			Error::ThrowError("400");
+		if (_env.find("Content-Length") != _env.end())
+			if (!Utility::strtosize_t(_env["CONTENT_LENGTH"], _content_len))
+				Error::ThrowError("400");
 		if (_content_len == 0 || _env.find("CONTENT_LENGTH") == _env.end())
 			Error::ThrowError("400");
 		DDEBUG("ClientRequest") << "parsLenTypeCont: Content-Type='" << _env["CONTENT_TYPE"]
