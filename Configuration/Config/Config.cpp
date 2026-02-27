@@ -118,21 +118,15 @@ bool Config::isPrefixMatch(const vector<string> &locPath, const vector<string> &
     return true;
 }
 
-// Checks if the request path ends with the CGI extension
-bool Config::pathMatchesCgiExt(const string &path, const string &cgiPassExt)
-{
-    if (path.length() < cgiPassExt.length())
-        return false;
-    return path.compare(path.length() - cgiPassExt.length(),
-                        cgiPassExt.length(), cgiPassExt) == 0;
-}
-
 // Returns the index of the best (longest prefix) CGI location match, or -1
 int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, const string &path)
 {
     int    bestIndex = -1;
     size_t maxLength = 0;
+	string pathExt = Utility::GetFileExtension(path);
 
+	if (pathExt.empty())
+		return -1;
     for (size_t i = 0; i < srv.Locations.size(); ++i)
     {
         const Config::Server::Location &loc = srv.Locations[i];
@@ -140,7 +134,7 @@ int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath,
             continue;
         if (!isPrefixMatch(loc.parsedPath, reqPath))
             continue;
-        if (!pathMatchesCgiExt(path, loc.cgiPassExt))
+        if (loc.cgiPassExt != pathExt)
             continue;
         if (loc.parsedPath.size() > maxLength || bestIndex == -1)
         {

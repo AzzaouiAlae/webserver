@@ -3,6 +3,7 @@
 #include "../SocketIO/SocketIO.hpp"
 #include "../Socket/Socket.hpp"
 #include "SessionManager.hpp"
+#include "Cgi.hpp"
 
 class AMethod
 {
@@ -46,7 +47,7 @@ protected:
 	// ──── Sending ────
 	void SendResponse();
 	void SendRedirection();
-	void SendDefaultRespense();
+	void SendDefaultRespense(const string &code);
 
 	// ──── Method validation ────
 	bool IsMethodAllowed(const string &method);

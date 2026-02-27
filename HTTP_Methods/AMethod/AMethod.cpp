@@ -29,7 +29,7 @@ AMethod::AMethod(SocketIO *sock, Routing *router)
 
 void AMethod::ResolvePath()
 {
-	if (!pathResolved)
+	if (pathResolved == false)
 	{
 		filename = router->CreatePath(router->srv);
 		pathResolved = true;
@@ -140,10 +140,10 @@ void AMethod::CreateResponseHeader()
 }
 
 // Does one thing: sends the default 201 Created (no body)
-void AMethod::SendDefaultRespense()
+void AMethod::SendDefaultRespense(const string &code)
 {
 	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendDefaultRespense: sending 201 Created.";
-	code = "201";
+	this->code = code;
 	bodySize = 0;
 	filename = ".html";
 	CreateResponseHeader();
@@ -224,11 +224,13 @@ void AMethod::HandelErrorPages(const string &err)
 		{
 			DDEBUG("AMethod") << "  -> Failed to open error file, loading static fallback.";
 			LoadStaticErrorFile(err);
-			return;
 		}
-		bodySize = Utility::getFileSize(filename);
-		ShouldSend = bodySize;
-		DDEBUG("AMethod") << "  -> Opened error file, bodySize=" << bodySize;
+		else 
+		{
+			bodySize = Utility::getFileSize(filename);
+			ShouldSend = bodySize;
+			DDEBUG("AMethod") << "  -> Opened error file, bodySize=" << bodySize;
+		}
 	}
 	else
 	{
@@ -341,17 +343,22 @@ void AMethod::SendRedirection()
 // Does one thing: checks if the given method is in the server's allowed methods list
 bool AMethod::IsMethodAllowed(const string &method)
 {
-	if (!router->srv->allowMethodExists)
+	bool allowed = true;
+	if (router->loc != NULL && router->loc->allowMethodExists)
 	{
-		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed: no restrictions, all methods allowed.";
-		return true;
+		vector<string>::iterator start = router->loc->allowMethods.begin();
+		vector<string>::iterator end = router->loc->allowMethods.end();
+		allowed = (find(start, end, method) != end);
+		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
 	}
-
-	vector<string>::iterator start = router->srv->allowMethods.begin();
-	vector<string>::iterator end = router->srv->allowMethods.end();
-
-	bool allowed = (find(start, end, method) != end);
-	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
+	else if (router->srv != NULL && router->srv->allowMethodExists)
+	{
+		vector<string>::iterator start = router->srv->allowMethods.begin();
+		vector<string>::iterator end = router->srv->allowMethods.end();
+		
+		allowed = (find(start, end, method) != end);
+		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
+	}
 	return allowed;
 }
 

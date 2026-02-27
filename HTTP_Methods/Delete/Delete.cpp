@@ -18,6 +18,8 @@ bool Delete::HandleResponse()
 		return del;
 	}
 
+	ResolvePath();
+
 	// 2. Check method is allowed
 	if (!IsMethodAllowed("DELETE"))
 	{
@@ -25,8 +27,6 @@ bool Delete::HandleResponse()
 		HandelErrorPages("405");
 		return del;
 	}
-
-	ResolvePath();
 
 	DDEBUG("Delete") << "Socket fd: " << sock->GetFd()
 					  << ", found=" << router->GetPath().isFound()
@@ -46,7 +46,7 @@ bool Delete::HandleResponse()
 
 	if (router->GetPath().isCGI()) {
 		DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", CGI path detected (not yet implemented).";
-		//
+		HandelErrorPages("501");
 		return del;
 	}
 
@@ -77,6 +77,6 @@ void Delete::deleteFile()
 	else {
 		INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " file deleted: " << filename;
 		DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", file deleted successfully.";
-		SendDefaultRespense();
+		SendDefaultRespense("204");
 	}
 }
