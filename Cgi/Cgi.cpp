@@ -14,7 +14,7 @@
 #include <string.h>
 
 
-Cgi::Cgi(ClientRequest &req, char* exec, SocketIO &sok) : _req(req), _sok(sok)
+Cgi::Cgi(ClientRequest &req, const char* exec, SocketIO *sok) : _req(req), _sok(sok)
 {
     _exec = exec;
     _TimeSeted = false;
@@ -58,11 +58,11 @@ void Cgi::createChild()
     else if (!_pid)
     {
         Environment::CreateEnv(_req.getrequestenv());
-        dup2(_sok.pipefd[0], 0);
-        close(_sok.pipefd[0]);
-        dup2(_sok.pipefd[1], 1);
-        close(_sok.pipefd[1]);
-        execve(_exec, &_exec, environ);
+        dup2(_sok->pipefd[0], 0);
+        close(_sok->pipefd[0]);
+        dup2(_sok->pipefd[1], 1);
+        close(_sok->pipefd[1]);
+        execve(_exec, NULL, environ);
         exit(1);
     }
     _status = eFORK;
@@ -77,13 +77,13 @@ void Cgi::writetocgi()
         if (!_eventexec && _status == eFORK) 
         {
             string &body = _req.getBody();
-            len = _sok.SendBuffToPipe((void *)body.c_str(), body.size());
+            len = _sok->SendBuffToPipe((void *)body.c_str(), body.size());
             _status = eSENDBUFFTOPIPE;
             _reqlen += len;
         }
         else if (!_eventexec && _status == eSENDBUFFTOPIPE)
         {
-            len = _sok.SendSocketToPipe();
+            len = _sok->SendSocketToPipe();
             if (len == 0)
             {
                 if (_reqlen != _req.getcontentlen())
@@ -107,8 +107,8 @@ void Cgi::readfromcgi()
         if (_status < ePARSEDCGIHEADER)
         {
             int len = 0;
-            if (_sok.CanUsePipe0())
-                len = read(_sok.pipefd[0], buf, MAXHEADERSIZE - 1);
+            if (_sok->CanUsePipe0())
+                len = read(_sok->pipefd[0], buf, MAXHEADERSIZE - 1);
             if (len <= 0)
                 Error::ThrowError("504");
             buf[len + 1] = '\0';

@@ -1,66 +1,85 @@
 #pragma once
-
 #include "../Headers.hpp"
 
+enum ReturnKind
+{
+    RETURN_NONE,
+    RETURN_200,
+    RETURN_REDIRECT
+};
+class Validation
+{
+	public:
+		Validation(AST<string> &astRoot);
+		void Validate();
 
-class Validation {
-    private:
-        int     _idx;
-        int     _level;
-        std::map<std::string, bool> _useServer;
-        std::map<std::string, bool> _useLocation;
-        std::vector<std::string> _data;
-        
-        static std::vector<std::string> _skiped;
-        
-        typedef std::map<std::string, void (Validation::*)() >Map;
-        Map _map;
-        
-        static void     CheckExistance(std::pair<std::string, bool>);
-        static bool     SkipedOptions(std::string option);
-        void            AddDirective( std::string value );
+	private:
+		AST<string> &_root;
 
-        void            CreateMap();
-        void            CreateMimeMap();
-        bool            IsByteSizeUnit( std::string& data );
-        void            CreateServerdMap();
-        void            CreateLocationMap();
-        void            CreateSkipedData();
-        
-        void            IsValidTypes();
+		struct ServerSeen
+		{
+			bool listen;
+			bool serverName;
+			bool root;
+			bool index;
+			bool autoindex;
+			bool returnDir;
+			bool clientMaxBodySize;
+			bool allowMethods;
+			bool errorPage;
 
-        void            IsValidServer();
-        void            ResetServerSeting();
+			ServerSeen() : listen(false), serverName(false), root(false),
+						   index(false), autoindex(false), returnDir(false),
+						   clientMaxBodySize(false), allowMethods(false),
+						   errorPage(false) {}
+		};
 
-        void            IsValidLocation();
-        void            ResetLocationSeting();
+		struct LocationSeen
+		{
+			bool root;
+			bool index;
+			bool autoindex;
+			bool returnDir;
+			bool clientMaxBodySize;
+			bool allowMethods;
+			bool cgiPass;
+			bool bodyInFile;
+			bool deleteFiles;
+			ReturnKind returnKind;
 
-        void            IsClientMaxBodySize();
+			LocationSeen() : root(false), index(false), autoindex(false),
+							 returnDir(false), clientMaxBodySize(false),
+							 allowMethods(false), cgiPass(false),
+							 bodyInFile(false), deleteFiles(false), returnKind(RETURN_NONE) {}
+		};
 
-        void            IsValidIndex();
-        void            IsValidRoot();
-        void            IsValidAutoindex();
-        void            CkeckDuplication(bool& first, bool& second, std::string msg);
-        void            CheckLevelAndDuplication(bool& first, bool& second, std::string msg);
-        
-        void            IsValidReturn();
-        void            IsValidServerName();
-        bool            IsSeparator();
+		// --- top-level validators ---
+		void validateServer(AST<string> &serverNode);
+		void validateLocation(AST<string> &locationNode, LocationSeen &seen);
 
-        void            IsErrorPage();
-        void            IsValidCGIPass();
+		// --- directive validators (server scope) ---
+		void validateListen(AST<string> &node, ServerSeen &seen);
+		void validateServerName(AST<string> &node, ServerSeen &seen);
+		void validateRoot(AST<string> &node, bool &seen);
+		void validateIndex(AST<string> &node, bool &seen);
+		void validateAutoindex(AST<string> &node, bool &seen);
+		void validateReturn(AST<string> &node, bool &seen);
+		void validateClientMaxBody(AST<string> &node, bool &seen);
+		void validateAllowMethods(AST<string> &node, bool &seen);
+		void validateErrorPage(AST<string> &node, bool &seen);
+		
 
-        void            IsValidAllowMethods();
-        bool            IsAllowedMethods(std::string& method);
+		// --- directive validators (location-only scope) ---
+		void validateCgiPass(AST<string> &node, LocationSeen &seen);
+		void validateBodyInFile(AST<string> &node, LocationSeen &seen);
+		void validateDeleteFiles(AST<string> &node, LocationSeen &seen);
+		void validateReturn(AST<string> &node, LocationSeen &seen);
 
-        void            IsValidListen();
-        void            IpAndPort();
-        void            PortOnly();
-        void            ValidIP();
-        long            ConvertToNumber(std::string num);
-
-    public:
-        static void parseListen(string str, string& port, string& host);
-        Validation(std::vector<std::string> inputData);
-        void    CheckValidation();
+		// --- helpers ---
+		ReturnKind classifyReturnCode(long code);
+		static long parseNumber(const string &s);
+		static bool isByteSizeUnit(char c);
+		static bool isValidMethod(const string &m);
+		static void checkArgCount(AST<string> &node, size_t min, size_t max, const string &name);
+		static void requireArgs(AST<string> &node, const string &name);
 };

@@ -149,7 +149,8 @@ void AMethod::SendDefaultRespense()
 	CreateResponseHeader();
 	ShouldSend = responseHeaderStr.length();
 	readyToSend = true;
-	SendResponse();
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	MulObj->ChangeToEpollOut(sock);
 }
 
 // Does one thing: builds a redirection-specific header (no body, includes Location)
@@ -237,7 +238,8 @@ void AMethod::HandelErrorPages(const string &err)
 	CreateResponseHeader();
 	ShouldSend += responseHeaderStr.length();
 	readyToSend = true;
-	SendResponse();
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	MulObj->ChangeToEpollOut(sock);
 }
 
 // ══════════════════════════════════════════════
@@ -294,7 +296,7 @@ void AMethod::SendResponse()
 void AMethod::HandelCGI()
 {
 	if (_cgi == NULL)
-		_cgi = new Cgi(router->GetRequest(), router->GetPath().getLocation()->cgiPassPath.c_str(), (*this).sock);
+		_cgi = new Cgi(router->GetRequest(), router->GetPath().getLocation()->cgiPassPath.c_str(), sock);
 	try
 	{
 		_cgi->Handle();
@@ -303,7 +305,9 @@ void AMethod::HandelCGI()
 	{
 		if (status[0] == '5' || status[0] == '4')
 			HandelErrorPages(status);
-		if (status[0] == '3')
+		// if (status[0] == '3' && _cgi->getCgiReq().getthereisbody())
+		// 	CreateRedirectionHeader(status, )
+
 	}
 	
 }
@@ -315,7 +319,7 @@ void AMethod::HandelCGI()
 // Does one thing: prepares and sends a redirection response
 void AMethod::SendRedirection()
 {
-	DeprecatedPath &path = router->GetPath();
+	Path &path = router->GetPath();
 	string redirCode = path.getRedirCode();
 	string redirLoc = path.getRedirPath();
 
@@ -326,7 +330,8 @@ void AMethod::SendRedirection()
 
 	ShouldSend = responseHeaderStr.length();
 	readyToSend = true;
-	SendResponse();
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	MulObj->ChangeToEpollOut(sock);
 }
 
 // ══════════════════════════════════════════════

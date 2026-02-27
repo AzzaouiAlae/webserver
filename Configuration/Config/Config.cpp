@@ -3,10 +3,11 @@
 
 Config::Server::Server()
 {
-	autoindex = true;
+	autoindex = -1;
 	clientMaxBodySize = 0;
 	allowMethodExists = false;
 	isMaxBodySize = false;
+	autoindex = -1;
 }
 
 Config::Server::Location::Location()
@@ -15,6 +16,8 @@ Config::Server::Location::Location()
 	clientMaxBodySize = 0;
 	isMaxBodySize = false;
 	deleteFiles = false;
+	autoindex = -1;
+	clientBodyInFileOnly = false;
 }
 
 bool Config::IsDuplicatedServer(int currServerIdx, const string &val, const string &srvName)
@@ -73,7 +76,7 @@ Config::Server &Config::GetServerName(vector<Config::Server> &srvs, const string
 	return srvs[0];
 }
 
-int Config::GetMaxBodySize(vector<Config::Server> &srvs)
+size_t Config::GetMaxBodySize(vector<Config::Server> &srvs)
 {
 	size_t size = 0;
 	for (int i = 0; i < (int)srvs.size(); i++)
@@ -222,6 +225,25 @@ void Config::parseListen(const string &str, string &port, string &host)
 {
 	DDEBUG("Parsing") << "Parsing 'listen' directive value: [" << str << "]";
 
+	if (str[0] == '[')
+	{
+		std::string::size_type endBracket = str.find(']');
+
+		if (endBracket != std::string::npos)
+		{
+			host = str.substr(1, endBracket - 1);
+			if (endBracket + 1 < str.length() && str[endBracket + 1] == ':')
+				port = str.substr(endBracket + 2);
+			else
+				port = "80";
+
+			DDEBUG("Parsing") << "  -> Detected IPv6 format => Host: [" << host << "], Port: [" << port << "]";
+			return;
+		}
+		else
+			Error::ThrowError("Invalid host format: " + str);
+	}
+
 	const char *colon = strrchr(str.c_str(), ':');
 
 	if (colon != NULL)
@@ -294,6 +316,7 @@ void Config::fillServer(AST<string> &serverNode, Config::Server &srv)
 			DDEBUG("Parsing") << "    -> Set server_name: [" << srv.serverName << "]";
 		}
 		else if (val == "autoindex") {
+
 			srv.autoindex = (args[0] == "on");
 			DDEBUG("Parsing") << "    -> Set autoindex: [" << (srv.autoindex ? "ON" : "OFF") << "]";
 		}

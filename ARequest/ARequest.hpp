@@ -26,6 +26,7 @@ protected:
     map<string, string> _env;
     map<string, string> _cookies;
     Session* _currentSession;
+    bool _firstline;
     string _requestbuff;
 	size_t _content_len;
     bool _Thereisbody;

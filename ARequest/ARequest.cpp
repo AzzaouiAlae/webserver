@@ -17,6 +17,7 @@ ARequest::ARequest()
     _reqDirectives = NULL;
     _requestbuff = "";
     _content_len = 0;
+    _firstline = true;
     _Thereisbody = false;
 	_headersize = 0;
 }
@@ -36,11 +37,14 @@ bool ARequest::getFullLine(string reqtype, string &line)
         {
             if (reqtype == "cgi")
 			    Error::ThrowError("502");
+            if (_firstline)
+                Error::ThrowError("414");
             Error::ThrowError("431");
         }
 		line += _requestbuff[index];
 		index++;
 	}
+    _firstline = false;
 	if (_requestbuff[index] == '\n' && (index == 0 || (index > 0 && _requestbuff[index - 1] != '\r')))
     {
         if (reqtype == "cgi")
@@ -50,6 +54,12 @@ bool ARequest::getFullLine(string reqtype, string &line)
 	else if (_requestbuff[index] == '\n')
 	{
 		_headersize += index;
+        if (_headersize > MAXHEADERSIZE)
+        {
+            if (reqtype == "cgi")
+			    Error::ThrowError("502");
+            Error::ThrowError("431");
+        }
 		_requestbuff.erase(0, index + 1);
 		line += '\n';
 	}

@@ -4,48 +4,22 @@ vector<char *> HTTPContext::buffPoll;
 
 void HTTPContext::Handle(AFd *fd)
 {
-	HTTPLog(DDEBUG) << ", Handle(AFd) type: " << fd->GetType();
-	if (fd->GetType() == "Socket")
-		Handle((Socket *)fd);
-	else if (fd->GetType() == "SocketIO")
-		Handle();
-}
-
-void HTTPContext::Handle(Socket *sock)
-{
-	HTTPLog(DEBUG) << "Handle(Socket) called, accepting new connection on socket fd: " << sock->GetFd();
-	SocketIO *fd = new SocketIO(sock->acceptedSocket);
-	Singleton::GetFds().insert(fd);
-	servers = &((Singleton::GetVirtualServers())[sock->GetFd()]);
-	fd->context = new HTTPContext();
-	HTTPContext *cont = (HTTPContext *)fd->context;
-	cont->servers = servers;
-	cont->router.srv = &((*servers)[0]);
-	cont->router.GetRequest().SetMaxBodySize(Config::GetMaxBodySize(*servers));
-	cont->sock = fd;
-	cont->repsense.Init(fd, &(((HTTPContext *)fd->context)->router));
-	Multiplexer::GetCurrentMultiplexer()->AddAsEpollIn(fd);
-	INFO() << "New client connected from " << Socket::getRemoteName(fd->GetFd());
-}
-
-void HTTPContext::Handle()
-{
+	(void)fd;
 	HTTPLog(DDEBUG) << ", Handle() start";
 	if (router.isRequestComplete() == false &&
-		sock->isTimeOut() == false && err == false)
+		sock->isTimeOut(router.GetPath().isCGI()) == false && err == false)
 	{
 		HTTPLog(DDEBUG)
 			<< ", Handle() router.isRequestComplete(): "
 			<< router.isRequestComplete() << ", err: " << err;
 		HandleRequest();
 	}
-	else
+	if (router.isRequestComplete())
 	{
-		if (sock->isTimeOut())
+		if (sock->isTimeOut(router.GetPath().isCGI()))
 		{
 			_setupPipeline();
 		}
-		router.SetRequestComplete();
 		HTTPLog(DDEBUG) << ", request complete, handling response.";
 		if (repsense.HandleResponse())
 		{
@@ -59,8 +33,6 @@ void HTTPContext::Handle()
 		activeOutPipe();
 	}
 }
-
-
 
 int HTTPContext::_readFromSocket()
 {
@@ -143,7 +115,7 @@ void HTTPContext::_setupPipeline()
 
 	// Switch Multiplexer state
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	MulObj->ChangeToEpollOut(sock);
+	// MulObj->ChangeToEpollOut(sock);
 
 	// Create Pipes
 	// Note: Ensure you manage memory for 'in' and 'out' properly (e.g., delete in destructor)
@@ -204,7 +176,6 @@ void HTTPContext::HandleRequest()
 			}
 			else
 				sock->maxToClean = router.GetRequest().getcontentlen();
-			Multiplexer::GetCurrentMultiplexer()->ChangeToEpollIn(sock);
 		}
 	}
 }
@@ -217,18 +188,20 @@ void HTTPContext::ClearBuffPoll()
 	}
 }
 
-HTTPContext::HTTPContext()
+HTTPContext::HTTPContext(vector<Config::Server > *servers, size_t maxBodySize, SocketIO *sock): sock(sock), servers(servers)
 {
 	in = NULL;
 	out = NULL;
-	sock = NULL;
 	buf = NULL;
 	err = false;
-	isMaxBodyInit = false;
+	router.srv = &((*servers)[0]);
+	router.GetRequest().SetMaxBodySize(maxBodySize);
+	repsense.Init(sock, &(router));
 	if (buffPoll.size() > 0) {
 		buf = buffPoll[buffPoll.size() - 1];
 		buffPoll.pop_back();
 	}
+	// isMaxBodyInit = false;
 }
 
 void HTTPContext::MarkedSocketToFree()
@@ -288,7 +261,6 @@ void HTTPContext::activeOutPipe()
 
 	MulObj->ChangeToEpollOut(out);
 }
-
 
 string HTTPContext::logPrefix() 
 { 

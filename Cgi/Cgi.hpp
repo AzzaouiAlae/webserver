@@ -31,21 +31,21 @@ class Cgi
 {
     ClientRequest     &_req;
     CgiRequest        _cgireq;
-    SocketIO    &_sok;
+    SocketIO    *_sok;
     pid_t       _pid;
     estatus     _status;
     bool        _parsheader;
     long        _time;
     bool        _TimeSeted;
     bool        _eventexec;
-    char        *_exec;
+    const char        *_exec;
     size_t      _reqlen;
     void createChild();
     void writetocgi();
     void readfromcgi();
     Cgi();
 public:
-    Cgi(ClientRequest &req, char* exec, SocketIO &sok);
+    Cgi(ClientRequest &req, const char* exec, SocketIO *sok);
     bool isExeted();
     void Handle();
     void resetTime();

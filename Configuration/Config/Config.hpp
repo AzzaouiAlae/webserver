@@ -20,7 +20,7 @@ public:
 		string serverName;
 		vector<string> index;
 		string root;
-		bool autoindex;
+		int autoindex;
 		size_t clientMaxBodySize;
 		bool allowMethodExists;
 		vector<string> allowMethods;
@@ -31,7 +31,7 @@ public:
 		public:
 			AST<string> *locNode;
 			Location();
-			bool autoindex;
+			int autoindex;
 			bool isMaxBodySize;
 			size_t clientMaxBodySize;
 			bool clientBodyInFileOnly;
@@ -56,7 +56,7 @@ public:
 	static Config::Server &GetServerName(vector<Config::Server> &srvs, const string &val);
 	static string GetErrorPath(Config::Server &srv, const string &code);
 	static int GetLocationIndex(Config::Server &srv, const string &path);
-	static int GetMaxBodySize(vector<Config::Server> &srvs);
+	static size_t GetMaxBodySize(vector<Config::Server> &srvs);
 	static void FillConf();
 	static void parseListen(const string &str, string &port, string &host);
 private:
