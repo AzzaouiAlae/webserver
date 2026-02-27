@@ -239,6 +239,7 @@ void Validation::validateReturn(AST<string> &node, LocationSeen &seen)
 	DDEBUG("Validation") << "ENTER validateReturn(location)";
 	if (seen.returnDir)
 		Error::ThrowError("Config Error: duplicate 'return' directive");
+
 	seen.returnDir = true;
 	checkArgCount(node, 1, 2, "return");
 
@@ -248,6 +249,10 @@ void Validation::validateReturn(AST<string> &node, LocationSeen &seen)
 	
 	if ( seen.bodyInFile && code != 200 )
 		Error::ThrowError("Config Error: 'return 301/302' cannot be used with 'client_body_in_file_only' in the same location block");
+	if (seen.cgiPass && code != 200)
+		Error::ThrowError("Config Error: 'return 301/302' cannot be used with 'cgi_pass'");
+	if (seen.deleteFiles && code != 200)
+		Error::ThrowError("Config Error: 'return 301/302' cannot be used with 'delete_files'");
 
 	seen.returnKind = classifyReturnCode(code);
 	string str;
@@ -324,6 +329,8 @@ void Validation::validateCgiPass(AST<string> &node, LocationSeen &seen)
 		Error::ThrowError("Config Error: 'cgi_pass' cannot be used with 'client_body_in_file_only'");
 	if (seen.deleteFiles)
 		Error::ThrowError("Config Error: 'cgi_pass' cannot be used with 'delete_files'");
+	if ( seen.returnKind == RETURN_REDIRECT )
+		Error::ThrowError("Config Error: 'cgi_pass' cannot be used with 'return 301/302' in the same location block");
 
 	seen.cgiPass = true;
 	checkArgCount(node, 2, 2, "cgi_pass");
@@ -361,6 +368,8 @@ void Validation::validateDeleteFiles(AST<string> &node, LocationSeen &seen)
 		Error::ThrowError("Config Error: duplicate 'delete_files' in location block");
 	if (seen.cgiPass)
 		Error::ThrowError("Config Error: 'delete_files' cannot be used with 'cgi_pass'");
+	if ( seen.returnKind == RETURN_REDIRECT )
+		Error::ThrowError("Config Error: 'delete_files' cannot be used with 'return 301/302' in the same location block");
 
 	seen.deleteFiles = true;
 	checkArgCount(node, 1, 1, "delete_files");
