@@ -293,6 +293,25 @@ void AMethod::SendResponse()
 	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendResponse: sent=" << size << ", progress=" << sended << "/" << ShouldSend;
 }
 
+void AMethod::HandelCGI()
+{
+	if (_cgi == NULL)
+		_cgi = new Cgi(router->GetRequest(), router->GetPath().getLocation()->cgiPassPath.c_str(), sock);
+	try
+	{
+		_cgi->Handle();
+	}
+	catch(const std::string& status)
+	{
+		if (status[0] == '5' || status[0] == '4')
+			HandelErrorPages(status);
+		// if (status[0] == '3' && _cgi->getCgiReq().getthereisbody())
+		// 	CreateRedirectionHeader(status, )
+
+	}
+	
+}
+
 // ══════════════════════════════════════════════
 //  Redirection
 // ══════════════════════════════════════════════

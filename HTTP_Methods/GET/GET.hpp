@@ -9,7 +9,6 @@ class GET : public AMethod
 	int sendListFiles;
 	int targetToSend;
 	int sent;
-
 	// ──── File serving ────
 	void OpenFile(const string &path);
 	void PrepareFileResponse();

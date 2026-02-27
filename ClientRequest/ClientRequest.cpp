@@ -122,17 +122,12 @@ void ClientRequest::parsHttpStandard(string httpStandard)
 
 void ClientRequest::parsLenTypeCont()
 {
-	if (_env.find("CONTENT_LENGTH") != _env.end() && _env.find("CONTENT_TYPE") == _env.end())
-		Error::ThrowError("There is No Content Type");
-	if (_env.find("CONTENT_TYPE") != _env.end() && _env.find("CONTENT_LENGTH") == _env.end())
-		Error::ThrowError("There is No Content Length");
-
-	if (_env.find("CONTENT_TYPE") != _env.end() && _env.find("CONTENT_LENGTH") != _env.end())
+	if (getthereisbody())
 	{
-		if (!getthereisbody())
-			Error::ThrowError("400");
 		if (!Utility::strtosize_t(_env["CONTENT_LENGTH"], _content_len))
-			Error::ThrowError("The Content Length Invalid");
+			Error::ThrowError("400");
+		if (_content_len == 0 || _env.find("CONTENT_LENGTH") == _env.end())
+			Error::ThrowError("400");
 		DDEBUG("ClientRequest") << "parsLenTypeCont: Content-Type='" << _env["CONTENT_TYPE"]
 								<< "', Content-Length=" << _content_len;
 	}
@@ -154,10 +149,11 @@ bool ClientRequest::ParseHeader()
 {
 	string line = "";
 
-	if (_Parspos == eParsStart && getFullLine(line))
+	if (_Parspos == eParsStart && getFullLine("client", line))
 		parsHttpStandard(line);
-	while (_Parspos == eParsHttpStand && getFullLine(line) && line != "\r\n")
-		parseHeaderLine(line);
+	while (_Parspos == eParsHttpStand && getFullLine("client", line) && line != "\r\n")
+		parseHeaderLine("client", line);
+	
 	if (_Parspos == eParsHttpStand && line == "\r\n" && _requestbuff.length() > 0) _Thereisbody = true;
 	if (_Parspos == eParsHttpStand && line == "\r\n" && 
 		(_env["REQUEST_METHOD"] == "POST" || _env["REQUEST_METHOD"] == "DELETE"))
