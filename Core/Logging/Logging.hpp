@@ -48,6 +48,7 @@ public:
 		template <typename T>
 		LogBase &operator<<(const T &value)
 		{
+			return *this;
 			ss << value;
 			return *this;
 		}

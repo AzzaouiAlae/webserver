@@ -129,7 +129,7 @@ void Multiplexer::ChangeToEpollInOut(AFd *fd)
 
 void Multiplexer::MainLoop()
 {
-	int timeout = 10;
+	int timeout = 20;
 	long time = Utility::CurrentTime() + USEC * timeout;
 	(void)time;
 	INFO() << "Server is ready, waiting for connections...";
@@ -225,7 +225,7 @@ bool Multiplexer::ClearEventObj(epoll_event &event)
 {
 	AFd *obj = (AFd *)(event.data.ptr);
 
-	if (obj->MarkedToDelete || event.events & (EPOLLERR | EPOLLPRI | EPOLLRDHUP))
+	if (obj->MarkedToDelete || (event.events & (EPOLLIN | EPOLLOUT)) == 0)
 	{
 		ClearObj(obj);
 		return true;
@@ -265,7 +265,7 @@ void Multiplexer::handelEpollSocket(epoll_event &event)
 		<< ", type=" << obj->GetType()
 		<< ", events=" << event.events
 		<< ", cleanBody=" << obj->cleanBody;
-	if (obj->cleanBody) {
+	if (obj->cleanBody && (event.events & EPOLLIN)) {
 		DDEBUG("Multiplexer") << "  -> cleanFd() for fd=" << obj->GetFd();
 		obj->cleanFd();
 	}
