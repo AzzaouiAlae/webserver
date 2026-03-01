@@ -71,29 +71,24 @@ bool ARequest::getFullLine(string reqtype, string &line)
 	return true;
 }
 
+void ARequest::throwBadHeader(string reqtype)
+{
+    if (reqtype == "cgi")
+		Error::ThrowError("502");
+    Error::ThrowError("400");
+}
+
 void ARequest::parseHeaderLine(string reqtype, const string &line)
 {
     size_t colonPos = line.find(':');
     if (colonPos == string::npos)
-    {
-        if (reqtype == "cgi")
-			Error::ThrowError("502");
-        Error::ThrowError("400");
-    }
+        throwBadHeader(reqtype);
     string key   = line.substr(0, colonPos);
-    if (!key.empty() && key[key.size() - 1] == ' ')
-    {
-        if (reqtype == "cgi")
-			Error::ThrowError("502");
-        Error::ThrowError("400");
-    }
+    if (!key.empty() && !isalpha(key[key.size() - 1]))
+        throwBadHeader(reqtype);
     string value = line.substr(colonPos + 1);
-    if (si&& key[key.size() - 1] == ' ')
-    {
-        if (reqtype == "cgi")
-			Error::ThrowError("502");
-        Error::ThrowError("400");
-    }
+    if (value.size() >= 2 && key[0] == ' ' && !isalpha(key[1]))
+        throwBadHeader(reqtype);
     Utility::trim(value, " \n\r");
 
     if (_reqDirectives && _reqDirectives->find(key) != _reqDirectives->end())

@@ -36,6 +36,7 @@ protected:
     void parseHeaderLine(string reqtype, const string &line);
     
     void parseCookies();
+    void throwBadHeader(string reqtype);
 public:
     ARequest();
     virtual ~ARequest();

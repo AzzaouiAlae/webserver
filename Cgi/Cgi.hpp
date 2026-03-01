@@ -34,6 +34,10 @@ class Cgi
     SocketIO    *_sok;
     pid_t       _pid;
     estatus     _status;
+    string      _copybuf;
+    AFd         *_out;
+	AFd         *_in;
+    int        _pipefd[2];
     bool        _parsheader;
     long        _time;
     bool        _TimeSeted;

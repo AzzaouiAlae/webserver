@@ -64,8 +64,6 @@ void CgiRequest::parseLocation()
         Error::ThrowError("502");
     if (!(_env["Location"].find("http://") == 0 || _env["Location"].find("https://") == 0 || _env["Location"].find("/") == 0))
         Error::ThrowError("502");
-    if (_env.find("Location") != _env.end() && (!_Thereisbody || _env.find("Content-Type") == _env.end()))
-        Error::ThrowError(_statusCode);
 }
 
 void CgiRequest::parsLenTypeCont()

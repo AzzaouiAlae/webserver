@@ -113,12 +113,8 @@ void HTTPContext::_setupPipeline()
 
 	router.SetRequestComplete();
 
-	// Switch Multiplexer state
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	// MulObj->ChangeToEpollOut(sock);
 
-	// Create Pipes
-	// Note: Ensure you manage memory for 'in' and 'out' properly (e.g., delete in destructor)
 	in = new Pipe(sock->pipefd[0], sock);
 	MulObj->AddAsEpollIn(in);
 
