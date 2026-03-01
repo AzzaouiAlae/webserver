@@ -16,8 +16,7 @@ GET::GET(SocketIO *sock, Routing *router): AMethod(sock, router)
 
 // Does one thing: cleanup (base class ~AMethod handles fileFd)
 GET::~GET()
-{
-}
+{}
 
 // ══════════════════════════════════════════════
 //  HandleResponse — GET entry point
@@ -33,11 +32,12 @@ bool GET::HandleResponse()
 	string method = req.getMethod();
 	ResolvePath();
 
-	DDEBUG("GET") << "Socket fd: " << sock->GetFd()
-				   << ", method=" << method
-				   << ", readyToSend=" << readyToSend
-				   << ", sendListFiles=" << sendListFiles
-				   << ", emptyRoot=" << router->GetPath().emptyRoot();
+	DDEBUG("GET") 
+		<< "Socket fd: " << sock->GetFd()
+		<< ", method=" << method
+		<< ", readyToSend=" << readyToSend
+		<< ", sendListFiles=" << sendListFiles
+		<< ", emptyRoot=" << router->GetPath().emptyRoot();
 
 	if (sock->isTimeOut(router->GetPath().isCGI())) 
 	{
@@ -129,7 +129,7 @@ void GET::GetMethod()
 // Does one thing: opens the file for reading
 void GET::OpenFile(const string &path)
 {
-	fileFd = open(path.c_str(), O_RDONLY);
+	fileFd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
 }
 
 // Does one thing: sets body size, status code, and creates the response header
@@ -286,12 +286,8 @@ void GET::SendListFilesStr(const string &str)
 	int len = targetToSend - sended;
 	int offset = str.length() - len;
 
-	
-
 	const char *b = &(str[offset]);
 	SendChunk(b, len);
-
-	
 }
 
 // Does one thing: calculates the correct offset into a static file and sends that chunk
@@ -302,8 +298,6 @@ void GET::SendAutoIndex(StaticFile *f)
 	const char *b = &((f->GetData())[offset]);
 
 	SendChunk(b, len);
-
-	
 }
 
 // Does one thing: advances the state machine counter and checks for completion
@@ -311,7 +305,7 @@ void GET::AdvanceListFilesState()
 {
 	if (sended >= targetToSend)
 		sendListFiles++;
-	if (sendListFiles == 7 || Utility::SigPipe)
+	if (sendListFiles == 7 || Utility::SigPipe || sock->errorNumber == eWriteError)
 		del = true;
 }
 
@@ -352,6 +346,5 @@ void GET::SendListFilesResponse()
 		SendAutoIndex(StaticFile::GetFileByName("autoIndex3"));
 		break;
 	}
-
 	AdvanceListFilesState();
 }

@@ -129,15 +129,12 @@ void Multiplexer::ChangeToEpollInOut(AFd *fd)
 
 void Multiplexer::MainLoop()
 {
-	int timeout = 20;
-	long time = Utility::CurrentTime() + USEC * timeout;
-	(void)time;
+	size_t Count = 0;
 	INFO() << "Server is ready, waiting for connections...";
-	// while(time > Utility::CurrentTime())
 	while(true)
 	{
 		epoll_event eventList[count];
-		int size = epoll_wait(epollFd, eventList, count, USEC * timeout / 1000);
+		int size = epoll_wait(epollFd, eventList, count, USEC * TIMEOUT / 1000);
 		
 		for(int i = 0; i < size; i++) {
 			handelEpollPipes(eventList[i]);
@@ -146,29 +143,30 @@ void Multiplexer::MainLoop()
 			handelEpollSocket(eventList[i]);
 		}
 		ClearToDelete();
+		if (Utility::SigInt) {
+			INFO() << "SIGINT received. Shutting down server.";
+			break;
+		}
+		WARN() << "epoll_wait loop iteration complete " << Count++;
 	}
 }
 
-bool Multiplexer::DeleteItem(AFd *item)
+void Multiplexer::DeleteItem(AFd *item)
 {
 	tcp_info info;
     socklen_t len;
-	
-	if (item->deleteNow)
+	len = sizeof(info);
+
+	if (item->deleteNow || item->GetType() == "Socket")
 	{
 		delete item;
         toDelete.erase(item);
-		return true;
 	}
-	len = sizeof(info);
-	if (getsockopt(item->GetFd(), IPPROTO_TCP, TCP_INFO, &info, &len) == 0)
+	else if (getsockopt(item->GetFd(), IPPROTO_TCP, TCP_INFO, &info, &len) == 0)
 	{
-		if (info.tcpi_unacked == 0 && item->deleteNow == 0)
-		{
+		if (info.tcpi_unacked == 0)
 			item->deleteNow = true;
-		}
 	}
-	return false;
 }
 
 void Multiplexer::ClearToDelete()
@@ -202,21 +200,22 @@ Multiplexer::~Multiplexer()
 
 	for(; it != fds.end(); it++)
 	{
+		DEBUG("Multiplexer") << "Deleting fd=" << (*it)->GetFd() << ", type=" << (*it)->GetType();
 		toDelete.insert(*it);
 	}
 	DDEBUG("Multiplexer") << "Marked " << fds.size() << " fd(s) for deletion, closing epollFd=" << epollFd;
 	close(epollFd);
 	while (toDelete.size()) {
+		DEBUG("Multiplexer") << "Waiting for " << toDelete.size() << " item(s) to be deleted.";
 		ClearToDelete();
-		usleep(10000);
 	}
 	while (SocketIO::CloseSockFD(-1)) {
-		usleep(10000);
+		DEBUG("Multiplexer") << "Waiting for all socket fds to be closed.";
 	}
 	SocketIO::ClearPipePool();
 	SessionManager *p = SessionManager::getInstance();
 	delete p;
-	free(AFd::buff);
+	delete[] AFd::buff;
 	HTTPContext::ClearBuffPoll();
 	DEBUG("Multiplexer") << "Multiplexer cleanup complete.";
 }

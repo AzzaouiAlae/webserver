@@ -40,10 +40,6 @@ void Path::checkFileExistence(const string &path)
 {
 	struct stat info;
 
-	_found = false;
-	_isDir = false;
-	_isFile = false;
-
 	if (stat(path.c_str(), &info) == 0)
 	{
 		_found = true;
@@ -105,9 +101,13 @@ void Path::_handleDirectoryIndex(Config::Server &srv)
 {
     vector<string> indices = srv.index;
 
-    if (matchedLocationIndex != -1 && !srv.Locations[matchedLocationIndex].index.empty()) {
+    if (matchedLocationIndex != -1 ) {
+		if (_decodedPath != srv.Locations[matchedLocationIndex].path)
+			return;
         indices = srv.Locations[matchedLocationIndex].index;
     }
+	else if (_decodedPath != "/")
+		return;
 
     DDEBUG("Path") << "_handleDirectoryIndex: trying " << indices.size() << " index file(s) in '" << _fullPath << "'";
 
@@ -125,6 +125,8 @@ void Path::_handleDirectoryIndex(Config::Server &srv)
             _isDir = false;
 
             checkPermissions(_fullPath); 
+			if (!_hasPermission) 
+				continue;
             DDEBUG("Path") << "  -> found index file: '" << _fullPath << "'";
             break;
         }
@@ -133,10 +135,10 @@ void Path::_handleDirectoryIndex(Config::Server &srv)
 
 void Path::CreatePath(Config::Server &srv, const string &reqUrl)
 {
-	string decodedPath = decodePath(reqUrl);
-	DEBUG("Path") << "Creating path for URL: '" << reqUrl << "', decoded: '" << decodedPath << "'";
+	_decodedPath = decodePath(reqUrl);
+	DEBUG("Path") << "Creating path for URL: '" << reqUrl << "', decoded: '" << _decodedPath << "'";
 
-    matchedLocationIndex = Config::GetLocationIndex(srv, decodedPath);
+    matchedLocationIndex = Config::GetLocationIndex(srv, _decodedPath);
 	DEBUG("Path") << "Best matching location index: " << matchedLocationIndex;
 	DDEBUG("Path") << "  -> Server root='" << srv.root << "', locations=" << srv.Locations.size();
 	this->srv = &srv;
@@ -149,7 +151,7 @@ void Path::CreatePath(Config::Server &srv, const string &reqUrl)
 
     _setRootAndCGI(srv);
 
-    _fullPath = joinPath(_root, decodedPath);
+    _fullPath = joinPath(_root, _decodedPath);
     DDEBUG("Path") << "  -> Constructed full path: '" << _fullPath << "'";
 
     checkFileExistence(_fullPath);

@@ -44,7 +44,6 @@ Logging::LogBase::LogBase()
 // Specific destructor handles the writing
 Logging::Debug::~Debug()
 {
-	return;
 	if (isActive && Logging::current)
 		Logging::current->WriteDebug(ss.str());
 }
@@ -55,7 +54,6 @@ Logging::Info::Info()
 
 Logging::Info::~Info()
 {
-	return;
 	if (Logging::current)
 		Logging::current->WriteInfo(ss.str());
 }
@@ -66,7 +64,6 @@ Logging::Warn::Warn()
 
 Logging::Warn::~Warn()
 {
-	return;
 	if (Logging::current)
 		Logging::current->WriteWarn(ss.str());
 }
@@ -77,7 +74,6 @@ Logging::Error::Error()
 
 Logging::Error::~Error()
 {
-	return;
 	if (Logging::current)
 		Logging::current->WriteError(ss.str());
 }
@@ -90,7 +86,6 @@ Logging::Debug::Debug()
 
 Logging::Debug::Debug(string ClsName, bool isDetail)
 {
-	return;
 	isActive = false;
 
 	if (isDetail)

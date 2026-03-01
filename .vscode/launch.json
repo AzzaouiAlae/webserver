@@ -8,7 +8,7 @@
 			"name": "(gdb) Launch",
 			"type": "cppdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/websrv.out",
+			"program": "${workspaceFolder}/webserv.out",
 			"miDebuggerPath": "/usr/bin/gdb",
 			"args": ["-D"],
 			"stopAtEntry": false,

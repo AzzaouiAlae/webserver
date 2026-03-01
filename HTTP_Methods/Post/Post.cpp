@@ -112,7 +112,7 @@ bool Post::HandleResponse()
 // Does one thing: creates/opens the upload file for writing
 void Post::OpenUploadFile()
 {
-	uploadFd = open(filename.c_str(), O_CREAT | O_WRONLY, 0644);
+	uploadFd = open(filename.c_str(), O_CREAT | O_WRONLY | O_CLOEXEC, 0644);
 	DDEBUG("Post") 
 		<< "Socket fd: " << sock->GetFd() 
 		<< ", OpenUploadFile: '" << filename 

@@ -2,7 +2,7 @@
 #include "Headers.hpp"
 #include "Socket.hpp"
 #include "SocketIO.hpp"
-#include "Pipe.hpp"
+#include "SocketPipe.hpp"
 #include "Repsense.hpp"
 
 #define BUF_SIZE 1024 * 64

@@ -6,6 +6,7 @@ class Utility
 	static string toTrime;
 public:
 	static bool SigPipe;
+	static bool SigInt;
 	static bool isNotZero(char ch);
 	static bool isNotSquareBracket(char ch);
 	static void ltrim(string &s, bool (*f)(char ch));
