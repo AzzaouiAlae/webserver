@@ -6,7 +6,7 @@ int Socket::errorNumber = 0;
 
 void Socket::Handle()
 {
-	acceptedSocket = accept4(fd, NULL, NULL, SOCK_NONBLOCK);
+	acceptedSocket = accept4(fd, NULL, NULL, SOCK_NONBLOCK | SOCK_CLOEXEC);
 	if (acceptedSocket == -1)
 	{
 		ERR() << "Fail to accepte new conection from socket fd: " << fd;
@@ -70,7 +70,7 @@ int Socket::inetPassiveSocket(const char *host, const char *service, int type,
 
 	for (rp = result; rp != NULL; rp = rp->ai_next)
 	{
-		sock = socket(rp->ai_family, rp->ai_socktype | O_NONBLOCK, rp->ai_protocol);
+		sock = socket(rp->ai_family, rp->ai_socktype | O_NONBLOCK | FD_CLOEXEC, rp->ai_protocol);
 		if (sock == -1)
 			continue;
 		if (doListen)

@@ -17,6 +17,7 @@ class Path {
 		bool        _hasPermission;
         string      _redirCode;
         string      _redirPath;
+		string		_decodedPath;
 		Config::Server *srv;
 
         void        checkFileExistence(const string &path);
