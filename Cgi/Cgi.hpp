@@ -34,6 +34,7 @@ class Cgi
     SocketIO    *_sok;
     pid_t       _pid;
     estatus     _status;
+    int         _statusfd;
     string      _copybuf;
     AFd         *_out;
 	AFd         *_in;
@@ -55,6 +56,7 @@ public:
     void resetTime();
     long getTime();
     CgiRequest   &getCgiReq();
+    void SetStateByFd(int fd);
     ~Cgi();
     
 };

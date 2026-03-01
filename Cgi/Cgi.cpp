@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "Cgi.hpp"
+#include "CGIPipe.hpp"
 #include <string.h>
 
 
@@ -22,10 +23,10 @@ Cgi::Cgi(ClientRequest &req, const char* exec, SocketIO *sok) : _req(req), _sok(
     _reqlen  = 0;
     Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 
-	_in = new CgiPipe(_pipefd[0], *this);
+	_in = new CGIPipe(_pipefd[0], this);
 	MulObj->AddAsEpollIn(_in);
 
-	_out = new CgiPipe(_pipefd[1], *this);
+	_out = new CGIPipe(_pipefd[1], this);
 	MulObj->AddAsEpollOut(_out);
 }
 
@@ -83,7 +84,7 @@ void Cgi::createChild()
 void Cgi::writetocgi()
 {
     int len = 0;
-    int size = _req.getcontentlen() - _reqlen;
+    size_t size = _req.getcontentlen() - _reqlen;
 
     if (_status < eFINISHWRITING && _req.getthereisbody())
     {
@@ -156,12 +157,10 @@ void Cgi::Handle()
 
 void Cgi::SetStateByFd(int fd)
 {
-	if (fd == pipefd[0])
-		status |= ePipe0;
-	else if (fd == pipefd[1])
-		status |= ePipe1;
-	else if (this->fd == fd)
-		status |= eSocket;
+	if (fd == _pipefd[0])
+		_statusfd |= ePipe0;
+	else if (fd == _pipefd[1])
+		_statusfd |= ePipe1;
 }
 
 Cgi::~Cgi()

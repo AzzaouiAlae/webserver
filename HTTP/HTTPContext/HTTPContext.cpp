@@ -115,10 +115,12 @@ void HTTPContext::_setupPipeline()
 
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 
-	in = new Pipe(sock->pipefd[0], sock);
+	// Create Pipes
+	// Note: Ensure you manage memory for 'in' and 'out' properly (e.g., delete in destructor)
+	in = new SocketPipe(sock->pipefd[0], sock);
 	MulObj->AddAsEpollIn(in);
 
-	out = new Pipe(sock->pipefd[1], sock);
+	out = new SocketPipe(sock->pipefd[1], sock);
 	MulObj->AddAsEpollOut(out);
 	HTTPLog(DDEBUG) 
 		<< ", _setupPipeline complete: in_pipe_fd=" 
@@ -166,12 +168,6 @@ void HTTPContext::HandleRequest()
 			{
 				repsense.HandelErrorPages("400");
 			}
-			if (router.GetRequest().getcontentlen() < INT64_MAX)
-			{
-				sock->maxToClean = router.GetRequest().getcontentlen() + SAFE_MARGIN;
-			}
-			else
-				sock->maxToClean = router.GetRequest().getcontentlen();
 		}
 	}
 }

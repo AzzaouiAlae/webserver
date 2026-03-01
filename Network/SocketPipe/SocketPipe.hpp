@@ -2,9 +2,9 @@
 #include "../../Headers.hpp"
 #include "../SocketIO/SocketIO.hpp"
 
-class Pipe : public AFd {
+class SocketPipe : public APipe {
 	SocketIO *socket;
 public:
-	Pipe(int fd, SocketIO *socket);
+	SocketPipe(int fd, SocketIO *socket);
 	void Handle();
 };

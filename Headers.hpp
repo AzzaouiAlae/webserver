@@ -69,6 +69,7 @@ using namespace std;
 #include "ISocket.hpp"
 #include "Tokenizing.hpp"
 #include "ConnectionContext.hpp"
+#include "APipe.hpp"
 
 extern char **environ;
 

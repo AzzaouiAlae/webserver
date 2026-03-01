@@ -8,6 +8,12 @@ void sigpipe_handler(int signum)
 	Utility::SigPipe = true;
 }
 
+void sigint_handler(int signum)
+{
+	(void)signum;
+	Utility::SigInt = true;
+}
+
 void initDebug(string &className)
 {
 	if (className.empty())
@@ -62,11 +68,14 @@ int ParseLoggingArgs(int argc, char *argv[])
 	return fileNameIdx;
 }
 
+
+
 void InitServer(int argc, char *argv[], string &filename)
 {
 	int fileNameIdx = ParseLoggingArgs(argc, argv);
 
 	signal(SIGPIPE, sigpipe_handler);
+	signal(SIGINT, sigint_handler);
 
 	if (argc < fileNameIdx + 1)
 		filename = DEFAULT_CONF;

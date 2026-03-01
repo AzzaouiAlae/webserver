@@ -2,10 +2,10 @@
 #include "Headers.hpp"
 #include "Socket.hpp"
 #include "SocketIO.hpp"
-#include "Pipe.hpp"
+#include "SocketPipe.hpp"
 #include "Repsense.hpp"
 
-#define BUF_SIZE 1024 * 1024 * 5
+#define BUF_SIZE 1024 * 64
 #define SAFE_MARGIN 1024 * 64
 #define HTTPLog(lvl) lvl("HTTPContext") << logPrefix() << "HTTPContext, "
 

@@ -211,7 +211,7 @@ SocketIO::SocketIO(int fd) : ISocket(fd, "SocketIO"), pipeInitialized(false), pe
 		pipeInitialized = true;
 		DDEBUG("SocketIO") << "SocketIO created fd=" << fd << ", reused pipe from pool [" << pipefd[0] << ", " << pipefd[1] << "]";
 	}
-	else if (pipe2(pipefd, O_NONBLOCK) == -1)
+	else if (pipe2(pipefd, O_NONBLOCK | O_CLOEXEC) == -1)
 	{
 		SocketIO::errorNumber = ePipeCreateError;
 		DDEBUG("SocketIO") << "SocketIO created fd=" << fd << ", pipe2 failed!";
@@ -279,6 +279,7 @@ void SocketIO::clearTimeout()
 		else if (sock->GetEndTime() < now)
 		{
 			Multiplexer::GetCurrentMultiplexer()->ChangeToEpollOut(sock);
+			sock->MarkedToDelete = true;
 			timeoutList.pop();
 		}
 		else
