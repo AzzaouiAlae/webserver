@@ -64,17 +64,20 @@ void CgiRequest::parseLocation()
         Error::ThrowError("502");
     if (!(_env["Location"].find("http://") == 0 || _env["Location"].find("https://") == 0 || _env["Location"].find("/") == 0))
         Error::ThrowError("502");
-    if (_env.find("Location") != _env.end() && (!_Thereisbody || _env.find("Content-Type") == _env.end()))
-        Error::ThrowError(_statusCode);
 }
 
 void CgiRequest::parsLenTypeCont()
 {
-    if (_Thereisbody && _env.find("Content-Type") == _env.end())
-        Error::ThrowError("502");
     if (_env.find("Content-Length") != _env.end())
         if (!Utility::strtosize_t(_env["Content-Length"], _content_len))
 			Error::ThrowError("502");
+    if (getthereisbody())
+    {
+        if (_env.find("Content-Type") == _env.end())
+            Error::ThrowError("502");
+        if (_content_len == 0 || _env.find("Content-Length") == _env.end())
+			Error::ThrowError("502");
+    }
 }
 
 void CgiRequest::checkCgiMinimum()

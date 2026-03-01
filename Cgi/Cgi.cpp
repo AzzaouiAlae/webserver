@@ -11,14 +11,23 @@
 /* ************************************************************************** */
 
 #include "Cgi.hpp"
+#include "CGIPipe.hpp"
 #include <string.h>
 
 
 Cgi::Cgi(ClientRequest &req, const char* exec, SocketIO *sok) : _req(req), _sok(sok)
 {
+    pipe(_pipefd);
     _exec = exec;
     _TimeSeted = false;
     _reqlen  = 0;
+    Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+
+	_in = new CGIPipe(_pipefd[0], this);
+	MulObj->AddAsEpollIn(_in);
+
+	_out = new CGIPipe(_pipefd[1], this);
+	MulObj->AddAsEpollOut(_out);
 }
 
 bool Cgi::isExeted()
@@ -61,8 +70,10 @@ void Cgi::createChild()
 		
         Environment::CreateEnv(_req.getrequestenv());
         dup2(_sok->pipefd[0], 0);
+        close(_pipefd[0]);
         close(_sok->pipefd[0]);
-        dup2(_sok->pipefd[1], 1);
+        dup2(_pipefd[1], 1);
+        close(_pipefd[1]);
         close(_sok->pipefd[1]);
         execve(_exec, args, environ);
         exit(1);
@@ -73,36 +84,42 @@ void Cgi::createChild()
 void Cgi::writetocgi()
 {
     int len = 0;
+    size_t size = _req.getcontentlen() - _reqlen;
 
     if (_status < eFINISHWRITING && _req.getthereisbody())
     {
-        if (!_eventexec && _status == eFORK) 
+        if (_status == eFORK) 
         {
             string &body = _req.getBody();
-            len = _sok->SendBuffToPipe((void *)body.c_str(), body.size());
-            _status = eSENDBUFFTOPIPE;
+            if (size > body.size() - _reqlen)
+                len = _sok->SendBuffToPipe((char *)body.c_str() + _reqlen, body.size() - _reqlen);
+            else
+                len = _sok->SendBuffToPipe((char *)body.c_str() + _reqlen, size);
+            if (_reqlen == body.size())
+                _status = eSENDBUFFTOPIPE;
             _reqlen += len;
         }
-        else if (!_eventexec && _status == eSENDBUFFTOPIPE)
+        else if (_status == eSENDBUFFTOPIPE)
         {
-            len = _sok->SendSocketToPipe();
+            
+            len = _sok->SendSocketToPipe(size);
             if (len == 0)
             {
-                if (_reqlen != _req.getcontentlen())
-                    Error::ThrowError("Bad Request");
-                _status = eFINISHWRITING;
+                if (_sok->errorNumber == eReadError)
+                    Error::ThrowError("502");
             }
             _status = eSENDSOCKETOPIPE;
             _reqlen += len;
         }
     }
+    if (_reqlen >= _req.getcontentlen())
+        _status = eFINISHWRITING;
 }
 
 
 void Cgi::readfromcgi()
 {
     char buf[MAXHEADERSIZE];
-    // char *copybuf;
 
     if (_status == eFINISHWRITING)
     {
@@ -110,12 +127,12 @@ void Cgi::readfromcgi()
         {
             int len = 0;
             if (_sok->CanUsePipe0())
-                len = read(_sok->pipefd[0], buf, MAXHEADERSIZE - 1);
+                return;
+            len = read(_sok->pipefd[0], buf, MAXHEADERSIZE);
             if (len <= 0)
                 Error::ThrowError("504");
-            buf[len + 1] = '\0';
-            // copybuf = strdup(buf);
-            if (_cgireq.isComplete(buf, len + 1))
+            _copybuf.append(buf, len);
+            if (_cgireq.isComplete(buf, len))
                 _status = ePARSEDCGIHEADER;
         }
     }
@@ -138,8 +155,29 @@ void Cgi::Handle()
         readfromcgi();
 }
 
+void Cgi::SetStateByFd(int fd)
+{
+	if (fd == _pipefd[0])
+		_statusfd |= ePipe0;
+	else if (fd == _pipefd[1])
+		_statusfd |= ePipe1;
+}
+
 Cgi::~Cgi()
 {
+    Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+    if (_in)
+	{
+		DDEBUG("HTTPContext") << "  -> Deleting in-pipe fd=" << _in->GetFd();
+		MulObj->DeleteFromEpoll(_in);
+		delete _in;
+	}
+	if (_out)
+	{
+		DDEBUG("HTTPContext") << "  -> Deleting out-pipe fd=" << _out->GetFd();
+		MulObj->DeleteFromEpoll(_out);
+		delete _out;
+	}
 }
 
 CgiRequest   &Cgi::getCgiReq()

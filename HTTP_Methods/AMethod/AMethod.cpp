@@ -311,7 +311,7 @@ void AMethod::HandelCGI()
 		// 	CreateRedirectionHeader(status, )
 
 	}
-	
+	// if (getcg)
 }
 
 // ══════════════════════════════════════════════
