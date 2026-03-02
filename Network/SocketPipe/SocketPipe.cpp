@@ -1,6 +1,6 @@
-#include "Pipe.hpp"
+#include "SocketPipe.hpp"
 
-void Pipe::Handle()
+void SocketPipe::Handle()
 {
 	if (MarkedToDelete)
 		return;
@@ -10,5 +10,5 @@ void Pipe::Handle()
 	MulObj->ChangeToEpollOneShot(this);
 }
 
-Pipe::Pipe(int fd, SocketIO *socket): AFd(fd, "Pipe"), socket(socket)
+SocketPipe::SocketPipe(int fd, SocketIO *socket): APipe(fd, "Pipe"), socket(socket)
 {}

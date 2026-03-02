@@ -188,7 +188,7 @@ string AMethod::ResolveErrorFilePath(const string &errorCode)
 // Does one thing: tries to open the error file, sets fileFd, returns true on success
 bool AMethod::OpenErrorFile(const string &path)
 {
-	fileFd = open(path.c_str(), O_RDONLY);
+	fileFd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
 	return (fileFd != -1);
 }
 
@@ -311,7 +311,7 @@ void AMethod::HandelCGI()
 		// 	CreateRedirectionHeader(status, )
 
 	}
-	
+	// if (getcg)
 }
 
 // ══════════════════════════════════════════════

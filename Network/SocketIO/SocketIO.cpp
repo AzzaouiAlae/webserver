@@ -3,7 +3,7 @@
 
 vector<pair<int, int> > SocketIO::pipePool;
 
-priority_queue<SocketIO*, vector<SocketIO*>, SocketIO::CompareTimeout> SocketIO::timeoutList;
+priority_queue<SocketIO *, vector<SocketIO *>, SocketIO::CompareTimeout> SocketIO::timeoutList;
 
 void SocketIO::Handle()
 {
@@ -24,7 +24,7 @@ int SocketIO::Send(void *buff, int size)
 {
 	char *b = (char *)buff;
 	ssize_t sent = 0;
-	
+
 	if (&(b[0]) != &((this->buff)[0]))
 	{
 		SendedBuffToPipe = 0;
@@ -49,10 +49,11 @@ int SocketIO::SendBuffToPipe(void *buff, int size)
 		return 0;
 	struct iovec iov;
 	iov.iov_base = buff;
-	iov.iov_len  = size;
+	iov.iov_len = size;
 
 	ssize_t n = vmsplice(pipefd[1], &iov, 1, SPLICE_F_NONBLOCK);
-	if (n <= 0) {
+	if (n <= 0)
+	{
 		ERR() << "Socket fd: " << fd << " SendBuffToPipe";
 		errorNumber = ePipe1Error;
 	}
@@ -73,7 +74,8 @@ int SocketIO::SendPipeToSock()
 	if (pendingInPipe <= 0)
 		return 0;
 	ssize_t sent = splice(pipefd[0], NULL, this->fd, NULL, pendingInPipe, SPLICE_F_NONBLOCK);
-	if (sent <= 0) {
+	if (sent <= 0)
+	{
 		ERR() << "Socket fd: " << fd << " SendPipeToSock";
 		errorNumber = eWriteError;
 	}
@@ -87,7 +89,8 @@ int SocketIO::SendPipeToSock()
 ssize_t SocketIO::FileToSocket(int fileFd, int size)
 {
 	ssize_t len = sendfile(this->fd, fileFd, NULL, size);
-	if (len <= 0) {
+	if (len <= 0)
+	{
 		ERR() << "Socket fd: " << fd << " FileToSocket eWriteError";
 		errorNumber = eWriteError;
 	}
@@ -105,7 +108,7 @@ int SocketIO::CloseSockFD(int fd)
 	long now = CurrentTime();
 	int optval = 0;
 	tcp_info info;
-    socklen_t len;
+	socklen_t len;
 
 	if (fd != -1)
 	{
@@ -113,8 +116,8 @@ int SocketIO::CloseSockFD(int fd)
 		shutdown(fd, SHUT_WR);
 		fds.push_back(pair<int, long>(fd, now));
 	}
-	
-	for(int i = 0; i < (int)fds.size(); i++)
+
+	for (int i = 0; i < (int)fds.size(); i++)
 	{
 		len = sizeof(info);
 		if (getsockopt(fds[i].first, IPPROTO_TCP, TCP_INFO, &info, &len) == 0)
@@ -128,7 +131,7 @@ int SocketIO::CloseSockFD(int fd)
 		{
 			close(fds[i].first);
 			fds[i] = fds.back();
-            fds.pop_back();
+			fds.pop_back();
 			i--;
 		}
 	}
@@ -152,7 +155,8 @@ int SocketIO::SocketToFile(int fileFD, int size)
 		status &= ~flag;
 		if (len > 0)
 			pendingInPipe += len;
-		else {
+		else
+		{
 			ERR() << "Socket fd: " << fd << " SocketToFile eReadError";
 			errorNumber = eReadError;
 		}
@@ -163,7 +167,8 @@ int SocketIO::SocketToFile(int fileFD, int size)
 		len = splice(pipefd[0], NULL, fileFD, NULL, pendingInPipe, 0);
 		status &= ~ePipe0;
 		((HTTPContext *)context)->activeInPipe();
-		if (len <= 0) {
+		if (len <= 0)
+		{
 			ERR() << "Socket fd: " << fd << " SocketToFile ePipe0Error";
 			errorNumber = ePipe0Error;
 		}
@@ -176,9 +181,11 @@ int SocketIO::SocketToFile(int fileFD, int size)
 int SocketIO::SendSocketToPipe(int size)
 {
 	int len = 0;
-	if (status & ePipe1) {
+	if (status & ePipe1)
+	{
 		len = splice(fd, NULL, pipefd[1], NULL, size, 0);
-		if (len <= 0) {
+		if (len <= 0)
+		{
 			ERR() << "Socket fd: " << fd << " SendSocketToPipe eReadError";
 			errorNumber = eReadError;
 		}
@@ -192,7 +199,7 @@ int SocketIO::SendSocketToPipe(int size)
 	return len;
 }
 
-SocketIO::SocketIO(int fd): ISocket(fd, "SocketIO"), pipeInitialized(false), pendingInPipe(0), status(0), errorNumber(0)
+SocketIO::SocketIO(int fd) : ISocket(fd, "SocketIO"), pipeInitialized(false), pendingInPipe(0), status(0), errorNumber(0)
 {
 	buff = NULL;
 	if (pipePool.size() > 0)
@@ -204,7 +211,7 @@ SocketIO::SocketIO(int fd): ISocket(fd, "SocketIO"), pipeInitialized(false), pen
 		pipeInitialized = true;
 		DDEBUG("SocketIO") << "SocketIO created fd=" << fd << ", reused pipe from pool [" << pipefd[0] << ", " << pipefd[1] << "]";
 	}
-	else if (pipe2(pipefd, O_NONBLOCK) == -1)
+	else if (pipe2(pipefd, O_NONBLOCK | O_CLOEXEC) == -1)
 	{
 		SocketIO::errorNumber = ePipeCreateError;
 		DDEBUG("SocketIO") << "SocketIO created fd=" << fd << ", pipe2 failed!";
@@ -241,7 +248,7 @@ SocketIO::~SocketIO()
 
 void SocketIO::ClearPipePool()
 {
-	for(int i = 0; i < (int)pipePool.size(); i++)
+	for (int i = 0; i < (int)pipePool.size(); i++)
 	{
 		close(pipePool[i].first);
 		close(pipePool[i].second);
@@ -264,7 +271,7 @@ void SocketIO::clearTimeout()
 	time_t now = time(NULL);
 	set<AFd *> &fds = Singleton::GetFds();
 
-	while(timeoutList.empty() == false)
+	while (timeoutList.empty() == false)
 	{
 		SocketIO *sock = timeoutList.top();
 		if (fds.find(sock) == fds.end())
@@ -272,6 +279,7 @@ void SocketIO::clearTimeout()
 		else if (sock->GetEndTime() < now)
 		{
 			Multiplexer::GetCurrentMultiplexer()->ChangeToEpollOut(sock);
+			sock->MarkedToDelete = true;
 			timeoutList.pop();
 		}
 		else
@@ -279,7 +287,7 @@ void SocketIO::clearTimeout()
 	}
 }
 
-bool SocketIO::CompareTimeout::operator()(const SocketIO *a, const SocketIO *b) const 
+bool SocketIO::CompareTimeout::operator()(const SocketIO *a, const SocketIO *b) const
 {
 	set<AFd *> &fds = Singleton::GetFds();
 
@@ -287,7 +295,7 @@ bool SocketIO::CompareTimeout::operator()(const SocketIO *a, const SocketIO *b) 
 		return false;
 	if (fds.find((SocketIO *)b) == fds.end())
 		return true;
-    return (a->GetEndTime()) > (b->GetEndTime());
+	return (a->GetEndTime()) > (b->GetEndTime());
 }
 
 time_t SocketIO::GetEndTime() const
@@ -302,9 +310,13 @@ void SocketIO::UpdateTime()
 
 bool SocketIO::CanUsePipe0()
 {
-	return (status & ePipe0);
+	bool res = (status & ePipe0);
+	status &= ~ePipe0;
+	return res;
 }
 bool SocketIO::CanUsePipe1()
 {
-	return (status & ePipe1);
+	bool res = (status & ePipe1);
+	status &= ~ePipe1;
+	return res;
 }

@@ -1,6 +1,7 @@
 #include "Utility.hpp"
 
 bool Utility::SigPipe;
+bool Utility::SigInt;
 
 bool Utility::isNotZero(char ch)
 {

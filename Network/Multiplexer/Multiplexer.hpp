@@ -11,7 +11,7 @@ class Multiplexer
 	static Multiplexer *currentMultiplexer;
 	static set<AFd *> toDelete;
 	int count;
-	static bool DeleteItem(AFd *item);
+	static void DeleteItem(AFd *item);
 
 public:
 	void ChangeToEpollInOut(AFd *fd);
