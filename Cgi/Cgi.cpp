@@ -210,3 +210,12 @@ estatus Cgi::getStatus() const {
 void Cgi::setStatus(estatus status) {
     _status = status;
 }
+
+string &Cgi::getCopybuf() {
+    return _copybuf;
+}
+
+int *Cgi::getCgiPipes()
+{
+    return (_pipefd);
+}

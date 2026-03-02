@@ -62,6 +62,8 @@ public:
     bool CanUsePipe0();
     bool CanUsePipe1();
     estatus getStatus() const;
+    string &getCopybuf() ;
+    int *getCgiPipes();
     void setStatus(estatus status);
     ~Cgi();
     

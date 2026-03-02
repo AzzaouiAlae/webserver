@@ -86,6 +86,27 @@ int SocketIO::SendPipeToSock()
 	return sent;
 }
 
+int SocketIO::SendPipeToSock(int inputfd)
+{
+	int flag = (ePipe0 | eSocket);
+
+	if ((status & flag) != flag)
+		return 0;
+	if (pendingInPipe <= 0)
+		return 0;
+	ssize_t sent = splice(inputfd, NULL, this->fd, NULL, pendingInPipe, SPLICE_F_NONBLOCK);
+	if (sent <= 0)
+	{
+		ERR() << "Socket fd: " << fd << " SendPipeToSock";
+		errorNumber = eWriteError;
+	}
+	status &= ~(ePipe0 | eSocket);
+	if (sent < 0)
+		return -1;
+	pendingInPipe -= sent;
+	return sent;
+}
+
 ssize_t SocketIO::FileToSocket(int fileFd, int size)
 {
 	ssize_t len = sendfile(this->fd, fileFd, NULL, size);
