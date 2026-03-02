@@ -30,5 +30,6 @@ class CgiRequest : public ARequest
 public:
     CgiRequest();
     ~CgiRequest();
+    string &getStatusCode();
     bool isComplete(char *request, int size);
 };

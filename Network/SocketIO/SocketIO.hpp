@@ -48,6 +48,7 @@ public:
     ~SocketIO();
 	int SendBuffToPipe(void *buff, int size);
 	int SendPipeToSock();
+	int SendPipeToSock(int inputfd);
 	int errorNumber;
 	void SetStateByFd(int fd);
 	int Send(void *buff, int size);

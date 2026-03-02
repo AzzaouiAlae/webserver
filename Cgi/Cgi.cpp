@@ -126,9 +126,9 @@ void Cgi::readfromcgi()
         if (_status < ePARSEDCGIHEADER)
         {
             int len = 0;
-            if (_sok->CanUsePipe0())
+            if (!CanUsePipe0())
                 return;
-            len = read(_sok->pipefd[0], buf, MAXHEADERSIZE);
+            len = read(_pipefd[0], buf, MAXHEADERSIZE);
             if (len <= 0)
                 Error::ThrowError("504");
             _copybuf.append(buf, len);
@@ -180,7 +180,42 @@ Cgi::~Cgi()
 	}
 }
 
+bool Cgi::CanUsePipe0()
+{
+	bool res = (_status & ePipe0);
+	_statusfd &= ~ePipe0;
+	return res;
+}
+bool Cgi::CanUsePipe1()
+{
+	bool res = (_status & ePipe1);
+	_statusfd &= ~ePipe1;
+	return res;
+}
+
+string &Cgi::getStatusCode()
+{
+    _cgireq.getStatusCode();
+}
+
 CgiRequest   &Cgi::getCgiReq()
 {
     return (_cgireq);
+}
+
+estatus Cgi::getStatus() const {
+    return _status;
+}
+
+void Cgi::setStatus(estatus status) {
+    _status = status;
+}
+
+string &Cgi::getCopybuf() {
+    return _copybuf;
+}
+
+int *Cgi::getCgiPipes()
+{
+    return (_pipefd);
 }
