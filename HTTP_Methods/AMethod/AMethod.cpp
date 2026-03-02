@@ -299,19 +299,26 @@ void AMethod::HandelCGI()
 {
 	if (_cgi == NULL)
 		_cgi = new Cgi(router->GetRequest(), router->GetPath().getLocation()->cgiPassPath.c_str(), sock);
+	if (_cgi->getStatus() == eCOMPLETE)
+		return;
 	try
 	{
 		_cgi->Handle();
 	}
 	catch(const std::string& status)
 	{
-		if (status[0] == '5' || status[0] == '4')
+		if (status[0] != '2' || status[0] != '3')
 			HandelErrorPages(status);
 		// if (status[0] == '3' && _cgi->getCgiReq().getthereisbody())
 		// 	CreateRedirectionHeader(status, )
-
 	}
-	// if (getcg)
+	if (_cgi->getStatusCode()[0] == '2' || _cgi->getStatusCode()[0] == '3')
+	{
+		responseHeader.str("");
+		responseHeader << "HTTP/1.1 " << _cgi->getStatusCode() << " " << statusMap[_cgi->getStatusCode()] << "\r\n";
+		if (_cgi->getStatus() == ePARSEDCGIHEADER)
+			sock->Send()
+	}
 }
 
 // ══════════════════════════════════════════════

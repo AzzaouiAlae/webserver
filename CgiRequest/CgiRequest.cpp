@@ -46,8 +46,10 @@ void CgiRequest::parseStatus()
         if (statusMap.find(status) == statusMap.end())
             Error::ThrowError("502");
         _statusCode = status;
-        if (status[0] != '2' || status[0] != '3')
+        if (status[0] == '4' || status[0] == '5')
             Error::ThrowError(status);
+        if (status[0] != '2' || status[0] != '3')
+            Error::ThrowError("502");
     }
     else
     {
@@ -107,6 +109,12 @@ bool CgiRequest::ParseHeader()
     }
     return (false);
 }
+
+string &CgiRequest::getStatusCode()
+{
+    return (_statusCode);
+}
+
 
 bool CgiRequest::isComplete(char *request, int size)
 {

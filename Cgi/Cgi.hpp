@@ -23,6 +23,7 @@ enum estatus
     eFINISHWRITING,
     ePARSEDCGIHEADER,
 
+    eSENDBUFFTOSOCKET,
     eSENDPIPETOSOCKET,
     eCOMPLETE
 };
@@ -57,6 +58,11 @@ public:
     long getTime();
     CgiRequest   &getCgiReq();
     void SetStateByFd(int fd);
+    string &getStatusCode();
+    bool CanUsePipe0();
+    bool CanUsePipe1();
+    estatus getStatus() const;
+    void setStatus(estatus status);
     ~Cgi();
     
 };
