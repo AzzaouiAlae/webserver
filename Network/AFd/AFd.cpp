@@ -29,7 +29,7 @@ int AFd::GetFd()
 	return fd;
 }
 
-AFd::~AFd() 
+AFd::~AFd()
 {}
 
 void AFd::cleanFd()

@@ -45,7 +45,7 @@ public:
 	int pipefd[2];
 	SocketIO(int fd);
     ~SocketIO();
-	int SendBuffToPipe(void *buff, int size);
+	int SendBuffToPipe(void *buff, int size, bool usePending);
 	int SendPipeToSock();
 	int SendPipeToSock(int inputfd, size_t size = KBYTE);
 	int errorNumber;
@@ -56,7 +56,7 @@ public:
 	void Handle();
 	static int CloseSockFD(int fd);
 	static void ClearPipePool();
-	int SendSocketToPipe(int size = KBYTE);
+	int SendSocketToPipe(int size, bool usePending);
 	struct CompareTimeout {
 		bool operator()(const SocketIO *a, const SocketIO *b) const ;
 	};

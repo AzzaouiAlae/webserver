@@ -56,7 +56,7 @@ bool Multiplexer::AddAsEpoll(AFd *fd, int type)
 		ERR() << "HERE";
 	else
 		Singleton::debug.insert(fd);
-	INFO() << "AddAsEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
+	//INFO() << "AddAsEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
 	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, fd->GetFd(), &ev) == -1)
 	{
 		DDEBUG("Multiplexer") << "epoll_ctl ADD failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
@@ -73,7 +73,7 @@ bool Multiplexer::ChangeToEpoll(AFd *fd, int type)
 
 	ev.events = type;
 	ev.data.ptr = (void *)fd;
-	INFO() << "ChangeToEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
+	//INFO() << "ChangeToEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
 	if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev) == -1)
 	{
 		DDEBUG("Multiplexer") << "ChangeToEpollOut failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
@@ -101,10 +101,10 @@ bool Multiplexer::ChangeToEpollOneShot(AFd *fd)
 bool Multiplexer::DeleteFromEpoll(AFd *fd)
 {
 	count--;
-	Singleton::debug.erase(fd);
-	DDEBUG("Multiplexer") << "DeleteFromEpoll fd=" << fd->GetFd() << ", count=" << count;
-	INFO() << "DeleteFromEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
-	return epoll_ctl(epollFd, EPOLL_CTL_DEL, fd->GetFd(), NULL);
+	bool res = epoll_ctl(epollFd, EPOLL_CTL_DEL, fd->GetFd(), NULL) == 0;
+	DDEBUG("Multiplexer") << "DeleteFromEpoll fd=" << fd->GetFd() << ", count=" << count << ", EPOLL_CTL_DEL: " << res;
+	//INFO() << "DeleteFromEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
+	return res;
 }
 
 bool Multiplexer::ChangeToEpollInOut(AFd *fd)
@@ -132,7 +132,7 @@ void Multiplexer::MainLoop()
 			INFO() << "SIGINT received. Shutting down server.";
 			break;
 		}
-		WARN() << "epoll_wait loop iteration complete " << Count++;
+		INFO() << "epoll_wait loop iteration complete " << Count++ << "\n";
 	}
 }
 
@@ -233,7 +233,7 @@ void Multiplexer::handelEpollPipes(epoll_event &event)
 
 	if (obj->GetType() == "Pipe") 
 	{
-		INFO() << "Pipe addr: " << event.data.ptr << ", fd: " <<  obj->GetFd();
+		//INFO() << "Pipe addr: " << event.data.ptr << ", fd: " <<  obj->GetFd();
 		DDEBUG("Multiplexer") << "handelEpollPipes: handling Pipe fd=" << obj->GetFd();
 		obj->Handle();
 	}

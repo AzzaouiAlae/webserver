@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/03 18:35:35 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/03 22:53:23 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,10 +94,11 @@ void Cgi::writetocgi()
 		if (_status == eSendBuffToPipe)
 		{
 			string &body = _req.getBody();
+			void *b =  (char *)body.c_str() + _reqlen;
 			if (size > body.size() - _reqlen)
-				len = _sok->SendBuffToPipe((char *)body.c_str() + _reqlen, body.size() - _reqlen);
+				len = _sok->SendBuffToPipe(b, body.size() - _reqlen, false);
 			else
-				len = _sok->SendBuffToPipe((char *)body.c_str() + _reqlen, size);
+				len = _sok->SendBuffToPipe(b, size, false);
 
 			if (_sok->errorNumber == ePipe1Error)
 				Error::ThrowError("502");
@@ -107,8 +108,7 @@ void Cgi::writetocgi()
 		}
 		else if (_status == eSendSockToPipe)
 		{
-
-			len = _sok->SendSocketToPipe(size);
+			len = _sok->SendSocketToPipe(size, false);
 			if (_sok->errorNumber == eReadError)
 				Error::ThrowError("502");
 			_reqlen += len;
@@ -167,7 +167,7 @@ void Cgi::writeToClientSoket()
 			Error::ThrowError("502");
 		_responselen += len;
 	}
-	if (_shouldSend >= _responselen)
+	if (_shouldSend <= _responselen)
 		_status = eComplete;
 }
 
@@ -209,14 +209,16 @@ Cgi::~Cgi()
 	{
 		DDEBUG("HTTPContext") << "  -> Deleting in-pipe fd=" << _in->GetFd();
 		MulObj->DeleteFromEpoll(_in);
+		sleep(1);
 		close(_in->GetFd());
 		delete _in;
 	}
 	if (_out)
 	{
 		DDEBUG("HTTPContext") << "  -> Deleting out-pipe fd=" << _out->GetFd();
-		close(_out->GetFd());
 		MulObj->DeleteFromEpoll(_out);
+		sleep(1);
+		close(_out->GetFd());
 		delete _out;
 	}
 	delete []_buf;
