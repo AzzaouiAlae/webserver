@@ -9,6 +9,7 @@ map<string, string> AMethod::statusMap;
 // Does one thing: initializes all member variables to default values
 AMethod::AMethod(SocketIO *sock, Routing *router)
 {
+	_cgi = NULL;
 	readyToSend = false;
 	sendHeader = false;
 	staticFile = NULL;
@@ -299,37 +300,23 @@ void AMethod::HandelCGI()
 {
 	if (_cgi == NULL)
 		_cgi = new Cgi(router->GetRequest(), router->GetPath().getLocation()->cgiPassPath.c_str(), sock);
-	if (_cgi->getStatus() == eCOMPLETE)
-		return;
 	try
 	{
 		_cgi->Handle();
-	}
-	catch(const std::string& status)
-	{
-		if (status[0] != '2' || status[0] != '3')
-			HandelErrorPages(status);
-	}
-	if (_cgi->getStatusCode()[0] == '2' || _cgi->getStatusCode()[0] == '3')
-	{
-		responseHeader.str("");
-		responseHeader << "HTTP/1.1 " << _cgi->getStatusCode() << " " << statusMap[_cgi->getStatusCode()] << "\r\n";
-		if (_cgi->getStatus() == ePARSEDCGIHEADER)
+		if (_cgi->isComplete())
 		{
-			sock->Send(const_cast<char *>(_cgi->getCopybuf().c_str()), _cgi->getCopybuf().size());
-			_cgi->setStatus(eSENDBUFFTOSOCKET);
-			return;
+			del = true;
+			sock->cleanBody = true;
 		}
-		if (_cgi->getStatus() == eSENDBUFFTOSOCKET)
-		{
-			if (!_cgi->CanUsePipe0())
-				return;
-			sock->SendPipeToSock(_cgi->getCgiPipes()[0]);
-			_cgi->setStatus(eSENDPIPETOSOCKET);
-		}
-		if (_cgi->getStatus() == eSENDPIPETOSOCKET)
-			_cgi->setStatus(eCOMPLETE);
 	}
+	catch(exception& e) {
+		HandelErrorPages(e.what());
+	}
+}
+
+void _cgiResponse()
+{
+	
 }
 
 // ══════════════════════════════════════════════

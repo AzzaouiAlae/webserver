@@ -1,4 +1,4 @@
-#include "Repsense.hpp"
+#include "Response.hpp"
 
 // Does one thing: initializes all pointers to NULL
 Repsense::Repsense()

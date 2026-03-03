@@ -1,5 +1,5 @@
 #pragma once
-#include "../AMethod/AMethod.hpp"
+#include "AMethod.hpp"
 
 class GET : public AMethod
 {

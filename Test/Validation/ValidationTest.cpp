@@ -1,5 +1,5 @@
-#include "../Unity-master/src/unity.h"
-#include "../../Validation/Validation.hpp"
+#include "Unity-master/src/unity.h"
+#include "Validation/Validation.hpp"
 
 void setUp(void)
 {}

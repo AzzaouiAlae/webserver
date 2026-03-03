@@ -1,6 +1,6 @@
-#include "../Unity-master/src/unity.h"
-#include "../../Parsing/Parsing.hpp"
-#include "../../Tokenizing/Tokenizing.hpp"
+#include "Unity-master/src/unity.h"
+#include "Parsing/Parsing.hpp"
+#include "Tokenizing/Tokenizing.hpp"
 
 void setUp(void)
 {}

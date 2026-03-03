@@ -1,5 +1,5 @@
-#include "../Unity-master/src/unity.h"
-#include "../../Parsing/Parsing.hpp"
+#include "Unity-master/src/unity.h"
+#include "Parsing.hpp"
 
 void setUp(void)
 {}

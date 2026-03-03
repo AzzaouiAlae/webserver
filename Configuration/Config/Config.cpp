@@ -1,5 +1,5 @@
 #include "Config.hpp"
-#include "../Socket/Socket.hpp"
+#include "Socket.hpp"
 
 Config::Server::Server()
 {
@@ -127,6 +127,7 @@ int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath,
 
 	if (pathExt.empty())
 		return -1;
+	pathExt = '.' + pathExt;
     for (size_t i = 0; i < srv.Locations.size(); ++i)
     {
         const Config::Server::Location &loc = srv.Locations[i];

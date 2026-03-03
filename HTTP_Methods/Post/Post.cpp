@@ -94,8 +94,7 @@ bool Post::HandleResponse()
 		DDEBUG("Post") 
 			<< "Socket fd: " << sock->GetFd() 
 			<< ", CGI path detected (not yet implemented).";
-		// TODO: forward body to CGI via stdin
-		HandelErrorPages("501");
+		HandelCGI();
 		return del;
 	}
 

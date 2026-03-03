@@ -113,12 +113,11 @@ void GET::GetMethod()
 		else
 			CreateListFilesResponse();
 	}
+	else if (router->GetPath().isCGI())
+		HandelCGI();
 	else if (router->GetPath().isFile())
 		ServeFile();
-	else if (router->GetPath().isCGI())
-	{
-		HandelErrorPages("501");
-	}
+	
 
 }
 

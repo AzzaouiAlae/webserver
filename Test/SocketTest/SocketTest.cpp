@@ -1,5 +1,5 @@
-#include "../Unity-master/src/unity.h"
-#include "../../Socket/socket.hpp"
+#include "Unity-master/src/unity.h"
+#include "socket.hpp"
 
 
 void setUp(void)

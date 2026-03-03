@@ -1,5 +1,5 @@
 #include "Multiplexer.hpp"
-#include "../SocketIO/SocketIO.hpp"
+#include "SocketIO.hpp"
 #include "SessionManager.hpp"
 #include "HTTPContext.hpp"
 
@@ -55,11 +55,11 @@ bool Multiplexer::AddAsEpoll(AFd *fd, int type)
 
 	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, fd->GetFd(), &ev) == -1)
 	{
-		DDEBUG("Multiplexer") << "epoll_ctl ADD failed for fd=" << fd->GetFd() << ", type=" << type;
+		DDEBUG("Multiplexer") << "epoll_ctl ADD failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
 		return false;
 	}
 	count++;
-	DDEBUG("Multiplexer") << "epoll_ctl ADD succeeded for fd=" << fd->GetFd() << ", type=" << type << ", count=" << count;
+	DDEBUG("Multiplexer") << "epoll_ctl ADD succeeded for fd=" << fd->GetFd() << ", type=" << fd->GetType() << ", count=" << count;
 	return true;
 }
 
@@ -72,10 +72,10 @@ bool Multiplexer::ChangeToEpollOut(AFd *fd)
 
 	if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev) == -1)
 	{
-		DDEBUG("Multiplexer") << "ChangeToEpollOut failed for fd=" << fd->GetFd();
+		DDEBUG("Multiplexer") << "ChangeToEpollOut failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
 		return false;
 	}
-	DDEBUG("Multiplexer") << "ChangeToEpollOut succeeded for fd=" << fd->GetFd();
+	DDEBUG("Multiplexer") << "ChangeToEpollOut succeeded for fd=" << fd->GetFd() << ", type=" << fd->GetType();
 	return true;
 }
 
@@ -88,10 +88,10 @@ bool Multiplexer::ChangeToEpollIn(AFd *fd)
 
 	if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev) == -1)
 	{
-		DDEBUG("Multiplexer") << "ChangeToEpollIn failed for fd=" << fd->GetFd();
+		DDEBUG("Multiplexer") << "ChangeToEpollIn failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
 		return false;
 	}
-	DDEBUG("Multiplexer") << "ChangeToEpollIn succeeded for fd=" << fd->GetFd();
+	DDEBUG("Multiplexer") << "ChangeToEpollIn succeeded for fd=" << fd->GetFd() << ", type=" << fd->GetType();
 	return true;
 }
 
@@ -104,10 +104,10 @@ bool Multiplexer::ChangeToEpollOneShot(AFd *fd)
 
 	if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev) == -1)
 	{
-		DDEBUG("Multiplexer") << "ChangeToEpollOneShot failed for fd=" << fd->GetFd();
+		DDEBUG("Multiplexer") << "ChangeToEpollOneShot failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
 		return false;
 	}
-	DDEBUG("Multiplexer") << "ChangeToEpollOneShot succeeded for fd=" << fd->GetFd();
+	DDEBUG("Multiplexer") << "ChangeToEpollOneShot succeeded for fd=" << fd->GetFd() << ", type=" << fd->GetType();
 	return true;
 }
 
@@ -122,9 +122,9 @@ void Multiplexer::ChangeToEpollInOut(AFd *fd)
 {
     struct epoll_event ev;
     ev.events = EPOLLIN | EPOLLOUT;
-    ev.data.fd = fd->GetFd();
+    ev.data.ptr = fd;
     epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev);
-    DDEBUG("Multiplexer") << "ChangeToEpollInOut for fd=" << fd->GetFd();
+    DDEBUG("Multiplexer") << "ChangeToEpollInOut for fd=" << fd->GetFd() << ", type=" << fd->GetType();
 }
 
 void Multiplexer::MainLoop()

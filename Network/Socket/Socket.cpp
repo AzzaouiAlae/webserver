@@ -1,6 +1,6 @@
 #include "Socket.hpp"
-#include "../SocketIO/SocketIO.hpp"
-#include "../../HTTP/HTTPContext/HTTPContext.hpp"
+#include "SocketIO.hpp"
+#include "HTTPContext.hpp"
 
 int Socket::errorNumber = 0;
 

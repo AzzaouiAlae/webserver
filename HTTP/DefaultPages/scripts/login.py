@@ -287,11 +287,11 @@ def handle_login(post, session, cookies):
         # so the CGI script can read them back (since CGI is stateless).
         session_id = os.environ.get("SESSIONID", "new-" + username)
 
-        print("Status: 200 OK")
-        print(set_cookie("SESSIONID",    session_id))
-        print(set_cookie("SESSION_USERNAME", username))
-        print(set_cookie("SESSION_THEME",    theme))
-        print(set_cookie("SESSION_LOGGED_IN", "1"))
+        print("Status: 200 OK\r\n")
+        print(set_cookie("SESSIONID",    session_id) + "\r\n")
+        print(set_cookie("SESSION_USERNAME", username) + "\r\n")
+        print(set_cookie("SESSION_THEME",    theme) + "\r\n")
+        print(set_cookie("SESSION_LOGGED_IN", "1") + "\r\n")
 
         updated_session = {
             "id":        session_id,

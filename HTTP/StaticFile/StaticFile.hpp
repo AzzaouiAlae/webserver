@@ -1,5 +1,5 @@
 #pragma once
-#include "../Headers.hpp"
+#include "Headers.hpp"
 
 class StaticFile {
 	static map<string, StaticFile> files;
