@@ -22,8 +22,7 @@ enum IOError {
 	ePipeCreateError = 5,
 };
 
-#define KBYTE 1024 * 1024
-#define MBYTE 50
+#define KBYTE 1024 * 64
 
 class SocketIO : public ISocket {
 	static long CurrentTime();
@@ -48,7 +47,7 @@ public:
     ~SocketIO();
 	int SendBuffToPipe(void *buff, int size);
 	int SendPipeToSock();
-	int SendPipeToSock(int inputfd);
+	int SendPipeToSock(int inputfd, size_t size = KBYTE);
 	int errorNumber;
 	void SetStateByFd(int fd);
 	int Send(void *buff, int size);
@@ -57,7 +56,7 @@ public:
 	void Handle();
 	static int CloseSockFD(int fd);
 	static void ClearPipePool();
-	int SendSocketToPipe(int size = KBYTE * MBYTE);
+	int SendSocketToPipe(int size = KBYTE);
 	struct CompareTimeout {
 		bool operator()(const SocketIO *a, const SocketIO *b) const ;
 	};

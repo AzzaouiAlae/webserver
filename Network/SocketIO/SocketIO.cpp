@@ -86,15 +86,13 @@ int SocketIO::SendPipeToSock()
 	return sent;
 }
 
-int SocketIO::SendPipeToSock(int inputfd)
+int SocketIO::SendPipeToSock(int inputfd, size_t size)
 {
 	int flag = (ePipe0 | eSocket);
 
 	if ((status & flag) != flag)
 		return 0;
-	if (pendingInPipe <= 0)
-		return 0;
-	ssize_t sent = splice(inputfd, NULL, this->fd, NULL, pendingInPipe, SPLICE_F_NONBLOCK);
+	ssize_t sent = splice(inputfd, NULL, this->fd, NULL, size, SPLICE_F_NONBLOCK);
 	if (sent <= 0)
 	{
 		ERR() << "Socket fd: " << fd << " SendPipeToSock";
@@ -103,7 +101,6 @@ int SocketIO::SendPipeToSock(int inputfd)
 	status &= ~(ePipe0 | eSocket);
 	if (sent < 0)
 		return -1;
-	pendingInPipe -= sent;
 	return sent;
 }
 

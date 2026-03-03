@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Cgi.hpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
+/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:37:26 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/19 02:54:38 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/03/03 00:20:28 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,16 +16,14 @@
 
 enum estatus
 {
-    eSTART,
-    eFORK,
-    eSENDBUFFTOPIPE,
-    eSENDSOCKETOPIPE,
-    eFINISHWRITING,
-    ePARSEDCGIHEADER,
-
-    eSENDBUFFTOSOCKET,
-    eSENDPIPETOSOCKET,
-    eCOMPLETE
+    eFork,
+	eSendBuffToPipe,
+	eSendSockToPipe,
+	eReadCgiResponse,
+	eCreateResponseHeader,
+	eWriteBuffToClient,
+	eWritePipeToClient,
+	eComplete
 };
 
 class Cgi
@@ -43,9 +41,11 @@ class Cgi
     bool        _parsheader;
     long        _time;
     bool        _TimeSeted;
-    bool        _eventexec;
+	string		_responseHeaderStr;
+	char		*_buf;
     const char        *_exec;
     size_t      _reqlen;
+	size_t		_responselen;
     void createChild();
     void writetocgi();
     void readfromcgi();
@@ -61,10 +61,8 @@ public:
     string &getStatusCode();
     bool CanUsePipe0();
     bool CanUsePipe1();
-    estatus getStatus() const;
-    string &getCopybuf() ;
-    int *getCgiPipes();
-    void setStatus(estatus status);
+	void createCgiResponse();
+	void writeToClientSoket();
     ~Cgi();
     
 };

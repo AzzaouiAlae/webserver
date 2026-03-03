@@ -58,6 +58,7 @@ protected:
 	void addCookies(Session &session);
 	
 	void HandelCGI();
+	void _cgiResponse();
 public:
 	AMethod(SocketIO *sock, Routing *router);
 	virtual ~AMethod();
