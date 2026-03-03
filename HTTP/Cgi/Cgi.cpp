@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/03 05:38:17 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/03 05:58:03 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,10 +137,11 @@ void Cgi::readfromcgi()
 
 void Cgi::createCgiResponse()
 {
-	_responseHeaderStr += "HTTP/1.1 " + getStatusCode() + " " + AMethod::getStatusMap()[getStatusCode()] + "\r\n";
+	_responseHeaderStr = "HTTP/1.1 " + getStatusCode() + " " + AMethod::getStatusMap()[getStatusCode()] + "\r\n";
+	_shouldSend = _responseHeaderStr.length();
 	_responseHeaderStr += _copybuf;
 	_status = eWriteBuffToClient;
-	_shouldSend = _req.getBody().length() ;
+	_shouldSend += _cgireq.getcontentlen() + _cgireq.getRequestLen();
 }
 
 void Cgi::writeToClientSoket()
@@ -154,24 +155,20 @@ void Cgi::writeToClientSoket()
 			Error::ThrowError("502");
 		_responselen += len;
 		if (_responselen == _responseHeaderStr.length())
-		{
 			_status = eWritePipeToClient;
-			_responselen = 0;
-		}
 	}
 	else if (_status == eWritePipeToClient)
 	{
 		int len = 0;
-		size_t bodysize = _cgireq.getcontentlen();
 		if (!CanUsePipe0())
 			return;
-		len = _sok->SendPipeToSock(_pipefd[0], bodysize - _responselen);
+		len = _sok->SendPipeToSock(_pipefd[0], _shouldSend - _responselen);
 		if (_sok->errorNumber == eWriteError)
 			Error::ThrowError("502");
 		_responselen += len;
-		if (_responselen == bodysize)
-			_status = eComplete;
 	}
+	if (_shouldSend >= _responselen)
+		_status = eComplete;
 }
 
 void Cgi::Handle()

@@ -3,7 +3,7 @@
         {
             "type": "cppbuild",
             "label": "C/C++: gcc build active file",
-            "command": "make -f Makefile.alae",
+            "command": "make",
             "args": [],
             "options": {
                 "cwd": "${workspaceFolder}"

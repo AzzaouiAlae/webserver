@@ -117,8 +117,6 @@ void GET::GetMethod()
 		HandelCGI();
 	else if (router->GetPath().isFile())
 		ServeFile();
-	
-
 }
 
 // ══════════════════════════════════════════════

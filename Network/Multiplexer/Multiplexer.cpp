@@ -53,6 +53,7 @@ bool Multiplexer::AddAsEpoll(AFd *fd, int type)
 	ev.events = type;
 	ev.data.ptr = (void *)fd;
 
+	INFO() << "AddAsEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
 	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, fd->GetFd(), &ev) == -1)
 	{
 		DDEBUG("Multiplexer") << "epoll_ctl ADD failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
@@ -63,13 +64,13 @@ bool Multiplexer::AddAsEpoll(AFd *fd, int type)
 	return true;
 }
 
-bool Multiplexer::ChangeToEpollOut(AFd *fd)
+bool Multiplexer::ChangeToEpoll(AFd *fd, int type)
 {
 	epoll_event ev;
 
-	ev.events = EPOLLOUT;
+	ev.events = type;
 	ev.data.ptr = (void *)fd;
-
+	INFO() << "ChangeToEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
 	if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev) == -1)
 	{
 		DDEBUG("Multiplexer") << "ChangeToEpollOut failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
@@ -79,52 +80,32 @@ bool Multiplexer::ChangeToEpollOut(AFd *fd)
 	return true;
 }
 
+bool Multiplexer::ChangeToEpollOut(AFd *fd)
+{
+	return ChangeToEpoll(fd, EPOLLOUT);
+}
+
 bool Multiplexer::ChangeToEpollIn(AFd *fd)
 {
-	epoll_event ev;
-
-	ev.events = EPOLLIN;
-	ev.data.ptr = (void *)fd;
-
-	if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev) == -1)
-	{
-		DDEBUG("Multiplexer") << "ChangeToEpollIn failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
-		return false;
-	}
-	DDEBUG("Multiplexer") << "ChangeToEpollIn succeeded for fd=" << fd->GetFd() << ", type=" << fd->GetType();
-	return true;
+	return ChangeToEpoll(fd, EPOLLIN);
 }
 
 bool Multiplexer::ChangeToEpollOneShot(AFd *fd)
 {
-	epoll_event ev;
-
-	ev.events = EPOLLONESHOT;
-	ev.data.ptr = (void *)fd;
-
-	if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev) == -1)
-	{
-		DDEBUG("Multiplexer") << "ChangeToEpollOneShot failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
-		return false;
-	}
-	DDEBUG("Multiplexer") << "ChangeToEpollOneShot succeeded for fd=" << fd->GetFd() << ", type=" << fd->GetType();
-	return true;
+	return ChangeToEpoll(fd, EPOLLONESHOT);
 }
 
 bool Multiplexer::DeleteFromEpoll(AFd *fd)
 {
 	count--;
 	DDEBUG("Multiplexer") << "DeleteFromEpoll fd=" << fd->GetFd() << ", count=" << count;
+	INFO() << "DeleteFromEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
 	return epoll_ctl(epollFd, EPOLL_CTL_DEL, fd->GetFd(), NULL);
 }
 
-void Multiplexer::ChangeToEpollInOut(AFd *fd)
+bool Multiplexer::ChangeToEpollInOut(AFd *fd)
 {
-    struct epoll_event ev;
-    ev.events = EPOLLIN | EPOLLOUT;
-    ev.data.ptr = fd;
-    epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev);
-    DDEBUG("Multiplexer") << "ChangeToEpollInOut for fd=" << fd->GetFd() << ", type=" << fd->GetType();
+	return ChangeToEpoll(fd, EPOLLIN | EPOLLOUT);
 }
 
 void Multiplexer::MainLoop()
@@ -248,6 +229,7 @@ void Multiplexer::handelEpollPipes(epoll_event &event)
 
 	if (obj->GetType() == "Pipe") 
 	{
+		INFO() << "Pipe addr: " << event.data.ptr << ", fd: " <<  obj->GetFd();
 		DDEBUG("Multiplexer") << "handelEpollPipes: handling Pipe fd=" << obj->GetFd();
 		obj->Handle();
 	}
