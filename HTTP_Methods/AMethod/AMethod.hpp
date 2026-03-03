@@ -1,7 +1,7 @@
 #pragma once
-#include "../Headers.hpp"
-#include "../SocketIO/SocketIO.hpp"
-#include "../Socket/Socket.hpp"
+#include "Headers.hpp"
+#include "SocketIO.hpp"
+#include "Socket.hpp"
 #include "SessionManager.hpp"
 #include "Cgi.hpp"
 

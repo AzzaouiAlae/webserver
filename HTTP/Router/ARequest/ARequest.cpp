@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 06:22:13 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/20 05:01:27 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/03 04:30:50 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,7 @@ bool ARequest::getFullLine(string reqtype, string &line)
 		index++;
 	}
     _firstline = false;
-	if (_requestbuff[index] == '\n' && (index == 0 || (index > 0 && _requestbuff[index - 1] != '\r')))
+	if (_requestbuff[index] == '\n' && (index == 0 || (index > 0 && _requestbuff[index - 1] != '\r') ))
     {
         if (reqtype == "cgi")
 			Error::ThrowError("502");

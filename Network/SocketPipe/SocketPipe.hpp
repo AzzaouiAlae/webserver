@@ -1,6 +1,6 @@
 #pragma once
-#include "../../Headers.hpp"
-#include "../SocketIO/SocketIO.hpp"
+#include "Headers.hpp"
+#include "SocketIO.hpp"
 
 class SocketPipe : public APipe {
 	SocketIO *socket;

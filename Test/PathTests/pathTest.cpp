@@ -1,5 +1,5 @@
-#include "../Unity-master/src/unity.h"
-#include "../../Headers.hpp"
+#include "Unity-master/src/unity.h"
+#include "Headers.hpp"
 
 void setUp(void)
 {}

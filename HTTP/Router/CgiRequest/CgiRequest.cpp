@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiRequest.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
+/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 08:51:18 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/20 03:28:28 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/03/03 05:49:13 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ void CgiRequest::initReqDirectives()
 CgiRequest::CgiRequest()
 {
     _parsPos = eCgiHeaders;
+	_headerSize = 0;
 }
 CgiRequest::~CgiRequest() {}
 
@@ -46,8 +47,10 @@ void CgiRequest::parseStatus()
         if (statusMap.find(status) == statusMap.end())
             Error::ThrowError("502");
         _statusCode = status;
-        if (status[0] != '2' || status[0] != '3')
+        if (status[0] == '4' || status[0] == '5')
             Error::ThrowError(status);
+        if (status[0] != '2' || status[0] != '3')
+            Error::ThrowError("502");
     }
     else
     {
@@ -87,12 +90,27 @@ void CgiRequest::checkCgiMinimum()
     Error::ThrowError("502");
 }
 
+size_t CgiRequest::getRequestLen()
+{
+	return _headerSize;
+}
+
 bool CgiRequest::ParseHeader()
 {
     string line = "";
+	bool isFullLine;
 
-    while (_parsPos == eCgiHeaders && getFullLine("cgi", line) && line != "\r\n")
+    while (_parsPos == eCgiHeaders)
+	{
+		isFullLine = getFullLine("cgi", line);
+		
+		if (isFullLine == false)
+			break;
+		_headerSize += line.length();
+		if (line == "\r\n")
+			break;
 		parseHeaderLine("cgi", line);
+	}
     if (_parsPos == eCgiHeaders && line == "\r\n" && _requestbuff.length() > 0) _Thereisbody = true;
     if (_parsPos == eCgiHeaders && line == "\r\n")
         _parsPos = eCgiHeadersEnd;
@@ -101,12 +119,18 @@ bool CgiRequest::ParseHeader()
         checkCgiMinimum();
         parsLenTypeCont();
         parseStatus();
-        parseLocation();
+        // parseLocation();
         _parsPos = eCgiParsEnd;
         return (true);
     }
     return (false);
 }
+
+string &CgiRequest::getStatusCode()
+{
+    return (_statusCode);
+}
+
 
 bool CgiRequest::isComplete(char *request, int size)
 {

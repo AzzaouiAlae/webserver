@@ -3,16 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   CgiRequest.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
+/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 08:51:20 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/19 11:49:44 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/03/03 05:48:49 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
-#include "../Headers.hpp"
+#include "Headers.hpp"
 
 class CgiRequest : public ARequest
 {
@@ -26,9 +26,12 @@ class CgiRequest : public ARequest
     void parseLocation();
     void parsLenTypeCont();
     void checkCgiMinimum();
+	size_t _headerSize;
 
 public:
+	size_t getRequestLen();
     CgiRequest();
     ~CgiRequest();
+    string &getStatusCode();
     bool isComplete(char *request, int size);
 };

@@ -4,7 +4,7 @@
 
 ROOT_DIR="$(pwd)"
 
-find ../ \( \
+find  \( \
 		-name "*.html" -o \
 		-name "*.gcov" -o \
 		-name "*.gcno" -o \

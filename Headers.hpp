@@ -44,11 +44,11 @@ using namespace std;
 #include "Validation.hpp"
 
 #include "Error.hpp"
-#include "SessionManagement/SessionManager.hpp"
-#include "ARequest/ARequest.hpp"
-#include "ClientRequest/ClientRequest.hpp"
-#include "CgiRequest/CgiRequest.hpp"
-// #include "Cgi/Cgi.hpp"
+#include "SessionManager.hpp"
+#include "ARequest.hpp"
+#include "ClientRequest.hpp"
+#include "CgiRequest.hpp"
+// #include "Cgi.hpp"
 
 
 #include "Config.hpp"

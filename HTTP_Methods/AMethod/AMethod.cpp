@@ -9,6 +9,7 @@ map<string, string> AMethod::statusMap;
 // Does one thing: initializes all member variables to default values
 AMethod::AMethod(SocketIO *sock, Routing *router)
 {
+	_cgi = NULL;
 	readyToSend = false;
 	sendHeader = false;
 	staticFile = NULL;
@@ -72,6 +73,7 @@ AMethod::~AMethod()
 	{
 		close(fileFd);
 	}
+	delete _cgi;
 }
 
 // ══════════════════════════════════════════════
@@ -302,16 +304,20 @@ void AMethod::HandelCGI()
 	try
 	{
 		_cgi->Handle();
+		if (_cgi->isComplete())
+		{
+			del = true;
+			sock->cleanBody = true;
+		}
 	}
-	catch(const std::string& status)
-	{
-		if (status[0] == '5' || status[0] == '4')
-			HandelErrorPages(status);
-		// if (status[0] == '3' && _cgi->getCgiReq().getthereisbody())
-		// 	CreateRedirectionHeader(status, )
+	catch(exception& e) {
+		HandelErrorPages(e.what());
+	}
+}
 
-	}
-	// if (getcg)
+void _cgiResponse()
+{
+	
 }
 
 // ══════════════════════════════════════════════

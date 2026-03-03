@@ -1,4 +1,4 @@
-SRC = ../Unity-master/src/unity.c ParsingTest.cpp $(shell find ../../ -name "*.cpp" | grep -v "main" | grep -v ".*Test.cpp")
+SRC = Unity-master/src/unity.c ParsingTest.cpp $(shell find  -name "*.cpp" | grep -v "main" | grep -v ".*Test.cpp")
 OBJ = $(SRC:.cpp=.o)
 OBJ := $(OBJ:.c=.o)
 CXX = c++
@@ -9,14 +9,14 @@ all : $(NAME)
 
 coverage : 
 	-./a.out
-	gcovr --html-details -r ../.. -o coverage/coverage.html
-	@find ../.. \( \
+	gcovr --html-details -r .. -o coverage/coverage.html
+	@find .. \( \
 		-name "*.gcno" -o \
 		-name "*.gcda" \
 	\) -delete
 
 rm_coverage:
-	find ../.. \( \
+	find .. \( \
 		-name "*.html" -o \
 		-name "*.gcno" -o \
 		-name "*.gcda" -o \

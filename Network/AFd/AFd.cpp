@@ -1,5 +1,5 @@
 #include "AFd.hpp"
-#include "../../Headers.hpp"
+#include "Headers.hpp"
 
 char *AFd::buff;
 
@@ -29,7 +29,7 @@ int AFd::GetFd()
 	return fd;
 }
 
-AFd::~AFd() 
+AFd::~AFd()
 {}
 
 void AFd::cleanFd()
