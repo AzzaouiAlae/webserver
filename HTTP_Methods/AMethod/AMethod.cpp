@@ -307,6 +307,8 @@ void AMethod::HandelCGI()
 		{
 			del = true;
 			sock->cleanBody = true;
+			delete _cgi;
+			_cgi = NULL;
 		}
 	}
 	catch(exception& e) {

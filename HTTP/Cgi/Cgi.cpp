@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/03 05:58:03 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/03 18:35:35 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -209,11 +209,13 @@ Cgi::~Cgi()
 	{
 		DDEBUG("HTTPContext") << "  -> Deleting in-pipe fd=" << _in->GetFd();
 		MulObj->DeleteFromEpoll(_in);
+		close(_in->GetFd());
 		delete _in;
 	}
 	if (_out)
 	{
 		DDEBUG("HTTPContext") << "  -> Deleting out-pipe fd=" << _out->GetFd();
+		close(_out->GetFd());
 		MulObj->DeleteFromEpoll(_out);
 		delete _out;
 	}
