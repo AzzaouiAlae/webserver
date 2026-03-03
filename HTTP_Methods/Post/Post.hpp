@@ -1,6 +1,6 @@
 #pragma once
-#include "../Headers.hpp"
-#include "../AMethod/AMethod.hpp"
+#include "Headers.hpp"
+#include "AMethod.hpp"
 
 class Post : public AMethod
 {

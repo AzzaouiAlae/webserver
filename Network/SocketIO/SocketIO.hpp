@@ -1,7 +1,7 @@
 #pragma once 
 
-#include "../Headers.hpp"
-#include "../../HTTP/Routing/Routing.hpp"
+#include "Headers.hpp"
+#include "Routing.hpp"
 #define CLOSE_TIME 10
 #define TIMEOUT 20
 

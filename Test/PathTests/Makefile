@@ -1,6 +1,6 @@
 
-SRC = ../Unity-master/src/unity.c ValidationTest.cpp ../../Parsing/Parsing.cpp ../../TokensTypes/TokensTypes.cpp\
-		../../Validation/Validation.cpp ../../Tokenizing/Tokenizing.cpp ../../ErrorHandling/Error.cpp ../../Path/Path.cpp
+SRC = Unity-master/src/unity.c ValidationTest.cpp Parsing/Parsing.cpp TokensTypes/TokensTypes.cpp\
+		Validation/Validation.cpp Tokenizing/Tokenizing.cpp ErrorHandling/Error.cpp Path/Path.cpp
 OBJ = $(SRC:.cpp=.o)
 OBJ := $(OBJ:.c=.o)
 CXX = c++
@@ -11,14 +11,14 @@ all : $(NAME)
 
 coverage : 
 	-./a.out
-	gcovr --html-details -r ../.. -o coverage/coverage.html
-	@find ../.. \( \
+	gcovr --html-details -r .. -o coverage/coverage.html
+	@find .. \( \
 		-name "*.gcno" -o \
 		-name "*.gcda" \
 	\) -delete
 
 rm_coverage:
-	find ../.. \( \
+	find .. \( \
 		-name "*.html" -o \
 		-name "*.gcno" -o \
 		-name "*.gcda" -o \

@@ -9,6 +9,7 @@ map<string, string> AMethod::statusMap;
 // Does one thing: initializes all member variables to default values
 AMethod::AMethod(SocketIO *sock, Routing *router)
 {
+	_cgi = NULL;
 	readyToSend = false;
 	sendHeader = false;
 	staticFile = NULL;
@@ -303,10 +304,9 @@ void AMethod::HandelCGI()
 	{
 		_cgi->Handle();
 	}
-	catch(const std::string& status)
+	catch(exception& e)
 	{
-		if (status[0] != '2' || status[0] != '3')
-			HandelErrorPages(status);
+		HandelErrorPages(e.what());
 	}
 }
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../AbstractSyntaxTree/AST.hpp"
+#include "AST.hpp"
 #include <set>
 
 using namespace std;
@@ -68,4 +68,4 @@ private:
 	static void fillLocation(AST<string> &locationNode, Config::Server::Location &loc);
 	static size_t parseByteSize(const string &raw);
 };
-#include "../Headers.hpp"
+#include "Headers.hpp"

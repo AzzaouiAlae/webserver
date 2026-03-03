@@ -1,5 +1,5 @@
 #include "SocketIO.hpp"
-#include "../../HTTP/HTTPContext/HTTPContext.hpp"
+#include "HTTPContext.hpp"
 
 vector<pair<int, int> > SocketIO::pipePool;
 

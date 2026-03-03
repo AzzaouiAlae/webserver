@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/03 00:40:47 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/03 03:20:24 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,8 @@
 Cgi::Cgi(ClientRequest &req, const char *exec, SocketIO *sok) : _req(req), _sok(sok)
 {
 	pipe(_pipefd);
+	_statusfd = 0;
+	_status = eFork;
 	_exec = exec;
 	_TimeSeted = false;
 	_reqlen = 0;
@@ -31,6 +33,14 @@ Cgi::Cgi(ClientRequest &req, const char *exec, SocketIO *sok) : _req(req), _sok(
 
 	_out = new CGIPipe(_pipefd[1], this);
 	MulObj->AddAsEpollOut(_out);
+}
+
+void Cgi::_activeCgiPipe()
+{
+	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+
+	MulObj->ChangeToEpollIn(_in);
+	MulObj->ChangeToEpollOut(_out);
 }
 
 bool Cgi::isExeted()
@@ -56,9 +66,9 @@ void Cgi::createChild()
 	_pid = fork();
 	if (_pid == -1)
 		Error::ThrowError("500");
-	else if (!_pid)
+	else if (_pid == 0)
 	{
-		char *args[] = {(char *)_exec, NULL};
+		char *args[] = {(char *)_exec, (char *)"HTTP/DefaultPages/scripts/login.py" ,NULL};
 
 		Environment::CreateEnv(_req.getrequestenv());
 		dup2(_sok->pipefd[0], 0);
@@ -104,13 +114,15 @@ void Cgi::writetocgi()
 		}
 	}
 
-	if (_reqlen >= _req.getcontentlen() || _req.getthereisbody() == false)
+	if (_reqlen >= _req.getcontentlen() || _req.getthereisbody() == false) {
 		_status = eReadCgiResponse;
+		Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+		MulObj->ChangeToEpollOut(_sok);
+	}
 }
 
 void Cgi::readfromcgi()
 {
-	
 	int len = 0;
 	if (!CanUsePipe0())
 		return;
@@ -169,8 +181,6 @@ void Cgi::Handle()
 	}
 	if (_time - Utility::CurrentTime() > TIMEOUT * 1000000)
 		Error::ThrowError("504");
-	if (_status == eComplete)
-		return;
 	if (_status == eFork)
 		createChild();
 	if (_status < eReadCgiResponse)
@@ -181,6 +191,7 @@ void Cgi::Handle()
 		createCgiResponse();
 	else if (_status > eCreateResponseHeader)
 		writeToClientSoket();
+	_activeCgiPipe();
 }
 
 void Cgi::SetStateByFd(int fd)
@@ -211,13 +222,13 @@ Cgi::~Cgi()
 
 bool Cgi::CanUsePipe0()
 {
-	bool res = (_status & ePipe0);
+	bool res = (_statusfd & ePipe0);
 	_statusfd &= ~ePipe0;
 	return res;
 }
 bool Cgi::CanUsePipe1()
 {
-	bool res = (_status & ePipe1);
+	bool res = (_statusfd & ePipe1);
 	_statusfd &= ~ePipe1;
 	return res;
 }

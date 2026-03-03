@@ -6,13 +6,13 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:37:26 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/03 00:20:28 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/03 03:54:38 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
-#include "../SocketIO/SocketIO.hpp"
-#include "../Headers.hpp"
+#include "SocketIO.hpp"
+#include "Headers.hpp"
 
 enum estatus
 {
@@ -49,6 +49,7 @@ class Cgi
     void createChild();
     void writetocgi();
     void readfromcgi();
+	void _activeCgiPipe();
     Cgi();
 public:
     Cgi(ClientRequest &req, const char* exec, SocketIO *sok);
@@ -64,5 +65,4 @@ public:
 	void createCgiResponse();
 	void writeToClientSoket();
     ~Cgi();
-    
 };
