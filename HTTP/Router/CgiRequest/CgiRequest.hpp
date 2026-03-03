@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 08:51:20 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/03 03:55:22 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/03 05:48:49 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,8 +26,10 @@ class CgiRequest : public ARequest
     void parseLocation();
     void parsLenTypeCont();
     void checkCgiMinimum();
+	size_t _headerSize;
 
 public:
+	size_t getRequestLen();
     CgiRequest();
     ~CgiRequest();
     string &getStatusCode();

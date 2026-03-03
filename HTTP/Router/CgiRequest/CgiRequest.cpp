@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 08:51:18 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/03 04:38:21 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/03 05:49:13 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ void CgiRequest::initReqDirectives()
 CgiRequest::CgiRequest()
 {
     _parsPos = eCgiHeaders;
+	_headerSize = 0;
 }
 CgiRequest::~CgiRequest() {}
 
@@ -89,12 +90,27 @@ void CgiRequest::checkCgiMinimum()
     Error::ThrowError("502");
 }
 
+size_t CgiRequest::getRequestLen()
+{
+	return _headerSize;
+}
+
 bool CgiRequest::ParseHeader()
 {
     string line = "";
+	bool isFullLine;
 
-    while (_parsPos == eCgiHeaders && getFullLine("cgi", line) && line != "\r\n")
+    while (_parsPos == eCgiHeaders)
+	{
+		isFullLine = getFullLine("cgi", line);
+		
+		if (isFullLine == false)
+			break;
+		_headerSize += line.length();
+		if (line == "\r\n")
+			break;
 		parseHeaderLine("cgi", line);
+	}
     if (_parsPos == eCgiHeaders && line == "\r\n" && _requestbuff.length() > 0) _Thereisbody = true;
     if (_parsPos == eCgiHeaders && line == "\r\n")
         _parsPos = eCgiHeadersEnd;
