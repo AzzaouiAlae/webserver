@@ -215,17 +215,18 @@ HTTPContext::~HTTPContext()
 {
 	DDEBUG("HTTPContext") << "HTTPContext destructor called, sock=" << (sock ? sock->GetFd() : -1);
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	bool res;
 
 	if (in)
 	{
-		DDEBUG("HTTPContext") << "  -> Deleting in-pipe fd=" << in->GetFd();
-		MulObj->DeleteFromEpoll(in);
+		res = MulObj->DeleteFromEpoll(in);
+		DDEBUG("HTTPContext") << "  -> Deleting in-pipe fd=" << in->GetFd() << ", deleted: " << res;
 		delete in;
 	}
 	if (out)
 	{
-		DDEBUG("HTTPContext") << "  -> Deleting out-pipe fd=" << out->GetFd();
-		MulObj->DeleteFromEpoll(out);
+		res = MulObj->DeleteFromEpoll(out);
+		DDEBUG("HTTPContext") << "  -> Deleting out-pipe fd=" << out->GetFd() << ", deleted: " << res;
 		delete out;
 	}
 	if (buffPoll.size() > 100)

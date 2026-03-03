@@ -73,6 +73,7 @@ AMethod::~AMethod()
 	{
 		close(fileFd);
 	}
+	delete _cgi;
 }
 
 // ══════════════════════════════════════════════

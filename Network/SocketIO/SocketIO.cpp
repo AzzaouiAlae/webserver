@@ -32,7 +32,7 @@ int SocketIO::Send(void *buff, int size)
 	}
 	if (SendedBuffToPipe < size)
 	{
-		sent = SendBuffToPipe(&((this->buff)[SendedBuffToPipe]), size - SendedBuffToPipe);
+		sent = SendBuffToPipe(&((this->buff)[SendedBuffToPipe]), size - SendedBuffToPipe, true);
 		if (sent > 0)
 		{
 			SendedBuffToPipe += sent;
@@ -43,7 +43,7 @@ int SocketIO::Send(void *buff, int size)
 	return sent;
 }
 
-int SocketIO::SendBuffToPipe(void *buff, int size)
+int SocketIO::SendBuffToPipe(void *buff, int size, bool usePending)
 {
 	if ((status & ePipe1) == 0)
 		return 0;
@@ -61,7 +61,8 @@ int SocketIO::SendBuffToPipe(void *buff, int size)
 	((HTTPContext *)context)->activeOutPipe();
 	if (n <= 0)
 		return -1;
-	pendingInPipe += n;
+	if (usePending)
+		pendingInPipe += n;
 	return n;
 }
 
@@ -196,7 +197,7 @@ int SocketIO::SocketToFile(int fileFD, int size)
 	return len;
 }
 
-int SocketIO::SendSocketToPipe(int size)
+int SocketIO::SendSocketToPipe(int size, bool usePending)
 {
 	int len = 0;
 	if (status & ePipe1)
@@ -211,7 +212,8 @@ int SocketIO::SendSocketToPipe(int size)
 		((HTTPContext *)context)->activeOutPipe();
 		if (len == -1)
 			return -1;
-		pendingInPipe += len;
+		if (usePending)
+			pendingInPipe += len;
 		DDEBUG("SocketIO") << "SendSocketToPipe: fd=" << fd << ", spliced=" << len << ", pendingInPipe=" << pendingInPipe;
 	}
 	return len;
@@ -249,6 +251,7 @@ SocketIO::~SocketIO()
 {
 	DDEBUG("SocketIO") << "SocketIO destructor, fd=" << this->fd << ", pendingInPipe=" << pendingInPipe;
 	CloseSockFD(this->fd);
+	delete context;
 	if (pendingInPipe == 0 && pipeInitialized && pipePool.size() < 100)
 	{
 		pipePool.push_back(pair<int, int>(pipefd[0], pipefd[1]));
@@ -260,7 +263,6 @@ SocketIO::~SocketIO()
 		close(pipefd[1]);
 		DDEBUG("SocketIO") << "  -> Closed pipe [" << pipefd[0] << ", " << pipefd[1] << "]";
 	}
-	delete context;
 	Singleton::GetFds().erase(this);
 }
 

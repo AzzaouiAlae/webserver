@@ -1,5 +1,7 @@
 #include "Singleton.hpp"
 
+set<void *> Singleton::debug;
+
 AST<string>& Singleton::GetASTroot()
 {
     static AST<string> ASTroot("ASTroot");
