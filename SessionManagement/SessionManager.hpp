@@ -1,7 +1,9 @@
 #pragma once
-#include "iostream"
+#include <iostream>
 #include <map>
 #include <vector>
+// #include "../Headers.hpp"
+#include <queue>
 
 using namespace std;
 #define MAXHEADERSIZE 8192
@@ -12,7 +14,11 @@ struct Session {
     time_t createdAt;
     time_t lastAccessedAt;
     
-    Session(const string &sid) : id(sid), createdAt(time(NULL)), lastAccessedAt(time(NULL)) {}
+    Session(const string &sid);
+    struct CompareTimeout {
+		bool operator()(const Session *a, const Session *b) const ;
+	};
+    static priority_queue<Session*, vector<Session*>, Session::CompareTimeout> timeoutList;
 };
 
 class SessionManager {
@@ -31,7 +37,6 @@ public:
     // Session operations
     Session* createSession();
     Session* getSession(const string &sessionId);
-    void destroySession(const string &sessionId);
     void cleanupExpiredSessions();
     
     // Session data
