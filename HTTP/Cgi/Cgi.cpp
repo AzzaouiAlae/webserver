@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/03 22:53:23 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/03 22:57:24 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -140,8 +140,8 @@ void Cgi::createCgiResponse()
 	_responseHeaderStr = "HTTP/1.1 " + getStatusCode() + " " + AMethod::getStatusMap()[getStatusCode()] + "\r\n";
 	_shouldSend = _responseHeaderStr.length();
 	_responseHeaderStr += _copybuf;
-	_status = eWriteBuffToClient;
 	_shouldSend += _cgireq.getcontentlen() + _cgireq.getRequestLen();
+	_status = eWriteBuffToClient;
 }
 
 void Cgi::writeToClientSoket()
@@ -209,7 +209,6 @@ Cgi::~Cgi()
 	{
 		DDEBUG("HTTPContext") << "  -> Deleting in-pipe fd=" << _in->GetFd();
 		MulObj->DeleteFromEpoll(_in);
-		sleep(1);
 		close(_in->GetFd());
 		delete _in;
 	}
@@ -217,7 +216,6 @@ Cgi::~Cgi()
 	{
 		DDEBUG("HTTPContext") << "  -> Deleting out-pipe fd=" << _out->GetFd();
 		MulObj->DeleteFromEpoll(_out);
-		sleep(1);
 		close(_out->GetFd());
 		delete _out;
 	}
