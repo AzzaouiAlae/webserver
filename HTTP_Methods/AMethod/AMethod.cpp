@@ -303,9 +303,13 @@ void AMethod::HandelCGI()
 	try
 	{
 		_cgi->Handle();
+		if (_cgi->isComplete())
+		{
+			del = true;
+			sock->cleanBody = true;
+		}
 	}
-	catch(exception& e)
-	{
+	catch(exception& e) {
 		HandelErrorPages(e.what());
 	}
 }

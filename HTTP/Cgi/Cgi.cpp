@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/03 03:20:24 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/03 05:38:17 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ Cgi::Cgi(ClientRequest &req, const char *exec, SocketIO *sok) : _req(req), _sok(
 	_responseHeaderStr.clear();
 	_responselen = 0;
 	_buf = new char[MAXHEADERSIZE];
+	_shouldSend=0;
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 
 	_in = new CGIPipe(_pipefd[0], this);
@@ -68,7 +69,7 @@ void Cgi::createChild()
 		Error::ThrowError("500");
 	else if (_pid == 0)
 	{
-		char *args[] = {(char *)_exec, (char *)"HTTP/DefaultPages/scripts/login.py" ,NULL};
+		char *args[] = {(char *)_exec, (char *)"HTTP/DefaultPages/scripts/login2.py" ,NULL};
 
 		Environment::CreateEnv(_req.getrequestenv());
 		dup2(_sok->pipefd[0], 0);
@@ -139,6 +140,7 @@ void Cgi::createCgiResponse()
 	_responseHeaderStr += "HTTP/1.1 " + getStatusCode() + " " + AMethod::getStatusMap()[getStatusCode()] + "\r\n";
 	_responseHeaderStr += _copybuf;
 	_status = eWriteBuffToClient;
+	_shouldSend = _req.getBody().length() ;
 }
 
 void Cgi::writeToClientSoket()
@@ -146,7 +148,8 @@ void Cgi::writeToClientSoket()
 	if (_status == eWriteBuffToClient)
 	{
 		int len = 0;
-		len = _sok->Send(const_cast<char *>(_responseHeaderStr.c_str() + _responselen), _responseHeaderStr.length() - _responselen);
+		void *buff = (void *)(_responseHeaderStr.c_str() + _responselen);
+		len = _sok->Send(buff, _responseHeaderStr.length() - _responselen);
 		if (_sok->errorNumber == eWriteError)
 			Error::ThrowError("502");
 		_responselen += len;
@@ -159,10 +162,9 @@ void Cgi::writeToClientSoket()
 	else if (_status == eWritePipeToClient)
 	{
 		int len = 0;
-		size_t bodysize = _cgireq.getcontentlen() + _cgireq.getBody().length();
+		size_t bodysize = _cgireq.getcontentlen();
 		if (!CanUsePipe0())
 			return;
-		
 		len = _sok->SendPipeToSock(_pipefd[0], bodysize - _responselen);
 		if (_sok->errorNumber == eWriteError)
 			Error::ThrowError("502");
@@ -191,7 +193,8 @@ void Cgi::Handle()
 		createCgiResponse();
 	else if (_status > eCreateResponseHeader)
 		writeToClientSoket();
-	_activeCgiPipe();
+	if (_status != eComplete)
+		_activeCgiPipe();
 }
 
 void Cgi::SetStateByFd(int fd)
@@ -241,4 +244,9 @@ string &Cgi::getStatusCode()
 CgiRequest &Cgi::getCgiReq()
 {
 	return (_cgireq);
+}
+
+bool Cgi::isComplete()
+{
+	return _status == eComplete;
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   CgiRequest.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: oel-bann <oel-bann@student.42.fr>          +#+  +:+       +#+        */
+/*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 08:51:18 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/20 03:28:28 by oel-bann         ###   ########.fr       */
+/*   Updated: 2026/03/03 04:38:21 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -103,7 +103,7 @@ bool CgiRequest::ParseHeader()
         checkCgiMinimum();
         parsLenTypeCont();
         parseStatus();
-        parseLocation();
+        // parseLocation();
         _parsPos = eCgiParsEnd;
         return (true);
     }

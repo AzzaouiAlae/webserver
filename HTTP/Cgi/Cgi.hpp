@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:37:26 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/03 03:54:38 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/03 05:36:44 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,7 @@ class Cgi
     void readfromcgi();
 	void _activeCgiPipe();
     Cgi();
+	size_t _shouldSend;
 public:
     Cgi(ClientRequest &req, const char* exec, SocketIO *sok);
     bool isExeted();
@@ -64,5 +65,6 @@ public:
     bool CanUsePipe1();
 	void createCgiResponse();
 	void writeToClientSoket();
+	bool isComplete();
     ~Cgi();
 };
