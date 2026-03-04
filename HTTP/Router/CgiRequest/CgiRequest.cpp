@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 08:51:18 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/03 05:49:13 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/04 03:03:55 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,7 +48,7 @@ void CgiRequest::parseStatus()
         _statusCode = status;
         if (status[0] == '4' || status[0] == '5')
             Error::ThrowError(status);
-        if (status[0] != '2' || status[0] != '3')
+        if (status[0] != '2' && status[0] != '3')
             Error::ThrowError("502");
     }
     else

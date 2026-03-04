@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # =============================================================================
 #  login_simple.py — Minimal CGI Login + Cookie/Session Management
-#  Place in your cgi scripts directory, configured with:
-#      cgi_pass .py /usr/bin/python3
 # =============================================================================
 
 import os
@@ -38,8 +36,13 @@ def parse_post():
     if os.environ.get("REQUEST_METHOD", "GET").upper() != "POST":
         return {}
     try:
-        length = int(os.environ.get("CONTENT_LENGTH", 0))
-        body = sys.stdin.buffer.read(length).decode("utf-8", errors="replace")
+        # Safely handle CONTENT_LENGTH
+        length_env = os.environ.get("CONTENT_LENGTH")
+        if length_env and length_env.isdigit():
+            length = int(length_env)
+            body = sys.stdin.buffer.read(length).decode("utf-8", errors="replace")
+        else:
+            body = sys.stdin.read()
         return dict(urllib.parse.parse_qsl(body))
     except Exception:
         return {}
@@ -55,20 +58,27 @@ def make_session_id(username):
 def set_cookie(name, value, max_age=3600):
     return f"Set-Cookie: {name}={value}; Path=/; Max-Age={max_age}; HttpOnly"
 
-def send_headers(status="200 OK", extra_headers=None):
-    print(f"Status: {status}")
+def send_response(html_body, status="200 OK", extra_headers=None):
+    """Calculates Content-Length and sends strict \r\n HTTP headers + body."""
+    body_bytes = html_body.encode('utf-8')
+    content_length = len(body_bytes)
+    
+    sys.stdout.write(f"Status: {status}\r\n")
     if extra_headers:
         for h in extra_headers:
-            print(h)
-    print("Content-Type: text/html; charset=utf-8")
-    print()  # blank line = end of headers
+            sys.stdout.write(f"{h}\r\n")
+    sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
+    sys.stdout.write(f"Content-Length: {content_length}\r\n")
+    sys.stdout.write("\r\n") # Blank line separating headers from body
+    sys.stdout.write(html_body)
 
 # ─── Pages ────────────────────────────────────────────────────────────────────
 
-def page_login(error=""):
+def page_login(error="", extra_headers=None):
+    script_name = os.environ.get("SCRIPT_NAME", "")
     error_html = f'<p style="color:red">{html.escape(error)}</p>' if error else ""
-    send_headers("200 OK")
-    print(f"""<!DOCTYPE html>
+    
+    html_body = f"""<!DOCTYPE html>
 <html>
 <head><title>Login</title>
 <style>
@@ -84,7 +94,7 @@ def page_login(error=""):
 <div class="box">
   <h2>🔐 Login</h2>
   {error_html}
-  <form method="POST" action="">
+  <form method="POST" action="{script_name}">
     <input type="hidden" name="action" value="login">
     <label>Username</label>
     <input type="text" name="username" placeholder="admin" required autofocus>
@@ -96,11 +106,12 @@ def page_login(error=""):
     Hint: <code>admin / admin123</code>
   </p>
 </div>
-</body></html>""")
+</body></html>"""
+    send_response(html_body, extra_headers=extra_headers)
 
-def page_dashboard(username, session_id):
-    send_headers("200 OK")
-    print(f"""<!DOCTYPE html>
+def page_dashboard(username, session_id, extra_headers=None):
+    script_name = os.environ.get("SCRIPT_NAME", "")
+    html_body = f"""<!DOCTYPE html>
 <html>
 <head><title>Dashboard</title>
 <style>
@@ -119,22 +130,23 @@ def page_dashboard(username, session_id):
     <b>Session ID:</b> {html.escape(session_id)}<br>
     <b>Username:</b>   {html.escape(username)}
   </div>
-  <form method="POST" action="">
+  <form method="POST" action="{script_name}">
     <input type="hidden" name="action" value="logout">
     <button type="submit">🚪 Logout</button>
   </form>
 </div>
-</body></html>""")
+</body></html>"""
+    send_response(html_body, extra_headers=extra_headers)
 
-def page_logged_out():
-    send_headers("200 OK")
-    print("""<!DOCTYPE html>
+def page_logged_out(extra_headers=None):
+    script_name = os.environ.get("SCRIPT_NAME", "")
+    html_body = f"""<!DOCTYPE html>
 <html>
 <head><title>Logged Out</title>
 <style>
-  body { font-family: Arial, sans-serif; display: flex; justify-content: center; padding-top: 80px; background: #f0f2f5; }
-  .box { background: white; padding: 32px; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 320px; text-align: center; }
-  a { color: #0066cc; }
+  body {{ font-family: Arial, sans-serif; display: flex; justify-content: center; padding-top: 80px; background: #f0f2f5; }}
+  .box {{ background: white; padding: 32px; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 320px; text-align: center; }}
+  a {{ color: #0066cc; }}
 </style>
 </head>
 <body>
@@ -142,9 +154,10 @@ def page_logged_out():
   <h2>👋 Logged Out</h2>
   <p>Your session has been cleared.</p>
   <br>
-  <a href="">Back to Login</a>
+  <a href="{script_name}">Back to Login</a>
 </div>
-</body></html>""")
+</body></html>"""
+    send_response(html_body, extra_headers=extra_headers)
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
@@ -169,24 +182,20 @@ def main():
             new_sid = make_session_id(username)
             SESSIONS[new_sid] = {"username": username, "created": time.time()}
 
-            send_headers("200 OK", extra_headers=[
-                set_cookie("SESSIONID", new_sid, max_age=3600)
-            ])
-            # Re-render dashboard directly (redirect would lose the Set-Cookie in some CGI setups)
-            page_dashboard(username, new_sid)
+            # Pass the cookie header directly into the dashboard generation
+            headers = [set_cookie("SESSIONID", new_sid, max_age=3600)]
+            page_dashboard(username, new_sid, extra_headers=headers)
             return
         else:
             page_login(error="Invalid username or password.")
             return
 
     elif action == "logout":
-        # Expire the session cookie
-        send_headers("200 OK", extra_headers=[
-            set_cookie("SESSIONID", "", max_age=0)
-        ])
+        # Pass the expiring cookie header directly into the logged-out generation
+        headers = [set_cookie("SESSIONID", "", max_age=0)]
         if session_id in SESSIONS:
             del SESSIONS[session_id]
-        page_logged_out()
+        page_logged_out(extra_headers=headers)
         return
 
     # ── Default: show dashboard if session valid, else login ──

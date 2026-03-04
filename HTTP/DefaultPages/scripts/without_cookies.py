@@ -5,8 +5,21 @@ import os
 import sys
 import urllib.parse
 
+def send_response(html_body):
+    """Helper function to calculate content-length and send strict CGI headers."""
+    body_bytes = html_body.encode('utf-8')
+    content_length = len(body_bytes)
+    
+    sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
+    sys.stdout.write(f"Content-Length: {content_length}\r\n")
+    sys.stdout.write("\r\n")
+    sys.stdout.write(html_body)
+
 method = os.environ.get("REQUEST_METHOD", "GET").upper()
 query  = dict(urllib.parse.parse_qsl(os.environ.get("QUERY_STRING", "")))
+
+# Dynamically get the script's path so it always references itself
+script_name = os.environ.get("SCRIPT_NAME", "")
 
 # ── POST: increment then redirect ───────────────────────────────
 if method == "POST":
@@ -18,11 +31,12 @@ if method == "POST":
 
     counter += 1
 
-    # Redirect with count in URL — no cookie set
-    print("Status: 302 Found")
-    print(f"Location: /without-cookies?count={counter}")
-    print("Content-Type: text/html; charset=utf-8")
-    print()
+    # Redirect with count in URL — no cookie set, using dynamic script_name
+    sys.stdout.write("Status: 302 Found\r\n")
+    sys.stdout.write(f"Location: {script_name}?count={counter}\r\n")
+    sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
+    sys.stdout.write("Content-Length: 0\r\n")
+    sys.stdout.write("\r\n")
 
 # ── GET: show current count from URL ────────────────────────────
 else:
@@ -31,9 +45,7 @@ else:
     except ValueError:
         counter = 0
 
-    print("Content-Type: text/html; charset=utf-8")
-    print()
-    print(f"""<!DOCTYPE html>
+    html_body = f"""<!DOCTYPE html>
 <html>
 <head><title>Without Cookies</title>
 <style>
@@ -52,14 +64,16 @@ else:
   <h2>❌ Without Cookies</h2>
   <p>How many times did you click?</p>
   <div class="count">{counter}</div>
-  <form method="POST" action="?count={counter}">
+  <form method="POST" action="{script_name}?count={counter}">
     <button type="submit">Click Me</button>
   </form>
   <div class="warn">
     ⚠ No cookie — count lives in the URL:<br>
-    <div class="url">?count={counter}</div>
+    <div class="url">{script_name}?count={counter}</div>
     Close the tab and reopen → resets to 0.<br>
     Anyone can fake it: <code>?count=9999</code>
   </div>
 </div>
-</body></html>""")
+</body></html>"""
+
+    send_response(html_body)

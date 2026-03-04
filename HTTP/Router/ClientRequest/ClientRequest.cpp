@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/04 02:19:40 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/04 03:18:07 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,7 @@ ClientRequest::~ClientRequest() {}
 
 string &ClientRequest::getPath() 
 {
-	return _env["REQUEST_URI"];
+	return _env["SCRIPT_NAME"];
 }
 
 bool ClientRequest::parsPath(string path)
@@ -91,6 +91,7 @@ bool ClientRequest::parsPath(string path)
 	{
 		_env["SCRIPT_NAME"] = path.substr(0, pos);
 		_env["QUERY_STRING"] = path.substr(pos + 1);
+		
 		DDEBUG("ClientRequest") << "parsPath: SCRIPT_NAME='" << _env["SCRIPT_NAME"]
 								<< "', QUERY_STRING='" << _env["QUERY_STRING"] << "'";
 	}

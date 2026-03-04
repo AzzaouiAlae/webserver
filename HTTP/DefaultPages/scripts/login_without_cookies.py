@@ -15,15 +15,35 @@ def parse_post():
     if os.environ.get("REQUEST_METHOD", "GET").upper() != "POST":
         return {}
     try:
-        length = int(os.environ.get("CONTENT_LENGTH", 0))
-        body = sys.stdin.buffer.read(length).decode("utf-8", errors="replace")
+        # Safely handle CONTENT_LENGTH just like we did in the previous script
+        length_env = os.environ.get("CONTENT_LENGTH")
+        if length_env and length_env.isdigit():
+            length = int(length_env)
+            body = sys.stdin.buffer.read(length).decode("utf-8", errors="replace")
+        else:
+            body = sys.stdin.read()
         return dict(urllib.parse.parse_qsl(body))
     except Exception:
         return {}
 
+def send_response(html_body):
+    """Helper function to calculate content-length and send strict CGI headers."""
+    body_bytes = html_body.encode('utf-8')
+    content_length = len(body_bytes)
+    
+    sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
+    sys.stdout.write(f"Content-Length: {content_length}\r\n")
+    sys.stdout.write("\r\n")
+    sys.stdout.write(html_body)
+
 post   = parse_post()
 method = os.environ.get("REQUEST_METHOD", "GET").upper()
 query  = dict(urllib.parse.parse_qsl(os.environ.get("QUERY_STRING", "")))
+
+# Dynamically get the script's path so it always redirects to itself
+script_name = os.environ.get("SCRIPT_NAME", "")
+# Get the host for display purposes
+http_host = os.environ.get("HTTP_HOST", "localhost")
 
 # ── POST: check credentials then redirect ────────────────────────
 if method == "POST":
@@ -33,40 +53,37 @@ if method == "POST":
 
     if action == "login":
         if username in USERS and USERS[username] == password:
-            # Redirect to GET — no cookie set, so server won't remember
-            print("Status: 302 Found")
-            print("Location: /login-without?logged_in=1")
-            print("Content-Type: text/html; charset=utf-8")
-            print()
+            # Redirect back to the script dynamically using script_name
+            sys.stdout.write("Status: 302 Found\r\n")
+            sys.stdout.write(f"Location: {script_name}?logged_in=1\r\n")
+            sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
+            sys.stdout.write("Content-Length: 0\r\n")
+            sys.stdout.write("\r\n")
         else:
-            print("Status: 302 Found")
-            print("Location: /login-without?error=1")
-            print("Content-Type: text/html; charset=utf-8")
-            print()
+            # Redirect back to the script with an error
+            sys.stdout.write("Status: 302 Found\r\n")
+            sys.stdout.write(f"Location: {script_name}?error=1\r\n")
+            sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
+            sys.stdout.write("Content-Length: 0\r\n")
+            sys.stdout.write("\r\n")
 
 # ── GET: show page ───────────────────────────────────────────────
 else:
     logged_in = query.get("logged_in", "")
     error     = query.get("error", "")
 
-    print("Content-Type: text/html; charset=utf-8")
-    print()
-
     if logged_in:
-        # Shows dashboard BUT only because of ?logged_in=1 in URL
-        # Anyone can type this URL and see the dashboard — not secure!
-        # Also: refresh removes ?logged_in=1 from URL → back to login
-        print("""<!DOCTYPE html>
+        html_body = f"""<!DOCTYPE html>
 <html>
 <head><title>Without Cookies — Dashboard</title>
 <style>
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:Arial; display:flex; justify-content:center; padding-top:80px; background:#fff0f0; }
-  .box { background:white; padding:32px; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,0.1); width:380px; }
-  h2 { color:#27ae60; margin-bottom:12px; }
-  .warn { background:#fff3cd; border-left:4px solid #f39c12; padding:12px; margin:16px 0; border-radius:4px; font-size:0.9em; line-height:1.6; }
-  .url { background:#f8f9fa; padding:8px; border-radius:4px; font-family:monospace; font-size:0.8em; margin:8px 0; word-break:break-all; }
-  a { display:inline-block; margin-top:16px; color:#0066cc; }
+  * {{ box-sizing:border-box; margin:0; padding:0; }}
+  body {{ font-family:Arial; display:flex; justify-content:center; padding-top:80px; background:#fff0f0; }}
+  .box {{ background:white; padding:32px; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,0.1); width:380px; }}
+  h2 {{ color:#27ae60; margin-bottom:12px; }}
+  .warn {{ background:#fff3cd; border-left:4px solid #f39c12; padding:12px; margin:16px 0; border-radius:4px; font-size:0.9em; line-height:1.6; }}
+  .url {{ background:#f8f9fa; padding:8px; border-radius:4px; font-family:monospace; font-size:0.8em; margin:8px 0; word-break:break-all; }}
+  a {{ display:inline-block; margin-top:16px; color:#0066cc; }}
 </style>
 </head>
 <body>
@@ -76,7 +93,7 @@ else:
     ⚠ <b>No cookie was set.</b><br><br>
     The redirect worked — no refresh warning.<br>
     But look at the URL:
-    <div class="url">http://localhost/login-without?logged_in=1</div>
+    <div class="url">http://{http_host}{script_name}?logged_in=1</div>
     The server only thinks you're logged in because
     of <b>?logged_in=1</b> in the URL.<br><br>
     Problems:<br>
@@ -84,13 +101,14 @@ else:
     • Remove <b>?logged_in=1</b> from URL → logged out<br>
     • This is <b>not real authentication</b>
   </div>
-  <a href="/login-without">← Back to Login</a>
+  <a href="{script_name}">← Back to Login</a>
 </div>
-</body></html>""")
+</body></html>"""
+        send_response(html_body)
 
     else:
         error_html = '<p style="color:red;margin-bottom:12px">❌ Wrong username or password.</p>' if error else ""
-        print(f"""<!DOCTYPE html>
+        html_body = f"""<!DOCTYPE html>
 <html>
 <head><title>Without Cookies — Login</title>
 <style>
@@ -112,7 +130,7 @@ else:
     but no cookies — server still forgets you.
   </div>
   {error_html}
-  <form method="POST" action="">
+  <form method="POST" action="{script_name}">
     <input type="hidden" name="action" value="login">
     <label>Username</label>
     <input type="text" name="username" placeholder="admin" required autofocus>
@@ -122,4 +140,5 @@ else:
   </form>
   <p style="font-size:0.8em;color:#888;margin-top:12px">admin / admin123</p>
 </div>
-</body></html>""")
+</body></html>"""
+        send_response(html_body)

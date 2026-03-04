@@ -15,8 +15,21 @@ def parse_cookies():
             cookies[k.strip()] = v.strip()
     return cookies
 
+def send_response(html_body):
+    """Helper function to calculate content-length and send strict CGI headers."""
+    body_bytes = html_body.encode('utf-8')
+    content_length = len(body_bytes)
+    
+    sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
+    sys.stdout.write(f"Content-Length: {content_length}\r\n")
+    sys.stdout.write("\r\n")
+    sys.stdout.write(html_body)
+
 cookies = parse_cookies()
 method  = os.environ.get("REQUEST_METHOD", "GET").upper()
+
+# Dynamically get the script's path so it always redirects and posts to itself
+script_name = os.environ.get("SCRIPT_NAME", "")
 
 # ── POST: increment counter then redirect ────────────────────────
 if method == "POST":
@@ -27,12 +40,13 @@ if method == "POST":
 
     counter += 1
 
-    # Save new count in cookie + redirect to GET
-    print(f"Set-Cookie: VISIT_COUNT={counter}; Path=/; Max-Age=3600")
-    print("Status: 302 Found")
-    print("Location: /with-cookies")
-    print("Content-Type: text/html; charset=utf-8")
-    print()
+    # Save new count in cookie + redirect to GET dynamically using script_name
+    sys.stdout.write("Status: 302 Found\r\n")
+    sys.stdout.write(f"Location: {script_name}\r\n")
+    sys.stdout.write(f"Set-Cookie: VISIT_COUNT={counter}; Path=/; Max-Age=3600\r\n")
+    sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
+    sys.stdout.write("Content-Length: 0\r\n")
+    sys.stdout.write("\r\n")
 
 # ── GET: just show the current count ────────────────────────────
 else:
@@ -41,9 +55,7 @@ else:
     except ValueError:
         counter = 0
 
-    print("Content-Type: text/html; charset=utf-8")
-    print()
-    print(f"""<!DOCTYPE html>
+    html_body = f"""<!DOCTYPE html>
 <html>
 <head><title>With Cookies</title>
 <style>
@@ -62,10 +74,12 @@ else:
   <h2>✅ With Cookies</h2>
   <p>How many times did you click?</p>
   <div class="count">{counter}</div>
-  <form method="POST" action="">
+  <form method="POST" action="{script_name}">
     <button type="submit">Click Me</button>
   </form>
   <div class="cookie">Cookie: VISIT_COUNT = <b>{counter}</b></div>
   <p class="note">✅ Count grows and persists. Refresh is safe — no warning!</p>
 </div>
-</body></html>""")
+</body></html>"""
+
+    send_response(html_body)
