@@ -28,7 +28,6 @@ void CgiRequest::initReqDirectives()
 CgiRequest::CgiRequest()
 {
     _parsPos = eCgiHeaders;
-	_headerSize = 0;
 }
 CgiRequest::~CgiRequest() {}
 
@@ -63,10 +62,13 @@ void CgiRequest::parseStatus()
 
 void CgiRequest::parseLocation()
 {
-    if (_env["Location"].empty())
-        Error::ThrowError("502");
-    if (!(_env["Location"].find("http://") == 0 || _env["Location"].find("https://") == 0 || _env["Location"].find("/") == 0))
-        Error::ThrowError("502");
+    if (_env.find("Location") != _env.end())
+    {
+        if (_env["Location"].empty())
+            Error::ThrowError("502");
+        if (!(_env["Location"].find("http://") == 0 || _env["Location"].find("https://") == 0 || _env["Location"].find("/") == 0))
+            Error::ThrowError("502");
+    }
 }
 
 void CgiRequest::parsLenTypeCont()
@@ -90,27 +92,12 @@ void CgiRequest::checkCgiMinimum()
     Error::ThrowError("502");
 }
 
-size_t CgiRequest::getRequestLen()
-{
-	return _headerSize;
-}
-
 bool CgiRequest::ParseHeader()
 {
     string line = "";
-	bool isFullLine;
 
-    while (_parsPos == eCgiHeaders)
-	{
-		isFullLine = getFullLine("cgi", line);
-		
-		if (isFullLine == false)
-			break;
-		_headerSize += line.length();
-		if (line == "\r\n")
-			break;
-		parseHeaderLine("cgi", line);
-	}
+    while (_parsPos == eCgiHeaders && getFullLine(line) && line != "\r\n")
+		parseHeaderLine(line);
     if (_parsPos == eCgiHeaders && line == "\r\n" && _requestbuff.length() > 0) _Thereisbody = true;
     if (_parsPos == eCgiHeaders && line == "\r\n")
         _parsPos = eCgiHeadersEnd;
@@ -119,7 +106,7 @@ bool CgiRequest::ParseHeader()
         checkCgiMinimum();
         parsLenTypeCont();
         parseStatus();
-        // parseLocation();
+        parseLocation();
         _parsPos = eCgiParsEnd;
         return (true);
     }
@@ -141,4 +128,52 @@ bool CgiRequest::isComplete(char *request, int size)
 			return (false);
 	}
 	return true;
+}
+
+bool CgiRequest::getFullLine(string &line)
+{
+	int index = 0;
+	line.clear();
+
+	while (_requestbuff[index] && _requestbuff[index] != '\n')
+	{
+		if (index > MAXHEADERSIZE)
+			Error::ThrowError("502");
+		line += _requestbuff[index];
+		index++;
+	}
+	if (_requestbuff[index] == '\n')
+	{
+		_headersize += index;
+        if (_headersize > MAXHEADERSIZE)
+			Error::ThrowError("502");
+		_requestbuff.erase(0, index + 1);
+		line += '\n';
+	}
+	else
+	{
+		line.clear();
+		return (false);
+	}
+	return true;
+}
+
+void CgiRequest::parseHeaderLine(const string &line)
+{
+    size_t colonPos = line.find(':');
+    if (colonPos == string::npos)
+        Error::ThrowError("502");
+    string key   = line.substr(0, colonPos);
+    string value = line.substr(colonPos + 1);
+    Utility::trim(value, " \n\r");
+
+    if (_reqDirectives && _reqDirectives->find(key) != _reqDirectives->end())
+        key = (*_reqDirectives)[key];
+
+    if (_env.find(key) != _env.end())
+    {
+        if (key != "Cookie")
+			    Error::ThrowError("502");
+    }
+    _env[key] = value;
 }

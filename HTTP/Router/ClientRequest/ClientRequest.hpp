@@ -27,7 +27,8 @@ class ClientRequest: public ARequest {
 	bool parsPath(string path);
 	void parseHost();
 	void parsLenTypeCont();
-
+	bool getFullLine(string &line);
+	void parseHeaderLine(const string &line);
 public:
 	ClientRequest(size_t maxbodysze);
 	ClientRequest();

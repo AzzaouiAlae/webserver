@@ -31,13 +31,10 @@ protected:
 	size_t _content_len;
     bool _Thereisbody;
     int  _headersize;
-
-    bool getFullLine(string reqtype, string &line);
-    void parseHeaderLine(string reqtype, const string &line);
-    
     void parseCookies();
-    void throwBadHeader(string reqtype);
 public:
+    virtual bool getFullLine(string &line) = 0;
+    virtual void parseHeaderLine(const string &line) = 0;
     ARequest();
     virtual ~ARequest();
     virtual bool isComplete(char *request, int size) = 0;

@@ -2,10 +2,22 @@
 #include "sstream"
 #include "Logging.hpp"
 
+priority_queue<Session*, vector<Session*>, Session::CompareTimeout> Session::timeoutList;
 
 SessionManager *SessionManager::instance = NULL;
 
-SessionManager::SessionManager() : SESSION_TIMEOUT(3600) {}
+SessionManager::SessionManager() : SESSION_TIMEOUT(3600) {
+	
+}
+
+Session::Session(const string &sid) : id(sid), createdAt(time(NULL)), lastAccessedAt(time(NULL)){
+	timeoutList.push(this);
+}
+
+bool Session::CompareTimeout::operator()(const Session *a, const Session *b) const 
+{
+	return (a->lastAccessedAt > b->lastAccessedAt);
+}
 
 SessionManager::~SessionManager()
 {
@@ -15,6 +27,7 @@ SessionManager::~SessionManager()
 	}
 	sessions.clear();
 }
+
 
 SessionManager *SessionManager::getInstance()
 {
@@ -48,6 +61,8 @@ Session *SessionManager::createSession()
 
 Session *SessionManager::getSession(const string &sessionId)
 {
+	cleanupExpiredSessions();
+
 	map<string, Session *>::iterator it = sessions.find(sessionId);
 	if (it == sessions.end())
 	{
@@ -59,49 +74,30 @@ Session *SessionManager::getSession(const string &sessionId)
 
 	// Check if expired
 	time_t now = time(NULL);
-	if (now - session->lastAccessedAt > SESSION_TIMEOUT)
-	{
-		DEBUG("SessionManager") << "Session expired and removed: id=" << sessionId;
-		delete session;
-		sessions.erase(it);
-		return NULL;
-	}
 
 	// Update last accessed time
 	session->lastAccessedAt = now;
 	return session;
 }
 
-void SessionManager::destroySession(const string &sessionId)
-{
-	map<string, Session *>::iterator it = sessions.find(sessionId);
-	if (it != sessions.end())
-	{
-		DEBUG("SessionManager") << "Session destroyed: id=" << sessionId;
-		delete it->second;
-		sessions.erase(it);
-	}
-}
-
 void SessionManager::cleanupExpiredSessions()
 {
 	time_t now = time(NULL);
-	int removed = 0;
-	for (map<string, Session *>::iterator it = sessions.begin(); it != sessions.end();)
+	while(Session::timeoutList.size())
 	{
-		if (now - it->second->lastAccessedAt > SESSION_TIMEOUT)
+		Session *s = Session::timeoutList.top();
+
+		if (now - s->lastAccessedAt > SESSION_TIMEOUT)
 		{
-			delete it->second;
-			sessions.erase(it++);
-			removed++;
+			Session::timeoutList.pop();
+			sessions.erase(sessions.find(s->id));
+			delete s;
 		}
 		else
-		{
-			++it;
-		}
+			break;
 	}
-	if (removed > 0)
-		DEBUG("SessionManager") << "Cleaned up " << removed << " expired session(s). Active sessions: " << sessions.size();
+
+	DEBUG("SessionManager") << "Cleaned up " << " expired session(s). Active sessions: " << Session::timeoutList.size();
 }
 
 void SessionManager::setSessionData(const string &sessionId, const string &key, const string &value)
