@@ -52,10 +52,6 @@ bool Multiplexer::AddAsEpoll(AFd *fd, int type)
 
 	ev.events = type;
 	ev.data.ptr = (void *)fd;
-	if (Singleton::debug.find(fd) != Singleton::debug.end())
-		ERR() << "HERE";
-	else
-		Singleton::debug.insert(fd);
 	//INFO() << "AddAsEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
 	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, fd->GetFd(), &ev) == -1)
 	{
@@ -76,10 +72,10 @@ bool Multiplexer::ChangeToEpoll(AFd *fd, int type)
 	//INFO() << "ChangeToEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
 	if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev) == -1)
 	{
-		DDEBUG("Multiplexer") << "ChangeToEpollOut failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
+		DDEBUG("Multiplexer") << "ChangeToEpoll: "<< type <<", failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
 		return false;
 	}
-	DDEBUG("Multiplexer") << "ChangeToEpollOut succeeded for fd=" << fd->GetFd() << ", type=" << fd->GetType();
+	DDEBUG("Multiplexer") << "ChangeToEpoll: "<< type <<", succeeded for fd=" << fd->GetFd() << ", type=" << fd->GetType();
 	return true;
 }
 

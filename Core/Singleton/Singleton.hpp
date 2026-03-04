@@ -5,7 +5,6 @@ class Singleton
 {
 
 public:
-	static set<void *> debug;
 	static AST<string>& GetASTroot();
 	static vector<int>& GetSockets();
 	static map<string, string>& GetMime();

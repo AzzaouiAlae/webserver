@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/04 00:00:28 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/04 01:00:42 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,12 +44,19 @@ void Cgi::_activeCgiPipe()
 	MulObj->ChangeToEpollOut(_out);
 }
 
-bool Cgi::isExeted()
+bool Cgi::isChildError()
 {
 	int status;
 	if (waitpid(_pid, &status, WNOHANG) != _pid)
 		return false;
-	return true;
+	
+    if (WIFEXITED(status)) {
+        return WEXITSTATUS(status) != 0;
+	}
+    else if (WIFSIGNALED(status) || WIFSTOPPED(status)) {
+        return true;
+	}
+	return false;
 }
 
 void Cgi::resetTime()
@@ -71,9 +78,10 @@ void Cgi::createChild()
 	{
 		Environment::CreateEnv(_req.getrequestenv());
 		dup2(_sok->pipefd[0], 0);
+		dup2(_pipefd[1], 1);
+		
 		close(_pipefd[0]);
 		close(_sok->pipefd[0]);
-		dup2(_pipefd[1], 1);
 		close(_pipefd[1]);
 		close(_sok->pipefd[1]);
 		execve(*_exec, _exec, environ);
@@ -130,7 +138,6 @@ void Cgi::readfromcgi()
 		Error::ThrowError("504");
 	if (_cgireq.isComplete(_buf, len))
 		_status = eCreateResponseHeader;
-	
 }
 
 void Cgi::createCgiResponse()
@@ -160,12 +167,22 @@ void Cgi::writeToClientSoket()
 	else if (_status == eWritePipeToClient)
 	{
 		int len = 0;
-		if (!CanUsePipe0())
-			return;
-		len = _sok->SendPipeToSock(_pipefd[0], _shouldSend - _responselen);
-		if (_sok->errorNumber == eWriteError)
-			Error::ThrowError("502");
-		_responselen += len;
+		if (_cgireq.getBody().size() + _responseHeaderStr.length() > _responselen)
+		{
+			int size = _cgireq.getBody().length() - (_responselen - _responseHeaderStr.length()) ;
+			void *buff = (void *)(_cgireq.getBody().data() + (_cgireq.getBody().length() - size));
+			len = _sok->Send(buff, _cgireq.getBody().length() - (_cgireq.getBody().length() - size));
+			if (_sok->errorNumber == eWriteError)
+				Error::ThrowError("502");
+			_responselen += len;
+		}
+		else if (CanUsePipe0())
+		{
+			len = _sok->SendPipeToSock(_pipefd[0], _shouldSend - _responselen);
+			if (_sok->errorNumber == eWriteError)
+				Error::ThrowError("502");
+			_responselen += len;
+		}
 	}
 	if (_shouldSend <= _responselen)
 		_status = eComplete;
@@ -182,8 +199,6 @@ void Cgi::Handle()
 		Error::ThrowError("504");
 	if (_status == eFork)
 		createChild();
-	if (isExeted() && _status < eCreateResponseHeader)
-		Error::ThrowError("500");
 	if (_status < eReadCgiResponse)
 		writetocgi();
 	else if (_status == eReadCgiResponse)
@@ -192,6 +207,8 @@ void Cgi::Handle()
 		createCgiResponse();
 	else if (_status > eCreateResponseHeader)
 		writeToClientSoket();
+	if (isChildError())
+		Error::ThrowError("500");
 	if (_status != eComplete)
 		_activeCgiPipe();
 }
