@@ -135,39 +135,42 @@ void Cgi::readfromcgi()
 
 void Cgi::createCgiResponse()
 {
+	string body(_buf); 
 	_responseHeaderStr = "HTTP/1.1 " + getStatusCode() + " " + AMethod::getStatusMap()[getStatusCode()] + "\r\n";
 	map<string, string> &env = _cgireq.getrequestenv();
 	for(map<string,string>::iterator it = env.begin(); it != env.end(); it++)
 		_responseHeaderStr += it->first + ": " + it->second + "\r\n";
 	_responseHeaderStr += "\r\n";
-	_shouldSend = _responseHeaderStr.length() + _cgireq.getcontentlen();
+	_responseHeaderStr += body;
+	_shouldSend = _responseHeaderStr.length() + body.length();
 	_status = eWriteBuffToClient;
 }
 
 void Cgi::writeToClientSoket()
 {
+	string body(_buf);
 	if (_status == eWriteBuffToClient)
 	{
 		int len = 0;
 		void *buff = (void *)(_responseHeaderStr.c_str() + _responselen);
-		len = _sok->Send(buff, _responseHeaderStr.length() - _responselen);
+		len = _sok->Send(buff, _shouldSend - _responselen);
 		if (_sok->errorNumber == eWriteError)
 			Error::ThrowError("502");
 		_responselen += len;
-		if (_responselen == _responseHeaderStr.length())
+		if (_responselen == _shouldSend)
 			_status = eWritePipeToClient;
 	}
 	else if (_status == eWritePipeToClient)
-	{
+	{ 
 		int len = 0;
 		if (!CanUsePipe0())
 			return;
-		len = _sok->SendPipeToSock(_pipefd[0], _shouldSend - _responselen);
+		len = _sok->SendPipeToSock(_pipefd[0], _cgireq.getcontentlen() - _responselen);
 		if (_sok->errorNumber == eWriteError)
 			Error::ThrowError("502");
 		_responselen += len;
 	}
-	if (_shouldSend <= _responselen)
+	if (_cgireq.getcontentlen() <= _responselen)
 		_status = eComplete;
 }
 

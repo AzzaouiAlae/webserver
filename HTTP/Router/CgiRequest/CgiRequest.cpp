@@ -96,7 +96,7 @@ bool CgiRequest::ParseHeader()
 {
     string line = "";
 
-    while (_parsPos == eCgiHeaders && getFullLine(line) && line != "\r\n")
+    while (_parsPos == eCgiHeaders && getFullLine(line) && line != "\n")
 		parseHeaderLine(line);
     if (_parsPos == eCgiHeaders && line == "\r\n" && _requestbuff.length() > 0) _Thereisbody = true;
     if (_parsPos == eCgiHeaders && line == "\r\n")
