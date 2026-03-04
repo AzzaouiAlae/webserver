@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/03 22:57:24 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/04 00:00:28 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 #include "AMethod.hpp"
 #include <string.h>
 
-Cgi::Cgi(ClientRequest &req, const char *exec, SocketIO *sok) : _req(req), _sok(sok)
+Cgi::Cgi(ClientRequest &req,  char *const *exec, SocketIO *sok) : _req(req), _sok(sok)
 {
 	pipe(_pipefd);
 	_statusfd = 0;
@@ -69,8 +69,6 @@ void Cgi::createChild()
 		Error::ThrowError("500");
 	else if (_pid == 0)
 	{
-		char *args[] = {(char *)_exec, (char *)"HTTP/DefaultPages/scripts/login2.py" ,NULL};
-
 		Environment::CreateEnv(_req.getrequestenv());
 		dup2(_sok->pipefd[0], 0);
 		close(_pipefd[0]);
@@ -78,7 +76,7 @@ void Cgi::createChild()
 		dup2(_pipefd[1], 1);
 		close(_pipefd[1]);
 		close(_sok->pipefd[1]);
-		execve(_exec, args, environ);
+		execve(*_exec, _exec, environ);
 		exit(1);
 	}
 	_status = eSendBuffToPipe;
@@ -182,10 +180,10 @@ void Cgi::Handle()
 	}
 	if (_time - Utility::CurrentTime() > TIMEOUT * 1000000)
 		Error::ThrowError("504");
-	if (isExeted() && _status < eCreateResponseHeader)
-		Error::ThrowError("500");
 	if (_status == eFork)
 		createChild();
+	if (isExeted() && _status < eCreateResponseHeader)
+		Error::ThrowError("500");
 	if (_status < eReadCgiResponse)
 		writetocgi();
 	else if (_status == eReadCgiResponse)

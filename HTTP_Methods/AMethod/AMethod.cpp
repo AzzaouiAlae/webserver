@@ -300,7 +300,15 @@ void AMethod::SendResponse()
 void AMethod::HandelCGI()
 {
 	if (_cgi == NULL)
-		_cgi = new Cgi(router->GetRequest(), router->GetPath().getLocation()->cgiPassPath.c_str(), sock);
+	{
+		char *args[] = 
+		{
+			(char *)router->GetPath().getLocation()->cgiPassPath.c_str(), 
+			(char *)router->GetPath().getFullPath().c_str(),
+			NULL
+		};
+		_cgi = new Cgi(router->GetRequest(), args, sock);
+	}
 	try
 	{
 		_cgi->Handle();

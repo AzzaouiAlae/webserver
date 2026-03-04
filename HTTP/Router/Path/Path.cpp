@@ -211,7 +211,7 @@ string Path::decodePath(const string& path)
     return decoded;
 }
 
-string Path::getFullPath() const { return _fullPath; }
+string &Path::getFullPath() { return _fullPath; }
 string Path::getPathInfo() const { return _pathInfo; }
 string Path::getCgiPath() const { return _cgiScriptPath; }
 bool Path::isCGI() const { return _isCGI; }
