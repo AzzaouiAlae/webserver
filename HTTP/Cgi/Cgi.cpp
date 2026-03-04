@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/04 01:00:42 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/04 02:49:37 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ long Cgi::getTime()
 {
 	return (_time);
 }
-
+int i = 0;
 void Cgi::createChild()
 {
 	_pid = fork();
@@ -87,6 +87,7 @@ void Cgi::createChild()
 		execve(*_exec, _exec, environ);
 		exit(1);
 	}
+	i++;
 	_status = eSendBuffToPipe;
 }
 
@@ -121,11 +122,15 @@ void Cgi::writetocgi()
 		}
 	}
 
-	if (_reqlen >= _req.getcontentlen() || _req.getthereisbody() == false) {
-		_status = eReadCgiResponse;
+	if (_req.getBody().length() == _req.getcontentlen() || _reqlen >= _req.getcontentlen())
+	{
 		Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 		MulObj->ChangeToEpollOut(_sok);
 	}
+	if (_reqlen >= _req.getcontentlen() || _req.getthereisbody() == false ) {
+		_status = eReadCgiResponse;
+	}
+	
 }
 
 void Cgi::readfromcgi()

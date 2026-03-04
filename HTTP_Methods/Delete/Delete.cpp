@@ -45,7 +45,7 @@ bool Delete::HandleResponse()
 	}
 
 	if (router->GetPath().isCGI()) {
-		DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", CGI path detected (not yet implemented).";
+		DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", CGI path detected.";
 		HandelCGI();
 		return del;
 	}

@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/02/26 01:01:03 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/04 02:19:40 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,7 +124,7 @@ void ClientRequest::parsLenTypeCont()
 {
 	if (getthereisbody())
 	{
-		if (_env.find("Content-Length") != _env.end())
+		if (_env.find("CONTENT_LENGTH") != _env.end())
 			if (!Utility::strtosize_t(_env["CONTENT_LENGTH"], _content_len))
 				Error::ThrowError("400");
 		if (_content_len == 0 || _env.find("CONTENT_LENGTH") == _env.end())

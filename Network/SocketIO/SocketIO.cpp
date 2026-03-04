@@ -89,10 +89,6 @@ int SocketIO::SendPipeToSock()
 
 int SocketIO::SendPipeToSock(int inputfd, size_t size)
 {
-	int flag = (ePipe0 | eSocket);
-
-	if ((status & flag) != flag)
-		return 0;
 	ssize_t sent = splice(inputfd, NULL, this->fd, NULL, size, SPLICE_F_NONBLOCK);
 	if (sent <= 0)
 	{
