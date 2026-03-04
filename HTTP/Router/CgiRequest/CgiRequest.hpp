@@ -26,10 +26,10 @@ class CgiRequest : public ARequest
     void parseLocation();
     void parsLenTypeCont();
     void checkCgiMinimum();
-	size_t _headerSize;
+    bool getFullLine(string &line);
+    void parseHeaderLine(const string &line);
 
 public:
-	size_t getRequestLen();
     CgiRequest();
     ~CgiRequest();
     string &getStatusCode();

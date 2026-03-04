@@ -150,10 +150,10 @@ bool ClientRequest::ParseHeader()
 {
 	string line = "";
 
-	if (_Parspos == eParsStart && getFullLine("client", line))
+	if (_Parspos == eParsStart && getFullLine(line))
 		parsHttpStandard(line);
-	while (_Parspos == eParsHttpStand && getFullLine("client", line) && line != "\r\n")
-		parseHeaderLine("client", line);
+	while (_Parspos == eParsHttpStand && getFullLine(line) && line != "\r\n")
+		parseHeaderLine(line);
 	
 	if (_Parspos == eParsHttpStand && line == "\r\n" && _requestbuff.length() > 0) _Thereisbody = true;
 	if (_Parspos == eParsHttpStand && line == "\r\n" && 
@@ -243,4 +243,63 @@ void ClientRequest::SetMaxBodySize(int size)
 	if (_requestbuff.length() > _maxbodysize || _content_len > _maxbodysize){
 		Error::ThrowError("413");
 	}
+}
+
+bool  ClientRequest::getFullLine(string &line)
+{
+	int index = 0;
+	line.clear();
+
+	while (_requestbuff[index] && _requestbuff[index] != '\n')
+	{
+		if (index > MAXHEADERSIZE)
+        {
+            if (_firstline)
+                Error::ThrowError("414");
+            Error::ThrowError("431");
+        }
+		line += _requestbuff[index];
+		index++;
+	}
+    _firstline = false;
+	if (_requestbuff[index] == '\n' && (index == 0 || (index > 0 && _requestbuff[index - 1] != '\r') ))
+        Error::ThrowError("400");
+	else if (_requestbuff[index] == '\n')
+	{
+		_headersize += index;
+        if (_headersize > MAXHEADERSIZE)
+            Error::ThrowError("431");
+		_requestbuff.erase(0, index + 1);
+		line += '\n';
+	}
+	else
+	{
+		line.clear();
+		return (false);
+	}
+	return true;
+}
+
+void ClientRequest::parseHeaderLine(const string &line)
+{
+    size_t colonPos = line.find(':');
+    if (colonPos == string::npos)
+        Error::ThrowError("400");
+    string key   = line.substr(0, colonPos);
+    if (!key.empty() && !isalpha(key[key.size() - 1]))
+        Error::ThrowError("400");
+    string value = line.substr(colonPos + 1);
+    if (value.size() >= 2 && key[0] == ' ' && !isalpha(key[1]))
+        Error::ThrowError("400");
+    Utility::trim(value, " \n\r");
+
+    if (_reqDirectives && _reqDirectives->find(key) != _reqDirectives->end())
+        key = (*_reqDirectives)[key];
+
+    if (_env.find(key) != _env.end())
+    {
+        if (key != "Cookie")
+            Error::ThrowError("400");
+    }
+    _env[key] = value;
 }

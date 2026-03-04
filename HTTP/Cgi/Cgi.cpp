@@ -130,17 +130,19 @@ void Cgi::readfromcgi()
 	len = read(_pipefd[0], _buf, MAXHEADERSIZE);
 	if (len <= 0)
 		Error::ThrowError("504");
-	_copybuf.append(_buf, len);
 	if (_cgireq.isComplete(_buf, len))
 		_status = eCreateResponseHeader;
+	
 }
 
 void Cgi::createCgiResponse()
 {
 	_responseHeaderStr = "HTTP/1.1 " + getStatusCode() + " " + AMethod::getStatusMap()[getStatusCode()] + "\r\n";
-	_shouldSend = _responseHeaderStr.length();
-	_responseHeaderStr += _copybuf;
-	_shouldSend += _cgireq.getcontentlen() + _cgireq.getRequestLen();
+	map<string, string> &env = _cgireq.getrequestenv();
+	for(map<string,string>::iterator it = env.begin(); it != env.end(); it++)
+		_responseHeaderStr += it->first + ": " + it->second + "\r\n";
+	_responseHeaderStr += "\r\n";
+	_shouldSend = _responseHeaderStr.length() + _cgireq.getcontentlen();
 	_status = eWriteBuffToClient;
 }
 
@@ -180,6 +182,8 @@ void Cgi::Handle()
 	}
 	if (_time - Utility::CurrentTime() > TIMEOUT * 1000000)
 		Error::ThrowError("504");
+	if (isExeted() && _status < eCreateResponseHeader)
+		Error::ThrowError("500");
 	if (_status == eFork)
 		createChild();
 	if (_status < eReadCgiResponse)
