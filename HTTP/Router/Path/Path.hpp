@@ -39,7 +39,7 @@ class Path {
 		static string decodePath(const string& path);
 		static string encodePath(const string& path);
 
-        string      getFullPath() const;
+        string      &getFullPath();
         string      getPathInfo() const;
         string      getCgiPath() const;
         bool        isCGI() const;

@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:37:26 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/03 05:36:44 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/03 23:51:28 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ class Cgi
     bool        _TimeSeted;
 	string		_responseHeaderStr;
 	char		*_buf;
-    const char        *_exec;
+    char        *const*_exec;
     size_t      _reqlen;
 	size_t		_responselen;
     void createChild();
@@ -53,7 +53,7 @@ class Cgi
     Cgi();
 	size_t _shouldSend;
 public:
-    Cgi(ClientRequest &req, const char* exec, SocketIO *sok);
+    Cgi(ClientRequest &req, char* const* exec, SocketIO *sok);
     bool isExeted();
     void Handle();
     void resetTime();
