@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/05 05:05:36 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/05 22:20:51 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,9 @@ string Cgi::resolveExcPath(const string &excName)
 
 Cgi::Cgi(ClientRequest &req,  char *const *exec, SocketIO *sok) : _req(req), _sok(sok)
 {
-	pipe(_pipefd);
+	if (APipe::GetPipe(_pipefd) == false) {
+		Error::ThrowError("500");
+	}
 	_statusfd = 0;
 	_status = eFork;
 	_exec = exec;
@@ -284,18 +286,16 @@ Cgi::~Cgi()
 	{
 		DDEBUG("HTTPContext") << "  -> Deleting in-pipe fd=" << _in->GetFd();
 		MulObj->DeleteFromEpoll(_in);
-		close(_in->GetFd());
 		delete _in;
 	}
 	if (_out)
 	{
 		DDEBUG("HTTPContext") << "  -> Deleting out-pipe fd=" << _out->GetFd();
 		MulObj->DeleteFromEpoll(_out);
-		close(_out->GetFd());
 		delete _out;
 	}
+	APipe::ReleasePipe(_pipefd);
 	delete []_buf;
-	
 }
 
 bool Cgi::CanUsePipe0()

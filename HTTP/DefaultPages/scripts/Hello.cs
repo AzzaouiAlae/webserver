@@ -16,7 +16,6 @@ string filePath = Path.Combine(baseDir, "Hello.cs.htm");
 
 if (File.Exists(filePath)) 
 {
-	await Task.Delay(100000);
     string content = File.ReadAllText(filePath);
     int bodySize = content.Length;
     string date = DateTime.UtcNow.ToString("r"); 
