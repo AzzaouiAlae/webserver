@@ -1,7 +1,5 @@
 #include "HTTPContext.hpp"
 
-vector<char *> HTTPContext::buffPoll;
-
 void HTTPContext::Handle(AFd *fd)
 {
 	(void)fd;
@@ -173,13 +171,7 @@ void HTTPContext::HandleRequest()
 	}
 }
 
-void HTTPContext::ClearBuffPoll()
-{
-	for(size_t i = 0; i < buffPoll.size(); i++)
-	{
-		delete[] buffPoll[i];
-	}
-}
+
 
 HTTPContext::HTTPContext(vector<Config::Server > *servers, size_t maxBodySize, SocketIO *sock): sock(sock), servers(servers)
 {
@@ -190,10 +182,7 @@ HTTPContext::HTTPContext(vector<Config::Server > *servers, size_t maxBodySize, S
 	router.srv = &((*servers)[0]);
 	router.GetRequest().SetMaxBodySize(maxBodySize);
 	repsense.Init(sock, &(router));
-	if (buffPoll.size() > 0) {
-		buf = buffPoll[buffPoll.size() - 1];
-		buffPoll.pop_back();
-	}
+	buf = Utility::GetBuffer();
 	isMaxBodyInit = false;
 }
 
@@ -229,10 +218,7 @@ HTTPContext::~HTTPContext()
 		DDEBUG("HTTPContext") << "  -> Deleting out-pipe fd=" << out->GetFd() << ", deleted: " << res;
 		delete out;
 	}
-	if (buffPoll.size() > 100)
-		delete[] buf;
-	else
-		buffPoll.push_back(buf);
+	Utility::ReleaseBuffer(buf);
 }
 
 void HTTPContext::activeInPipe()

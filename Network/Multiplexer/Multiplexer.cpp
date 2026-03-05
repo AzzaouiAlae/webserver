@@ -197,7 +197,7 @@ Multiplexer::~Multiplexer()
 	SessionManager *p = SessionManager::getInstance();
 	delete p;
 	delete[] AFd::buff;
-	HTTPContext::ClearBuffPoll();
+	Utility::ClearBuffPoll();
 	DEBUG("Multiplexer") << "Multiplexer cleanup complete.";
 }
 
