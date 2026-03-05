@@ -200,7 +200,7 @@ HTTPContext::HTTPContext(vector<Config::Server > *servers, size_t maxBodySize, S
 void HTTPContext::MarkedSocketToFree()
 {
 	INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " disconnected";
-	HTTPLog(DDEBUG) << ", MarkedSocketToFree: shutting down and marking for deletion.";
+	HTTPLog(DDEBUG) << ", MarkedSocketToFree: marking for deletion.";
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 
 	Utility::SigPipe = false;
@@ -208,7 +208,6 @@ void HTTPContext::MarkedSocketToFree()
 		MulObj->ChangeToEpollOneShot(in);
 	if (out != NULL)
 		MulObj->ChangeToEpollOneShot(out);
-	shutdown(sock->GetFd(), SHUT_RDWR);
 	sock->MarkedToDelete = true;
 }
 

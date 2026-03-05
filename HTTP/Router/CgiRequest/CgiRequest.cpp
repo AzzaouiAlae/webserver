@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 08:51:18 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/04 22:54:24 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/05 04:13:38 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -173,8 +173,9 @@ void CgiRequest::parseHeaderLine(const string &line)
 
     if (_env.find(key) != _env.end())
     {
-        if (key != "Cookie")
-			    Error::ThrowError("502");
+        if (key != "Cookie") {
+			// Error::ThrowError("502");
+		}
     }
     _env[key] = value;
 }

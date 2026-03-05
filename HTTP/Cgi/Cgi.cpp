@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/05 03:35:47 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/05 05:05:36 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,28 @@
 #include "AMethod.hpp"
 #include <string.h>
 
+string Cgi::resolveExcPath(const string &excName) 
+{
+    if (excName.find('/') != string::npos)
+        return excName;
+    
+    const char* envPath = getenv("PATH");
+    if (!envPath) 
+        return excName; 
 
+    string pathString(envPath);
+    stringstream ss(pathString);
+    string directory;
+
+    while (getline(ss, directory, ':')) 
+	{
+        string fullPath = (directory.empty() ? "." : directory) + "/" + excName;
+
+        if (access(fullPath.c_str(), F_OK | X_OK) == 0) 
+            return fullPath;
+    }
+    return excName;
+}
 
 Cgi::Cgi(ClientRequest &req,  char *const *exec, SocketIO *sok) : _req(req), _sok(sok)
 {
@@ -74,13 +95,8 @@ void Cgi::createChild()
 		Environment::CreateEnv(_req.getrequestenv());
 		dup2(_sok->pipefd[0], 0);
 		dup2(_pipefd[1], 1);
-		
-		close(_pipefd[0]);
-		close(_sok->pipefd[0]);
-		close(_pipefd[1]);
-		close(_sok->pipefd[1]);
-		execve(*_exec, _exec, environ);
-		exit(1);
+		execve(resolveExcPath(*_exec).c_str(), _exec, environ);
+		throw "500";
 	}
 	_status = eSendBuffToPipe;
 	INFO() << "Successfully forked CGI child process.";

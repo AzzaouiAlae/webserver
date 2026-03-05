@@ -128,7 +128,6 @@ int SocketIO::CloseSockFD(int fd)
 	if (fd != -1)
 	{
 		setsockopt(fd, IPPROTO_TCP, TCP_CORK, &optval, sizeof(optval));
-		shutdown(fd, SHUT_WR);
 		fds.push_back(pair<int, long>(fd, now));
 	}
 
@@ -295,7 +294,7 @@ void SocketIO::clearTimeout()
 	{
 		SocketIO *sock = timeoutList.top();
 		if (fds.find(sock) == fds.end()) {
-			DDEBUG("SocketIO") << "  -> Socket fd=" << sock->GetFd() << " not found in active fds, removing from timeoutList.";
+			DDEBUG("SocketIO") << "  -> Socket not found in active fds, removing from timeoutList.";
 			timeoutList.pop();
 		}
 		else if (sock->GetEndTime() < now)

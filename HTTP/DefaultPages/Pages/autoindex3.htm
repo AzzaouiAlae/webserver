@@ -357,6 +357,67 @@
         updateDeleteBtn();
     });
 
+    // ===== THEME TOGGLE WITH COOKIE =====
+    (function () {
+        var themeToggleBtn = document.getElementById("themeToggle");
+        var themeIcon = document.getElementById("themeIcon");
+
+        function getCookie(name) {
+            var match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+            return match ? decodeURIComponent(match[1]) : null;
+        }
+
+        function setCookie(name, value, days) {
+            var expires = "";
+            if (days) {
+                var d = new Date();
+                d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+                expires = "; expires=" + d.toUTCString();
+            }
+            document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/; SameSite=Lax";
+        }
+
+        function applyTheme(theme) {
+            if (theme === "light") {
+                document.body.classList.add("light-theme");
+                if (themeIcon) themeIcon.textContent = "☀️";
+            } else {
+                document.body.classList.remove("light-theme");
+                if (themeIcon) themeIcon.textContent = "🌙";
+            }
+        }
+
+        function sendThemeCookie(theme) {
+            setCookie("theme", theme, 365);
+            fetch("/set-theme?theme=" + encodeURIComponent(theme), {
+                method: "GET",
+                credentials: "same-origin"
+            }).catch(function () {});
+        }
+
+        var savedTheme = getCookie("theme") || "dark";
+        applyTheme(savedTheme);
+
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener("click", function () {
+                var isLight = document.body.classList.contains("light-theme");
+                var newTheme = isLight ? "dark" : "light";
+                if (themeIcon) {
+                    themeIcon.style.transform = "rotate(180deg) scale(0.4)";
+                    themeIcon.style.opacity = "0";
+                    setTimeout(function () {
+                        applyTheme(newTheme);
+                        themeIcon.style.transform = "rotate(0deg) scale(1)";
+                        themeIcon.style.opacity = "1";
+                    }, 200);
+                } else {
+                    applyTheme(newTheme);
+                }
+                sendThemeCookie(newTheme);
+            });
+        }
+    })();
+
 })();
 </script>
 </body>

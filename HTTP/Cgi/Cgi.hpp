@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:37:26 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/05 01:51:00 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/05 05:05:19 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,6 +50,7 @@ class Cgi
     void writetocgi();
     void readfromcgi();
 	void _activeCgiPipe();
+	string resolveExcPath(const std::string &excName);
     Cgi();
 	size_t _shouldSend;
 public:
