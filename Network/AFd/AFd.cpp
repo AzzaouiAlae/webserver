@@ -35,10 +35,10 @@ AFd::~AFd()
 void AFd::cleanFd()
 {
 	if (buff == NULL)
-		buff = new char[1024 * 1024 * 1];
+		buff = Utility::GetBuffer();
 	int fd = GetFd();
 	int size = 0;
-	size = read(fd, buff, 1024 * 1024 * 1);
+	size = read(fd, buff, 1024 * 64);
 	if (size > 0)
 		totalClean += size;
 	if (totalClean  >= maxToClean || size <= 0 || Utility::SigPipe) 

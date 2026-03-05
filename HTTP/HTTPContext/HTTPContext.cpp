@@ -34,7 +34,7 @@ int HTTPContext::_readFromSocket()
 {
 	if (buf == NULL)
 	{
-		buf = new char[BUF_SIZE + 1];
+		buf = Utility::GetBuffer();
 		HTTPLog(DDEBUG)
 			<< ", allocated read buffer (" << BUF_SIZE
 			<< " bytes).";
@@ -130,18 +130,12 @@ void HTTPContext::HandleRequest()
 {
 	// 1. Read Data
 	int len = _readFromSocket();
-	string buff = "";
-	if (len > 0)
-	{
-		buff.append(buf, len);
-	}
 	HTTPLog(DEBUG) << "HandleRequest, len: " << len;
 	// If read failed (-1) or nothing to process, return
 	if (len == -1 && !err)
 	{
 		return;
 	}
-	HTTPLog(DDEBUG) << "\n" << buff;
 	// 2. Parse Data
 	bool isComplete = _parseAndConfig(len);
 	HTTPLog(DDEBUG)

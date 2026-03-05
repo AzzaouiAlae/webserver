@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/01/27 20:05:46 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/04 03:18:07 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/05 23:06:23 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -164,9 +164,10 @@ bool ClientRequest::ParseHeader()
 	{
 		
 		_Parspos = eParsEnd;
-		DEBUG("ClientRequest") << "Request header parsing complete: method=" << _env["REQUEST_METHOD"]
-							   << ", path=" << _env["REQUEST_URI"]
-							   << ", host=" << _env["HTTP_HOST"];
+		DEBUG("ClientRequest") 
+			<< "Request header parsing complete: method=" << _env["REQUEST_METHOD"]
+			<< ", path=" << _env["REQUEST_URI"]
+			<< ", host=" << _env["HTTP_HOST"];
 		return (true);
 	}
 	return (false);
@@ -180,7 +181,10 @@ bool ClientRequest::isRequestHeaderComplete()
 bool ClientRequest::isComplete(char *request, int size)
 {
 	_requestbuff.append(request, size);
-	DDEBUG("ClientRequest") << "isComplete: appended " << size << " bytes, total buffer=" << _requestbuff.length();
+	DDEBUG("ClientRequest") 
+		<< "isComplete: appended " << size 
+		<< " bytes, total buffer=" << _requestbuff.length() 
+		<< "\n" << _requestbuff;
 	if (_Parspos != eParsEnd)
 	{
 		if (!ParseHeader())
