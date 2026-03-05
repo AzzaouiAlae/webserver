@@ -76,10 +76,6 @@ AMethod::~AMethod()
 	delete _cgi;
 }
 
-// ══════════════════════════════════════════════
-//  Date Formatting
-// ══════════════════════════════════════════════
-
 // Does one thing: returns the current time formatted as an HTTP date string
 string AMethod::CreateDate()
 {
@@ -124,7 +120,7 @@ void AMethod::CreateResponseHeader()
 		<< "Content-Length: " << bodySize << "\r\n"
 		<< "Connection: close\r\n";
 	Session* session = NULL;
-	// session = router->GetRequest().getSession();
+	session = router->GetRequest().getSession();
 	if (session != NULL) {
 		addCookies(*session);
 	}
@@ -167,7 +163,7 @@ void AMethod::CreateRedirectionHeader(const string &redirCode, const string &red
 		<< "Content-Length: 0\r\n"
 		<< "Connection: close\r\n";
 	Session* session = NULL;
-	// session = router->GetRequest().getSession();
+	session = router->GetRequest().getSession();
 	if (session != NULL) {
 		addCookies(*session);
 	}

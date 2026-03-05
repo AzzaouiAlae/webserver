@@ -43,7 +43,6 @@ public:
     bool 		        getthereisbody();
     size_t		        getcontentlen();
     string              &getBody();
-    private:
     
     void initSession();
     Session* getSession();

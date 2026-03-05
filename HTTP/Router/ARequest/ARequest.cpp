@@ -20,6 +20,7 @@ ARequest::ARequest()
     _firstline = true;
     _Thereisbody = false;
 	_headersize = 0;
+    _currentSession = NULL;
 }
 
 ARequest::~ARequest()
@@ -67,7 +68,9 @@ void ARequest::parseCookies() {
 }
 
 string ARequest::getCookie(const string &name) {
-    return _cookies[name];
+    if ( _currentSession )
+        return _currentSession->data[name];
+    return "";
 }
 
 void ARequest::initSession() {
@@ -82,12 +85,11 @@ void ARequest::initSession() {
     
     if (_currentSession == NULL) {
         _currentSession = sm->createSession();
+        _currentSession->data = _cookies;
     }
     
     _env["SESSIONID"] = _currentSession->id;
-    _env["HTTP_SESSIONID"] = _currentSession->id;
 }
-
 Session* ARequest::getSession() {
     if (_currentSession == NULL) {
         initSession();

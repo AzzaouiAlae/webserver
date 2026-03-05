@@ -116,7 +116,7 @@ void Multiplexer::MainLoop()
 	{
 		epoll_event eventList[count];
 		int size = epoll_wait(epollFd, eventList, count, USEC * TIMEOUT / 1000);
-		
+
 		for(int i = 0; i < size; i++) {
 			handelEpollPipes(eventList[i]);
 		}
