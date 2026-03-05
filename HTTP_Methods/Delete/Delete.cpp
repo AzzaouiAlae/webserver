@@ -11,6 +11,15 @@ bool Delete::HandleResponse()
 
 	DEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", Delete::HandleResponse() start";
 
+	if (sock->isTimeOut()) 
+	{
+		if (router->GetPath().isCGI())
+			HandelErrorPages("504");
+		else
+			HandelErrorPages("408");
+		sock->UpdateTime();
+		return del;
+	}
 	// 1. Already sending response (success or error) → keep sending
 	if (readyToSend)
 	{

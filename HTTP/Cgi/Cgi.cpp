@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/04 23:14:36 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/05 01:51:30 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,13 +15,14 @@
 #include "AMethod.hpp"
 #include <string.h>
 
+
+
 Cgi::Cgi(ClientRequest &req,  char *const *exec, SocketIO *sok) : _req(req), _sok(sok)
 {
 	pipe(_pipefd);
 	_statusfd = 0;
 	_status = eFork;
 	_exec = exec;
-	_TimeSeted = false;
 	_reqlen = 0;
 	_responseHeaderStr.clear();
 	_responselen = 0;
@@ -62,16 +63,6 @@ bool Cgi::isChildError()
 	return false;
 }
 
-void Cgi::resetTime()
-{
-	_time = Utility::CurrentTime();
-}
-
-long Cgi::getTime()
-{
-	return (_time);
-}
-int i = 0;
 void Cgi::createChild()
 {
 	CGILog(DDEBUG) << "Attempting to fork child process for CGI...";
@@ -91,7 +82,6 @@ void Cgi::createChild()
 		execve(*_exec, _exec, environ);
 		exit(1);
 	}
-	i++;
 	_status = eSendBuffToPipe;
 	INFO() << "Successfully forked CGI child process.";
 }
@@ -239,13 +229,6 @@ void Cgi::writeToClientSoket()
 void Cgi::Handle()
 {
 	CGILog(DDEBUG) << "Handle() called. Current status: " << _status;
-	if (!_TimeSeted)
-	{
-		resetTime();
-		_TimeSeted = true;
-	}
-	if (_time - Utility::CurrentTime() > TIMEOUT * 1000000)
-		Error::ThrowError("504");
 	if (_status == eFork)
 		createChild();
 	if (_status == eSendBuffToPipe || _status == eSendSockToPipe)
@@ -305,6 +288,7 @@ bool Cgi::CanUsePipe0()
 	_statusfd &= ~ePipe0;
 	return res;
 }
+
 bool Cgi::CanUsePipe1()
 {
 	bool res = (_statusfd & ePipe1);

@@ -282,8 +282,10 @@ void AMethod::SendResponse()
 		size = sock->FileToSocket(fileFd, ShouldSend - sended);
 	}
 
-	if (size > 0)
+	if (size > 0) {
 		sended += size;
+		sock->UpdateTime();
+	}
 
 	if (ShouldSend <= sended || Utility::SigPipe || sock->errorNumber == eWriteError)
 	{

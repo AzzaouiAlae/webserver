@@ -7,7 +7,7 @@ void HTTPContext::Handle(AFd *fd)
 	(void)fd;
 	HTTPLog(DDEBUG) << ", Handle() start";
 	if (router.isRequestComplete() == false &&
-		sock->isTimeOut(router.GetPath().isCGI()) == false && err == false)
+		sock->isTimeOut() == false && err == false)
 	{
 		HTTPLog(DDEBUG)
 			<< ", Handle() router.isRequestComplete(): "
@@ -16,10 +16,8 @@ void HTTPContext::Handle(AFd *fd)
 	}
 	if (router.isRequestComplete())
 	{
-		if (sock->isTimeOut(router.GetPath().isCGI()))
-		{
+		if (sock->isTimeOut())
 			_setupPipeline();
-		}
 		HTTPLog(DDEBUG) << ", request complete, handling response.";
 		if (repsense.HandleResponse())
 		{
@@ -44,6 +42,7 @@ int HTTPContext::_readFromSocket()
 			<< " bytes).";
 	}
 	int len = read(sock->GetFd(), buf, BUF_SIZE);
+	sock->UpdateTime();
 	HTTPLog(DDEBUG)
 		<< ", _readFromSocket: read returned "
 		<< len;
@@ -109,6 +108,8 @@ bool HTTPContext::_parseAndConfig(int len)
 
 void HTTPContext::_setupPipeline()
 {
+	if (in)
+		return;
 	HTTPLog(DDEBUG) << ", _setupPipeline: setting up pipes and switching epoll state.";
 
 	router.SetRequestComplete();

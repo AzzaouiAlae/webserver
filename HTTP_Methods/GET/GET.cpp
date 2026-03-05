@@ -39,10 +39,12 @@ bool GET::HandleResponse()
 		<< ", sendListFiles=" << sendListFiles
 		<< ", emptyRoot=" << router->GetPath().emptyRoot();
 
-	if (sock->isTimeOut(router->GetPath().isCGI())) 
+	if (sock->isTimeOut()) 
 	{
-		DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", method '" << method << "' timeout, sending 408.";
-		HandelErrorPages("408");
+		if (router->GetPath().isCGI())
+			HandelErrorPages("504");
+		else
+			HandelErrorPages("408");
 		sock->UpdateTime();
 		return del;
 	}
@@ -79,13 +81,14 @@ bool GET::HandleResponse()
 // Does one thing: resolves the path, then dispatches based on path state
 void GET::GetMethod()
 {
-	DDEBUG("GET") << "Socket fd: " << sock->GetFd()
-				   << ", GetMethod: isRedir=" << router->GetPath().isRedirection()
-				   << ", found=" << router->GetPath().isFound()
-				   << ", hasPerm=" << router->GetPath().hasPermission()
-				   << ", isDir=" << router->GetPath().isDirectory()
-				   << ", isFile=" << router->GetPath().isFile()
-				   << ", isCGI=" << router->GetPath().isCGI();
+	DDEBUG("GET") 
+		<< "Socket fd: " << sock->GetFd()
+		<< ", GetMethod: isRedir=" << router->GetPath().isRedirection()
+		<< ", found=" << router->GetPath().isFound()
+		<< ", hasPerm=" << router->GetPath().hasPermission()
+		<< ", isDir=" << router->GetPath().isDirectory()
+		<< ", isFile=" << router->GetPath().isFile()
+		<< ", isCGI=" << router->GetPath().isCGI();
 	if (router->GetPath().isRedirection())
 		SendRedirection();
 	else if (router->GetPath().emptyRoot()) {
@@ -179,10 +182,10 @@ string GET::FormatDirectoryEntry(const string &name, const struct stat &st, cons
 	stringstream entry;
 
 	entry << "{ name: '" << escapeForJS(name)
-		  << "', href: '" << Path::encodePath(requestPath)
-		  << (requestPath[requestPath.size() - 1] == '/' ? "" : "/")
-		  << Path::encodePath(name)
-		  << "', isDir: ";
+		<< "', href: '" << Path::encodePath(requestPath)
+		<< (requestPath[requestPath.size() - 1] == '/' ? "" : "/")
+		<< Path::encodePath(name)
+		<< "', isDir: ";
 
 	if (S_ISDIR(st.st_mode))
 	{
@@ -190,9 +193,7 @@ string GET::FormatDirectoryEntry(const string &name, const struct stat &st, cons
 	}
 	else
 	{
-		entry << "false, size: '"
-			  << st.st_size
-			  << "', date: '";
+		entry << "false, size: '" << st.st_size << "', date: '";
 	}
 
 	time_t modTime = st.st_mtime;
@@ -273,8 +274,10 @@ void GET::CreateListFilesResponse()
 void GET::SendChunk(const char *data, int dataSize)
 {
 	int sent = sock->Send((void *)data, dataSize);
-	if (sent > 0)
+	if (sent > 0) {
 		sended += sent;
+		sock->UpdateTime();
+	}
 }
 
 // Does one thing: calculates the correct offset into a string and sends that chunk

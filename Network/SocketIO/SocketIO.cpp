@@ -217,6 +217,7 @@ int SocketIO::SendSocketToPipe(int size, bool usePending)
 
 SocketIO::SocketIO(int fd) : ISocket(fd, "SocketIO"), pipeInitialized(false), pendingInPipe(0), status(0), errorNumber(0)
 {
+	_timeoutStatus = eNotTimedOut;
 	buff = NULL;
 	if (pipePool.size() > 0)
 	{
@@ -239,7 +240,6 @@ SocketIO::SocketIO(int fd) : ISocket(fd, "SocketIO"), pipeInitialized(false), pe
 	}
 	DEBUG("SocketIO") << "SocketIO initialized, fd=" << fd;
 	lastTime = time(NULL);
-	timeout = TIMEOUT;
 	timeoutList.push(this);
 }
 
@@ -271,32 +271,47 @@ void SocketIO::ClearPipePool()
 	}
 }
 
-bool SocketIO::isTimeOut(bool isCGI)
+bool SocketIO::isTimeOut()
 {
-	if (isCGI)
-		return false;
 	time_t now = time(NULL);
-	if (GetEndTime() < now)
+	if (GetEndTime() < now) {
 		return true;
-	UpdateTime();
+	}
 	return false;
+}
+
+int SocketIO::GetStatus() const
+{
+	return _timeoutStatus;
 }
 
 void SocketIO::clearTimeout()
 {
+	DDEBUG("SocketIO") << "Clearing timeouts, current timeoutList size=" << timeoutList.size();
 	time_t now = time(NULL);
 	set<AFd *> &fds = Singleton::GetFds();
 
 	while (timeoutList.empty() == false)
 	{
 		SocketIO *sock = timeoutList.top();
-		if (fds.find(sock) == fds.end())
+		if (fds.find(sock) == fds.end()) {
+			DDEBUG("SocketIO") << "  -> Socket fd=" << sock->GetFd() << " not found in active fds, removing from timeoutList.";
 			timeoutList.pop();
+		}
 		else if (sock->GetEndTime() < now)
 		{
-			Multiplexer::GetCurrentMultiplexer()->ChangeToEpollOut(sock);
-			sock->MarkedToDelete = true;
-			timeoutList.pop();
+			Multiplexer::GetCurrentMultiplexer()->ChangeToEpollInOut(sock);
+			if (sock->GetStatus() >= eTimedOut) {
+				Multiplexer::ClearObj(sock);
+				timeoutList.pop();
+				DDEBUG("SocketIO") << "  -> Socket fd=" << sock->GetFd() << " timed out and marked for deletion.";
+			}
+			else {
+				DDEBUG("SocketIO") << "  -> Socket fd=" << sock->GetFd() << 
+					" timed out, marking for timeout and will check again on next clearTimeout.";
+				sock->_timeoutStatus = eTimedOut;
+				break;
+			}
 		}
 		else
 			break;
@@ -316,12 +331,19 @@ bool SocketIO::CompareTimeout::operator()(const SocketIO *a, const SocketIO *b) 
 
 time_t SocketIO::GetEndTime() const
 {
-	return lastTime + timeout;
+	return lastTime + TIMEOUT;
 }
 
 void SocketIO::UpdateTime()
 {
-	lastTime = time(NULL);
+	if (_timeoutStatus == eMarkedForDeletion)
+		return;
+	if (_timeoutStatus == eTimedOut) {
+		_timeoutStatus = eMarkedForDeletion;
+		lastTime = time(NULL) - ((float)TIMEOUT / 1.3333);
+	}
+	else
+		lastTime = time(NULL);
 }
 
 bool SocketIO::CanUsePipe0()
