@@ -31,7 +31,6 @@ enum TimeoutStatus {
 #define KBYTE 1024 * 64
 
 class SocketIO : public ISocket {
-	static long CurrentTime();
 	static vector<pair<int, int> > pipePool;
 	bool pipeInitialized;
 	int pendingInPipe;
@@ -41,32 +40,37 @@ class SocketIO : public ISocket {
 	time_t lastTime;
 	int _timeoutStatus;
 public:
-	int GetStatus() const;
-	bool CanUsePipe0();
-	bool CanUsePipe1();
+	//timeout related
+	int GetTimeoutStatus() const;
 	bool isTimeOut();
 	void UpdateTime();
 	time_t GetEndTime() const;
 	static void clearTimeout();
-	static int GetPipePoolSize();
-	int pipefd[2];
-	SocketIO(int fd);
-    ~SocketIO();
-	int SendBuffToPipe(void *buff, int size, bool usePending);
-	int SendPipeToSock();
-	int SendPipeToSock(int inputfd, size_t size = KBYTE);
-	int errorNumber;
-	void SetStateByFd(int fd);
-	int Send(void *buff, int size);
-	ssize_t FileToSocket(int fileFd, int size);
-	int SocketToFile(int fileFD, int size);
-	void Handle();
-	static int CloseSockFD(int fd);
-	static void ClearPipePool();
-	int SendSocketToPipe(int size, bool usePending);
 	struct CompareTimeout {
 		bool operator()(const SocketIO *a, const SocketIO *b) const ;
 	};
 private:
 	static priority_queue<SocketIO*, vector<SocketIO*>, SocketIO::CompareTimeout> timeoutList;
+public:
+	//pipe related
+	void SetStateByFd(int fd);
+	bool CanUsePipe0();
+	bool CanUsePipe1();
+	int pipefd[2];
+	
+	//socketIO related
+	int Send(void *buff, int size);
+	int SendBuffToPipe(void *buff, int size, bool usePending);
+	int SendPipeToSock();
+	int SendPipeToSock(int inputfd, size_t size = KBYTE);
+	int SendSocketToPipe(int size, bool usePending);
+	int SocketToFile(int fileFD, int size);
+	ssize_t FileToSocket(int fileFd, int size);
+	static int CloseSockFD(int fd);
+	
+	//socket related
+	int errorNumber;
+	SocketIO(int fd);
+    ~SocketIO();
+	void Handle();
 };

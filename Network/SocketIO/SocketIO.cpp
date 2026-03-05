@@ -1,7 +1,7 @@
 #include "SocketIO.hpp"
 #include "HTTPContext.hpp"
 
-vector<pair<int, int> > SocketIO::pipePool;
+
 
 priority_queue<SocketIO *, vector<SocketIO *>, SocketIO::CompareTimeout> SocketIO::timeoutList;
 
@@ -95,9 +95,6 @@ int SocketIO::SendPipeToSock(int inputfd, size_t size)
 		ERR() << "Socket fd: " << fd << " SendPipeToSock";
 		errorNumber = eWriteError;
 	}
-	status &= ~(ePipe0 | eSocket);
-	if (sent < 0)
-		return -1;
 	return sent;
 }
 
@@ -112,15 +109,12 @@ ssize_t SocketIO::FileToSocket(int fileFd, int size)
 	return len;
 }
 
-int SocketIO::GetPipePoolSize()
-{
-	return pipePool.size();
-}
+
 
 int SocketIO::CloseSockFD(int fd)
 {
 	static vector<pair<int, long> > fds;
-	long now = CurrentTime();
+	long now = Utility::CurrentTime();
 	int optval = 0;
 	tcp_info info;
 	socklen_t len;
@@ -150,13 +144,6 @@ int SocketIO::CloseSockFD(int fd)
 		}
 	}
 	return fds.size();
-}
-
-long SocketIO::CurrentTime()
-{
-	timeval time;
-	gettimeofday(&time, NULL);
-	return time.tv_sec * USEC + time.tv_usec;
 }
 
 int SocketIO::SocketToFile(int fileFD, int size)
@@ -218,24 +205,12 @@ SocketIO::SocketIO(int fd) : ISocket(fd, "SocketIO"), pipeInitialized(false), pe
 {
 	_timeoutStatus = eNotTimedOut;
 	buff = NULL;
-	if (pipePool.size() > 0)
-	{
-		pair<int, int> p = pipePool[pipePool.size() - 1];
-		pipefd[0] = p.first;
-		pipefd[1] = p.second;
-		pipePool.pop_back();
-		pipeInitialized = true;
-		DDEBUG("SocketIO") << "SocketIO created fd=" << fd << ", reused pipe from pool [" << pipefd[0] << ", " << pipefd[1] << "]";
-	}
-	else if (pipe2(pipefd, O_NONBLOCK | O_CLOEXEC) == -1)
-	{
-		SocketIO::errorNumber = ePipeCreateError;
-		DDEBUG("SocketIO") << "SocketIO created fd=" << fd << ", pipe2 failed!";
-	}
-	else
-	{
+	if (APipe::GetPipe(pipefd)) {
 		pipeInitialized = true;
 		DDEBUG("SocketIO") << "SocketIO created fd=" << fd << ", new pipe [" << pipefd[0] << ", " << pipefd[1] << "]";
+	}
+	else {
+		MarkedToDelete = true;
 	}
 	DEBUG("SocketIO") << "SocketIO initialized, fd=" << fd;
 	lastTime = time(NULL);
@@ -247,10 +222,10 @@ SocketIO::~SocketIO()
 	DDEBUG("SocketIO") << "SocketIO destructor, fd=" << this->fd << ", pendingInPipe=" << pendingInPipe;
 	CloseSockFD(this->fd);
 	delete context;
-	if (pendingInPipe == 0 && pipeInitialized && pipePool.size() < 100)
+	if (pendingInPipe == 0)
 	{
-		pipePool.push_back(pair<int, int>(pipefd[0], pipefd[1]));
-		DDEBUG("SocketIO") << "  -> Returned pipe [" << pipefd[0] << ", " << pipefd[1] << "] to pool (size=" << pipePool.size() << ")";
+		APipe::ReleasePipe(pipefd);
+		DDEBUG("SocketIO") << "  -> Released pipe back to pool [" << pipefd[0] << ", " << pipefd[1] << "]";
 	}
 	else if (pipeInitialized)
 	{
@@ -261,25 +236,23 @@ SocketIO::~SocketIO()
 	Singleton::GetFds().erase(this);
 }
 
-void SocketIO::ClearPipePool()
-{
-	for (int i = 0; i < (int)pipePool.size(); i++)
-	{
-		close(pipePool[i].first);
-		close(pipePool[i].second);
-	}
-}
+
 
 bool SocketIO::isTimeOut()
 {
 	time_t now = time(NULL);
 	if (GetEndTime() < now) {
+		if (_timeoutStatus == eNotTimedOut)
+			_timeoutStatus = eTimedOut;
 		return true;
 	}
 	return false;
 }
 
-int SocketIO::GetStatus() const
+
+
+
+int SocketIO::GetTimeoutStatus() const
 {
 	return _timeoutStatus;
 }
@@ -300,7 +273,7 @@ void SocketIO::clearTimeout()
 		else if (sock->GetEndTime() < now)
 		{
 			Multiplexer::GetCurrentMultiplexer()->ChangeToEpollInOut(sock);
-			if (sock->GetStatus() >= eTimedOut) {
+			if (sock->GetTimeoutStatus() >= eTimedOut) {
 				Multiplexer::ClearObj(sock);
 				timeoutList.pop();
 				DDEBUG("SocketIO") << "  -> Socket fd=" << sock->GetFd() << " timed out and marked for deletion.";
@@ -339,7 +312,7 @@ void SocketIO::UpdateTime()
 		return;
 	if (_timeoutStatus == eTimedOut) {
 		_timeoutStatus = eMarkedForDeletion;
-		lastTime = time(NULL) - ((float)TIMEOUT / 1.3333);
+		lastTime = time(NULL) - (TIMEOUT - 3);
 	}
 	else
 		lastTime = time(NULL);

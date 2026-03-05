@@ -193,7 +193,7 @@ Multiplexer::~Multiplexer()
 	while (SocketIO::CloseSockFD(-1)) {
 		DEBUG("Multiplexer") << "Waiting for all socket fds to be closed.";
 	}
-	SocketIO::ClearPipePool();
+	APipe::ClearPipePool();
 	SessionManager *p = SessionManager::getInstance();
 	delete p;
 	delete[] AFd::buff;
