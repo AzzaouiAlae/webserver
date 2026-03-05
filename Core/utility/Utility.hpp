@@ -1,10 +1,17 @@
 #pragma once
 #include "Headers.hpp"
 
+
 class Utility
 {
 	static string toTrime;
+	static vector<char *> buffPoll;
+
 public:
+	static size_t GetBuffPollSize();
+	static char *GetBuffer();
+	static void ReleaseBuffer(char *buffer);
+	static void ClearBuffPoll();
 	static bool SigPipe;
 	static bool SigInt;
 	static bool isNotZero(char ch);

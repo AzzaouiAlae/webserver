@@ -1,7 +1,9 @@
 #include "Utility.hpp"
+#include "HTTPContext.hpp"
 
 bool Utility::SigPipe;
 bool Utility::SigInt;
+vector<char *> Utility::buffPoll;
 
 bool Utility::isNotZero(char ch)
 {
@@ -15,7 +17,7 @@ bool Utility::isNotDot(char ch)
 
 bool Utility::isStrToTrime(char ch)
 {
-	for (int i = 0; i < (int)toTrime.length(); i++) 
+	for (int i = 0; i < (int)toTrime.length(); i++)
 	{
 		if (toTrime[i] == ch)
 			return false;
@@ -64,7 +66,7 @@ long Utility::CurrentTime()
 string Utility::GetFileExtension(string filename)
 {
 	int i;
-	for(i = filename.length() - 1; i >= 0; i--)
+	for (i = filename.length() - 1; i >= 0; i--)
 	{
 		if (filename[i] == '.')
 			break;
@@ -76,69 +78,69 @@ string Utility::GetFileExtension(string filename)
 
 long Utility::getFileSize(const string &path)
 {
-    struct stat st;
-    if (stat(path.c_str(), &st) == 0)
-        return st.st_size;
-    return -1;
+	struct stat st;
+	if (stat(path.c_str(), &st) == 0)
+		return st.st_size;
+	return -1;
 }
 
-
-bool Utility::strtosize_t(const string& s, size_t& out)
+bool Utility::strtosize_t(const string &s, size_t &out)
 {
-    if (s.empty())
-        return false;
+	if (s.empty())
+		return false;
 
-    size_t result = 0;
+	size_t result = 0;
 
-    for (size_t i = 0; i < s.size(); i++)
-    {
-        if (!isdigit(s[i]))
-            return false;
+	for (size_t i = 0; i < s.size(); i++)
+	{
+		if (!isdigit(s[i]))
+			return false;
 
-        size_t digit = s[i] - '0';
+		size_t digit = s[i] - '0';
 
-        if (result > (SIZE_MAX - digit) / 10)
-            return false;
+		if (result > (SIZE_MAX - digit) / 10)
+			return false;
 
-        result = result * 10 + digit;
-    }
+		result = result * 10 + digit;
+	}
 
-    out = result;
-    return true;
+	out = result;
+	return true;
 }
 
 char Utility::HexaToChar(string hex)
 {
-	return ( static_cast< char >( strtol(hex.c_str(), NULL, 16) ) );
+	return (static_cast<char>(strtol(hex.c_str(), NULL, 16)));
 }
 
-bool Utility::isHexa( string hex )
+bool Utility::isHexa(string hex)
 {
-    if (hex.length() != 2)
-        return false;
+	if (hex.length() != 2)
+		return false;
 
-    return ( isxdigit(static_cast<unsigned char>(hex[0])) &&
-           isxdigit(static_cast<unsigned char>(hex[1])) );
+	return (isxdigit(static_cast<unsigned char>(hex[0])) &&
+			isxdigit(static_cast<unsigned char>(hex[1])));
 }
-
 
 bool Utility::isHexa(char hex)
 {
-	return ( isxdigit(static_cast<unsigned char>(hex)) );
+	return (isxdigit(static_cast<unsigned char>(hex)));
 }
 
 void Utility::parseBySep(vector<string> &parsedPath, string str, string sep)
 {
 	char *s = strtok((char *)str.c_str(), sep.c_str());
-	while(s) {
+	while (s)
+	{
 		parsedPath.push_back(s);
 		s = strtok(NULL, sep.c_str());
 	}
 }
 
-string Utility::lastToken(const string &str, char ch) 
+string Utility::lastToken(const string &str, char ch)
 {
-	for(int i = str.length() - 1; i > 0; i++) {
+	for (int i = str.length() - 1; i > 0; i++)
+	{
 		if (str[i] == ch)
 			return str.substr(i + 1);
 	}
@@ -162,4 +164,31 @@ size_t Utility::parseByteSize(const string &raw)
 	}
 
 	return value;
+}
+char *Utility::GetBuffer()
+{
+	if (buffPoll.size() > 0)
+	{
+		char *buffer = buffPoll.back();
+		buffPoll.pop_back();
+		return buffer;
+	}
+	return new char[BUF_SIZE + 1];
+}
+
+void Utility::ReleaseBuffer(char *buffer)
+{
+	buffPoll.push_back(buffer);
+}
+
+void Utility::ClearBuffPoll()
+{
+	for (size_t i = 0; i < buffPoll.size(); i++)
+		delete[] buffPoll[i];
+	buffPoll.clear();
+}
+
+size_t Utility::GetBuffPollSize()
+{
+	return buffPoll.size();
 }

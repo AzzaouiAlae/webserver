@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/05 22:20:51 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/05 22:56:16 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ Cgi::Cgi(ClientRequest &req,  char *const *exec, SocketIO *sok) : _req(req), _so
 	_reqlen = 0;
 	_responseHeaderStr.clear();
 	_responselen = 0;
-	_buf = new char[MAXHEADERSIZE];
+	_buf = Utility::GetBuffer();
 	_shouldSend = 0;
 	_pid = -1;
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
@@ -295,7 +295,7 @@ Cgi::~Cgi()
 		delete _out;
 	}
 	APipe::ReleasePipe(_pipefd);
-	delete []_buf;
+	Utility::ReleaseBuffer(_buf);
 }
 
 bool Cgi::CanUsePipe0()
