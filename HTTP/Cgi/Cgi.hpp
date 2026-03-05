@@ -6,13 +6,15 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:37:26 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/04 00:36:08 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/04 17:56:08 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 #include "SocketIO.hpp"
 #include "Headers.hpp"
+
+#define CGILog(lvl) lvl("Cgi") << "[CGI PID: " << _pid << "] "
 
 enum estatus
 {

@@ -1,31 +1,86 @@
 #!/usr/bin/env python3
-# LOGIN WITHOUT COOKIES — has redirect, but still forgets you
-
 import os
 import sys
 import urllib.parse
 import html
 
-USERS = {
-    "admin": "admin123",
-    "user1": "pass1234",
-}
+USERS = { "admin": "admin123", "user1": "pass1234" }
+
+# ─── UNIVERSAL ENGINX DESIGN THEME ───────────────────────────────────────────
+ENGINX_THEME = """
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #6366f1; --primary-light: #818cf8;
+    --bg: #030712; --bg-card: rgba(15, 23, 42, 0.6);
+    --text: #f1f5f9; --text-muted: #94a3b8;
+    --border: rgba(99, 102, 241, 0.15);
+    --error: #ef4444; --warn: #f59e0b; --warn-bg: rgba(245, 158, 11, 0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", system-ui, sans-serif;
+    background-color: var(--bg); color: var(--text);
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; padding: 20px;
+  }
+  .box {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 32px; width: 100%; max-width: 400px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+  }
+  h2 { font-weight: 600; margin-bottom: 20px; font-size: 1.5em; }
+  label { font-size: 0.85em; color: var(--text-muted); margin-bottom: 6px; display: block; }
+  input {
+    width: 100%; padding: 12px; margin-bottom: 16px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    color: var(--text); border-radius: 6px; font-family: inherit; font-size: 1em;
+  }
+  input:focus { outline: none; border-color: var(--primary); }
+  button {
+    width: 100%; padding: 12px; font-size: 1em; font-family: inherit;
+    background: var(--primary); color: white; border: none; border-radius: 6px;
+    font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+  }
+  button:hover { opacity: 0.9; }
+  .warn-box {
+    background: var(--warn-bg); border-left: 4px solid var(--warn);
+    padding: 16px; margin: 16px 0; border-radius: 4px; font-size: 0.85em; 
+    color: var(--text); line-height: 1.6;
+  }
+  code { font-family: "JetBrains Mono", monospace; color: var(--warn); }
+  .url { background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; margin: 8px 0; font-family: "JetBrains Mono", monospace; color: var(--text-muted); }
+  a { color: var(--primary-light); text-decoration: none; font-size: 0.9em; display: inline-block; margin-top: 10px; }
+  a:hover { text-decoration: underline; }
+  .error-text { color: var(--error); font-size: 0.9em; margin-bottom: 16px; }
+</style>
+"""
 
 def parse_post():
-    if os.environ.get("REQUEST_METHOD", "GET").upper() != "POST":
-        return {}
+    if os.environ.get("REQUEST_METHOD", "GET").upper() != "POST": return {}
     try:
-        length = int(os.environ.get("CONTENT_LENGTH", 0))
-        body = sys.stdin.buffer.read(length).decode("utf-8", errors="replace")
+        length_env = os.environ.get("CONTENT_LENGTH")
+        if length_env and length_env.isdigit():
+            length = int(length_env)
+            body = sys.stdin.buffer.read(length).decode("utf-8", errors="replace")
+        else:
+            body = sys.stdin.read()
         return dict(urllib.parse.parse_qsl(body))
-    except Exception:
-        return {}
+    except Exception: return {}
+
+def send_response(html_body):
+    body_bytes = html_body.encode('utf-8')
+    content_length = len(body_bytes)
+    sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
+    sys.stdout.write(f"Content-Length: {content_length}\r\n\r\n")
+    sys.stdout.write(html_body)
 
 post   = parse_post()
 method = os.environ.get("REQUEST_METHOD", "GET").upper()
 query  = dict(urllib.parse.parse_qsl(os.environ.get("QUERY_STRING", "")))
+script_name = os.environ.get("SCRIPT_NAME", "")
+http_host = os.environ.get("HTTP_HOST", "localhost")
 
-# ── POST: check credentials then redirect ────────────────────────
 if method == "POST":
     action   = post.get("action", "")
     username = post.get("username", "").strip()
@@ -33,93 +88,59 @@ if method == "POST":
 
     if action == "login":
         if username in USERS and USERS[username] == password:
-            # Redirect to GET — no cookie set, so server won't remember
-            print("Status: 302 Found")
-            print("Location: /login-without?logged_in=1")
-            print("Content-Type: text/html; charset=utf-8")
-            print()
+            sys.stdout.write("Status: 302 Found\r\n")
+            sys.stdout.write(f"Location: {script_name}?logged_in=1\r\n")
+            sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
+            sys.stdout.write("Content-Length: 0\r\n\r\n")
         else:
-            print("Status: 302 Found")
-            print("Location: /login-without?error=1")
-            print("Content-Type: text/html; charset=utf-8")
-            print()
+            sys.stdout.write("Status: 302 Found\r\n")
+            sys.stdout.write(f"Location: {script_name}?error=1\r\n")
+            sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
+            sys.stdout.write("Content-Length: 0\r\n\r\n")
 
-# ── GET: show page ───────────────────────────────────────────────
 else:
     logged_in = query.get("logged_in", "")
     error     = query.get("error", "")
 
-    print("Content-Type: text/html; charset=utf-8")
-    print()
-
     if logged_in:
-        # Shows dashboard BUT only because of ?logged_in=1 in URL
-        # Anyone can type this URL and see the dashboard — not secure!
-        # Also: refresh removes ?logged_in=1 from URL → back to login
-        print("""<!DOCTYPE html>
+        html_body = f"""<!DOCTYPE html>
 <html>
-<head><title>Without Cookies — Dashboard</title>
-<style>
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:Arial; display:flex; justify-content:center; padding-top:80px; background:#fff0f0; }
-  .box { background:white; padding:32px; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,0.1); width:380px; }
-  h2 { color:#27ae60; margin-bottom:12px; }
-  .warn { background:#fff3cd; border-left:4px solid #f39c12; padding:12px; margin:16px 0; border-radius:4px; font-size:0.9em; line-height:1.6; }
-  .url { background:#f8f9fa; padding:8px; border-radius:4px; font-family:monospace; font-size:0.8em; margin:8px 0; word-break:break-all; }
-  a { display:inline-block; margin-top:16px; color:#0066cc; }
-</style>
-</head>
+<head><title>Enginx - Faux Dashboard</title>{ENGINX_THEME}</head>
 <body>
 <div class="box">
-  <h2>⚠ Logged in... kind of</h2>
-  <div class="warn">
-    ⚠ <b>No cookie was set.</b><br><br>
-    The redirect worked — no refresh warning.<br>
-    But look at the URL:
-    <div class="url">http://localhost/login-without?logged_in=1</div>
-    The server only thinks you're logged in because
-    of <b>?logged_in=1</b> in the URL.<br><br>
-    Problems:<br>
-    • Anyone can type this URL and get in<br>
-    • Remove <b>?logged_in=1</b> from URL → logged out<br>
-    • This is <b>not real authentication</b>
+  <h2>⚠ Bypass Detected</h2>
+  <div class="warn-box">
+    <b>No secure session found.</b><br>
+    The redirect worked, but the server only identifies you via the URL string:
+    <div class="url">http://{http_host}{script_name}?logged_in=1</div>
+    • Anyone can type this URL to bypass authentication.<br>
+    • Removing <code>?logged_in=1</code> invalidates the session.
   </div>
-  <a href="/login-without">← Back to Login</a>
+  <a href="{script_name}">← Return to Secure Login</a>
 </div>
-</body></html>""")
+</body></html>"""
+        send_response(html_body)
 
     else:
-        error_html = '<p style="color:red;margin-bottom:12px">❌ Wrong username or password.</p>' if error else ""
-        print(f"""<!DOCTYPE html>
+        error_html = f'<div class="error-text">❌ {html.escape("Invalid credentials.")}</div>' if error else ""
+        html_body = f"""<!DOCTYPE html>
 <html>
-<head><title>Without Cookies — Login</title>
-<style>
-  * {{ box-sizing:border-box; margin:0; padding:0; }}
-  body {{ font-family:Arial; display:flex; justify-content:center; padding-top:80px; background:#fff0f0; }}
-  .box {{ background:white; padding:32px; border-radius:10px; box-shadow:0 2px 12px rgba(0,0,0,0.1); width:320px; }}
-  h2 {{ color:#e74c3c; margin-bottom:16px; }}
-  .warn {{ background:#fff3cd; border-left:4px solid #f39c12; padding:12px; margin-bottom:16px; border-radius:4px; font-size:0.85em; }}
-  label {{ font-size:0.85em; color:#555; }}
-  input {{ width:100%; padding:10px; margin:6px 0 14px; border:1px solid #ccc; border-radius:6px; font-size:1em; }}
-  button {{ width:100%; padding:10px; background:#e74c3c; color:white; border:none; border-radius:6px; cursor:pointer; font-size:1em; }}
-</style>
-</head>
+<head><title>Enginx - Stateless Login</title>{ENGINX_THEME}</head>
 <body>
 <div class="box">
-  <h2>❌ Login Without Cookies</h2>
-  <div class="warn">
-    ⚠ Has redirect (no refresh warning)<br>
-    but no cookies — server still forgets you.
-  </div>
+  <h2>❌ Stateless Login</h2>
+  <p style="color: var(--text-muted); font-size: 0.85em; margin-bottom: 20px;">
+    Testing redirect-only logic. Cookies are disabled.
+  </p>
   {error_html}
-  <form method="POST" action="">
+  <form method="POST" action="{script_name}">
     <input type="hidden" name="action" value="login">
     <label>Username</label>
     <input type="text" name="username" placeholder="admin" required autofocus>
     <label>Password</label>
-    <input type="password" name="password" placeholder="password" required>
-    <button type="submit">Login</button>
+    <input type="password" name="password" placeholder="••••••••" required>
+    <button type="submit" style="background: var(--warn); color: #000;">Insecure Login</button>
   </form>
-  <p style="font-size:0.8em;color:#888;margin-top:12px">admin / admin123</p>
 </div>
-</body></html>""")
+</body></html>"""
+        send_response(html_body)

@@ -78,7 +78,17 @@ bool Post::HandleResponse()
 		return del;
 	}
 
-	// 6. File already exists → 409
+	// 6. CGI (to be implemented)
+	if (router->GetPath().isCGI())
+	{
+		DDEBUG("Post") 
+			<< "Socket fd: " << sock->GetFd() 
+			<< ", CGI path detected .";
+		HandelCGI();
+		return del;
+	}
+
+	// 7. File already exists → 409
 	if (router->GetPath().isFound() && router->GetPath().isFile())
 	{
 		DDEBUG("Post") 
@@ -88,15 +98,7 @@ bool Post::HandleResponse()
 		return del;
 	}
 
-	// 7. CGI (to be implemented)
-	if (router->GetPath().isCGI())
-	{
-		DDEBUG("Post") 
-			<< "Socket fd: " << sock->GetFd() 
-			<< ", CGI path detected (not yet implemented).";
-		HandelCGI();
-		return del;
-	}
+	
 
 	// 8. Normal upload
 	PostMethod();
