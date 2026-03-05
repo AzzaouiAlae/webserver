@@ -15,6 +15,8 @@
 #include "AMethod.hpp"
 #include <string.h>
 
+
+
 Cgi::Cgi(ClientRequest &req,  char *const *exec, SocketIO *sok) : _req(req), _sok(sok)
 {
 	pipe(_pipefd);
@@ -159,8 +161,8 @@ void Cgi::readfromcgi()
 	CGILog(DDEBUG) << "readfromcgi() called.";
 	int len = 0;
 	if (!CanUsePipe0()) {
-		Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-		MulObj->ChangeToEpollOneShot(_sok);
+		// Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+		// MulObj->ChangeToEpollOneShot(_sok);
 		CGILog(DDEBUG) << "readfromcgi(), Can't Use Pipe 0";
 		return;
 	}
@@ -244,7 +246,7 @@ void Cgi::Handle()
 		resetTime();
 		_TimeSeted = true;
 	}
-	if (_time - Utility::CurrentTime() > TIMEOUT * 1000000)
+	if (Utility::CurrentTime()  - _time > TIMEOUT * 1000000)
 		Error::ThrowError("504");
 	if (_status == eFork)
 		createChild();
@@ -267,11 +269,11 @@ void Cgi::SetStateByFd(int fd)
 	CGILog(DDEBUG) << "SetStateByFd() called. Active fd: " << fd;
 	if (fd == _pipefd[0]) {
 		_statusfd |= ePipe0;
-		if (_status == eReadCgiResponse)
-		{
-			Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-			MulObj->ChangeToEpollOut(_sok);
-		}
+		// if (_status == eReadCgiResponse)
+		// {
+		// 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+		// 	MulObj->ChangeToEpollOut(_sok);
+		// }
 	}
 	else if (fd == _pipefd[1])
 		_statusfd |= ePipe1;

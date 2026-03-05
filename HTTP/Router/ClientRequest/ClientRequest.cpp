@@ -162,6 +162,7 @@ bool ClientRequest::ParseHeader()
 		parsLenTypeCont();
 	if (_Parspos == eParsHttpStand && line == "\r\n")
 	{
+		
 		_Parspos = eParsEnd;
 		DEBUG("ClientRequest") << "Request header parsing complete: method=" << _env["REQUEST_METHOD"]
 							   << ", path=" << _env["REQUEST_URI"]
