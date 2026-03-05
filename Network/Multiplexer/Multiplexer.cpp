@@ -229,7 +229,6 @@ void Multiplexer::handelEpollPipes(epoll_event &event)
 
 	if (obj->GetType() == "Pipe") 
 	{
-		//INFO() << "Pipe addr: " << event.data.ptr << ", fd: " <<  obj->GetFd();
 		DDEBUG("Multiplexer") << "handelEpollPipes: handling Pipe fd=" << obj->GetFd();
 		obj->Handle();
 	}

@@ -22,6 +22,12 @@ enum IOError {
 	ePipeCreateError = 5,
 };
 
+enum TimeoutStatus {
+	eNotTimedOut = 0,
+	eTimedOut = 1,
+	eMarkedForDeletion = 2,
+};
+
 #define KBYTE 1024 * 64
 
 class SocketIO : public ISocket {
@@ -32,12 +38,13 @@ class SocketIO : public ISocket {
 	int status;
 	int SendedBuffToPipe;
 	char *buff;
-	time_t timeout;
 	time_t lastTime;
+	int _timeoutStatus;
 public:
+	int GetStatus() const;
 	bool CanUsePipe0();
 	bool CanUsePipe1();
-	bool isTimeOut(bool isCGI);
+	bool isTimeOut();
 	void UpdateTime();
 	time_t GetEndTime() const;
 	static void clearTimeout();

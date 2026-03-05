@@ -70,7 +70,7 @@ int Socket::inetPassiveSocket(const char *host, const char *service, int type,
 
 	for (rp = result; rp != NULL; rp = rp->ai_next)
 	{
-		sock = socket(rp->ai_family, rp->ai_socktype | O_NONBLOCK | FD_CLOEXEC, rp->ai_protocol);
+		sock = socket(rp->ai_family, rp->ai_socktype | SOCK_NONBLOCK | SOCK_CLOEXEC, rp->ai_protocol);
 		if (sock == -1)
 			continue;
 		if (doListen)

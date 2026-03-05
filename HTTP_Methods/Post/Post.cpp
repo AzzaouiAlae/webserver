@@ -41,6 +41,15 @@ bool Post::HandleResponse()
 					<< ", uploadedSize=" << uploadedSize
 					<< ", contentBodySize=" << contentBodySize;
 
+	if (sock->isTimeOut()) 
+	{
+		if (router->GetPath().isCGI())
+			HandelErrorPages("504");
+		else
+			HandelErrorPages("408");
+		sock->UpdateTime();
+		return del;
+	}
 	// 1. Already sending response (success or error) → keep sending
 	if (readyToSend)
 	{

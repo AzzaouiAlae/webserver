@@ -31,6 +31,7 @@
             line-height: 1.6;
             min-height: 100vh;
             overflow-x: hidden;
+            transition: background 0.4s ease, color 0.4s ease;
         }
 
         /* ===== BACKGROUND ===== */
@@ -678,6 +679,154 @@
             .grid-item { padding: 0.8rem 0.5rem; }
             .grid-item .grid-icon { font-size: 2rem; }
         }
+
+        /* ===== LIGHT THEME ===== */
+        body.light-theme {
+            --bg: #f0f4ff;
+            --bg-card: rgba(255, 255, 255, 0.92);
+            --bg-hover: rgba(99, 102, 241, 0.06);
+            --text: #1e1b4b;
+            --text-muted: #4c5169;
+            --text-dim: #6b7194;
+            --border: rgba(99, 102, 241, 0.18);
+            --border-hover: rgba(99, 102, 241, 0.35);
+            --row-hover: rgba(99, 102, 241, 0.06);
+            background: #f0f4ff;
+            color: #1e1b4b;
+        }
+
+        body.light-theme nav {
+            background: rgba(240, 244, 255, 0.97);
+            border-bottom-color: rgba(99, 102, 241, 0.2);
+            box-shadow: 0 2px 20px rgba(99, 102, 241, 0.1);
+        }
+
+        body.light-theme .file-table,
+        body.light-theme .search-box input,
+        body.light-theme .view-toggle,
+        body.light-theme .upload-btn,
+        body.light-theme .delete-btn,
+        body.light-theme .upload-progress,
+        body.light-theme .grid-item {
+            background: rgba(255, 255, 255, 0.92);
+            border-color: rgba(99, 102, 241, 0.18);
+        }
+
+        body.light-theme .file-table thead th { color: #6b7194; }
+        body.light-theme .file-name-cell a { color: #1e1b4b; }
+        body.light-theme .file-name-cell a:hover { color: var(--primary); }
+        body.light-theme .file-size { color: #4c5169; }
+        body.light-theme .file-date { color: #6b7194; }
+
+        body.light-theme .breadcrumb a { color: var(--primary); }
+        body.light-theme .breadcrumb a:hover { background: rgba(99,102,241,0.08); color: #1e1b4b; }
+        body.light-theme .breadcrumb .current { color: #1e1b4b; }
+
+        body.light-theme .logo-box span {
+            background: linear-gradient(135deg, #1e1b4b, var(--primary-light), var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+
+        body.light-theme .search-box input { color: #1e1b4b; }
+        body.light-theme .search-box input::placeholder { color: #6b7194; }
+
+        body.light-theme .view-btn.active { background: rgba(99,102,241,0.12); }
+        body.light-theme .grid-item .grid-name { color: #1e1b4b; }
+
+        body.light-theme footer {
+            background: rgba(240, 244, 255, 0.97);
+            border-top-color: rgba(99, 102, 241, 0.15);
+        }
+
+        body.light-theme .foot-brand span {
+            background: linear-gradient(135deg, #1e1b4b, var(--primary-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+
+        body.light-theme .confirm-box {
+            background: rgba(255, 255, 255, 0.98);
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+
+        body.light-theme .drop-overlay {
+            background: rgba(240, 244, 255, 0.92);
+        }
+
+        body.light-theme .toast-success {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.25);
+        }
+
+        body.light-theme .toast-error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.25);
+        }
+
+        /* ===== THEME TOGGLE ===== */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+            margin-left: 0.5rem;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(99, 102, 241, 0.18);
+            border-color: var(--primary);
+            color: var(--text);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        .theme-toggle:active { transform: translateY(0) scale(0.95); }
+
+        .toggle-icon {
+            display: inline-block;
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s;
+            line-height: 1;
+        }
+
+        body.light-theme .theme-toggle {
+            background: rgba(99, 102, 241, 0.08);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        body.light-theme .theme-toggle:hover {
+            background: rgba(99, 102, 241, 0.16);
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+        }
+
+        /* ===== ADDITIONAL LIGHT TEXT FIXES ===== */
+        body.light-theme .file-count strong { color: #4f46e5; }
+        body.light-theme .nav-info { color: #4c5169; }
+        body.light-theme .foot-text { color: #64748b; }
+        body.light-theme .confirm-box .confirm-title { color: #1e1b4b; }
+        body.light-theme .confirm-box .confirm-msg { color: #4c5169; }
+        body.light-theme .drop-overlay .drop-text { color: #0e7490; }
+        body.light-theme .drop-overlay .drop-sub { color: #4c5169; }
+        body.light-theme .upload-progress .prog-title { color: #1e1b4b; }
+        body.light-theme .upload-progress .prog-status { color: #4c5169; }
+        body.light-theme .empty-state p { color: #64748b; }
+        body.light-theme .view-btn { color: #64748b; }
+        body.light-theme .view-btn.active { color: #4f46e5; }
+        body.light-theme .view-btn:hover:not(.active) { color: #1e1b4b; }
+        body.light-theme .upload-btn { color: #4c5169; }
+        body.light-theme .upload-btn:hover { color: #0e7490; border-color: #0e7490; }
+        body.light-theme .delete-btn { color: #64748b; }
+        body.light-theme .delete-btn:hover { color: #dc2626; border-color: #dc2626; }
+        body.light-theme .file-table thead th { color: #64748b; }
+        body.light-theme .file-table thead th:hover { color: #4f46e5; }
+        body.light-theme .grid-item .grid-size { color: #64748b; }
     </style>
 </head>
 <body>
@@ -722,7 +871,12 @@
         </svg>
         <span>Enginx</span>
     </div>
-    <div class="nav-info" id="navPath"></div>
+    <div style="display:flex;align-items:center;gap:0.5rem;">
+        <div class="nav-info" id="navPath"></div>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle dark / light theme">
+            <span class="toggle-icon" id="themeIcon">🌙</span>
+        </button>
+    </div>
 </nav>
 
 <!-- MAIN -->

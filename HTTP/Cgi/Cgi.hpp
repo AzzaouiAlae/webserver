@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:37:26 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/04 17:56:08 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/05 05:05:19 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,8 +41,6 @@ class Cgi
 	AFd         *_in;
     int        _pipefd[2];
     bool        _parsheader;
-    long        _time;
-    bool        _TimeSeted;
 	string		_responseHeaderStr;
 	char		*_buf;
     char        *const*_exec;
@@ -52,14 +50,13 @@ class Cgi
     void writetocgi();
     void readfromcgi();
 	void _activeCgiPipe();
+	string resolveExcPath(const std::string &excName);
     Cgi();
 	size_t _shouldSend;
 public:
     Cgi(ClientRequest &req, char* const* exec, SocketIO *sok);
     bool isChildError();
     void Handle();
-    void resetTime();
-    long getTime();
     CgiRequest   &getCgiReq();
     void SetStateByFd(int fd);
     string &getStatusCode();

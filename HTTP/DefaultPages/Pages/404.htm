@@ -7,7 +7,7 @@
     <style>
         :root { --primary: #6366f1; --accent: #06b6d4; --accent2: #8b5cf6; --bg: #030712; --text: #f1f5f9; --text-muted: #94a3b8; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: background 0.4s ease, color 0.4s ease; }
 
         .container { position: relative; z-index: 1; text-align: center; max-width: 600px; padding: 2rem; animation: fadeIn 0.8s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
@@ -23,9 +23,30 @@
         .logo svg { width: 28px; height: 28px; }
         .logo span { font-weight: 800; font-size: 1rem; background: linear-gradient(135deg, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .ghost { font-size: 4rem; margin-bottom: 1rem; display: inline-block; }
+    
+        /* ===== LIGHT THEME ===== */
+        body.light-theme { --bg: #f0f4ff; --text: #1e1b4b; --text-muted: #4c5169; --border: rgba(99,102,241,0.2); background: #f0f4ff; color: #1e1b4b; }
+        body.light-theme .container { color: #1e1b4b; }
+        body.light-theme .error-title { color: #1e1b4b; }
+        body.light-theme .error-desc { color: #4c5169; }
+        body.light-theme .logo { opacity: 0.85; }
+        body.light-theme .logo span { background: linear-gradient(135deg, #1e1b4b, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        body.light-theme .btn { color: #fff; }
+        body.light-theme .btn:hover { box-shadow: 0 8px 40px rgba(99,102,241,0.35); }
+        /* ===== THEME TOGGLE ===== */
+        .theme-toggle { position: fixed; top: 1.2rem; right: 1.2rem; z-index: 100; width: 42px; height: 42px; border-radius: 12px; background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2); color: var(--text-muted); font-size: 1.15rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); }
+        .theme-toggle:hover { background: rgba(99,102,241,0.18); border-color: var(--primary); color: var(--text); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(99,102,241,0.3); }
+        .theme-toggle:active { transform: translateY(0) scale(0.95); }
+        .toggle-icon { display: inline-block; transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.2s; line-height: 1; }
+        body.light-theme .theme-toggle { background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.3); }
+        body.light-theme .theme-toggle:hover { background: rgba(99,102,241,0.16); box-shadow: 0 4px 16px rgba(99,102,241,0.2); }
     </style>
 </head>
 <body>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme" title="Toggle dark / light theme">
+        <span class="toggle-icon" id="themeIcon">🌙</span>
+    </button>
+
 
     <div class="container">
         <div class="logo"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="50%" stop-color="#06b6d4"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs><polygon points="50,8 92,30 92,70 50,92 8,70 8,30" fill="none" stroke="url(#lg)" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-family="system-ui" font-weight="900" font-size="28" fill="url(#lg)">E</text></svg><span>Enginx</span></div>
@@ -37,5 +58,67 @@
         <a href="/" class="btn">← Back to Home</a>
     </div>
 
+
+    <script>
+    (function () {
+        var themeToggleBtn = document.getElementById("themeToggle");
+        var themeIcon = document.getElementById("themeIcon");
+
+        function getCookie(name) {
+            var match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+            return match ? decodeURIComponent(match[1]) : null;
+        }
+
+        function setCookie(name, value, days) {
+            var expires = "";
+            if (days) {
+                var d = new Date();
+                d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+                expires = "; expires=" + d.toUTCString();
+            }
+            document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/; SameSite=Lax";
+        }
+
+        function applyTheme(theme) {
+            if (theme === "light") {
+                document.body.classList.add("light-theme");
+                if (themeIcon) themeIcon.textContent = "☀️";
+            } else {
+                document.body.classList.remove("light-theme");
+                if (themeIcon) themeIcon.textContent = "🌙";
+            }
+        }
+
+        function sendThemeCookie(theme) {
+            setCookie("theme", theme, 365);
+            fetch("/set-theme?theme=" + encodeURIComponent(theme), {
+                method: "GET",
+                credentials: "same-origin"
+            }).catch(function () {});
+        }
+
+        var savedTheme = getCookie("theme") || "dark";
+        applyTheme(savedTheme);
+
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener("click", function () {
+                var isLight = document.body.classList.contains("light-theme");
+                var newTheme = isLight ? "dark" : "light";
+                if (themeIcon) {
+                    themeIcon.style.transform = "rotate(180deg) scale(0.4)";
+                    themeIcon.style.opacity = "0";
+                    setTimeout(function () {
+                        applyTheme(newTheme);
+                        themeIcon.style.transform = "rotate(0deg) scale(1)";
+                        themeIcon.style.opacity = "1";
+                    }, 200);
+                } else {
+                    applyTheme(newTheme);
+                }
+                sendThemeCookie(newTheme);
+            });
+        }
+    })();
+    </script>
 </body>
 </html>

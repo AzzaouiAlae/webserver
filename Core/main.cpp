@@ -121,6 +121,8 @@ void HandelError(const char *what)
 	{
 		delete *it;
 	}
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
 }
 
 int main(int argc, char *argv[])
@@ -129,14 +131,15 @@ int main(int argc, char *argv[])
 
 	string filename;
 	InitServer(argc, argv, filename);
-	try
-	{
+	try {
 		LaunchServer(filename);
 	}
-	catch (const exception &e)
-	{
+	catch (const exception &e) {
 		HandelError(e.what());
-
+		return 1;
+	}
+	catch (...) {
+		HandelError("Unknown exception occurred during server launch.");
 		return 1;
 	}
 }

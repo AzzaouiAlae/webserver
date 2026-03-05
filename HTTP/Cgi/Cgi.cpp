@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/04 23:14:36 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/05 05:05:36 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,28 @@
 #include "AMethod.hpp"
 #include <string.h>
 
+string Cgi::resolveExcPath(const string &excName) 
+{
+    if (excName.find('/') != string::npos)
+        return excName;
+    
+    const char* envPath = getenv("PATH");
+    if (!envPath) 
+        return excName; 
 
+    string pathString(envPath);
+    stringstream ss(pathString);
+    string directory;
+
+    while (getline(ss, directory, ':')) 
+	{
+        string fullPath = (directory.empty() ? "." : directory) + "/" + excName;
+
+        if (access(fullPath.c_str(), F_OK | X_OK) == 0) 
+            return fullPath;
+    }
+    return excName;
+}
 
 Cgi::Cgi(ClientRequest &req,  char *const *exec, SocketIO *sok) : _req(req), _sok(sok)
 {
@@ -23,7 +44,6 @@ Cgi::Cgi(ClientRequest &req,  char *const *exec, SocketIO *sok) : _req(req), _so
 	_statusfd = 0;
 	_status = eFork;
 	_exec = exec;
-	_TimeSeted = false;
 	_reqlen = 0;
 	_responseHeaderStr.clear();
 	_responselen = 0;
@@ -64,16 +84,6 @@ bool Cgi::isChildError()
 	return false;
 }
 
-void Cgi::resetTime()
-{
-	_time = Utility::CurrentTime();
-}
-
-long Cgi::getTime()
-{
-	return (_time);
-}
-int i = 0;
 void Cgi::createChild()
 {
 	CGILog(DDEBUG) << "Attempting to fork child process for CGI...";
@@ -85,15 +95,9 @@ void Cgi::createChild()
 		Environment::CreateEnv(_req.getrequestenv());
 		dup2(_sok->pipefd[0], 0);
 		dup2(_pipefd[1], 1);
-		
-		close(_pipefd[0]);
-		close(_sok->pipefd[0]);
-		close(_pipefd[1]);
-		close(_sok->pipefd[1]);
-		execve(*_exec, _exec, environ);
-		exit(1);
+		execve(resolveExcPath(*_exec).c_str(), _exec, environ);
+		throw "500";
 	}
-	i++;
 	_status = eSendBuffToPipe;
 	INFO() << "Successfully forked CGI child process.";
 }
@@ -161,8 +165,8 @@ void Cgi::readfromcgi()
 	CGILog(DDEBUG) << "readfromcgi() called.";
 	int len = 0;
 	if (!CanUsePipe0()) {
-		// Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-		// MulObj->ChangeToEpollOneShot(_sok);
+		Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+		MulObj->ChangeToEpollOneShot(_sok);
 		CGILog(DDEBUG) << "readfromcgi(), Can't Use Pipe 0";
 		return;
 	}
@@ -241,13 +245,6 @@ void Cgi::writeToClientSoket()
 void Cgi::Handle()
 {
 	CGILog(DDEBUG) << "Handle() called. Current status: " << _status;
-	if (!_TimeSeted)
-	{
-		resetTime();
-		_TimeSeted = true;
-	}
-	if (Utility::CurrentTime()  - _time > TIMEOUT * 1000000)
-		Error::ThrowError("504");
 	if (_status == eFork)
 		createChild();
 	if (_status == eSendBuffToPipe || _status == eSendSockToPipe)
@@ -269,11 +266,11 @@ void Cgi::SetStateByFd(int fd)
 	CGILog(DDEBUG) << "SetStateByFd() called. Active fd: " << fd;
 	if (fd == _pipefd[0]) {
 		_statusfd |= ePipe0;
-		// if (_status == eReadCgiResponse)
-		// {
-		// 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-		// 	MulObj->ChangeToEpollOut(_sok);
-		// }
+		if (_status == eReadCgiResponse)
+		{
+			Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+			MulObj->ChangeToEpollOut(_sok);
+		}
 	}
 	else if (fd == _pipefd[1])
 		_statusfd |= ePipe1;
@@ -307,6 +304,7 @@ bool Cgi::CanUsePipe0()
 	_statusfd &= ~ePipe0;
 	return res;
 }
+
 bool Cgi::CanUsePipe1()
 {
 	bool res = (_statusfd & ePipe1);
