@@ -9,7 +9,7 @@ import time
 SESSIONS = {}
 USERS = {"admin": "admin123", "user1": "pass1234"}
 
-# ─── UNIVERSAL ENGINX DESIGN THEME ───────────────────────────────────────────
+# ─── UNIVRSEAL ENGINX DESIGN THEME ───────────────────────────────────────────
 ENGINX_THEME = """
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
