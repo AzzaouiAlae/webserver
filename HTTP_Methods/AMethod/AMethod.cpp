@@ -438,12 +438,17 @@ void AMethod::InitStatusMap()
 
 void AMethod::addCookies(Session &session)
 {
-	responseHeader << "Set-Cookie:";
-	map<string, string>::iterator it = session.data.begin(); 
-	for (;it != session.data.end(); ++it)
+	string Max_age = session.data["Max-Age"];
+	string path = router->GetRequest().getPath();
+	map<string, string>::iterator it = session.data.begin();
+	for (; it != session.data.end(); it++)
 	{
-		responseHeader << " " << it->first << "=" << it->second << ";";
+		if (it->first != "Max-Age")
+		{
+
+			responseHeader << "Set-Cookie:" << " " << it->first << "=" << it->second << ";" << " Max-Age=" << SESSION_TIMEOUT << ";" << " Path=" << path  << "\r\n";
+		DDEBUG("AddCookies") << "Set-Cookie:" << " " << it->first << "=" << it->second << ";" << " Max-Age=" << SESSION_TIMEOUT << ";" << " Path=" << path  << "\r\n";
+		}
 	}
-	responseHeader << "\r\n";
 }
 map<string, string>& AMethod::getStatusMap(){return (statusMap);}

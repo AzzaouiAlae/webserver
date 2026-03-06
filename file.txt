@@ -1,0 +1,993 @@
+[32m2026-03-06 08:39:17 [INFO]  Global Detailed Debug (-D) enabled[0m
+[32m2026-03-06 08:39:17 [INFO]  Server start with configuation file: EngineX/EngineX.conf[0m
+[34m2026-03-06 08:39:17 [DEBUG] Tokenizing start[0m
+[34m2026-03-06 08:39:17 [DEBUG] Tokenizing complete[0m
+[34m2026-03-06 08:39:17 [DEBUG] Parsing initialized with 41 tokens.[0m
+[34m2026-03-06 08:39:17 [DEBUG] Starting AST construction from tokens.[0m
+[34m2026-03-06 08:39:17 [DEBUG] Evaluating top-level token: [server][0m
+[34m2026-03-06 08:39:17 [DEBUG] --> Entering 'server' block[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'server'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> '{'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   -> Creating 'server' node in AST[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Server Block] Evaluating token: [listen][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'listen'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   -> Parsing directive: [listen][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> '1025'[0m
+[34m2026-03-06 08:39:17 [DEBUG]     -> Argument added to [listen]: [1025][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> ';'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   <- Directive [listen] successfully parsed.[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Server Block] Evaluating token: [server_name][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'server_name'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   -> Parsing directive: [server_name][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'localhost'[0m
+[34m2026-03-06 08:39:17 [DEBUG]     -> Argument added to [server_name]: [localhost][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> ';'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   <- Directive [server_name] successfully parsed.[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> '}'[0m
+[34m2026-03-06 08:39:17 [DEBUG] <-- Exiting 'server' block[0m
+[34m2026-03-06 08:39:17 [DEBUG] Evaluating top-level token: [types][0m
+[34m2026-03-06 08:39:17 [DEBUG] --> Entering 'types' block[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'types'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> '{'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Types Block] Evaluating token: [text/html][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'text/html'[0m
+[34m2026-03-06 08:39:17 [DEBUG]     -> MIME type detected: [text/html][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'html'[0m
+[34m2026-03-06 08:39:17 [DEBUG]       -> Mapped extension: [html] to [text/html][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'htm'[0m
+[34m2026-03-06 08:39:17 [DEBUG]       -> Mapped extension: [htm] to [text/html][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'shtml'[0m
+[34m2026-03-06 08:39:17 [DEBUG]       -> Mapped extension: [shtml] to [text/html][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> ';'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Types Block] Evaluating token: [text/css][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'text/css'[0m
+[34m2026-03-06 08:39:17 [DEBUG]     -> MIME type detected: [text/css][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'css'[0m
+[34m2026-03-06 08:39:17 [DEBUG]       -> Mapped extension: [css] to [text/css][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> ';'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Types Block] Evaluating token: [text/plain][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'text/plain'[0m
+[34m2026-03-06 08:39:17 [DEBUG]     -> MIME type detected: [text/plain][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'txt'[0m
+[34m2026-03-06 08:39:17 [DEBUG]       -> Mapped extension: [txt] to [text/plain][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> ';'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Types Block] Evaluating token: [image/jpeg][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'image/jpeg'[0m
+[34m2026-03-06 08:39:17 [DEBUG]     -> MIME type detected: [image/jpeg][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'jpeg'[0m
+[34m2026-03-06 08:39:17 [DEBUG]       -> Mapped extension: [jpeg] to [image/jpeg][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'jpg'[0m
+[34m2026-03-06 08:39:17 [DEBUG]       -> Mapped extension: [jpg] to [image/jpeg][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> ';'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Types Block] Evaluating token: [image/png][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'image/png'[0m
+[34m2026-03-06 08:39:17 [DEBUG]     -> MIME type detected: [image/png][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'png'[0m
+[34m2026-03-06 08:39:17 [DEBUG]       -> Mapped extension: [png] to [image/png][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> ';'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Types Block] Evaluating token: [image/gif][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'image/gif'[0m
+[34m2026-03-06 08:39:17 [DEBUG]     -> MIME type detected: [image/gif][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'gif'[0m
+[34m2026-03-06 08:39:17 [DEBUG]       -> Mapped extension: [gif] to [image/gif][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> ';'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Types Block] Evaluating token: [application/javascript][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'application/javascript'[0m
+[34m2026-03-06 08:39:17 [DEBUG]     -> MIME type detected: [application/javascript][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'js'[0m
+[34m2026-03-06 08:39:17 [DEBUG]       -> Mapped extension: [js] to [application/javascript][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> ';'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Types Block] Evaluating token: [application/octet-stream][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'application/octet-stream'[0m
+[34m2026-03-06 08:39:17 [DEBUG]     -> MIME type detected: [application/octet-stream][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'bin'[0m
+[34m2026-03-06 08:39:17 [DEBUG]       -> Mapped extension: [bin] to [application/octet-stream][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'exe'[0m
+[34m2026-03-06 08:39:17 [DEBUG]       -> Mapped extension: [exe] to [application/octet-stream][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> 'dll'[0m
+[34m2026-03-06 08:39:17 [DEBUG]       -> Mapped extension: [dll] to [application/octet-stream][0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> ';'[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Consume] -> '}'[0m
+[34m2026-03-06 08:39:17 [DEBUG] <-- Exiting 'types' block[0m
+[34m2026-03-06 08:39:17 [DEBUG] AST construction complete.[0m
+[34m2026-03-06 08:39:17 [DEBUG] Starting to fill Config structure from AST.[0m
+[34m2026-03-06 08:39:17 [DEBUG] Evaluating AST Node: [server][0m
+[34m2026-03-06 08:39:17 [DEBUG] --> Populating a new Config::Server object.[0m
+[34m2026-03-06 08:39:17 [DEBUG] Parsing 'listen' directive value: [1025][0m
+[34m2026-03-06 08:39:17 [DEBUG]   -> Detected pure numeric format => Port: [1025] (Host defaults to wildcard)[0m
+[34m2026-03-06 08:39:17 [DEBUG]     -> Bound listen address: [1025][0m
+[34m2026-03-06 08:39:17 [DEBUG]     -> Set server_name: [localhost][0m
+[34m2026-03-06 08:39:17 [DEBUG] <-- Config::Server object populated successfully.[0m
+[34m2026-03-06 08:39:17 [DEBUG] Resolving 'listen to all hosts' configurations.[0m
+[32m2026-03-06 08:39:17 [INFO]  Setting up listening sockets for 1 server(s).[0m
+[34m2026-03-06 08:39:17 [DEBUG] Adding socket for server 'localhost' on 1025[0m
+[34m2026-03-06 08:39:17 [DEBUG] Attempting to bind listening socket on :1025[0m
+[34m2026-03-06 08:39:17 [DEBUG] inetListen: host='', port='1025', backlog=1000000, result fd=5[0m
+[32m2026-03-06 08:39:17 [INFO]  Socket successfully bound on :1025 (fd=5)[0m
+[34m2026-03-06 08:39:17 [DEBUG] Socket created, fd=5[0m
+[32m2026-03-06 08:39:17 [INFO]  Config structure successfully populated.[0m
+[34m2026-03-06 08:39:17 [DEBUG] Validation initialized.[0m
+[34m2026-03-06 08:39:17 [DEBUG] Starting AST validation: 1 top-level block(s) found.[0m
+[34m2026-03-06 08:39:17 [DEBUG] Evaluating top-level block [0]: 'server'[0m
+[34m2026-03-06 08:39:17 [DEBUG] --> Validating 'server' block with 2 directive(s).[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Server Block] Checking directive [0]: 'listen'[0m
+[34m2026-03-06 08:39:17 [DEBUG]     'listen' validated: 1025[0m
+[34m2026-03-06 08:39:17 [DEBUG]   [Server Block] Checking directive [1]: 'server_name'[0m
+[34m2026-03-06 08:39:17 [DEBUG]     'server_name' validated: localhost[0m
+[34m2026-03-06 08:39:17 [DEBUG]   'server' block validation passed.[0m
+[34m2026-03-06 08:39:17 [DEBUG] Validation complete. All 1 block(s) passed.[0m
+[34m2026-03-06 08:39:17 [DEBUG] The main loop start[0m
+[34m2026-03-06 08:39:17 [DEBUG] Multiplexer initialized, starting epoll setup.[0m
+[34m2026-03-06 08:39:17 [DEBUG] epoll_create1 succeeded, epollFd=6[0m
+[34m2026-03-06 08:39:17 [DEBUG] Registering 1 initial fd(s) as EPOLLIN.[0m
+[34m2026-03-06 08:39:17 [DEBUG] epoll_ctl ADD succeeded for fd=5, type=Socket, count=1[0m
+[34m2026-03-06 08:39:17 [DEBUG] epoolInit complete, 1 fd(s) registered.[0m
+[32m2026-03-06 08:39:17 [INFO]  Server is ready, waiting for connections...[0m
+[34m2026-03-06 08:39:37 [DEBUG] Clearing timeouts, current timeoutList size=0[0m
+[32m2026-03-06 08:39:37 [INFO]  epoll_wait loop iteration complete 0
+[0m
+[34m2026-03-06 08:39:52 [DEBUG] handelEpollSocket: fd=5, type=Socket, events=1, cleanBody=0[0m
+[34m2026-03-06 08:39:52 [DEBUG]   -> Handle() for fd=5[0m
+[34m2026-03-06 08:39:52 [DEBUG] Handle: accepted new connection, fd=7 on listener fd=5[0m
+[34m2026-03-06 08:39:52 [DEBUG] SocketIO pipe created [8, 9][0m
+[34m2026-03-06 08:39:52 [DEBUG] SocketIO created fd=7, new pipe [8, 9][0m
+[34m2026-03-06 08:39:52 [DEBUG] SocketIO initialized, fd=7[0m
+[34m2026-03-06 08:39:52 [DEBUG] ClientRequest initialized with default maxBodySize.[0m
+[34m2026-03-06 08:39:52 [DEBUG] Routing initialized.[0m
+[34m2026-03-06 08:39:52 [DEBUG] SetMaxBodySize: maxBodySize=0, bufferLen=0, contentLen=0[0m
+[34m2026-03-06 08:39:52 [DEBUG] epoll_ctl ADD succeeded for fd=7, type=SocketIO, count=2[0m
+[32m2026-03-06 08:39:52 [INFO]  New client connected from (127.0.0.1, 46394)[0m
+[34m2026-03-06 08:39:52 [DEBUG] Clearing timeouts, current timeoutList size=1[0m
+[32m2026-03-06 08:39:52 [INFO]  epoll_wait loop iteration complete 1
+[0m
+[34m2026-03-06 08:39:52 [DEBUG] handelEpollSocket: fd=7, type=SocketIO, events=1, cleanBody=0[0m
+[34m2026-03-06 08:39:52 [DEBUG]   -> Handle() for fd=7[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:52 [DEBUG] isRequestComplete() = 0[0m
+[34m2026-03-06 08:39:52 [DEBUG] isRequestComplete() = 0[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , Handle() router.isRequestComplete(): 0, err: 0[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , _readFromSocket: read returned 636[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, HandleRequest, len: 636[0m
+[34m2026-03-06 08:39:52 [DEBUG] isComplete: appended 636 bytes, total buffer=636
+GET / HTTP/1.1
+Host: localhost:1025
+Connection: keep-alive
+Cache-Control: max-age=0
+sec-ch-ua: "Not A(Brand";v="8", "Chromium";v="132", "Brave";v="132"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Linux"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8
+Sec-GPC: 1
+Accept-Language: en-US,en
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+
+[0m
+[34m2026-03-06 08:39:52 [DEBUG] parsPath: SCRIPT_NAME='/' (no query string)[0m
+[34m2026-03-06 08:39:52 [DEBUG] Request line parsed: GET / HTTP/1.1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Request header parsing complete: method=GET, path=/, host=localhost:1025[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, _parseAndConfig, 1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , host detected: [localhost:1025], initializing max body size.[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, setMaxBodySize, err: 0[0m
+[34m2026-03-06 08:39:52 [DEBUG] Creating path for request '/' on server 'localhost'[0m
+[34m2026-03-06 08:39:52 [DEBUG]   -> Host: 'localhost:1025', request method: 'GET'[0m
+[34m2026-03-06 08:39:52 [DEBUG] Creating path for URL: '/', decoded: '/'[0m
+[34m2026-03-06 08:39:52 [DEBUG] Location match for '/': static location index -1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Best matching location index: -1[0m
+[34m2026-03-06 08:39:52 [DEBUG]   -> Server root='', locations=0[0m
+[34m2026-03-06 08:39:52 [DEBUG] _setRootAndCGI: root='', isCGI=0[0m
+[34m2026-03-06 08:39:52 [DEBUG]   -> Constructed full path: '/'[0m
+[34m2026-03-06 08:39:52 [DEBUG] checkFileExistence('/'): found=1, isDir=1, isFile=0[0m
+[34m2026-03-06 08:39:52 [DEBUG] checkPermissions('/'): hasPermission=1[0m
+[34m2026-03-06 08:39:52 [DEBUG] _handleDirectoryIndex: trying 0 index file(s) in '/'[0m
+[34m2026-03-06 08:39:52 [DEBUG] Resolved full path: '/' [found=1, isDir=1, isFile=0, isCGI=0, hasPermission=1][0m
+[34m2026-03-06 08:39:52 [DEBUG]   -> isCGI=0, isDir=1, isFile=0, isRedir=0, found=1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Path resolved: '/'[0m
+[34m2026-03-06 08:39:52 [DEBUG] getLocation: no matched location (index=-1)[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, HandleRequest(), isComplete: 1, err: 0[0m
+[32m2026-03-06 08:39:52 [INFO]  (127.0.0.1, 46394) GET /[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , request parsing done, setting up pipeline.[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , _setupPipeline: setting up pipes and switching epoll state.[0m
+[34m2026-03-06 08:39:52 [DEBUG] Request marked as complete.[0m
+[34m2026-03-06 08:39:52 [DEBUG] epoll_ctl ADD succeeded for fd=8, type=Pipe, count=3[0m
+[34m2026-03-06 08:39:52 [DEBUG] epoll_ctl ADD succeeded for fd=9, type=Pipe, count=4[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , _setupPipeline complete: in_pipe_fd=8, out_pipe_fd=9[0m
+[34m2026-03-06 08:39:52 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, creating GET handler[0m
+[34m2026-03-06 08:39:52 [DEBUG] AMethod initialized, socket fd=7[0m
+[34m2026-03-06 08:39:52 [DEBUG] GET initialized, socket fd=7[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:52 [DEBUG] CreatePath: returning cached path '/'[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7 GET resolved path: /[0m
+[34m2026-03-06 08:39:52 [DEBUG]   -> isCGI=0, isDir=1, isFile=0, isRedir=0, found=1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, method=GET, readyToSend=0, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, GetMethod: isRedir=0, found=1, hasPerm=1, isDir=1, isFile=0, isCGI=0[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, serving static index (empty root).[0m
+[34m2026-03-06 08:39:52 [DEBUG] Session created: id=865f29ae6b5e3360dd92ac728609bcd9[0m
+[34m2026-03-06 08:39:52 [DEBUG] Set-Cookie: SESSIONID=865f29ae6b5e3360dd92ac728609bcd9; Max-Age=10; Path=/
+[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, CreateResponseHeader: code=200, status=OK, Content-Length=60821, Content-Type=text/html
+HTTP/1.1 200 OK
+Date: Fri, 06 Mar 2026 08:39:52 GMT
+Server: localhost
+Content-Type: text/html
+Content-Length: 60821
+Connection: close
+Set-Cookie: SESSIONID=865f29ae6b5e3360dd92ac728609bcd9; Max-Age=10; Path=/
+X-Content-Type-Options: nosniff
+
+[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 4, succeeded for fd=7, type=SocketIO[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , activeInPipe: activating in-pipe fd=8[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 1, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , activeOutPipe: activating out-pipe fd=9[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 4, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] Clearing timeouts, current timeoutList size=1[0m
+[32m2026-03-06 08:39:52 [INFO]  epoll_wait loop iteration complete 2
+[0m
+[34m2026-03-06 08:39:52 [DEBUG] handelEpollPipes: handling Pipe fd=9[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] handelEpollSocket: fd=7, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:39:52 [DEBUG]   -> Handle() for fd=7[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:52 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:52 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , activeOutPipe: activating out-pipe fd=9[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 4, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, SendResponse: sent=0, progress=0/61072[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , activeInPipe: activating in-pipe fd=8[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 1, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , activeOutPipe: activating out-pipe fd=9[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 4, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] Clearing timeouts, current timeoutList size=1[0m
+[32m2026-03-06 08:39:52 [INFO]  epoll_wait loop iteration complete 3
+[0m
+[34m2026-03-06 08:39:52 [DEBUG] handelEpollPipes: handling Pipe fd=9[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] handelEpollPipes: handling Pipe fd=8[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] handelEpollSocket: fd=7, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:39:52 [DEBUG]   -> Handle() for fd=7[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:52 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:52 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, SendResponse: sent=251, progress=251/61072[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , activeInPipe: activating in-pipe fd=8[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 1, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , activeOutPipe: activating out-pipe fd=9[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 4, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] Clearing timeouts, current timeoutList size=1[0m
+[32m2026-03-06 08:39:52 [INFO]  epoll_wait loop iteration complete 4
+[0m
+[34m2026-03-06 08:39:52 [DEBUG] handelEpollPipes: handling Pipe fd=9[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] handelEpollSocket: fd=7, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:39:52 [DEBUG]   -> Handle() for fd=7[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:52 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:52 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , activeOutPipe: activating out-pipe fd=9[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 4, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, SendResponse: sent=0, progress=251/61072[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , activeInPipe: activating in-pipe fd=8[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 1, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , activeOutPipe: activating out-pipe fd=9[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 4, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] Clearing timeouts, current timeoutList size=1[0m
+[32m2026-03-06 08:39:52 [INFO]  epoll_wait loop iteration complete 5
+[0m
+[34m2026-03-06 08:39:52 [DEBUG] handelEpollPipes: handling Pipe fd=8[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] handelEpollSocket: fd=7, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:39:52 [DEBUG]   -> Handle() for fd=7[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:52 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:52 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[32m2026-03-06 08:39:52 [INFO]  Client (127.0.0.1, 46394) <- 200 OK[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, SendResponse complete, code=200[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, SendResponse: sent=60821, progress=61072/61072[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , response done, marking socket to free.[0m
+[32m2026-03-06 08:39:52 [INFO]  Client (127.0.0.1, 46394) disconnected[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, HTTPContext, , MarkedSocketToFree: marking for deletion.[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:52 [DEBUG] Clearing timeouts, current timeoutList size=1[0m
+[32m2026-03-06 08:39:52 [INFO]  epoll_wait loop iteration complete 6
+[0m
+[34m2026-03-06 08:39:52 [DEBUG] handelEpollSocket: fd=7, type=SocketIO, events=4, cleanBody=1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Socket fd: 7, MarkedToDelete[0m
+[34m2026-03-06 08:39:52 [DEBUG] DeleteFromEpoll fd=7, count=3, EPOLL_CTL_DEL: 1[0m
+[34m2026-03-06 08:39:52 [DEBUG] Clearing timeouts, current timeoutList size=1[0m
+[34m2026-03-06 08:39:52 [DEBUG] ClearToDelete: 1 item(s) pending deletion.[0m
+[34m2026-03-06 08:39:52 [DEBUG] Cleaned up  expired session(s). Active sessions: 1[0m
+[32m2026-03-06 08:39:52 [INFO]  epoll_wait loop iteration complete 7
+[0m
+[34m2026-03-06 08:39:53 [DEBUG] handelEpollSocket: fd=5, type=Socket, events=1, cleanBody=0[0m
+[34m2026-03-06 08:39:53 [DEBUG]   -> Handle() for fd=5[0m
+[34m2026-03-06 08:39:53 [DEBUG] Handle: accepted new connection, fd=10 on listener fd=5[0m
+[34m2026-03-06 08:39:53 [DEBUG] SocketIO pipe created [11, 12][0m
+[34m2026-03-06 08:39:53 [DEBUG] SocketIO created fd=10, new pipe [11, 12][0m
+[34m2026-03-06 08:39:53 [DEBUG] SocketIO initialized, fd=10[0m
+[34m2026-03-06 08:39:53 [DEBUG] ClientRequest initialized with default maxBodySize.[0m
+[34m2026-03-06 08:39:53 [DEBUG] Routing initialized.[0m
+[34m2026-03-06 08:39:53 [DEBUG] SetMaxBodySize: maxBodySize=0, bufferLen=0, contentLen=0[0m
+[34m2026-03-06 08:39:53 [DEBUG] epoll_ctl ADD succeeded for fd=10, type=SocketIO, count=4[0m
+[32m2026-03-06 08:39:53 [INFO]  New client connected from (127.0.0.1, 46402)[0m
+[34m2026-03-06 08:39:53 [DEBUG] Clearing timeouts, current timeoutList size=2[0m
+[34m2026-03-06 08:39:53 [DEBUG] ClearToDelete: 1 item(s) pending deletion.[0m
+[34m2026-03-06 08:39:53 [DEBUG] Cleaned up  expired session(s). Active sessions: 1[0m
+[34m2026-03-06 08:39:53 [DEBUG] SocketIO destructor, fd=7, pendingInPipe=0[0m
+[34m2026-03-06 08:39:53 [DEBUG] HTTPContext destructor called, sock=7[0m
+[34m2026-03-06 08:39:53 [DEBUG] DeleteFromEpoll fd=8, count=3, EPOLL_CTL_DEL: 1[0m
+[34m2026-03-06 08:39:53 [DEBUG]   -> Deleting in-pipe fd=8, deleted: 1[0m
+[34m2026-03-06 08:39:53 [DEBUG] DeleteFromEpoll fd=9, count=2, EPOLL_CTL_DEL: 1[0m
+[34m2026-03-06 08:39:53 [DEBUG]   -> Deleting out-pipe fd=9, deleted: 1[0m
+[34m2026-03-06 08:39:53 [DEBUG]   -> Released pipe back to pool [8, 9][0m
+[32m2026-03-06 08:39:53 [INFO]  epoll_wait loop iteration complete 8
+[0m
+[34m2026-03-06 08:39:53 [DEBUG] handelEpollSocket: fd=10, type=SocketIO, events=1, cleanBody=0[0m
+[34m2026-03-06 08:39:53 [DEBUG]   -> Handle() for fd=10[0m
+[34m2026-03-06 08:39:53 [DEBUG] Socket fd: 10, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:53 [DEBUG] isRequestComplete() = 0[0m
+[34m2026-03-06 08:39:53 [DEBUG] isRequestComplete() = 0[0m
+[34m2026-03-06 08:39:53 [DEBUG] Socket fd: 10, HTTPContext, , Handle() router.isRequestComplete(): 0, err: 0[0m
+[34m2026-03-06 08:39:53 [DEBUG] Socket fd: 10, HTTPContext, , _readFromSocket: read returned 688[0m
+[34m2026-03-06 08:39:53 [DEBUG] Socket fd: 10, HTTPContext, HandleRequest, len: 688[0m
+[34m2026-03-06 08:39:53 [DEBUG] isComplete: appended 688 bytes, total buffer=688
+GET / HTTP/1.1
+Host: localhost:1025
+Connection: keep-alive
+Cache-Control: max-age=0
+sec-ch-ua: "Not A(Brand";v="8", "Chromium";v="132", "Brave";v="132"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Linux"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8
+Sec-GPC: 1
+Accept-Language: en-US,en
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+Cookie: SESSIONID=865f29ae6b5e3360dd92ac728609bcd9
+
+[0m
+[34m2026-03-06 08:39:53 [DEBUG] parsPath: SCRIPT_NAME='/' (no query string)[0m
+[34m2026-03-06 08:39:53 [DEBUG] Request line parsed: GET / HTTP/1.1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Request header parsing complete: method=GET, path=/, host=localhost:1025[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, _parseAndConfig, 1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , host detected: [localhost:1025], initializing max body size.[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, setMaxBodySize, err: 0[0m
+[34m2026-03-06 08:39:54 [DEBUG] Creating path for request '/' on server 'localhost'[0m
+[34m2026-03-06 08:39:54 [DEBUG]   -> Host: 'localhost:1025', request method: 'GET'[0m
+[34m2026-03-06 08:39:54 [DEBUG] Creating path for URL: '/', decoded: '/'[0m
+[34m2026-03-06 08:39:54 [DEBUG] Location match for '/': static location index -1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Best matching location index: -1[0m
+[34m2026-03-06 08:39:54 [DEBUG]   -> Server root='', locations=0[0m
+[34m2026-03-06 08:39:54 [DEBUG] _setRootAndCGI: root='', isCGI=0[0m
+[34m2026-03-06 08:39:54 [DEBUG]   -> Constructed full path: '/'[0m
+[34m2026-03-06 08:39:54 [DEBUG] checkFileExistence('/'): found=1, isDir=1, isFile=0[0m
+[34m2026-03-06 08:39:54 [DEBUG] checkPermissions('/'): hasPermission=1[0m
+[34m2026-03-06 08:39:54 [DEBUG] _handleDirectoryIndex: trying 0 index file(s) in '/'[0m
+[34m2026-03-06 08:39:54 [DEBUG] Resolved full path: '/' [found=1, isDir=1, isFile=0, isCGI=0, hasPermission=1][0m
+[34m2026-03-06 08:39:54 [DEBUG]   -> isCGI=0, isDir=1, isFile=0, isRedir=0, found=1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Path resolved: '/'[0m
+[34m2026-03-06 08:39:54 [DEBUG] getLocation: no matched location (index=-1)[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, HandleRequest(), isComplete: 1, err: 0[0m
+[32m2026-03-06 08:39:54 [INFO]  (127.0.0.1, 46402) GET /[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , request parsing done, setting up pipeline.[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , _setupPipeline: setting up pipes and switching epoll state.[0m
+[34m2026-03-06 08:39:54 [DEBUG] Request marked as complete.[0m
+[34m2026-03-06 08:39:54 [DEBUG] epoll_ctl ADD succeeded for fd=11, type=Pipe, count=3[0m
+[34m2026-03-06 08:39:54 [DEBUG] epoll_ctl ADD succeeded for fd=12, type=Pipe, count=4[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , _setupPipeline complete: in_pipe_fd=11, out_pipe_fd=12[0m
+[34m2026-03-06 08:39:54 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, creating GET handler[0m
+[34m2026-03-06 08:39:54 [DEBUG] AMethod initialized, socket fd=10[0m
+[34m2026-03-06 08:39:54 [DEBUG] GET initialized, socket fd=10[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:54 [DEBUG] CreatePath: returning cached path '/'[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10 GET resolved path: /[0m
+[34m2026-03-06 08:39:54 [DEBUG]   -> isCGI=0, isDir=1, isFile=0, isRedir=0, found=1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, method=GET, readyToSend=0, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, GetMethod: isRedir=0, found=1, hasPerm=1, isDir=1, isFile=0, isCGI=0[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, serving static index (empty root).[0m
+[34m2026-03-06 08:39:54 [DEBUG] Cleaned up  expired session(s). Active sessions: 1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Set-Cookie: SESSIONID=865f29ae6b5e3360dd92ac728609bcd9; Max-Age=10; Path=/
+[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, CreateResponseHeader: code=200, status=OK, Content-Length=60821, Content-Type=text/html
+HTTP/1.1 200 OK
+Date: Fri, 06 Mar 2026 08:39:54 GMT
+Server: localhost
+Content-Type: text/html
+Content-Length: 60821
+Connection: close
+Set-Cookie: SESSIONID=865f29ae6b5e3360dd92ac728609bcd9; Max-Age=10; Path=/
+X-Content-Type-Options: nosniff
+
+[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 4, succeeded for fd=10, type=SocketIO[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , activeInPipe: activating in-pipe fd=11[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 1, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , activeOutPipe: activating out-pipe fd=12[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 4, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] Clearing timeouts, current timeoutList size=2[0m
+[32m2026-03-06 08:39:54 [INFO]  epoll_wait loop iteration complete 9
+[0m
+[34m2026-03-06 08:39:54 [DEBUG] handelEpollPipes: handling Pipe fd=12[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] handelEpollSocket: fd=10, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:39:54 [DEBUG]   -> Handle() for fd=10[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:54 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:54 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , activeOutPipe: activating out-pipe fd=12[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 4, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, SendResponse: sent=0, progress=0/61072[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , activeInPipe: activating in-pipe fd=11[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 1, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , activeOutPipe: activating out-pipe fd=12[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 4, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] Clearing timeouts, current timeoutList size=2[0m
+[32m2026-03-06 08:39:54 [INFO]  epoll_wait loop iteration complete 10
+[0m
+[34m2026-03-06 08:39:54 [DEBUG] handelEpollPipes: handling Pipe fd=12[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] handelEpollPipes: handling Pipe fd=11[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] handelEpollSocket: fd=10, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:39:54 [DEBUG]   -> Handle() for fd=10[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:54 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:54 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, SendResponse: sent=251, progress=251/61072[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , activeInPipe: activating in-pipe fd=11[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 1, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , activeOutPipe: activating out-pipe fd=12[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 4, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] Clearing timeouts, current timeoutList size=2[0m
+[32m2026-03-06 08:39:54 [INFO]  epoll_wait loop iteration complete 11
+[0m
+[34m2026-03-06 08:39:54 [DEBUG] handelEpollPipes: handling Pipe fd=12[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] handelEpollSocket: fd=10, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:39:54 [DEBUG]   -> Handle() for fd=10[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:54 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:54 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , activeOutPipe: activating out-pipe fd=12[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 4, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, SendResponse: sent=0, progress=251/61072[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , activeInPipe: activating in-pipe fd=11[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 1, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , activeOutPipe: activating out-pipe fd=12[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 4, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] Clearing timeouts, current timeoutList size=2[0m
+[32m2026-03-06 08:39:54 [INFO]  epoll_wait loop iteration complete 12
+[0m
+[34m2026-03-06 08:39:54 [DEBUG] handelEpollPipes: handling Pipe fd=11[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] handelEpollSocket: fd=10, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:39:54 [DEBUG]   -> Handle() for fd=10[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:54 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:54 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[32m2026-03-06 08:39:54 [INFO]  Client (127.0.0.1, 46402) <- 200 OK[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, SendResponse complete, code=200[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, SendResponse: sent=60821, progress=61072/61072[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , response done, marking socket to free.[0m
+[32m2026-03-06 08:39:54 [INFO]  Client (127.0.0.1, 46402) disconnected[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, HTTPContext, , MarkedSocketToFree: marking for deletion.[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:39:54 [DEBUG] Clearing timeouts, current timeoutList size=2[0m
+[32m2026-03-06 08:39:54 [INFO]  epoll_wait loop iteration complete 13
+[0m
+[34m2026-03-06 08:39:54 [DEBUG] handelEpollSocket: fd=10, type=SocketIO, events=4, cleanBody=1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Socket fd: 10, MarkedToDelete[0m
+[34m2026-03-06 08:39:54 [DEBUG] DeleteFromEpoll fd=10, count=3, EPOLL_CTL_DEL: 1[0m
+[34m2026-03-06 08:39:54 [DEBUG] Clearing timeouts, current timeoutList size=2[0m
+[34m2026-03-06 08:39:54 [DEBUG] ClearToDelete: 1 item(s) pending deletion.[0m
+[34m2026-03-06 08:39:54 [DEBUG] Cleaned up  expired session(s). Active sessions: 1[0m
+[32m2026-03-06 08:39:54 [INFO]  epoll_wait loop iteration complete 14
+[0m
+[34m2026-03-06 08:39:56 [DEBUG] handelEpollSocket: fd=5, type=Socket, events=1, cleanBody=0[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> Handle() for fd=5[0m
+[34m2026-03-06 08:39:56 [DEBUG] Handle: accepted new connection, fd=13 on listener fd=5[0m
+[34m2026-03-06 08:39:56 [DEBUG] reused pipe from pool [8, 9][0m
+[34m2026-03-06 08:39:56 [DEBUG] SocketIO pipe created [8, 9][0m
+[34m2026-03-06 08:39:56 [DEBUG] SocketIO created fd=13, new pipe [8, 9][0m
+[34m2026-03-06 08:39:56 [DEBUG] SocketIO initialized, fd=13[0m
+[34m2026-03-06 08:39:56 [DEBUG] ClientRequest initialized with default maxBodySize.[0m
+[34m2026-03-06 08:39:56 [DEBUG] Routing initialized.[0m
+[34m2026-03-06 08:39:56 [DEBUG] SetMaxBodySize: maxBodySize=0, bufferLen=0, contentLen=0[0m
+[34m2026-03-06 08:39:56 [DEBUG] epoll_ctl ADD succeeded for fd=13, type=SocketIO, count=4[0m
+[32m2026-03-06 08:39:56 [INFO]  New client connected from (127.0.0.1, 46408)[0m
+[34m2026-03-06 08:39:56 [DEBUG] Clearing timeouts, current timeoutList size=3[0m
+[34m2026-03-06 08:39:56 [DEBUG] ClearToDelete: 1 item(s) pending deletion.[0m
+[34m2026-03-06 08:39:56 [DEBUG] Cleaned up  expired session(s). Active sessions: 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] SocketIO destructor, fd=10, pendingInPipe=0[0m
+[34m2026-03-06 08:39:56 [DEBUG] HTTPContext destructor called, sock=10[0m
+[34m2026-03-06 08:39:56 [DEBUG] DeleteFromEpoll fd=11, count=3, EPOLL_CTL_DEL: 1[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> Deleting in-pipe fd=11, deleted: 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] DeleteFromEpoll fd=12, count=2, EPOLL_CTL_DEL: 1[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> Deleting out-pipe fd=12, deleted: 1[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> Released pipe back to pool [11, 12][0m
+[32m2026-03-06 08:39:56 [INFO]  epoll_wait loop iteration complete 15
+[0m
+[34m2026-03-06 08:39:56 [DEBUG] handelEpollSocket: fd=13, type=SocketIO, events=1, cleanBody=0[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> Handle() for fd=13[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:56 [DEBUG] isRequestComplete() = 0[0m
+[34m2026-03-06 08:39:56 [DEBUG] isRequestComplete() = 0[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , Handle() router.isRequestComplete(): 0, err: 0[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , _readFromSocket: read returned 586[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, HandleRequest, len: 586[0m
+[34m2026-03-06 08:39:56 [DEBUG] isComplete: appended 586 bytes, total buffer=586
+GET /set-theme?theme=light HTTP/1.1
+Host: localhost:1025
+Connection: keep-alive
+sec-ch-ua-platform: "Linux"
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36
+sec-ch-ua: "Not A(Brand";v="8", "Chromium";v="132", "Brave";v="132"
+sec-ch-ua-mobile: ?0
+Accept: */*
+Sec-GPC: 1
+Accept-Language: en-US,en
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: cors
+Sec-Fetch-Dest: empty
+Referer: http://localhost:1025/
+Accept-Encoding: gzip, deflate, br, zstd
+Cookie: SESSIONID=865f29ae6b5e3360dd92ac728609bcd9; theme=light
+
+[0m
+[34m2026-03-06 08:39:56 [DEBUG] parsPath: SCRIPT_NAME='/set-theme', QUERY_STRING='theme=light'[0m
+[34m2026-03-06 08:39:56 [DEBUG] Request line parsed: GET /set-theme?theme=light HTTP/1.1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Request header parsing complete: method=GET, path=/set-theme?theme=light, host=localhost:1025[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, _parseAndConfig, 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , host detected: [localhost:1025], initializing max body size.[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, setMaxBodySize, err: 0[0m
+[34m2026-03-06 08:39:56 [DEBUG] Creating path for request '/set-theme' on server 'localhost'[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> Host: 'localhost:1025', request method: 'GET'[0m
+[34m2026-03-06 08:39:56 [DEBUG] Creating path for URL: '/set-theme', decoded: '/set-theme'[0m
+[34m2026-03-06 08:39:56 [DEBUG] Location match for '/set-theme': static location index -1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Best matching location index: -1[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> Server root='', locations=0[0m
+[34m2026-03-06 08:39:56 [DEBUG] _setRootAndCGI: root='', isCGI=0[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> Constructed full path: '/set-theme'[0m
+[34m2026-03-06 08:39:56 [DEBUG] checkFileExistence('/set-theme'): found=0, isDir=0, isFile=0[0m
+[34m2026-03-06 08:39:56 [DEBUG] Resolved full path: '/set-theme' [found=0, isDir=0, isFile=0, isCGI=0, hasPermission=0][0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> isCGI=0, isDir=0, isFile=0, isRedir=0, found=0[0m
+[34m2026-03-06 08:39:56 [DEBUG] Path resolved: '/set-theme'[0m
+[34m2026-03-06 08:39:56 [DEBUG] getLocation: no matched location (index=-1)[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, HandleRequest(), isComplete: 1, err: 0[0m
+[32m2026-03-06 08:39:56 [INFO]  (127.0.0.1, 46408) GET /set-theme[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , request parsing done, setting up pipeline.[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , _setupPipeline: setting up pipes and switching epoll state.[0m
+[34m2026-03-06 08:39:56 [DEBUG] Request marked as complete.[0m
+[34m2026-03-06 08:39:56 [DEBUG] epoll_ctl ADD succeeded for fd=8, type=Pipe, count=3[0m
+[34m2026-03-06 08:39:56 [DEBUG] epoll_ctl ADD succeeded for fd=9, type=Pipe, count=4[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , _setupPipeline complete: in_pipe_fd=8, out_pipe_fd=9[0m
+[34m2026-03-06 08:39:56 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, creating GET handler[0m
+[34m2026-03-06 08:39:56 [DEBUG] AMethod initialized, socket fd=13[0m
+[34m2026-03-06 08:39:56 [DEBUG] GET initialized, socket fd=13[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:56 [DEBUG] CreatePath: returning cached path '/set-theme'[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13 GET resolved path: /set-theme[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> isCGI=0, isDir=0, isFile=0, isRedir=0, found=0[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, method=GET, readyToSend=0, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, GetMethod: isRedir=0, found=0, hasPerm=0, isDir=0, isFile=0, isCGI=0[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, empty root and path != '/', sending 404.[0m
+[31m2026-03-06 08:39:56 [ERROR] Client (127.0.0.1, 46408) error 404 Not Found[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, AMethod::HandelErrorPages, code=404[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> errorFilePath='', isPath=0, filename='/'[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> No custom error page, loading static fallback.[0m
+[34m2026-03-06 08:39:56 [DEBUG] Cleaned up  expired session(s). Active sessions: 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Set-Cookie: SESSIONID=865f29ae6b5e3360dd92ac728609bcd9; Max-Age=10; Path=/set-theme
+[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, CreateResponseHeader: code=404, status=Not Found, Content-Length=8184, Content-Type=text/html
+HTTP/1.1 404 Not Found
+Date: Fri, 06 Mar 2026 08:39:56 GMT
+Server: localhost
+Content-Type: text/html
+Content-Length: 8184
+Connection: close
+Set-Cookie: SESSIONID=865f29ae6b5e3360dd92ac728609bcd9; Max-Age=10; Path=/set-theme
+X-Content-Type-Options: nosniff
+
+[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 4, succeeded for fd=13, type=SocketIO[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , activeInPipe: activating in-pipe fd=8[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 1, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , activeOutPipe: activating out-pipe fd=9[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 4, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] Clearing timeouts, current timeoutList size=3[0m
+[32m2026-03-06 08:39:56 [INFO]  epoll_wait loop iteration complete 16
+[0m
+[34m2026-03-06 08:39:56 [DEBUG] handelEpollPipes: handling Pipe fd=9[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] handelEpollSocket: fd=13, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> Handle() for fd=13[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:56 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , activeOutPipe: activating out-pipe fd=9[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 4, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, SendResponse: sent=0, progress=0/8450[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , activeInPipe: activating in-pipe fd=8[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 1, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , activeOutPipe: activating out-pipe fd=9[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 4, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] Clearing timeouts, current timeoutList size=3[0m
+[32m2026-03-06 08:39:56 [INFO]  epoll_wait loop iteration complete 17
+[0m
+[34m2026-03-06 08:39:56 [DEBUG] handelEpollPipes: handling Pipe fd=9[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] handelEpollPipes: handling Pipe fd=8[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] handelEpollSocket: fd=13, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> Handle() for fd=13[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:56 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, SendResponse: sent=266, progress=266/8450[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , activeInPipe: activating in-pipe fd=8[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 1, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , activeOutPipe: activating out-pipe fd=9[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 4, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] Clearing timeouts, current timeoutList size=3[0m
+[32m2026-03-06 08:39:56 [INFO]  epoll_wait loop iteration complete 18
+[0m
+[34m2026-03-06 08:39:56 [DEBUG] handelEpollPipes: handling Pipe fd=9[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] handelEpollSocket: fd=13, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> Handle() for fd=13[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:56 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , activeOutPipe: activating out-pipe fd=9[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 4, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, SendResponse: sent=0, progress=266/8450[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , activeInPipe: activating in-pipe fd=8[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 1, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , activeOutPipe: activating out-pipe fd=9[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 4, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] Clearing timeouts, current timeoutList size=3[0m
+[32m2026-03-06 08:39:56 [INFO]  epoll_wait loop iteration complete 19
+[0m
+[34m2026-03-06 08:39:56 [DEBUG] handelEpollPipes: handling Pipe fd=9[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] handelEpollPipes: handling Pipe fd=8[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] handelEpollSocket: fd=13, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:39:56 [DEBUG]   -> Handle() for fd=13[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:39:56 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, GET::HandleResponse() start[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[32m2026-03-06 08:39:56 [INFO]  Client (127.0.0.1, 46408) <- 404 Not Found[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, SendResponse complete, code=404[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, SendResponse: sent=8184, progress=8450/8450[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , response done, marking socket to free.[0m
+[32m2026-03-06 08:39:56 [INFO]  Client (127.0.0.1, 46408) disconnected[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, HTTPContext, , MarkedSocketToFree: marking for deletion.[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=8, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=9, type=Pipe[0m
+[34m2026-03-06 08:39:56 [DEBUG] Clearing timeouts, current timeoutList size=3[0m
+[32m2026-03-06 08:39:56 [INFO]  epoll_wait loop iteration complete 20
+[0m
+[34m2026-03-06 08:39:56 [DEBUG] handelEpollSocket: fd=13, type=SocketIO, events=4, cleanBody=1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Socket fd: 13, MarkedToDelete[0m
+[34m2026-03-06 08:39:56 [DEBUG] DeleteFromEpoll fd=13, count=3, EPOLL_CTL_DEL: 1[0m
+[34m2026-03-06 08:39:56 [DEBUG] Clearing timeouts, current timeoutList size=3[0m
+[34m2026-03-06 08:39:56 [DEBUG] ClearToDelete: 1 item(s) pending deletion.[0m
+[34m2026-03-06 08:39:56 [DEBUG] Cleaned up  expired session(s). Active sessions: 1[0m
+[32m2026-03-06 08:39:56 [INFO]  epoll_wait loop iteration complete 21
+[0m
+[34m2026-03-06 08:40:10 [DEBUG] handelEpollSocket: fd=5, type=Socket, events=1, cleanBody=0[0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> Handle() for fd=5[0m
+[34m2026-03-06 08:40:10 [DEBUG] Handle: accepted new connection, fd=7 on listener fd=5[0m
+[34m2026-03-06 08:40:10 [DEBUG] reused pipe from pool [11, 12][0m
+[34m2026-03-06 08:40:10 [DEBUG] SocketIO pipe created [11, 12][0m
+[34m2026-03-06 08:40:10 [DEBUG] SocketIO created fd=7, new pipe [11, 12][0m
+[34m2026-03-06 08:40:10 [DEBUG] SocketIO initialized, fd=7[0m
+[34m2026-03-06 08:40:10 [DEBUG] ClientRequest initialized with default maxBodySize.[0m
+[34m2026-03-06 08:40:10 [DEBUG] Routing initialized.[0m
+[34m2026-03-06 08:40:10 [DEBUG] SetMaxBodySize: maxBodySize=0, bufferLen=0, contentLen=0[0m
+[34m2026-03-06 08:40:10 [DEBUG] epoll_ctl ADD succeeded for fd=7, type=SocketIO, count=4[0m
+[32m2026-03-06 08:40:10 [INFO]  New client connected from (127.0.0.1, 50502)[0m
+[34m2026-03-06 08:40:10 [DEBUG] Clearing timeouts, current timeoutList size=4[0m
+[34m2026-03-06 08:40:10 [DEBUG] ClearToDelete: 1 item(s) pending deletion.[0m
+[34m2026-03-06 08:40:10 [DEBUG] Cleaned up  expired session(s). Active sessions: 0[0m
+[34m2026-03-06 08:40:10 [DEBUG] SocketIO destructor, fd=13, pendingInPipe=0[0m
+[34m2026-03-06 08:40:10 [DEBUG] HTTPContext destructor called, sock=13[0m
+[34m2026-03-06 08:40:10 [DEBUG] DeleteFromEpoll fd=8, count=3, EPOLL_CTL_DEL: 1[0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> Deleting in-pipe fd=8, deleted: 1[0m
+[34m2026-03-06 08:40:10 [DEBUG] DeleteFromEpoll fd=9, count=2, EPOLL_CTL_DEL: 1[0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> Deleting out-pipe fd=9, deleted: 1[0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> Released pipe back to pool [8, 9][0m
+[32m2026-03-06 08:40:10 [INFO]  epoll_wait loop iteration complete 22
+[0m
+[34m2026-03-06 08:40:10 [DEBUG] handelEpollSocket: fd=7, type=SocketIO, events=1, cleanBody=0[0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> Handle() for fd=7[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:40:10 [DEBUG] isRequestComplete() = 0[0m
+[34m2026-03-06 08:40:10 [DEBUG] isRequestComplete() = 0[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , Handle() router.isRequestComplete(): 0, err: 0[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , _readFromSocket: read returned 657[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, HandleRequest, len: 657[0m
+[34m2026-03-06 08:40:10 [DEBUG] isComplete: appended 657 bytes, total buffer=657
+GET / HTTP/1.1
+Host: localhost:1025
+Connection: keep-alive
+Cache-Control: max-age=0
+sec-ch-ua: "Not A(Brand";v="8", "Chromium";v="132", "Brave";v="132"
+sec-ch-ua-mobile: ?0
+sec-ch-ua-platform: "Linux"
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8
+Sec-GPC: 1
+Accept-Language: en-US,en
+Sec-Fetch-Site: none
+Sec-Fetch-Mode: navigate
+Sec-Fetch-User: ?1
+Sec-Fetch-Dest: document
+Accept-Encoding: gzip, deflate, br, zstd
+Cookie: theme=light
+
+[0m
+[34m2026-03-06 08:40:10 [DEBUG] parsPath: SCRIPT_NAME='/' (no query string)[0m
+[34m2026-03-06 08:40:10 [DEBUG] Request line parsed: GET / HTTP/1.1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Request header parsing complete: method=GET, path=/, host=localhost:1025[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, _parseAndConfig, 1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , host detected: [localhost:1025], initializing max body size.[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, setMaxBodySize, err: 0[0m
+[34m2026-03-06 08:40:10 [DEBUG] Creating path for request '/' on server 'localhost'[0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> Host: 'localhost:1025', request method: 'GET'[0m
+[34m2026-03-06 08:40:10 [DEBUG] Creating path for URL: '/', decoded: '/'[0m
+[34m2026-03-06 08:40:10 [DEBUG] Location match for '/': static location index -1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Best matching location index: -1[0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> Server root='', locations=0[0m
+[34m2026-03-06 08:40:10 [DEBUG] _setRootAndCGI: root='', isCGI=0[0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> Constructed full path: '/'[0m
+[34m2026-03-06 08:40:10 [DEBUG] checkFileExistence('/'): found=1, isDir=1, isFile=0[0m
+[34m2026-03-06 08:40:10 [DEBUG] checkPermissions('/'): hasPermission=1[0m
+[34m2026-03-06 08:40:10 [DEBUG] _handleDirectoryIndex: trying 0 index file(s) in '/'[0m
+[34m2026-03-06 08:40:10 [DEBUG] Resolved full path: '/' [found=1, isDir=1, isFile=0, isCGI=0, hasPermission=1][0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> isCGI=0, isDir=1, isFile=0, isRedir=0, found=1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Path resolved: '/'[0m
+[34m2026-03-06 08:40:10 [DEBUG] getLocation: no matched location (index=-1)[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, HandleRequest(), isComplete: 1, err: 0[0m
+[32m2026-03-06 08:40:10 [INFO]  (127.0.0.1, 50502) GET /[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , request parsing done, setting up pipeline.[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , _setupPipeline: setting up pipes and switching epoll state.[0m
+[34m2026-03-06 08:40:10 [DEBUG] Request marked as complete.[0m
+[34m2026-03-06 08:40:10 [DEBUG] epoll_ctl ADD succeeded for fd=11, type=Pipe, count=3[0m
+[34m2026-03-06 08:40:10 [DEBUG] epoll_ctl ADD succeeded for fd=12, type=Pipe, count=4[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , _setupPipeline complete: in_pipe_fd=11, out_pipe_fd=12[0m
+[34m2026-03-06 08:40:10 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, creating GET handler[0m
+[34m2026-03-06 08:40:10 [DEBUG] AMethod initialized, socket fd=7[0m
+[34m2026-03-06 08:40:10 [DEBUG] GET initialized, socket fd=7[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, GET::HandleResponse() start[0m
+[34m2026-03-06 08:40:10 [DEBUG] CreatePath: returning cached path '/'[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7 GET resolved path: /[0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> isCGI=0, isDir=1, isFile=0, isRedir=0, found=1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, method=GET, readyToSend=0, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, GetMethod: isRedir=0, found=1, hasPerm=1, isDir=1, isFile=0, isCGI=0[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, serving static index (empty root).[0m
+[34m2026-03-06 08:40:10 [DEBUG] Session created: id=5e9b2d45f35c5ab370d879346bfe0b3a[0m
+[34m2026-03-06 08:40:10 [DEBUG] Set-Cookie: SESSIONID=5e9b2d45f35c5ab370d879346bfe0b3a; Max-Age=10; Path=/
+[0m
+[34m2026-03-06 08:40:10 [DEBUG] Set-Cookie: theme=light; Max-Age=10; Path=/
+[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, CreateResponseHeader: code=200, status=OK, Content-Length=60821, Content-Type=text/html
+HTTP/1.1 200 OK
+Date: Fri, 06 Mar 2026 08:40:10 GMT
+Server: localhost
+Content-Type: text/html
+Content-Length: 60821
+Connection: close
+Set-Cookie: SESSIONID=5e9b2d45f35c5ab370d879346bfe0b3a; Max-Age=10; Path=/
+Set-Cookie: theme=light; Max-Age=10; Path=/
+X-Content-Type-Options: nosniff
+
+[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 4, succeeded for fd=7, type=SocketIO[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , activeInPipe: activating in-pipe fd=11[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 1, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , activeOutPipe: activating out-pipe fd=12[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 4, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] Clearing timeouts, current timeoutList size=4[0m
+[32m2026-03-06 08:40:10 [INFO]  epoll_wait loop iteration complete 23
+[0m
+[34m2026-03-06 08:40:10 [DEBUG] handelEpollPipes: handling Pipe fd=12[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] handelEpollSocket: fd=7, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> Handle() for fd=7[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:40:10 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:40:10 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, GET::HandleResponse() start[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , activeOutPipe: activating out-pipe fd=12[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 4, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, SendResponse: sent=0, progress=0/61117[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , activeInPipe: activating in-pipe fd=11[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 1, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , activeOutPipe: activating out-pipe fd=12[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 4, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] Clearing timeouts, current timeoutList size=4[0m
+[32m2026-03-06 08:40:10 [INFO]  epoll_wait loop iteration complete 24
+[0m
+[34m2026-03-06 08:40:10 [DEBUG] handelEpollPipes: handling Pipe fd=12[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] handelEpollPipes: handling Pipe fd=11[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] handelEpollSocket: fd=7, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> Handle() for fd=7[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:40:10 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:40:10 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, GET::HandleResponse() start[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, SendResponse: sent=296, progress=296/61117[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , activeInPipe: activating in-pipe fd=11[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 1, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , activeOutPipe: activating out-pipe fd=12[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 4, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] Clearing timeouts, current timeoutList size=4[0m
+[32m2026-03-06 08:40:10 [INFO]  epoll_wait loop iteration complete 25
+[0m
+[34m2026-03-06 08:40:10 [DEBUG] handelEpollPipes: handling Pipe fd=12[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] handelEpollSocket: fd=7, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> Handle() for fd=7[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:40:10 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:40:10 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, GET::HandleResponse() start[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , activeOutPipe: activating out-pipe fd=12[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 4, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, SendResponse: sent=0, progress=296/61117[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , activeInPipe: activating in-pipe fd=11[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 1, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , activeOutPipe: activating out-pipe fd=12[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 4, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] Clearing timeouts, current timeoutList size=4[0m
+[32m2026-03-06 08:40:10 [INFO]  epoll_wait loop iteration complete 26
+[0m
+[34m2026-03-06 08:40:10 [DEBUG] handelEpollPipes: handling Pipe fd=11[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] handelEpollSocket: fd=7, type=SocketIO, events=4, cleanBody=0[0m
+[34m2026-03-06 08:40:10 [DEBUG]   -> Handle() for fd=7[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , Handle() start[0m
+[34m2026-03-06 08:40:10 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:40:10 [DEBUG] isRequestComplete() = 1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , request complete, handling response.[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, Repsense::HandleResponse start[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, GET::HandleResponse() start[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, method=GET, readyToSend=1, sendListFiles=0, emptyRoot=1[0m
+[32m2026-03-06 08:40:10 [INFO]  Client (127.0.0.1, 50502) <- 200 OK[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, SendResponse complete, code=200[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, SendResponse: sent=60821, progress=61117/61117[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , response done, marking socket to free.[0m
+[32m2026-03-06 08:40:10 [INFO]  Client (127.0.0.1, 50502) disconnected[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, HTTPContext, , MarkedSocketToFree: marking for deletion.[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=11, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] ChangeToEpoll: 1073741824, succeeded for fd=12, type=Pipe[0m
+[34m2026-03-06 08:40:10 [DEBUG] Clearing timeouts, current timeoutList size=4[0m
+[32m2026-03-06 08:40:10 [INFO]  epoll_wait loop iteration complete 27
+[0m
+[34m2026-03-06 08:40:10 [DEBUG] handelEpollSocket: fd=7, type=SocketIO, events=4, cleanBody=1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Socket fd: 7, MarkedToDelete[0m
+[34m2026-03-06 08:40:10 [DEBUG] DeleteFromEpoll fd=7, count=3, EPOLL_CTL_DEL: 1[0m
+[34m2026-03-06 08:40:10 [DEBUG] Clearing timeouts, current timeoutList size=4[0m
+[34m2026-03-06 08:40:10 [DEBUG] ClearToDelete: 1 item(s) pending deletion.[0m
+[34m2026-03-06 08:40:10 [DEBUG] Cleaned up  expired session(s). Active sessions: 1[0m
+[32m2026-03-06 08:40:10 [INFO]  epoll_wait loop iteration complete 28
+[0m
+[34m2026-03-06 08:40:23 [DEBUG] Clearing timeouts, current timeoutList size=4[0m
+[34m2026-03-06 08:40:23 [DEBUG] ClearToDelete: 1 item(s) pending deletion.[0m
+[34m2026-03-06 08:40:23 [DEBUG] Cleaned up  expired session(s). Active sessions: 0[0m
+[34m2026-03-06 08:40:23 [DEBUG] SocketIO destructor, fd=7, pendingInPipe=0[0m
+[34m2026-03-06 08:40:23 [DEBUG] HTTPContext destructor called, sock=7[0m
+[34m2026-03-06 08:40:23 [DEBUG] DeleteFromEpoll fd=11, count=2, EPOLL_CTL_DEL: 1[0m
+[34m2026-03-06 08:40:23 [DEBUG]   -> Deleting in-pipe fd=11, deleted: 1[0m
+[34m2026-03-06 08:40:23 [DEBUG] DeleteFromEpoll fd=12, count=1, EPOLL_CTL_DEL: 1[0m
+[34m2026-03-06 08:40:23 [DEBUG]   -> Deleting out-pipe fd=12, deleted: 1[0m
+[34m2026-03-06 08:40:23 [DEBUG]   -> Released pipe back to pool [11, 12][0m
+[32m2026-03-06 08:40:23 [INFO]  SIGINT received. Shutting down server.[0m
+[34m2026-03-06 08:40:23 [DEBUG] The main loop stop[0m
+[34m2026-03-06 08:40:23 [DEBUG] Multiplexer destructor called, cleaning up.[0m
+[34m2026-03-06 08:40:23 [DEBUG] Deleting fd=5, type=Socket[0m
+[34m2026-03-06 08:40:23 [DEBUG] Marked 1 fd(s) for deletion, closing epollFd=6[0m
+[34m2026-03-06 08:40:23 [DEBUG] Waiting for 1 item(s) to be deleted.[0m
+[34m2026-03-06 08:40:23 [DEBUG] Clearing timeouts, current timeoutList size=4[0m
+[34m2026-03-06 08:40:23 [DEBUG]   -> Socket not found in active fds, removing from timeoutList.[0m
+[34m2026-03-06 08:40:23 [DEBUG]   -> Socket not found in active fds, removing from timeoutList.[0m
+[34m2026-03-06 08:40:23 [DEBUG]   -> Socket not found in active fds, removing from timeoutList.[0m
+[34m2026-03-06 08:40:23 [DEBUG]   -> Socket not found in active fds, removing from timeoutList.[0m
+[34m2026-03-06 08:40:23 [DEBUG] ClearToDelete: 1 item(s) pending deletion.[0m
+[34m2026-03-06 08:40:23 [DEBUG] Cleaned up  expired session(s). Active sessions: 0[0m
+[34m2026-03-06 08:40:23 [DEBUG] Socket destructor called, fd=5[0m
+[34m2026-03-06 08:40:23 [DEBUG] Waiting for all socket fds to be closed.[0m
+[34m2026-03-06 08:40:23 [DEBUG] Waiting for all socket fds to be closed.[0m
+[34m2026-03-06 08:40:23 [DEBUG] Waiting for all socket fds to be closed.[0m
+[34m2026-03-06 08:40:23 [DEBUG] Waiting for all socket fds to be closed.[0m
+[34m2026-03-06 08:40:23 [DEBUG] Waiting for all socket fds to be closed.[0m
+[34m2026-03-06 08:40:23 [DEBUG] Waiting for all socket fds to be closed.[0m
+[34m2026-03-06 08:40:23 [DEBUG] Waiting for all socket fds to be closed.[0m
+[34m2026-03-06 08:40:23 [DEBUG] Multiplexer cleanup complete.[0m

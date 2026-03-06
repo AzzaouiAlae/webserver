@@ -85,11 +85,15 @@ void ARequest::initSession() {
     
     if (_currentSession == NULL) {
         _currentSession = sm->createSession();
-        _currentSession->data = _cookies;
 		_currentSession->data["SESSIONID"] = _currentSession->id;
-		_currentSession->data["Max-Age"] =  SESSION_TIMEOUT_STR;
     }
     
+    map<string, string>::iterator it = _cookies.begin();
+    for (; it != _cookies.end(); ++it) {
+        if (it->first != "SESSIONID") {
+            _currentSession->data[it->first] = it->second;
+        }
+    }
     _env["SESSIONID"] = _currentSession->id;
 }
 Session* ARequest::getSession() {
