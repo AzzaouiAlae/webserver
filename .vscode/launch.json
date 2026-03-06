@@ -10,7 +10,7 @@
 			"request": "launch",
 			"program": "${workspaceFolder}/webserv.out",
 			"miDebuggerPath": "/usr/bin/gdb",
-			"args": [],
+			"args": ["-D"],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
 			"environment": [],

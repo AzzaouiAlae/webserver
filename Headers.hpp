@@ -73,4 +73,4 @@ using namespace std;
 
 extern char **environ;
 
-#define DEFAULT_CONF "conf/engineX.conf"
+#define DEFAULT_CONF "EngineX/EngineX.conf"

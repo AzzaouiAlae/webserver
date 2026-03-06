@@ -134,7 +134,8 @@ void AMethod::CreateResponseHeader()
 		<< ", CreateResponseHeader: code=" << code
 		<< ", status=" << statusMap[code]
 		<< ", Content-Length=" << bodySize
-		<< ", Content-Type=" << ResolveMimeType();
+		<< ", Content-Type=" << ResolveMimeType()
+		<< "\n" << responseHeaderStr;
 }
 
 // Does one thing: sends the default 201 Created (no body)

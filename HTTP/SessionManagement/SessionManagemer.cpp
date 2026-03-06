@@ -6,7 +6,7 @@ priority_queue<Session*, vector<Session*>, Session::CompareTimeout> Session::tim
 
 SessionManager *SessionManager::instance = NULL;
 
-SessionManager::SessionManager() : SESSION_TIMEOUT(3600) {
+SessionManager::SessionManager() {
 	
 }
 

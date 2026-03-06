@@ -226,7 +226,7 @@ void Multiplexer::ClearObj(AFd *obj)
 void Multiplexer::handelEpollPipes(epoll_event &event)
 {
 	AFd *obj = (AFd *)(event.data.ptr);
-
+	
 	if (obj->GetType() == "Pipe") 
 	{
 		DDEBUG("Multiplexer") << "handelEpollPipes: handling Pipe fd=" << obj->GetFd();
