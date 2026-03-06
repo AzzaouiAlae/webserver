@@ -111,7 +111,7 @@ void GET::GetMethod()
 		if (router->loc) {
 			idxLoc = router->loc->autoindex;
 		}
-		if ((idxSrv >= 0 && idxLoc == -1) || idxLoc == 0 )
+		if ((idxSrv <= 0 && idxLoc == -1) || idxLoc == 0 )
 			HandelErrorPages("403");
 		else
 			CreateListFilesResponse();
