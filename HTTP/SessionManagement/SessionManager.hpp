@@ -7,6 +7,8 @@
 
 using namespace std;
 #define MAXHEADERSIZE 8192
+#define SESSION_TIMEOUT 10 // seconds
+#define SESSION_TIMEOUT_STR "10" // seconds
 
 struct Session {
     string id;
@@ -25,7 +27,6 @@ class SessionManager {
 private:
     map<string, Session*> sessions;
     static SessionManager* instance;
-    int SESSION_TIMEOUT; // seconds
     
     SessionManager();
     string generateSessionId();

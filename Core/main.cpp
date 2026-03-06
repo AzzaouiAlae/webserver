@@ -68,8 +68,6 @@ int ParseLoggingArgs(int argc, char *argv[])
 	return fileNameIdx;
 }
 
-
-
 void InitServer(int argc, char *argv[], string &filename)
 {
 	int fileNameIdx = ParseLoggingArgs(argc, argv);
