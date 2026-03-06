@@ -34,7 +34,6 @@
 
 using namespace std;
 
-
 #define USEC 1000000
 
 #include "Utility.hpp"
