@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/19 06:22:13 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/06 04:27:41 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/06 04:45:12 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,13 +81,14 @@ void ARequest::initSession() {
     
     if (!sessionId.empty()) {
         _currentSession = sm->getSession(sessionId);
+	
     }
     
     if (_currentSession == NULL) {
         _currentSession = sm->createSession();
         _currentSession->data = _cookies;
 		_currentSession->data["SESSIONID"] = _currentSession->id;
-		_currentSession->data["Max-Age"] =  SESSION_TIMEOUT_STR;
+		// _currentSession->data["Max-Age"] =  SESSION_TIMEOUT_STR;
     }
     
     _env["SESSIONID"] = _currentSession->id;
