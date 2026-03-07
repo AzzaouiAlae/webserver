@@ -1,8 +1,6 @@
 #include "SocketIO.hpp"
 #include "HTTPContext.hpp"
 
-
-
 priority_queue<SocketIO *, vector<SocketIO *>, SocketIO::CompareTimeout> SocketIO::timeoutList;
 
 void SocketIO::Handle()
@@ -266,7 +264,7 @@ void SocketIO::clearTimeout()
 	while (timeoutList.empty() == false)
 	{
 		SocketIO *sock = timeoutList.top();
-		if (fds.find(sock) == fds.end()) {
+		if (fds.find(sock) == fds.end() || sock->MarkedToDelete == true) {
 			DDEBUG("SocketIO") << "  -> Socket not found in active fds, removing from timeoutList.";
 			timeoutList.pop();
 		}
