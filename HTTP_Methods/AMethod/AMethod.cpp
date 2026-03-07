@@ -2,11 +2,6 @@
 
 map<string, string> AMethod::statusMap;
 
-// ══════════════════════════════════════════════
-//  Constructor / Destructor
-// ══════════════════════════════════════════════
-
-// Does one thing: initializes all member variables to default values
 AMethod::AMethod(SocketIO *sock, Routing *router)
 {
 	_cgi = NULL;
@@ -52,11 +47,11 @@ string AMethod::escapeForJS(const string &input)
 	{
 		if (input[i] == '\'')
 		{
-			output += "\\'"; // Escape single quotes
+			output += "\\'";
 		}
 		else if (input[i] == '\\')
 		{
-			output += "\\\\"; // Escape backslashes
+			output += "\\\\";
 		}
 		else
 		{
@@ -66,7 +61,6 @@ string AMethod::escapeForJS(const string &input)
 	return output;
 }
 
-// Does one thing: closes the file descriptor if it was opened
 AMethod::~AMethod()
 {
 	if (fileFd != -1)
@@ -76,7 +70,6 @@ AMethod::~AMethod()
 	delete _cgi;
 }
 
-// Does one thing: returns the current time formatted as an HTTP date string
 string AMethod::CreateDate()
 {
 	char date[100];
@@ -86,11 +79,6 @@ string AMethod::CreateDate()
 	return date;
 }
 
-// ══════════════════════════════════════════════
-//  Response Header Building (broken into 3 steps)
-// ══════════════════════════════════════════════
-
-// Does one thing: resolves the server name with fallback to listen address
 string AMethod::ResolveServerName()
 {
 	string serverName = "";
@@ -101,13 +89,11 @@ string AMethod::ResolveServerName()
 	return serverName;
 }
 
-// Does one thing: resolves the MIME type based on the current filename extension
 string AMethod::ResolveMimeType()
 {
 	return Singleton::GetMime()[Utility::GetFileExtension(filename)];
 }
 
-// Does one thing: assembles the full HTTP response header string
 void AMethod::CreateResponseHeader()
 {
 	responseHeader.str("");
@@ -134,10 +120,10 @@ void AMethod::CreateResponseHeader()
 		<< ", CreateResponseHeader: code=" << code
 		<< ", status=" << statusMap[code]
 		<< ", Content-Length=" << bodySize
-		<< ", Content-Type=" << ResolveMimeType();
+		<< ", Content-Type=" << ResolveMimeType()
+		<< "\n" << responseHeaderStr;
 }
 
-// Does one thing: sends the default 201 Created (no body)
 void AMethod::SendDefaultRespense(const string &code)
 {
 	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendDefaultRespense: sending 201 Created.";
@@ -151,7 +137,6 @@ void AMethod::SendDefaultRespense(const string &code)
 	MulObj->ChangeToEpollOut(sock);
 }
 
-// Does one thing: builds a redirection-specific header (no body, includes Location)
 void AMethod::CreateRedirectionHeader(const string &redirCode, const string &redirLocation)
 {
 	responseHeader.str("");
@@ -173,24 +158,17 @@ void AMethod::CreateRedirectionHeader(const string &redirCode, const string &red
 	responseHeaderStr = responseHeader.str();
 }
 
-// ══════════════════════════════════════════════
-//  Error Handling (broken into 4 steps)
-// ══════════════════════════════════════════════
-
-// Does one thing: returns the configured error page path for the given code (or "")
 string AMethod::ResolveErrorFilePath(const string &errorCode)
 {
 	return Config::GetErrorPath(*router->srv, errorCode);
 }
 
-// Does one thing: tries to open the error file, sets fileFd, returns true on success
 bool AMethod::OpenErrorFile(const string &path)
 {
 	fileFd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
 	return (fileFd != -1);
 }
 
-// Does one thing: loads a static fallback error file (with 404 fallback if not found)
 void AMethod::LoadStaticErrorFile(const string &errorCode)
 {
 	staticFile = StaticFile::GetFileByName(errorCode.c_str());
@@ -204,7 +182,6 @@ void AMethod::LoadStaticErrorFile(const string &errorCode)
 	filename = ".html";
 }
 
-// Does one thing: orchestrates error page resolution, then prepares for sending
 void AMethod::HandelErrorPages(const string &err)
 {
 	ERR() << "Client " << Socket::getRemoteName(sock->GetFd()) << " error " << err << " " << statusMap[err];
@@ -242,11 +219,6 @@ void AMethod::HandelErrorPages(const string &err)
 	MulObj->ChangeToEpollOut(sock);
 }
 
-// ══════════════════════════════════════════════
-//  Sending Response
-// ══════════════════════════════════════════════
-
-// Does one thing: sends the next chunk of data (header + body) to the socket
 void AMethod::SendResponse()
 {
 	const char *h;
@@ -326,11 +298,6 @@ void _cgiResponse()
 	
 }
 
-// ══════════════════════════════════════════════
-//  Redirection
-// ══════════════════════════════════════════════
-
-// Does one thing: prepares and sends a redirection response
 void AMethod::SendRedirection()
 {
 	Path &path = router->GetPath();
@@ -348,11 +315,6 @@ void AMethod::SendRedirection()
 	MulObj->ChangeToEpollOut(sock);
 }
 
-// ══════════════════════════════════════════════
-//  Method Validation
-// ══════════════════════════════════════════════
-
-// Does one thing: checks if the given method is in the server's allowed methods list
 bool AMethod::IsMethodAllowed(const string &method)
 {
 	bool allowed = true;
@@ -374,13 +336,6 @@ bool AMethod::IsMethodAllowed(const string &method)
 	return allowed;
 }
 
-
-
-// ══════════════════════════════════════════════
-//  Status Map Initialization
-// ══════════════════════════════════════════════
-
-// Does one thing: populates the static status code → reason phrase map
 void AMethod::InitStatusMap()
 {
 	if (statusMap.size() > 0)
@@ -437,12 +392,17 @@ void AMethod::InitStatusMap()
 
 void AMethod::addCookies(Session &session)
 {
-	responseHeader << "Set-Cookie:";
-	map<string, string>::iterator it = session.data.begin(); 
-	for (;it != session.data.end(); ++it)
+	string Max_age = session.data["Max-Age"];
+	string path = router->GetRequest().getPath();
+	map<string, string>::iterator it = session.data.begin();
+	for (; it != session.data.end(); it++)
 	{
-		responseHeader << " " << it->first << "=" << it->second << ";";
+		if (it->first != "Max-Age")
+		{
+
+			responseHeader << "Set-Cookie:" << " " << it->first << "=" << it->second << ";" << " Max-Age=" << SESSION_TIMEOUT << ";" << " Path=" << path  << "\r\n";
+		DDEBUG("AddCookies") << "Set-Cookie:" << " " << it->first << "=" << it->second << ";" << " Max-Age=" << SESSION_TIMEOUT << ";" << " Path=" << path  << "\r\n";
+		}
 	}
-	responseHeader << "\r\n";
 }
 map<string, string>& AMethod::getStatusMap(){return (statusMap);}

@@ -81,13 +81,10 @@ bool HTTPContext::_parseAndConfig(int len)
 	try
 	{
 		if (err)
-			return true; // If error already exists, treat as "complete" to trigger error page
+			return true;
 
-		// 1. Parse buffer
 		bool complete = router.GetRequest().isComplete(buf, len);
 		HTTPLog(DEBUG) << "_parseAndConfig, " << complete;
-		// 2. Configure Server Block logic
-		// We do this immediately so we can check MaxBodySize during parsing if needed
 		if (!isMaxBodyInit && router.GetRequest().getHost() != "")
 		{
 			HTTPLog(DEBUG) << ", host detected: [" << router.GetRequest().getHost() << "], initializing max body size.";
@@ -100,7 +97,7 @@ bool HTTPContext::_parseAndConfig(int len)
 		ERR() << "Socket fd: " << sock->GetFd() << "_parseAndConfig, exception: " << e.what();
 		errNo = e.what();
 		err = true;
-		return true; // Return true to proceed to error handling
+		return true;
 	}
 }
 
@@ -114,8 +111,6 @@ void HTTPContext::_setupPipeline()
 
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 
-	// Create Pipes
-	// Note: Ensure you manage memory for 'in' and 'out' properly (e.g., delete in destructor)
 	in = new SocketPipe(sock->pipefd[0], sock);
 	MulObj->AddAsEpollIn(in);
 
@@ -128,21 +123,17 @@ void HTTPContext::_setupPipeline()
 
 void HTTPContext::HandleRequest()
 {
-	// 1. Read Data
 	int len = _readFromSocket();
 	HTTPLog(DEBUG) << "HandleRequest, len: " << len;
-	// If read failed (-1) or nothing to process, return
 	if (len == -1 && !err)
 	{
 		return;
 	}
-	// 2. Parse Data
 	bool isComplete = _parseAndConfig(len);
 	HTTPLog(DDEBUG)
 		<< "HandleRequest(), isComplete: "
 		<< isComplete << ", err: " << err;
 
-	// 3. Check for Completion or Errors
 	if (isComplete || router.GetRequest().isRequestHeaderComplete())
 	{
 		INFO() << Socket::getRemoteName(sock->GetFd()) << " " << router.GetRequest().getMethod() << " " << router.GetRequest().getPath();

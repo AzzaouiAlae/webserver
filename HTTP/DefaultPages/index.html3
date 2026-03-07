@@ -75,6 +75,8 @@ body.light-theme .td { color: #a8afc8; }
 
 body.light-theme .nav-links a { color: #4c5169; }
 body.light-theme .nav-links a:hover { color: #1e1b4b; }
+body.light-theme nav.scrolled { background: rgba(240, 244, 255, 0.97); box-shadow: 0 4px 40px rgba(99,102,241,0.12); }
+body.light-theme .mobile-toggle { color: #1e1b4b; }
 
 body.light-theme .btn-glass {
     background: rgba(255, 255, 255, 0.82);
@@ -104,6 +106,78 @@ body.light-theme .cta-box {
 body.light-theme .lang-track {
     background: rgba(0, 0, 0, 0.07);
 }
+
+/* ===== GRADIENT TEXT FIX (white → dark for light bg) ===== */
+body.light-theme .hero h1 .line1 {
+    background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 50%, var(--primary-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+body.light-theme .logo-text {
+    background: linear-gradient(135deg, #1e1b4b, var(--primary-light), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+body.light-theme .metric-val {
+    background: linear-gradient(135deg, #1e1b4b, var(--primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+body.light-theme .foot-logo span {
+    background: linear-gradient(135deg, #1e1b4b, var(--primary-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ===== SECTION HEADINGS ===== */
+body.light-theme .feat-card h3,
+body.light-theme .arch-node-name,
+body.light-theme .tcard h4,
+body.light-theme .demo-text h3 {
+    color: #1e1b4b;
+}
+
+body.light-theme .feat-card p,
+body.light-theme .arch-node-desc,
+body.light-theme .tcard p,
+body.light-theme .demo-text p,
+body.light-theme .demo-list li {
+    color: #4c5169;
+}
+
+/* ===== CODE / TERMINAL SYNTAX COLORS ===== */
+body.light-theme .ts { color: #a16207; }
+body.light-theme .tg { color: #047857; }
+body.light-theme .ti { color: #4338ca; }
+body.light-theme .tp { color: #0e7490; }
+body.light-theme .tf { color: #6d28d9; }
+body.light-theme .ck { color: #7e22ce; }
+body.light-theme .ct { color: #92400e; }
+body.light-theme .cv { color: #3f6212; }
+body.light-theme .cc { color: #64748b; }
+body.light-theme .cn { color: #c2410c; }
+body.light-theme .cb { color: #0369a1; }
+body.light-theme .ln { color: #94a3b8; }
+
+/* ===== MISC TEXT ===== */
+body.light-theme .chk { color: #047857; background: rgba(5, 150, 105, 0.1); }
+body.light-theme .foot-copy { color: #64748b; }
+body.light-theme .foot-copy a { color: var(--primary); }
+body.light-theme .foot-links a { color: #4c5169; }
+body.light-theme .foot-links a:hover { color: var(--primary); }
+body.light-theme .term-title { color: #64748b; }
+body.light-theme .code-tab { color: #4c5169; background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.15); }
+body.light-theme .lang-name { color: #1e1b4b; }
+body.light-theme .lang-pct { color: #4c5169; }
+body.light-theme .file-count strong { color: var(--primary); }
+body.light-theme .arch-layer-title { color: #0e7490; }
 
 /* ===== THEME TOGGLE BUTTON ===== */
 .theme-toggle {
@@ -1309,7 +1383,7 @@ body.light-theme .theme-toggle:hover {
 				}
 			}
 
-			@media (max-width: 768px) {
+			@media (max-width: 850px) {
 				nav {
 					padding: 0.8rem 1.5rem;
 				}
@@ -2170,10 +2244,11 @@ body.light-theme .theme-toggle:hover {
 						var id = section.getAttribute("id");
 
 						if (scrollPos >= top && scrollPos < top + height) {
+							var isLight = document.body.classList.contains('light-theme');
 							navLinks.forEach(function (link) {
 								link.style.color = "";
 								if (link.getAttribute("href") === "#" + id) {
-									link.style.color = "#fff";
+									link.style.color = isLight ? "#1e1b4b" : "#fff";
 								}
 							});
 						}
@@ -2216,6 +2291,7 @@ body.light-theme .theme-toggle:hover {
 						mobileOpen = !mobileOpen;
 
 						if (mobileOpen) {
+							var isLightMode = document.body.classList.contains('light-theme');
 							links.style.display = "flex";
 							links.style.position = "absolute";
 							links.style.top = "100%";
@@ -2223,9 +2299,8 @@ body.light-theme .theme-toggle:hover {
 							links.style.right = "0";
 							links.style.flexDirection = "column";
 							links.style.padding = "1.5rem 2rem";
-							links.style.background = "rgba(3,7,18,0.97)";
-							links.style.borderBottom =
-								"1px solid rgba(99,102,241,0.15)";
+							links.style.background = isLightMode ? "rgba(240,244,255,0.97)" : "rgba(3,7,18,0.97)";
+							links.style.borderBottom = isLightMode ? "1px solid rgba(99,102,241,0.2)" : "1px solid rgba(99,102,241,0.15)";
 							links.style.gap = "1rem";
 							links.style.animation = "fadeIn 0.3s ease-out";
 							mobileBtn.textContent = "✕";
@@ -2497,19 +2572,19 @@ body.light-theme .theme-toggle:hover {
 					return match ? decodeURIComponent(match[1]) : null;
 				}
 
-				function setCookie(name, value) {
-					// var expires = "";
-					// if (days) {
-					// 	var d = new Date();
-					// 	d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-					// 	expires = "; expires=" + d.toUTCString();
-					// }
+				function setCookie(name, value, days) {
+					var expires = "";
+					if (days) {
+						var d = new Date();
+						d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+						expires = "; expires=" + d.toUTCString();
+					}
 					document.cookie =
 						name +
 						"=" +
 						encodeURIComponent(value) +
+						expires +
 						"; path=/; SameSite=Lax";
-						// expires +
 				}
 
 				function applyTheme(theme) {

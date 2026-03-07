@@ -47,7 +47,7 @@ void CgiRequest::parseStatus()
             Error::ThrowError("502");
         _statusCode = status;
         if (status[0] == '4' || status[0] == '5') {
-			//    Error::ThrowError(status);
+			Error::ThrowError(status);
 		}
         else if (status[0] != '2' && status[0] != '3')
             Error::ThrowError("502");
@@ -174,7 +174,7 @@ void CgiRequest::parseHeaderLine(const string &line)
     if (_env.find(key) != _env.end())
     {
         if (key != "Cookie") {
-			// Error::ThrowError("502");
+			Error::ThrowError("502");
 		}
     }
     _env[key] = value;

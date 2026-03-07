@@ -21,13 +21,10 @@ class HTTPContext : public IContext
 	string errNo;
 	bool isMaxBodyInit;
 
-	// Helper to handle buffer allocation and raw socket reading
     int  _readFromSocket();
 
-    // Helper to parse the buffer and find the correct Server block
     bool _parseAndConfig(int len);
 
-    // Helper to set up Pipes and switch Epoll state when request is done
     void _setupPipeline();
 	string logPrefix();
 public:

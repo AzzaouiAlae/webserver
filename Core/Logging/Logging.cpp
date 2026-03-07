@@ -41,7 +41,6 @@ Logging::LogBase::LogBase()
 {
 }
 
-// Specific destructor handles the writing
 Logging::Debug::~Debug()
 {
 	if (isActive && Logging::current)

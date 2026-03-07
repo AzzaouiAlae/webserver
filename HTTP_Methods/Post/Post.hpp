@@ -9,13 +9,11 @@ class Post : public AMethod
 	size_t contentBodySize;
 	size_t uploadedSize;
 
-	// ──── Single-responsibility helpers ────
 	void OpenUploadFile();
 	void WriteBodyFromMemory();
 	void WriteBodyFromSocket();
 	void uploadFileToDisk();
 
-	// ──── Response helpers ────
 	bool GetLocationReturn(string &retCode, string &retBody);
 	void SendPostRedirection(const string &retCode, const string &retBody);
 	void SendPostCustomBody(const string &retCode, const string &retBody);

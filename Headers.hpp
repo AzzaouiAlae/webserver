@@ -48,7 +48,6 @@ using namespace std;
 #include "ARequest.hpp"
 #include "ClientRequest.hpp"
 #include "CgiRequest.hpp"
-// #include "Cgi.hpp"
 
 
 #include "Config.hpp"
@@ -73,4 +72,4 @@ using namespace std;
 
 extern char **environ;
 
-#define DEFAULT_CONF "conf/engineX.conf"
+#define DEFAULT_CONF "EngineX/EngineX.conf"

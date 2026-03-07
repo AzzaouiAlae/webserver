@@ -1,10 +1,5 @@
 #include "GET.hpp"
 
-// ══════════════════════════════════════════════
-//  Constructor / Destructor
-// ══════════════════════════════════════════════
-
-// Does one thing: initializes GET-specific members to default values
 GET::GET(SocketIO *sock, Routing *router): AMethod(sock, router)
 {
 	sendListFiles = 0;
@@ -14,15 +9,9 @@ GET::GET(SocketIO *sock, Routing *router): AMethod(sock, router)
 	DEBUG("GET") << "GET initialized, socket fd=" << sock->GetFd();
 }
 
-// Does one thing: cleanup (base class ~AMethod handles fileFd)
 GET::~GET()
 {}
 
-// ══════════════════════════════════════════════
-//  HandleResponse — GET entry point
-// ══════════════════════════════════════════════
-
-// Does one thing: dispatches to the correct sending/processing path for GET
 bool GET::HandleResponse()
 {
 	DEBUG("GET") << "Socket fd: " << sock->GetFd() << ", GET::HandleResponse() start";
@@ -48,7 +37,6 @@ bool GET::HandleResponse()
 		sock->UpdateTime();
 		return del;
 	}
-	// Check allowed methods (shared logic from AMethod)
 	else if (!readyToSend && !IsMethodAllowed(method))
 	{
 		if (method == "GET" || method == "POST" || method == "DELETE")
@@ -74,11 +62,6 @@ bool GET::HandleResponse()
 	return del;
 }
 
-// ══════════════════════════════════════════════
-//  GET Dispatch
-// ══════════════════════════════════════════════
-
-// Does one thing: resolves the path, then dispatches based on path state
 void GET::GetMethod()
 {
 	DDEBUG("GET") 
@@ -111,7 +94,7 @@ void GET::GetMethod()
 		if (router->loc) {
 			idxLoc = router->loc->autoindex;
 		}
-		if ((idxSrv >= 0 && idxLoc == -1) || idxLoc == 0 )
+		if ((idxSrv <= 0 && idxLoc == -1) || idxLoc == 0 )
 			HandelErrorPages("403");
 		else
 			CreateListFilesResponse();
@@ -122,17 +105,11 @@ void GET::GetMethod()
 		ServeFile();
 }
 
-// ══════════════════════════════════════════════
-//  File Serving (broken into 3 steps)
-// ══════════════════════════════════════════════
-
-// Does one thing: opens the file for reading
 void GET::OpenFile(const string &path)
 {
 	fileFd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
 }
 
-// Does one thing: sets body size, status code, and creates the response header
 void GET::PrepareFileResponse()
 {
 	bodySize = Utility::getFileSize(filename);
@@ -145,7 +122,6 @@ void GET::PrepareFileResponse()
 	MulObj->ChangeToEpollOut(sock);
 }
 
-// Does one thing: orchestrates file serving (open → prepare → send)
 void GET::ServeFile()
 {
 	DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", ServeFile: '" << filename << "'";
@@ -153,11 +129,6 @@ void GET::ServeFile()
 	PrepareFileResponse();
 }
 
-// ══════════════════════════════════════════════
-//  Static Index
-// ══════════════════════════════════════════════
-
-// Does one thing: loads the built-in static index page and prepares response
 void GET::GetStaticIndex()
 {
 	code = "200";
@@ -172,11 +143,6 @@ void GET::GetStaticIndex()
 	MulObj->ChangeToEpollOut(sock);
 }
 
-// ══════════════════════════════════════════════
-//  Directory Listing: Building
-// ══════════════════════════════════════════════
-
-// Does one thing: formats a single directory entry as a JS object string
 string GET::FormatDirectoryEntry(const string &name, const struct stat &st, const string &requestPath)
 {
 	stringstream entry;
@@ -203,7 +169,6 @@ string GET::FormatDirectoryEntry(const string &name, const struct stat &st, cons
 	return entry.str();
 }
 
-// Does one thing: scans a directory and appends formatted entries to filesList
 void GET::ListFiles(const string &path)
 {
 	DIR *dir = opendir(path.c_str());
@@ -233,7 +198,6 @@ void GET::ListFiles(const string &path)
 	closedir(dir);
 }
 
-// Does one thing: calculates the total size of all auto-index template parts
 int GET::CalculateAutoIndexSize()
 {
 	int size = 0;
@@ -245,7 +209,6 @@ int GET::CalculateAutoIndexSize()
 	return size;
 }
 
-// Does one thing: orchestrates directory listing (scan → calculate → header → trigger send)
 void GET::CreateListFilesResponse()
 {
 	DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", CreateListFilesResponse for path: '" << router->GetPath().getFullPath() << "'";
@@ -266,11 +229,6 @@ void GET::CreateListFilesResponse()
 	MulObj->ChangeToEpollOut(sock);
 }
 
-// ══════════════════════════════════════════════
-//  Directory Listing: Sending
-// ══════════════════════════════════════════════
-
-// Does one thing: sends a raw chunk from a buffer, updates sended counter
 void GET::SendChunk(const char *data, int dataSize)
 {
 	int sent = sock->Send((void *)data, dataSize);
@@ -280,7 +238,6 @@ void GET::SendChunk(const char *data, int dataSize)
 	}
 }
 
-// Does one thing: calculates the correct offset into a string and sends that chunk
 void GET::SendListFilesStr(const string &str)
 {
 	int len = targetToSend - sended;
@@ -290,7 +247,6 @@ void GET::SendListFilesStr(const string &str)
 	SendChunk(b, len);
 }
 
-// Does one thing: calculates the correct offset into a static file and sends that chunk
 void GET::SendAutoIndex(StaticFile *f)
 {
 	int len = targetToSend - sended;
@@ -300,7 +256,6 @@ void GET::SendAutoIndex(StaticFile *f)
 	SendChunk(b, len);
 }
 
-// Does one thing: advances the state machine counter and checks for completion
 void GET::AdvanceListFilesState()
 {
 	if (sended >= targetToSend)
@@ -309,7 +264,6 @@ void GET::AdvanceListFilesState()
 		del = true;
 }
 
-// Does one thing: dispatches to the correct send function based on current state
 void GET::SendListFilesResponse()
 {
 	int s1 = responseHeaderStr.length();
