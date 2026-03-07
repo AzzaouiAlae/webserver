@@ -28,6 +28,9 @@ void HTTPContext::Handle(AFd *fd)
 		activeInPipe();
 		activeOutPipe();
 	}
+	else {
+		shutdown(sock->GetFd(), SHUT_RDWR);
+	}
 }
 
 int HTTPContext::_readFromSocket()

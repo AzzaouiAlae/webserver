@@ -114,8 +114,13 @@ void Multiplexer::MainLoop()
 	INFO() << "Server is ready, waiting for connections...";
 	while(true)
 	{
+		int timeout = -1; 
+
+		if (toDelete.size() > 0) {
+			timeout = 200; 
+		}
 		epoll_event eventList[count];
-		int size = epoll_wait(epollFd, eventList, count, USEC * TIMEOUT / 1000);
+		int size = epoll_wait(epollFd, eventList, count, timeout);
 
 		for(int i = 0; i < size; i++) {
 			handelEpollPipes(eventList[i]);
@@ -128,7 +133,7 @@ void Multiplexer::MainLoop()
 			INFO() << "SIGINT received. Shutting down server.";
 			break;
 		}
-		INFO() << "epoll_wait loop iteration complete " << Count++ << "\n";
+		INFO() << "epoll_wait, Handle: " << size << " AFd, loop iteration complete " << Count++ << "\n";
 	}
 }
 
@@ -140,13 +145,18 @@ void Multiplexer::DeleteItem(AFd *item)
 
 	if (item->deleteNow || item->GetType() == "Socket")
 	{
-		delete item;
-        toDelete.erase(item);
+		if (Utility::CurrentTime() - item->delTime > 50)
+		{
+			delete item;
+			toDelete.erase(item);
+		}
 	}
 	else if (getsockopt(item->GetFd(), IPPROTO_TCP, TCP_INFO, &info, &len) == 0)
 	{
-		if (info.tcpi_unacked == 0)
+		if (info.tcpi_unacked == 0) {
 			item->deleteNow = true;
+			item->delTime = Utility::CurrentTime();
+		}
 	}
 }
 
@@ -154,17 +164,13 @@ void Multiplexer::ClearToDelete()
 {
 	SocketIO::CloseSockFD(-1);
 	SocketIO::clearTimeout();
-	
+
 	if (toDelete.size() == 0)
 		return;
 	DDEBUG("Multiplexer") << "ClearToDelete: " << toDelete.size() << " item(s) pending deletion.";
 	set<AFd *>::iterator it = toDelete.begin();
 	set<AFd *>::iterator next;
-	SessionManager *p = SessionManager::getInstance();
-	if (p != NULL)
-	{
-		p->cleanupExpiredSessions();
-	}
+	
 	for(; it != toDelete.end(); it = next)
 	{
 		next = it;

@@ -9,6 +9,7 @@ protected:
 	string type;
 	size_t totalClean;
 public:
+	long delTime;
 	size_t maxToClean;
 	static char *buff;
 	bool deleteNow;
