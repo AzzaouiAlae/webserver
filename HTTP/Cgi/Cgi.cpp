@@ -6,7 +6,7 @@
 /*   By: aazzaoui <aazzaoui@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/02/14 01:39:07 by oel-bann          #+#    #+#             */
-/*   Updated: 2026/03/06 00:26:10 by aazzaoui         ###   ########.fr       */
+/*   Updated: 2026/03/07 04:36:57 by aazzaoui         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,15 +89,18 @@ bool Cgi::isChildError()
 void Cgi::createChild()
 {
 	CGILog(DDEBUG) << "Attempting to fork child process for CGI...";
+	string exec = resolveExcPath(*_exec);
+	if (access(exec.c_str(), F_OK | X_OK) != 0)
+		Error::ThrowError("500");
 	_pid = fork();
-	if (_pid == -1)
+	if (_pid < 0)
 		Error::ThrowError("500");
 	else if (_pid == 0)
 	{
 		Environment::CreateEnv(_req.getrequestenv());
 		dup2(_sok->pipefd[0], 0);
 		dup2(_pipefd[1], 1);
-		execve(resolveExcPath(*_exec).c_str(), _exec, environ);
+		execve(exec.c_str(), _exec, environ);
 		throw "500";
 	}
 	_status = eSendBuffToPipe;

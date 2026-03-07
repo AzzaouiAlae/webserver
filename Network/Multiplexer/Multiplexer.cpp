@@ -114,11 +114,8 @@ void Multiplexer::MainLoop()
 	INFO() << "Server is ready, waiting for connections...";
 	while(true)
 	{
-		int timeout = -1; 
+		int timeout = TIMEOUT * 1000; // 20 seconds 
 
-		if (toDelete.size() > 0) {
-			timeout = 200; 
-		}
 		epoll_event eventList[count];
 		int size = epoll_wait(epollFd, eventList, count, timeout);
 
@@ -145,17 +142,13 @@ void Multiplexer::DeleteItem(AFd *item)
 
 	if (item->deleteNow || item->GetType() == "Socket")
 	{
-		if (Utility::CurrentTime() - item->delTime > 50)
-		{
-			delete item;
-			toDelete.erase(item);
-		}
+		delete item;
+		toDelete.erase(item);
 	}
 	else if (getsockopt(item->GetFd(), IPPROTO_TCP, TCP_INFO, &info, &len) == 0)
 	{
 		if (info.tcpi_unacked == 0) {
 			item->deleteNow = true;
-			item->delTime = Utility::CurrentTime();
 		}
 	}
 }
