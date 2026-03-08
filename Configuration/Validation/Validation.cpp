@@ -123,13 +123,6 @@ void Validation::validateLocation(AST<string> &locationNode, LocationSeen &seen)
 	DDEBUG("Validation") << "    Location block validation passed.";
 }
 
-// ──────────────────────────────────────
-//  SERVER-SCOPE DIRECTIVE VALIDATORS
-// ──────────────────────────────────────
-
-// --- listen ---
-// Allowed formats: "8080", "localhost", "0.0.0.0:8080"
-// Multiple listen directives are allowed in the same server block.
 void Validation::validateListen(AST<string> &node, ServerSeen &seen)
 {
 	seen.listen = true;
@@ -316,10 +309,6 @@ void Validation::validateErrorPage(AST<string> &node, bool &seen)
 						  << ", page=" << node.GetArguments()[1];
 }
 
-// ──────────────────────────────────────
-//  LOCATION-ONLY DIRECTIVE VALIDATORS
-// ──────────────────────────────────────
-
 // --- cgi_pass ---
 void Validation::validateCgiPass(AST<string> &node, LocationSeen &seen)
 {
@@ -379,10 +368,6 @@ void Validation::validateDeleteFiles(AST<string> &node, LocationSeen &seen)
 		Error::ThrowError("Config Error: delete_files must be 'on' or 'off' — got '" + val + "'");
 	DDEBUG("Validation") << "    'delete_files' validated: " << val;
 }
-
-// ──────────────────────────────────────
-//  HELPERS
-// ──────────────────────────────────────
 
 ReturnKind Validation::classifyReturnCode(long code)
 {

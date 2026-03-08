@@ -41,7 +41,6 @@ string Routing::CreatePath(Config::Server *srv)
 	DEBUG("Routing") << "Creating path for request '" << request.getPath() << "' on server '" << srv->serverName << "'";
 	DDEBUG("Routing") << "  -> Host: '" << h << "', request method: '" << request.getMethod() << "'";
 	path.CreatePath(*srv, request.getPath());
-	// request.setUrlPart(path.getCgiPath(), path.getPathInfo());
 	strPath = path.getFullPath();
 	DDEBUG("Routing") 
 		<< "  -> isCGI=" << path.isCGI()

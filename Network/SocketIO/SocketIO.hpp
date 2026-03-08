@@ -40,7 +40,6 @@ class SocketIO : public ISocket {
 	time_t lastTime;
 	int _timeoutStatus;
 public:
-	//timeout related
 	int GetTimeoutStatus() const;
 	bool isTimeOut();
 	void UpdateTime();
@@ -52,13 +51,11 @@ public:
 private:
 	static priority_queue<SocketIO*, vector<SocketIO*>, SocketIO::CompareTimeout> timeoutList;
 public:
-	//pipe related
 	void SetStateByFd(int fd);
 	bool CanUsePipe0();
 	bool CanUsePipe1();
 	int pipefd[2];
 	
-	//socketIO related
 	int Send(void *buff, int size);
 	int SendBuffToPipe(void *buff, int size, bool usePending);
 	int SendPipeToSock();
@@ -68,7 +65,6 @@ public:
 	ssize_t FileToSocket(int fileFd, int size);
 	static int CloseSockFD(int fd);
 	
-	//socket related
 	int errorNumber;
 	SocketIO(int fd);
     ~SocketIO();

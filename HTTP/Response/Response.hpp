@@ -1,5 +1,5 @@
 #pragma once
-// #include "AMethod.hpp"
+
 #include "GET.hpp"
 #include "Post.hpp"
 #include "Delete.hpp"

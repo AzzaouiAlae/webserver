@@ -215,7 +215,7 @@ void Cgi::writeToClientSoket()
 		}
 	}
 	else if (_status == eWritePipeToClient)
-	{
+	{ 
 		int len = 0;
 		if (_cgireq.getBody().size() + _responseHeaderStr.length() > _responselen)
 		{

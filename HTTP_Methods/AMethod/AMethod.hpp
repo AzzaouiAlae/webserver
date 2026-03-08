@@ -7,16 +7,13 @@
 
 class AMethod
 {
-	// ──── Static ────
 	static map<string, string> statusMap;
 	static void InitStatusMap();
 
-	// ──── Header building helpers (single responsibility each) ────
 	string ResolveServerName();
 	string ResolveMimeType();
 
 protected:
-	// ──── State shared by all methods ────
 	stringstream responseHeader;
 	string responseHeaderStr;
 	StaticFile *staticFile;
@@ -34,22 +31,18 @@ protected:
 	bool pathResolved;
 	Config::Server::Location *loc;
 	Cgi	*_cgi;
-	// ──── Shared utilities (each does one thing) ────
 	string CreateDate();
 	void CreateResponseHeader();
 	void CreateRedirectionHeader(const string &redirCode, const string &redirLocation);
 
-	// ──── Error handling (broken into single-responsibility steps) ────
 	string ResolveErrorFilePath(const string &errorCode);
 	bool   OpenErrorFile(const string &path);
 	void   LoadStaticErrorFile(const string &errorCode);
 
-	// ──── Sending ────
 	void SendResponse();
 	void SendRedirection();
 	void SendDefaultRespense(const string &code);
 
-	// ──── Method validation ────
 	bool IsMethodAllowed(const string &method);
 
 	void ResolvePath();
@@ -62,7 +55,6 @@ public:
 	AMethod(SocketIO *sock, Routing *router);
 	virtual ~AMethod();
 
-	// ──── Pure virtual: each HTTP method subclass must implement ────
 	virtual bool HandleResponse() = 0;
 	void   HandelErrorPages(const string &err);
 	static map<string, string>& getStatusMap();

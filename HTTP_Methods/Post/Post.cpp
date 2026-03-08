@@ -1,8 +1,5 @@
 #include "Post.hpp"
 
-// ══════════════════════════════════════════════
-//  Constructor / Destructor
-// ══════════════════════════════════════════════
 
 Post::Post(SocketIO *sock, Routing *router) : AMethod(sock, router)
 {
@@ -23,11 +20,6 @@ Post::~Post()
 		close(uploadFd);
 }
 
-// ══════════════════════════════════════════════
-//  HandleResponse — POST entry point
-// ══════════════════════════════════════════════
-
-// Does one thing: dispatches to the correct state for POST
 bool Post::HandleResponse()
 {
 	sock->SetStateByFd(sock->GetFd());
@@ -50,24 +42,20 @@ bool Post::HandleResponse()
 		sock->UpdateTime();
 		return del;
 	}
-	// 1. Already sending response (success or error) → keep sending
 	if (readyToSend)
 	{
 		SendResponse();
 		return del;
 	}
 
-	// 2. Currently uploading file to disk → continue writing
 	if (readyToUpload)
 	{
 		uploadFileToDisk();
 		return del;
 	}
 
-	// 3. Resolve path (only once)
 	ResolvePath();
 	
-	// 4. Check method is allowed
 	if (!IsMethodAllowed("POST"))
 	{
 		DDEBUG("Post") 
@@ -77,7 +65,6 @@ bool Post::HandleResponse()
 		return del;
 	}
 
-	// 5. Redirection
 	if (router->GetPath().isRedirection())
 	{
 		DDEBUG("Post") 
@@ -87,7 +74,6 @@ bool Post::HandleResponse()
 		return del;
 	}
 
-	// 6. CGI (to be implemented)
 	if (router->GetPath().isCGI())
 	{
 		DDEBUG("Post") 
@@ -97,7 +83,6 @@ bool Post::HandleResponse()
 		return del;
 	}
 
-	// 7. File already exists → 409
 	if (router->GetPath().isFound() && router->GetPath().isFile())
 	{
 		DDEBUG("Post") 
@@ -109,17 +94,10 @@ bool Post::HandleResponse()
 
 	
 
-	// 8. Normal upload
 	PostMethod();
 	return del;
 }
 
-
-// ══════════════════════════════════════════════
-//  File Creation
-// ══════════════════════════════════════════════
-
-// Does one thing: creates/opens the upload file for writing
 void Post::OpenUploadFile()
 {
 	uploadFd = open(filename.c_str(), O_CREAT | O_WRONLY | O_CLOEXEC, 0644);
@@ -129,11 +107,6 @@ void Post::OpenUploadFile()
 		<< "', fd=" << uploadFd;
 }
 
-// ══════════════════════════════════════════════
-//  POST Dispatch
-// ══════════════════════════════════════════════
-
-// Does one thing: validates location and starts the upload
 void Post::PostMethod()
 {
 	if (router->GetPath().getLocation() == NULL)
@@ -164,11 +137,6 @@ void Post::PostMethod()
 	uploadFileToDisk();
 }
 
-// ══════════════════════════════════════════════
-//  File Upload (writing body to disk)
-// ══════════════════════════════════════════════
-
-// Does one thing: writes buffered body data from memory to the file
 void Post::WriteBodyFromMemory()
 {
 	string &body = router->GetRequest().getBody();
@@ -183,7 +151,6 @@ void Post::WriteBodyFromMemory()
 		uploadedSize += written;
 }
 
-// Does one thing: splices data directly from socket to file (zero-copy)
 void Post::WriteBodyFromSocket()
 {
 	int written = sock->SocketToFile(uploadFd, contentBodySize - uploadedSize);
@@ -191,17 +158,14 @@ void Post::WriteBodyFromSocket()
 		uploadedSize += written;
 }
 
-// Does one thing: orchestrates writing — memory first, then socket
 void Post::uploadFileToDisk()
 {
 	string &body = router->GetRequest().getBody();
 
-	// First: write whatever the Request already buffered in memory
 	if (body.length() > uploadedSize)
 	{
 		WriteBodyFromMemory();
 	}
-	// Then: if more data expected, read directly from socket to file
 	else if (uploadedSize < contentBodySize)
 	{
 		WriteBodyFromSocket();
@@ -212,7 +176,6 @@ void Post::uploadFileToDisk()
 		<< " POST uploaded " << uploadedSize
 		<< " / " << contentBodySize << " bytes";
 
-	// Check if upload is complete
 	if (uploadedSize >= contentBodySize)
 	{
 		INFO() 
@@ -226,11 +189,6 @@ void Post::uploadFileToDisk()
 	}
 }
 
-// ══════════════════════════════════════════════
-//  Success Response
-// ══════════════════════════════════════════════
-
-// Does one thing: gets the return directive from the matched location (if any)
 bool Post::GetLocationReturn(string &retCode, string &retBody)
 {
 	const Config::Server::Location *loc = router->GetPath().getLocation();
@@ -242,7 +200,6 @@ bool Post::GetLocationReturn(string &retCode, string &retBody)
 	return true;
 }
 
-// Does one thing: sends a redirection response (301, 302)
 void Post::SendPostRedirection(const string &retCode, const string &retBody)
 {
 	CreateRedirectionHeader(retCode, retBody);
@@ -256,7 +213,6 @@ void Post::SendPostRedirection(const string &retCode, const string &retBody)
 	MulObj->ChangeToEpollOut(sock);
 }
 
-// Does one thing: sends a custom body response (e.g., return 200 '{"status":"ok"}')
 void Post::SendPostCustomBody(const string &retCode, const string &retBody)
 {
 	DDEBUG("Post") 
@@ -275,7 +231,6 @@ void Post::SendPostCustomBody(const string &retCode, const string &retBody)
 	MulObj->ChangeToEpollOut(sock);
 }
 
-// Does one thing: orchestrates which response to send after upload completes
 void Post::createPostResponse()
 {
 	string retCode, retBody;

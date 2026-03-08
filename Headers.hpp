@@ -48,7 +48,6 @@ using namespace std;
 #include "ARequest.hpp"
 #include "ClientRequest.hpp"
 #include "CgiRequest.hpp"
-// #include "Cgi.hpp"
 
 
 #include "Config.hpp"

@@ -20,7 +20,7 @@ bool Delete::HandleResponse()
 		sock->UpdateTime();
 		return del;
 	}
-	// 1. Already sending response (success or error) → keep sending
+
 	if (readyToSend)
 	{
 		SendResponse();
@@ -29,7 +29,6 @@ bool Delete::HandleResponse()
 
 	ResolvePath();
 
-	// 2. Check method is allowed
 	if (!IsMethodAllowed("DELETE"))
 	{
 		DDEBUG("Delete") << "Socket fd: " << sock->GetFd() << ", DELETE method not allowed, sending 405.";

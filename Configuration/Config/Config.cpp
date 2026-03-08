@@ -105,7 +105,6 @@ string Config::GetErrorPath(Config::Server &srv, const string &code)
 	return "";
 }
 
-// Checks if locPath is a prefix of reqPath
 bool Config::isPrefixMatch(const vector<string> &locPath, const vector<string> &reqPath)
 {
     if (locPath.size() > reqPath.size())
@@ -118,7 +117,6 @@ bool Config::isPrefixMatch(const vector<string> &locPath, const vector<string> &
     return true;
 }
 
-// Returns the index of the best (longest prefix) CGI location match, or -1
 int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, const string &path)
 {
     int    bestIndex = -1;
@@ -146,7 +144,6 @@ int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath,
     return bestIndex;
 }
 
-// Returns the index of the best (longest prefix) static location match, or -1
 int Config::findBestStaticMatch(Config::Server &srv, const vector<string> &reqPath)
 {
     int    bestIndex = -1;
@@ -168,7 +165,6 @@ int Config::findBestStaticMatch(Config::Server &srv, const vector<string> &reqPa
     return bestIndex;
 }
 
-// Main orchestrator — now just coordinates the helpers
 int Config::GetLocationIndex(Config::Server &srv, const string &path)
 {
     vector<string> reqPath;
@@ -198,7 +194,6 @@ void Config::FillConf()
 	{
 		DDEBUG("Parsing") << "Evaluating AST Node: [" << servers[i].GetValue() << "]";
 
-		// Skip non-server top-level nodes (e.g. types)
 		if (servers[i].GetValue() != "server")
 			continue;
 
@@ -249,7 +244,6 @@ void Config::parseListen(const string &str, string &port, string &host)
 		return;
 	}
 
-	// No colon — decide if it is a pure numeric port or a hostname
 	bool isNumeric = true;
 	for (size_t i = 0; i < str.size(); i++)
 	{
@@ -335,7 +329,7 @@ void Config::fillServer(AST<string> &serverNode, Config::Server &srv)
 		else if (val == "location")
 		{
 			Config::Server::Location loc;
-			loc.path = node.GetArguments()[0]; // path was stored as argument
+			loc.path = node.GetArguments()[0];
 			
 			loc.locNode = &node;
 			DEBUG("Parsing") << "  --> Populating Location configuration for path: [" << loc.path << "]";

@@ -72,10 +72,8 @@ Session *SessionManager::getSession(const string &sessionId)
 
 	Session *session = it->second;
 
-	// Check if expired
 	time_t now = time(NULL);
 
-	// Update last accessed time
 	session->lastAccessedAt = now;
 	return session;
 }

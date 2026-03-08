@@ -1,6 +1,5 @@
 #include "Response.hpp"
 
-// Does one thing: initializes all pointers to NULL
 Repsense::Repsense()
 {
 	method = NULL;
@@ -8,7 +7,6 @@ Repsense::Repsense()
 	router = NULL;
 }
 
-// Does one thing: deletes the method object (which is allocated with new)
 Repsense::~Repsense()
 {
 	if (method != NULL)
@@ -18,14 +16,12 @@ Repsense::~Repsense()
 	}
 }
 
-// Does one thing: stores sock/router, creates the correct method based on request type
 void Repsense::Init(SocketIO *sock, Routing *router)
 {
 	this->sock = sock;
 	this->router = router;
 }
 
-// Does one thing: delegates HandleResponse to the correct method object
 bool Repsense::HandleResponse()
 {
 	DEBUG("Repsense") << "Socket fd: " << sock->GetFd() << ", Repsense::HandleResponse start";
@@ -46,13 +42,12 @@ bool Repsense::HandleResponse()
 			method = new Delete(sock, router);
 		}
 		else
-			method = new GET(sock, router); // fallback: GET handles unknown methods with 405
+			method = new GET(sock, router);
 	}
 
 	return method->HandleResponse();
 }
 
-// Does one thing: delegates error page handling to the current method object
 void Repsense::HandelErrorPages(const string &err)
 {
 	if (method == NULL)

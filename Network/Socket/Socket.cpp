@@ -286,12 +286,10 @@ void Socket::FindServerNew(string &host, string &port, Config::Server srv)
     stringstream strError;
     strError << "Bind to address: " << host << ":" << port << " fail";
 
-    // 1. If no sockets exist at all, the port is locked by another program (e.g. Nginx/Apache)
     if (sockets.empty()) {
         Error::ThrowError(strError.str().c_str());
     }
 
-    // 2. Resolve the Target Host ONCE
     string targetV4 = getIpByHost(host, port, AF_INET);
     string targetV6 = getIpByHost(host, port, AF_INET6);
 
@@ -299,19 +297,16 @@ void Socket::FindServerNew(string &host, string &port, Config::Server srv)
         Error::ThrowError(strError.str().c_str());
     }
 
-    // 3. Iterate existing sockets to find a match
     for (map<int, vector<Config::Server> >::iterator it = sockets.begin(); it != sockets.end(); ++it) 
     {
         string localIp, localPort;
         getLocalName(it->first, localIp, localPort);
 
-        // Optimization: Resolve local socket name only if ports match
         if (localPort == port) 
         {
             string socketV4 = getIpByHost(localIp, localPort, AF_INET);
             string socketV6 = getIpByHost(localIp, localPort, AF_INET6);
 
-            // Check if the Target resolves to the same Identity as the Socket
             if ((!targetV4.empty() && targetV4 == socketV4) || 
                 (!targetV6.empty() && targetV6 == socketV6))
             {
