@@ -12,6 +12,7 @@ AFd::AFd(int fd, string type)
 	cleanBody = false;
 	maxToClean = 1024 * 1024 * 1;
 	totalClean = 0;
+	delTime = 0;
 }
 
 AFd::operator int() const 

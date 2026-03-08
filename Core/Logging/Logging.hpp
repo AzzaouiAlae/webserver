@@ -8,12 +8,12 @@
 #define YELLOW "\033[33m"
 #define BLUE "\033[34m"
 
-#define	DEBUG	Logging::Debug
-#define	INFO	Logging::Info
-#define	WARN	Logging::Warn
-#define	ERR		Logging::Error
 
-#define DDEBUG(className) Logging::Debug(className, true)
+// #define	DEBUG	Logging::Debug
+// #define	INFO	Logging::Info
+// #define	WARN	Logging::Warn
+// #define	ERR		Logging::Error
+// #define DDEBUG(className) Logging::Debug(className, true)
 
 class Logging
 {
@@ -83,3 +83,40 @@ public:
 		~Error();
 	};
 };
+
+
+// #define DISABLE_LOGGING
+
+
+
+#ifdef DISABLE_LOGGING
+
+// Helper class to safely swallow the stream expression
+class LogMessageVoidifier {
+public:
+    // This catches the final LogBase reference and returns void
+    void operator&(const Logging::LogBase&) {}
+};
+
+// If disabled, this evaluates to (void)0. 
+// Because of short-circuiting, the right side is NEVER evaluated at runtime.
+#define LOGGING_VOIDIFY true ? (void)0 : LogMessageVoidifier() &
+
+#define DEBUG LOGGING_VOIDIFY Logging::Debug
+#define INFO  LOGGING_VOIDIFY Logging::Info
+#define WARN  LOGGING_VOIDIFY Logging::Warn
+#define ERR   LOGGING_VOIDIFY Logging::Error
+
+// Explicitly handle macros that take arguments
+#define DDEBUG(className) LOGGING_VOIDIFY Logging::Debug(className, true)
+
+#else
+
+// Original active macros
+#define DEBUG Logging::Debug
+#define INFO  Logging::Info
+#define WARN  Logging::Warn
+#define ERR   Logging::Error
+#define DDEBUG(className) Logging::Debug(className, true)
+
+#endif

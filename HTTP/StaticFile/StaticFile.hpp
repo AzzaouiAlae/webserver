@@ -42,6 +42,9 @@ extern "C" {
     extern const char _binary_HTTP_DefaultPages_Pages_413_htm_start[];
     extern const char _binary_HTTP_DefaultPages_Pages_413_htm_end[];
 
+    extern const char _binary_HTTP_DefaultPages_Pages_414_htm_start[];
+    extern const char _binary_HTTP_DefaultPages_Pages_414_htm_end[];
+
     extern const char _binary_HTTP_DefaultPages_Pages_500_htm_start[];
     extern const char _binary_HTTP_DefaultPages_Pages_500_htm_end[];
 
@@ -96,6 +99,9 @@ extern "C" {
 
 #define PAGE_413_S _binary_HTTP_DefaultPages_Pages_413_htm_start
 #define PAGE_413_E _binary_HTTP_DefaultPages_Pages_413_htm_end
+
+#define PAGE_414_S _binary_HTTP_DefaultPages_Pages_414_htm_start
+#define PAGE_414_E _binary_HTTP_DefaultPages_Pages_414_htm_end
 
 #define PAGE_500_S _binary_HTTP_DefaultPages_Pages_500_htm_start
 #define PAGE_500_E _binary_HTTP_DefaultPages_Pages_500_htm_end

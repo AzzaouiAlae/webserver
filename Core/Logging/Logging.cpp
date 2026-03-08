@@ -1,5 +1,6 @@
 #include "Logging.hpp"
 
+
 set<string> Logging::activeDebugClasses;
 set<string> Logging::activeDetailClasses;
 bool Logging::globalDebug = false;
@@ -39,6 +40,7 @@ void Logging::EnableDetailDebug(const string &className)
 
 Logging::LogBase::LogBase() 
 {
+	ss.str();
 }
 
 Logging::Debug::~Debug()

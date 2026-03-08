@@ -67,7 +67,7 @@ bool ClientRequest::parsPath(string path)
 {
 	size_t pos = path.find('?');
 
-	if (path[0] != '/')
+	if (path[0] != '/' || path.find("..") != string::npos)
 		return (false);
 	_env["REQUEST_URI"] = path;
 	if (pos != string::npos)
@@ -95,9 +95,9 @@ void ClientRequest::parsHttpStandard(string httpStandard)
 	if (!(ss >> method >> path >> httpv) || (ss >> extra))
 		Error::ThrowError("The Request HttpStandard is Invalid");
 	if (!(httpv == "HTTP/1.1" || httpv == "HTTP/1.0"))
-		Error::ThrowError("The Request Protocol version Invalid");
+		Error::ThrowError("505");
 	if (!parsPath(path))
-		Error::ThrowError("The Request Path Invalid");
+		Error::ThrowError("400");
 	_env["REQUEST_METHOD"] = method;
 	_env["SERVER_PROTOCOL"] = httpv;
 	_Parspos = eParsHttpStand;
@@ -250,6 +250,7 @@ bool  ClientRequest::getFullLine(string &line)
 		line += _requestbuff[index];
 		index++;
 	}
+	DDEBUG("ClientRequest") << "getFullLine: extracted line='" << line << "' from buffer, index=" << index;	
     _firstline = false;
 	if (_requestbuff[index] == '\n' && (index == 0 || (index > 0 && _requestbuff[index - 1] != '\r') ))
         Error::ThrowError("400");

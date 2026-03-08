@@ -56,8 +56,6 @@ bool GET::HandleResponse()
 		SendResponse();
 	else if (method == "GET")
 		GetMethod();
-	else
-		return true;
 
 	return del;
 }

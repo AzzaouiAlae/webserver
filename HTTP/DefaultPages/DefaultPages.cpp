@@ -19,6 +19,7 @@ void DefaultPages::InitErrorPages4xx()
 	StaticFile("408", PAGE_408_S, PAGE_408_E - PAGE_408_S);
 	StaticFile("409", PAGE_409_S, PAGE_409_E - PAGE_409_S);
 	StaticFile("413", PAGE_413_S, PAGE_413_E - PAGE_413_S);
+	StaticFile("414", PAGE_414_S, PAGE_414_E - PAGE_414_S);
 }
 
 void DefaultPages::InitErrorPages5xx()

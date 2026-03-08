@@ -318,6 +318,8 @@ void AMethod::SendRedirection()
 bool AMethod::IsMethodAllowed(const string &method)
 {
 	bool allowed = true;
+	if (method != "GET" && method != "POST" && method != "DELETE")
+		return false;
 	if (router->loc != NULL && router->loc->allowMethodExists)
 	{
 		vector<string>::iterator start = router->loc->allowMethods.begin();
