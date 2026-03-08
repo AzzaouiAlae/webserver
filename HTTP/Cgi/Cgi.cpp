@@ -71,19 +71,22 @@ void Cgi::_activeCgiPipe()
 	MulObj->ChangeToEpollOut(_out);
 }
 
-bool Cgi::isChildError()
+bool Cgi::isExeted()
 {
 	int status;
 	if (waitpid(_pid, &status, WNOHANG) != _pid)
 		return false;
-	
-    if (WIFEXITED(status)) {
-        return WEXITSTATUS(status);
-	}
-    else if (WIFSIGNALED(status) || WIFSTOPPED(status)) {
         return true;
-	}
-	return false;
+}
+
+void Cgi::resetTime()
+{
+	_time = Utility::CurrentTime();
+}
+
+long Cgi::getTime()
+{
+	return (_time);
 }
 
 void Cgi::createChild()
@@ -99,9 +102,13 @@ void Cgi::createChild()
 	{
 		Environment::CreateEnv(_req.getrequestenv());
 		dup2(_sok->pipefd[0], 0);
+		close(_pipefd[0]);
+		close(_sok->pipefd[0]);
 		dup2(_pipefd[1], 1);
-		execve(exec.c_str(), _exec, environ);
-		throw "500";
+		close(_pipefd[1]);
+		close(_sok->pipefd[1]);
+		execve(*_exec, _exec, environ);
+		exit(1);
 	}
 	_status = eSendBuffToPipe;
 	INFO() << "Successfully forked CGI child process.";
@@ -180,22 +187,25 @@ void Cgi::readfromcgi()
 		Error::ThrowError("504");
 	if (_cgireq.isComplete(_buf, len))
 		_status = eCreateResponseHeader;
-	CGILog(DDEBUG) << "readfromcgi(), read len: " << len;
+	
 }
 
 void Cgi::createCgiResponse()
 {
+	string body(_buf); 
 	_responseHeaderStr = "HTTP/1.1 " + getStatusCode() + " " + AMethod::getStatusMap()[getStatusCode()] + "\r\n";
 	map<string, string> &env = _cgireq.getrequestenv();
 	for(map<string,string>::iterator it = env.begin(); it != env.end(); it++)
 		_responseHeaderStr += it->first + ": " + it->second + "\r\n";
 	_responseHeaderStr += "\r\n";
-	_shouldSend = _responseHeaderStr.length() + _cgireq.getcontentlen();
+	_responseHeaderStr += body;
+	_shouldSend = _responseHeaderStr.length() + body.length();
 	_status = eWriteBuffToClient;
 }
 
 void Cgi::writeToClientSoket()
 {
+	string body(_buf);
 	if (_status == eWriteBuffToClient)
 	{
 		CGILog(DDEBUG) 
@@ -203,46 +213,26 @@ void Cgi::writeToClientSoket()
             << _responseHeaderStr.length() << " bytes, Sent so far: " << _responselen;
 		int len = 0;
 		void *buff = (void *)(_responseHeaderStr.c_str() + _responselen);
-		len = _sok->Send(buff, _responseHeaderStr.length() - _responselen);
+		len = _sok->Send(buff, _shouldSend - _responselen);
 		if (_sok->errorNumber == eWriteError)
 			Error::ThrowError("502");
 		_responselen += len;
-		CGILog(DDEBUG) << "Sent " << len << " header bytes. Total sent: " << _responselen;
-		if (_responselen == _responseHeaderStr.length())
-		{
-			INFO() << "Finished sending CGI headers. Transitioning to eWritePipeToClient.";
+		if (_responselen == _shouldSend)
 			_status = eWritePipeToClient;
 		}
 	}
 	else if (_status == eWritePipeToClient)
 	{
 		int len = 0;
-		if (_cgireq.getBody().size() + _responseHeaderStr.length() > _responselen)
-		{
-			int size = _responselen - _responseHeaderStr.length();
-			void *buff = (void *)(_cgireq.getBody().data() + size);
-			len = _sok->Send(buff, _cgireq.getBody().length() - size);
-			CGILog(DDEBUG) << "Writing CGI body from memory buffer. Attempting to send " << size << " bytes.";
+		if (!CanUsePipe0())
+			return;
+		len = _sok->SendPipeToSock(_pipefd[0], (_cgireq.getcontentlen() - body.length()) - _responselen);
 			if (_sok->errorNumber == eWriteError)
 				Error::ThrowError("502");
 			_responselen += len;
 			CGILog(DDEBUG) << "Sent " << len << " body bytes from buffer. Total sent: " << _responselen;
 		}
-		else if (CanUsePipe0())
-		{
-			len = _sok->SendPipeToSock(_pipefd[0], _shouldSend - _responselen);
-			if (_sok->errorNumber == eWriteError)
-				Error::ThrowError("502");
-			_responselen += len;
-			CGILog(DDEBUG) << "Sent " << len << " body bytes from pipe. Total sent: " << _responselen;
-		}
-	}
-	if (_shouldSend <= _responselen)
-	{
-		INFO() 
-			<< "CGI Response fully sent to client. Total bytes: " 
-			<< _responselen << " / " << _shouldSend 
-			<< ". Status set to eComplete.";
+	if ((_cgireq.getcontentlen() - body.length()) <= _responselen)
 		_status = eComplete;
 	}
 }
@@ -252,7 +242,9 @@ void Cgi::Handle()
 	CGILog(DDEBUG) << "Handle() called. Current status: " << _status;
 	if (_status == eFork)
 		createChild();
-	if (_status == eSendBuffToPipe || _status == eSendSockToPipe)
+	// if (isExeted() && _status < eCreateResponseHeader)
+	// 	Error::ThrowError("500");
+	if (_status < eReadCgiResponse)
 		writetocgi();
 	else if (_status == eReadCgiResponse)
 		readfromcgi();
@@ -260,8 +252,6 @@ void Cgi::Handle()
 		createCgiResponse();
 	else if (_status > eCreateResponseHeader)
 		writeToClientSoket();
-	if (isChildError())
-		Error::ThrowError("500");
 	if (_status != eComplete)
 		_activeCgiPipe();
 }

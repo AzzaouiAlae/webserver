@@ -50,7 +50,7 @@ class Cgi
     void writetocgi();
     void readfromcgi();
 	void _activeCgiPipe();
-	string resolveExcPath(const std::string &excName);
+    bool isExeted();
     Cgi();
 	size_t _shouldSend;
 public:
