@@ -25,6 +25,9 @@ public:
 		bool allowMethodExists;
 		vector<string> allowMethods;
 		bool isMaxBodySize;
+		int keepAliveTimeout;
+		int clientReadTimeout;
+		int cgiTimeout;
 
 		class Location
 		{
@@ -47,6 +50,7 @@ public:
 			bool allowMethodExists;
 			vector<string> allowMethods;
 			bool deleteFiles;
+			bool chunkedSend;
 		};
 		vector<Location> Locations;
 	};
@@ -55,17 +59,22 @@ public:
 	bool IsDuplicatedServer(int currServerIdx, const string& val, const string &srvName) ;
 	static Config::Server &GetServerName(vector<Config::Server> &srvs, const string &val);
 	static string GetErrorPath(Config::Server &srv, const string &code);
-	static int GetLocationIndex(Config::Server &srv, const string &path);
+	static int GetLocationIndex(Config::Server &srv, const string &path, string &scriptPath, string &pathInfo, const string &method);
 	static size_t GetMaxBodySize(vector<Config::Server> &srvs);
+	static int GetMaxClientReadTimeout(vector<Config::Server> &srvs);
 	static void FillConf();
 	static void parseListen(const string &str, string &port, string &host);
+	static void writeIndexFile();
+	static void createDir();
 private:
+	static bool _foundMethod;
 	static bool isPrefixMatch(const vector<string> &locPath, const vector<string> &reqPath);
-    static bool pathMatchesCgiExt(const string &path, const string &cgiPassExt);
-    static int findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, const string &path);
+	
+    static int findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, string &scriptPath, string &pathInfo, const string &method);
     static int findBestStaticMatch(Config::Server &srv, const vector<string> &reqPath);
 	static void fillServer(AST<string> &serverNode, Config::Server &srv);
 	static void fillLocation(AST<string> &locationNode, Config::Server::Location &loc);
 	static size_t parseByteSize(const string &raw);
+	static bool isAllowedMethod(const vector<string> &allowMethods, const string &method);
 };
 #include "Headers.hpp"

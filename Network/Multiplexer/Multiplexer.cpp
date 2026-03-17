@@ -2,12 +2,13 @@
 #include "SocketIO.hpp"
 #include "SessionManager.hpp"
 #include "HTTPContext.hpp"
+#include "Config.hpp"
 
 set<AFd *> Multiplexer::toDelete;
 
-Multiplexer* Multiplexer::currentMultiplexer;
+Multiplexer *Multiplexer::currentMultiplexer;
 
-Multiplexer* Multiplexer::GetCurrentMultiplexer()
+Multiplexer *Multiplexer::GetCurrentMultiplexer()
 {
 	return currentMultiplexer;
 }
@@ -29,7 +30,7 @@ void Multiplexer::epoolInit()
 	set<AFd *> &fds = Singleton::GetFds();
 	set<AFd *>::iterator it = fds.begin();
 	DDEBUG("Multiplexer") << "Registering " << fds.size() << " initial fd(s) as EPOLLIN.";
-	for(; it != fds.end(); it++)
+	for (; it != fds.end(); it++)
 	{
 		AddAsEpollIn(*it);
 	}
@@ -52,7 +53,6 @@ bool Multiplexer::AddAsEpoll(AFd *fd, int type)
 
 	ev.events = type;
 	ev.data.ptr = (void *)fd;
-	//INFO() << "AddAsEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
 	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, fd->GetFd(), &ev) == -1)
 	{
 		DDEBUG("Multiplexer") << "epoll_ctl ADD failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
@@ -69,13 +69,12 @@ bool Multiplexer::ChangeToEpoll(AFd *fd, int type)
 
 	ev.events = type;
 	ev.data.ptr = (void *)fd;
-	//INFO() << "ChangeToEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
 	if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev) == -1)
 	{
-		DDEBUG("Multiplexer") << "ChangeToEpoll: "<< type <<", failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
+		DDEBUG("Multiplexer") << "ChangeToEpoll: " << type << ", failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
 		return false;
 	}
-	DDEBUG("Multiplexer") << "ChangeToEpoll: "<< type <<", succeeded for fd=" << fd->GetFd() << ", type=" << fd->GetType();
+	DDEBUG("Multiplexer") << "ChangeToEpoll: " << type << ", succeeded for fd=" << fd->GetFd() << ", type=" << fd->GetType();
 	return true;
 }
 
@@ -99,7 +98,6 @@ bool Multiplexer::DeleteFromEpoll(AFd *fd)
 	count--;
 	bool res = epoll_ctl(epollFd, EPOLL_CTL_DEL, fd->GetFd(), NULL) == 0;
 	DDEBUG("Multiplexer") << "DeleteFromEpoll fd=" << fd->GetFd() << ", count=" << count << ", EPOLL_CTL_DEL: " << res;
-	//INFO() << "DeleteFromEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
 	return res;
 }
 
@@ -112,21 +110,22 @@ void Multiplexer::MainLoop()
 {
 	size_t Count = 0;
 	INFO() << "Server is ready, waiting for connections...";
-	while(true)
+	while (true)
 	{
-		int timeout = TIMEOUT * 1000; // 20 seconds 
+		int timeout = TIMEOUT * 1000;
+		if (toDelete.size() > 0)
+			timeout = 100;
 
 		epoll_event eventList[count];
 		int size = epoll_wait(epollFd, eventList, count, timeout);
 
-		for(int i = 0; i < size; i++) {
-			handelEpollPipes(eventList[i]);
-		}
-		for(int i = 0; i < size; i++) {
-			handelEpollSocket(eventList[i]);
+		for (int i = 0; i < size; i++)
+		{
+			handelEpollAfd(eventList[i]);
 		}
 		ClearToDelete();
-		if (Utility::SigInt) {
+		if (Utility::SigInt)
+		{
 			INFO() << "SIGINT received. Shutting down server.";
 			break;
 		}
@@ -134,37 +133,47 @@ void Multiplexer::MainLoop()
 	}
 }
 
+void Multiplexer::keepSocketAlive(AFd *fd)
+{
+	SocketIO *sockIO = static_cast<SocketIO *>(fd);
+	if (sockIO->isKeepAlive() && sockIO->GetTimeoutStatus() == eNotTimedOut)
+	{
+		int fd = sockIO->GetFd();
+		HTTPContext *ctx = static_cast<HTTPContext *>(sockIO->context);
+		vector<Config::Server> *servers = ctx->servers;
+		int keepAliveTimeout = Config::GetServerName(*servers, "").keepAliveTimeout;
+		SocketIO *newSockIO = new SocketIO(fd, keepAliveTimeout);
+		Singleton::GetFds().insert(newSockIO);
+		newSockIO->context = new HTTPContext(servers, Config::GetMaxBodySize(*servers), newSockIO);
+		if (currentMultiplexer)
+			currentMultiplexer->AddAsEpollIn(newSockIO);
+		DEBUG("Multiplexer") << "Keep-alive: recycled fd=" << fd << " with timeout=" << keepAliveTimeout;
+	}
+}
+
 void Multiplexer::DeleteItem(AFd *item)
 {
-	tcp_info info;
-    socklen_t len;
-	len = sizeof(info);
-
-	if (item->deleteNow || item->GetType() == "Socket")
-	{
-		delete item;
-		toDelete.erase(item);
-	}
-	else if (getsockopt(item->GetFd(), IPPROTO_TCP, TCP_INFO, &info, &len) == 0)
-	{
-		if (info.tcpi_unacked == 0) {
-			item->deleteNow = true;
-		}
-	}
+	SocketIO *sockIO;
+	sockIO = static_cast<SocketIO *>(item);
+	if (item->GetType() == "SocketIO" && Utility::SigInt == false &&
+		sockIO->isKeepAlive() && sockIO->GetTimeoutStatus() == eNotTimedOut)
+		keepSocketAlive(sockIO);
+	delete item;
+	toDelete.erase(item);
 }
 
 void Multiplexer::ClearToDelete()
 {
-	SocketIO::CloseSockFD(-1);
-	SocketIO::clearTimeout();
+	if (Utility::SigInt == false)
+		SocketIO::clearTimeout();
 
 	if (toDelete.size() == 0)
 		return;
 	DDEBUG("Multiplexer") << "ClearToDelete: " << toDelete.size() << " item(s) pending deletion.";
 	set<AFd *>::iterator it = toDelete.begin();
 	set<AFd *>::iterator next;
-	
-	for(; it != toDelete.end(); it = next)
+
+	for (; it != toDelete.end(); it = next)
 	{
 		next = it;
 		next++;
@@ -178,19 +187,17 @@ Multiplexer::~Multiplexer()
 	set<AFd *> &fds = Singleton::GetFds();
 	set<AFd *>::iterator it = fds.begin();
 
-	for(; it != fds.end(); it++)
+	for (; it != fds.end(); it++)
 	{
 		DEBUG("Multiplexer") << "Deleting fd=" << (*it)->GetFd() << ", type=" << (*it)->GetType();
 		toDelete.insert(*it);
 	}
-	DDEBUG("Multiplexer") << "Marked " << fds.size() << " fd(s) for deletion, closing epollFd=" << epollFd;
+	DEBUG("Multiplexer") << "Marked " << fds.size() << " fd(s) for deletion, closing epollFd=" << epollFd;
 	close(epollFd);
-	while (toDelete.size()) {
+	while (toDelete.size())
+	{
 		DEBUG("Multiplexer") << "Waiting for " << toDelete.size() << " item(s) to be deleted.";
 		ClearToDelete();
-	}
-	while (SocketIO::CloseSockFD(-1)) {
-		DEBUG("Multiplexer") << "Waiting for all socket fds to be closed.";
 	}
 	APipe::ClearPipePool();
 	SessionManager *p = SessionManager::getInstance();
@@ -203,9 +210,18 @@ Multiplexer::~Multiplexer()
 bool Multiplexer::ClearEventObj(epoll_event &event)
 {
 	AFd *obj = (AFd *)(event.data.ptr);
+	DDEBUG("Multiplexer") << "ClearEventObj() for fd=" << obj->GetFd() << ", event=" << event.events;
 
-	if (obj->MarkedToDelete || (event.events & (EPOLLIN | EPOLLOUT)) == 0)
+	if (obj->MarkedToDelete || (event.events & MYEPOLLERR))
 	{
+		if (event.events & MYEPOLLERR)
+		{
+			if (obj->GetType() == "SocketIO")
+			{
+				SocketIO *sockIO = static_cast<SocketIO *>(obj);
+				sockIO->setKeepAlive(false);
+			}
+		}
 		ClearObj(obj);
 		return true;
 	}
@@ -225,33 +241,27 @@ void Multiplexer::ClearObj(AFd *obj)
 void Multiplexer::handelEpollPipes(epoll_event &event)
 {
 	AFd *obj = (AFd *)(event.data.ptr);
-	
-	if (obj->GetType() == "Pipe") 
-	{
+
+	if (obj->GetType() == "Pipe") {
 		DDEBUG("Multiplexer") << "handelEpollPipes: handling Pipe fd=" << obj->GetFd();
 		obj->Handle();
 	}
 }
 
-void Multiplexer::handelEpollSocket(epoll_event &event)
+void Multiplexer::handelEpollAfd(epoll_event &event)
 {
 	AFd *obj = (AFd *)(event.data.ptr);
-	
-	if (obj->GetType() == "Pipe") 
-		return;
-	DDEBUG("Multiplexer") 
+
+	DDEBUG("Multiplexer")
 		<< "handelEpollSocket: fd=" << obj->GetFd()
 		<< ", type=" << obj->GetType()
 		<< ", events=" << event.events
 		<< ", cleanBody=" << obj->cleanBody;
-	if (obj->cleanBody && (event.events & EPOLLIN)) {
-		DDEBUG("Multiplexer") << "  -> cleanFd() for fd=" << obj->GetFd();
+
+	if (obj->cleanBody && (event.events & (MYEPOLLIN | EPOLLRDHUP)))
 		obj->cleanFd();
-	}
 	else if (ClearEventObj(event))
 		return;
-	else if (event.events & (EPOLLIN | EPOLLOUT)) {
-		DDEBUG("Multiplexer") << "  -> Handle() for fd=" << obj->GetFd();
+	else if (event.events & (MYEPOLLIN | MYEPOLLOUT))
 		obj->Handle();
-	}
 }

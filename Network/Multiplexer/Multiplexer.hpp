@@ -4,6 +4,10 @@
 
 class AFd;
 
+#define MYEPOLLIN (EPOLLRDBAND | EPOLLRDNORM | EPOLLPRI | EPOLLIN)
+#define MYEPOLLOUT (EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND)
+#define MYEPOLLERR (EPOLLERR | EPOLLHUP)
+
 class Multiplexer
 {
 	int epollFd;
@@ -31,5 +35,6 @@ public:
 	bool ClearEventObj(epoll_event &event);
 	static void ClearObj(AFd *obj);
 	void handelEpollPipes(epoll_event &event);
-	void handelEpollSocket(epoll_event &event);
+	void handelEpollAfd(epoll_event &event);
+	static void keepSocketAlive(AFd *item);
 };

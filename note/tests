@@ -1,0 +1,82 @@
+Transfer-Encoding: chunked
+Content-Type: test/file
+Accept-Encoding: gzip
+
+
+./sockTester.sh -h "POST //post_body HTTP/1.1\r
+Host: 127.0.0.1:1025\r
+User-Agent: Go-http-client/1.1\r
+Transfer-Encoding: chunked\r
+Content-Type: test/file\r
+Accept-Encoding: gzip\r
+\r
+65\r
+uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu\r
+0\r
+\r
+"
+
+./sockTester.sh -h "POST //post_body HTTP/1.1\r
+Host: 127.0.0.1:1025\r
+User-Agent: Go-http-client/1.1\r
+Transfer-Encoding: chunked\r
+Content-Type: test/file\r
+Accept-Encoding: gzip\r
+\r
+64\r
+yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\r
+0\r
+\r
+"
+
+./sockTester.sh "GET /directory/youpi.bla HTTP/1.1\r
+Host: 127.0.0.1:1025\r
+User-Agent: Go-http-client/1.1\r
+Accept-Encoding: gzip\r
+\r
+"
+
+./sockTester.sh "GET /directory/youpi.bla HTTP/1.1\r
+Host: 127.0.0.1:1025\r
+User-Agent: Go-http-client/1.1\r
+Accept-Encoding: gzip\r
+\r
+"
+
+
+./sockTester.sh "POST /directory/youpi.bla HTTP/1.1\r
+Host: 127.0.0.1:1025\r
+User-Agent: Go-http-client/1.1\r
+Accept-Encoding: gzip\r
+\r
+
+yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"
+
+
+./sockTester.sh -h "POST /directory/youpi.bla HTTP/1.1\r
+Host: 127.0.0.1:1025\r
+User-Agent: Go-http-client/1.1\r
+Transfer-Encoding: chunked\r
+Content-Type: test/file\r
+Accept-Encoding: gzip\r
+\r
+64\r
+yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\r
+0\r
+\r
+"
+
+
+./sockTester.sh -h "POST /directory/youpi.bla HTTP/1.1\r
+Host: 127.0.0.1:1025\r
+User-Agent: Go-http-client/1.1\r
+Transfer-Encoding: chunked\r
+Content-Type: test/file\r
+X-Secret-Header-For-Test: 1\r
+Accept-Encoding: gzip\r
+\r
+64\r
+yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\r
+0\r
+\r
+"

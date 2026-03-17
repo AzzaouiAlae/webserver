@@ -17,7 +17,10 @@
 class Environment
 {
     Environment();
+    static set<string> specialKeys;
+    static void initSpecialKeys();
     static void AddEnvPair(pair<string, string> pair);
+    static string formatCgiEnvKey(const string& key);
 public:
     static void CreateEnv(map<string, string> env);
 };

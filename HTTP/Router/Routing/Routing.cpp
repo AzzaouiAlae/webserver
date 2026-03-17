@@ -40,7 +40,7 @@ string Routing::CreatePath(Config::Server *srv)
 	
 	DEBUG("Routing") << "Creating path for request '" << request.getPath() << "' on server '" << srv->serverName << "'";
 	DDEBUG("Routing") << "  -> Host: '" << h << "', request method: '" << request.getMethod() << "'";
-	path.CreatePath(*srv, request.getPath());
+	path.CreatePath(*srv, request.getPath(), request.getMethod());
 	strPath = path.getFullPath();
 	DDEBUG("Routing") 
 		<< "  -> isCGI=" << path.isCGI()
@@ -50,5 +50,13 @@ string Routing::CreatePath(Config::Server *srv)
 		<< ", found=" << path.isFound();
 	DEBUG("Routing") << "Path resolved: '" << strPath << "'";
 	loc = path.getLocation();
+	if (path.isCGI()) {
+		string pathInfo;
+		if (path.getPathInfo() == "")
+			pathInfo = request.getPath();
+		else
+			pathInfo = path.getPathInfo();
+		request.setUrlPart(path.getCgiPath(), pathInfo);
+	}
 	return strPath;
 }

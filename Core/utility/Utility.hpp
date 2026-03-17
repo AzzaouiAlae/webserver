@@ -1,13 +1,14 @@
 #pragma once
 #include "Headers.hpp"
-
+ 
+#define BUF_SIZE 1024 * 1024 * 2
 
 class Utility
 {
 	static string toTrime;
 	static vector<char *> buffPoll;
-
 public:
+	static long maxFds;
 	static size_t GetBuffPollSize();
 	static char *GetBuffer();
 	static void ReleaseBuffer(char *buffer);
@@ -32,5 +33,7 @@ public:
 	static void parseBySep(vector<string> &parsedPath, string str, string sep);
 	static string lastToken(const string &str, char ch) ;
 	static size_t parseByteSize(const string &raw);
-
+	static void normalizePath(string &path);
+	static bool getAbsolute(string &path);
+	
 };

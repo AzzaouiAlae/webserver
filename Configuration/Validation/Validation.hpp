@@ -27,11 +27,15 @@ class Validation
 			bool clientMaxBodySize;
 			bool allowMethods;
 			bool errorPage;
+			bool keepAliveTimeout;
+			bool clientReadTimeout;
+			bool cgiTimeout;
 
 			ServerSeen() : listen(false), serverName(false), root(false),
 						   index(false), autoindex(false), returnDir(false),
 						   clientMaxBodySize(false), allowMethods(false),
-						   errorPage(false) {}
+						   errorPage(false), keepAliveTimeout(false),
+						   clientReadTimeout(false), cgiTimeout(false) {}
 		};
 
 		struct LocationSeen
@@ -45,12 +49,13 @@ class Validation
 			bool cgiPass;
 			bool bodyInFile;
 			bool deleteFiles;
+			bool chunkedSend;
 			ReturnKind returnKind;
 
 			LocationSeen() : root(false), index(false), autoindex(false),
 							 returnDir(false), clientMaxBodySize(false),
 							 allowMethods(false), cgiPass(false),
-							 bodyInFile(false), deleteFiles(false), returnKind(RETURN_NONE) {}
+							 bodyInFile(false), deleteFiles(false), chunkedSend(false), returnKind(RETURN_NONE) {}
 		};
 
 		// --- top-level validators ---
@@ -67,12 +72,14 @@ class Validation
 		void validateClientMaxBody(AST<string> &node, bool &seen);
 		void validateAllowMethods(AST<string> &node, bool &seen);
 		void validateErrorPage(AST<string> &node, bool &seen);
+		void validateTimeout(AST<string> &node, bool &seen, const string &name);
 		
 
 		// --- directive validators (location-only scope) ---
 		void validateCgiPass(AST<string> &node, LocationSeen &seen);
 		void validateBodyInFile(AST<string> &node, LocationSeen &seen);
 		void validateDeleteFiles(AST<string> &node, LocationSeen &seen);
+		void validateChunkedSend(AST<string> &node, LocationSeen &seen);
 		void validateReturn(AST<string> &node, LocationSeen &seen);
 
 		// --- helpers ---

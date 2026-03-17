@@ -39,22 +39,16 @@ bool GET::HandleResponse()
 	}
 	else if (!readyToSend && !IsMethodAllowed(method))
 	{
-		if (method == "GET" || method == "POST" || method == "DELETE")
-		{
-			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", method '" << method << "' not allowed, sending 405.";
+		if (method == "GET" || method == "POST" || method == "DELETE" || method == "HEAD")
 			HandelErrorPages("405");
-		}
 		else 
-		{
-			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", method '" << method << "' not allowed, sending 405.";
 			HandelErrorPages("501");
-		}
 	}
 	if (sendListFiles)
 		SendListFilesResponse();
 	else if (readyToSend)
 		SendResponse();
-	else if (method == "GET")
+	else if (method == "GET" || method == "HEAD")
 		GetMethod();
 
 	return del;
@@ -70,19 +64,8 @@ void GET::GetMethod()
 		<< ", isDir=" << router->GetPath().isDirectory()
 		<< ", isFile=" << router->GetPath().isFile()
 		<< ", isCGI=" << router->GetPath().isCGI();
-	if (router->GetPath().isRedirection())
+	if (router->GetPath().isRedirection() || router->GetPath().isRedirectionToDir())
 		SendRedirection();
-	else if (router->GetPath().emptyRoot()) {
-		if (router->GetRequest().getPath() == "/") {
-			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", serving static index (empty root).";
-			GetStaticIndex();
-		}
-		else
-		{
-			DDEBUG("GET") << "Socket fd: " << sock->GetFd() << ", empty root and path != '/', sending 404.";
-			HandelErrorPages("404");
-		}
-	}
 	else if (router->GetPath().isFound() == false)
 		HandelErrorPages("404");
 	else if (router->GetPath().hasPermission() == false)
@@ -108,12 +91,16 @@ void GET::OpenFile(const string &path)
 	fileFd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
 }
 
+
+
 void GET::PrepareFileResponse()
 {
 	bodySize = Utility::getFileSize(filename);
 	ShouldSend = bodySize;
 	code = "200";
 	CreateResponseHeader();
+	if ("HEAD" == router->GetRequest().getMethod())
+		ShouldSend = 0;
 	ShouldSend += responseHeaderStr.length();
 	readyToSend = true;
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
@@ -135,6 +122,8 @@ void GET::GetStaticIndex()
 	ShouldSend = bodySize;
 	filename = ".html";
 	CreateResponseHeader();
+	if ("HEAD" == router->GetRequest().getMethod())
+		ShouldSend = 0;
 	ShouldSend += responseHeaderStr.length();
 	readyToSend = true;
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
@@ -220,6 +209,8 @@ void GET::CreateListFilesResponse()
 
 	bodySize = ShouldSend;
 	CreateResponseHeader();
+	if ("HEAD" == router->GetRequest().getMethod())
+		ShouldSend = 0;
 	ShouldSend += responseHeaderStr.length();
 
 	sendListFiles = 1;

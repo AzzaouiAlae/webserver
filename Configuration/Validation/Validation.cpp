@@ -63,6 +63,12 @@ void Validation::validateServer(AST<string> &serverNode)
 			validateAllowMethods(node, seen.allowMethods);
 		else if (directive == "error_page")
 			validateErrorPage(node, seen.errorPage);
+		else if (directive == "keep_alive_timeout")
+			validateTimeout(node, seen.keepAliveTimeout, "keep_alive_timeout");
+		else if (directive == "client_read_timeout")
+			validateTimeout(node, seen.clientReadTimeout, "client_read_timeout");
+		else if (directive == "cgi_timeout")
+			validateTimeout(node, seen.cgiTimeout, "cgi_timeout");
 		else if (directive == "location")
 		{
 			if (node.GetArguments().empty())
@@ -79,10 +85,6 @@ void Validation::validateServer(AST<string> &serverNode)
 			Error::ThrowError("Config Error: unknown directive '" + directive + "' in server block");
 	}
 
-	if (!seen.listen)
-		Error::ThrowError("Config Error: server block is missing required 'listen' directive");
-	if (!seen.serverName)
-		Error::ThrowError("Config Error: server block is missing required 'server_name' directive");
 	DEBUG("Validation") << "  'server' block validation passed.";
 }
 
@@ -117,6 +119,8 @@ void Validation::validateLocation(AST<string> &locationNode, LocationSeen &seen)
 			validateBodyInFile(node, seen);
 		else if (directive == "delete_files")
 			validateDeleteFiles(node, seen);
+		else if (directive == "chunked_send")
+			validateChunkedSend(node, seen);
 		else
 			Error::ThrowError("Config Error: unknown directive '" + directive + "' in location block");
 	}
@@ -309,6 +313,21 @@ void Validation::validateErrorPage(AST<string> &node, bool &seen)
 						  << ", page=" << node.GetArguments()[1];
 }
 
+// --- timeout ---
+void Validation::validateTimeout(AST<string> &node, bool &seen, const string &name)
+{
+	if (seen)
+		Error::ThrowError("Config Error: duplicate '" + name + "' in server block");
+	seen = true;
+	checkArgCount(node, 1, 1, name);
+
+	long val = parseNumber(node.GetArguments()[0]);
+	if (val <= 0)
+		Error::ThrowError("Config Error: '" + name + "' must be a positive number — got '" +
+						  node.GetArguments()[0] + "'");
+	DDEBUG("Validation") << "    '" << name << "' validated: " << node.GetArguments()[0];
+}
+
 // --- cgi_pass ---
 void Validation::validateCgiPass(AST<string> &node, LocationSeen &seen)
 {
@@ -369,6 +388,20 @@ void Validation::validateDeleteFiles(AST<string> &node, LocationSeen &seen)
 	DDEBUG("Validation") << "    'delete_files' validated: " << val;
 }
 
+void Validation::validateChunkedSend(AST<string> &node, LocationSeen &seen)
+{
+	if (seen.chunkedSend)
+		Error::ThrowError("Config Error: duplicate 'chunked_send' in location block");
+
+	seen.chunkedSend = true;
+	checkArgCount(node, 1, 1, "chunked_send");
+
+	const string &val = node.GetArguments()[0];
+	if (val != "on" && val != "off")
+		Error::ThrowError("Config Error: chunked_send must be 'on' or 'off' — got '" + val + "'");
+	DDEBUG("Validation") << "    'chunked_send' validated: " << val;
+}
+
 ReturnKind Validation::classifyReturnCode(long code)
 {
     if (code == 200) 
@@ -403,7 +436,7 @@ bool Validation::isByteSizeUnit(char c)
 
 bool Validation::isValidMethod(const string &m)
 {
-	return (m == "GET" || m == "POST" || m == "DELETE");
+	return (m == "GET" || m == "POST" || m == "DELETE" || m == "HEAD");
 }
 
 static string intToStr(int n)

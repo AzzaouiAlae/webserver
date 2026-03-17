@@ -8,13 +8,6 @@ AST<string>& Singleton::GetASTroot()
     return ASTroot;
 }
 
-vector<int>& Singleton::GetSockets()
-{
-	static vector<int> sockts;
-
-	return sockts;
-}
-
 map<string, string> &Singleton::GetMime()
 {
 	static map<string, string> mime;

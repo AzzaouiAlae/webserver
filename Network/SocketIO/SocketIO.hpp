@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 #include "Headers.hpp"
 #include "Routing.hpp"
@@ -7,13 +7,15 @@
 
 using namespace std;
 
-enum IOState {
+enum IOState
+{
 	ePipe1 = 1,
 	ePipe0 = 2,
 	eSocket = 4,
 };
 
-enum IOError {
+enum IOError
+{
 	eSuccess = 0,
 	eReadError = 1,
 	eWriteError = 2,
@@ -22,7 +24,8 @@ enum IOError {
 	ePipeCreateError = 5,
 };
 
-enum TimeoutStatus {
+enum TimeoutStatus
+{
 	eNotTimedOut = 0,
 	eTimedOut = 1,
 	eMarkedForDeletion = 2,
@@ -30,7 +33,8 @@ enum TimeoutStatus {
 
 #define KBYTE 1024 * 64
 
-class SocketIO : public ISocket {
+class SocketIO : public ISocket
+{
 	static vector<pair<int, int> > pipePool;
 	bool pipeInitialized;
 	int pendingInPipe;
@@ -39,34 +43,50 @@ class SocketIO : public ISocket {
 	char *buff;
 	time_t lastTime;
 	int _timeoutStatus;
+	int _timeout;
+	bool _isKeepAlive;
+
 public:
-	int GetTimeoutStatus() const;
+	int GetTimeoutStatus();
 	bool isTimeOut();
 	void UpdateTime();
 	time_t GetEndTime() const;
 	static void clearTimeout();
-	struct CompareTimeout {
-		bool operator()(const SocketIO *a, const SocketIO *b) const ;
-	};
+	static void closeTheOldestSocket();
+	bool closeConnection;
 private:
-	static priority_queue<SocketIO*, vector<SocketIO*>, SocketIO::CompareTimeout> timeoutList;
+	struct TimeoutEntry
+	{
+		SocketIO *sock;
+		time_t snapshotTime;
+
+		bool operator>(const TimeoutEntry &other) const
+		{
+			return snapshotTime > other.snapshotTime;
+		}
+	};
+	static priority_queue<TimeoutEntry, vector<TimeoutEntry>, greater<TimeoutEntry> > timeoutList;
+	bool clearPipe();
+
 public:
 	void SetStateByFd(int fd);
 	bool CanUsePipe0();
 	bool CanUsePipe1();
 	int pipefd[2];
-	
 	int Send(void *buff, int size);
 	int SendBuffToPipe(void *buff, int size, bool usePending);
-	int SendPipeToSock();
 	int SendPipeToSock(int inputfd, size_t size = KBYTE);
 	int SendSocketToPipe(int size, bool usePending);
 	int SocketToFile(int fileFD, int size);
+	int PipeToFile(int fileFD, int inputfd, int size);
 	ssize_t FileToSocket(int fileFd, int size);
-	static int CloseSockFD(int fd);
-	
 	int errorNumber;
-	SocketIO(int fd);
-    ~SocketIO();
+	SocketIO(int fd, int timeout = TIMEOUT);
+	void setKeepAlive(bool val);
+	bool isKeepAlive() const;
+	void setTimeout(int timeout);
+	int getTimeout() const;
+	~SocketIO();
 	void Handle();
+	void setupPipes();
 };

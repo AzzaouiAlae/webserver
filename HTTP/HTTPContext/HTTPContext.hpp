@@ -5,7 +5,6 @@
 #include "SocketPipe.hpp"
 #include "Response.hpp"
 
-#define BUF_SIZE 1024 * 64
 #define SAFE_MARGIN 1024 * 64
 #define HTTPLog(lvl) lvl("HTTPContext") << logPrefix() << "HTTPContext, "
 
@@ -38,5 +37,4 @@ public:
 	void MarkedSocketToFree();
 	void setMaxBodySize();
 	Routing &GetRouter() { return router; }
-
 };

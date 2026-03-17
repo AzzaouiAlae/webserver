@@ -2,6 +2,13 @@
 
 #include "Headers.hpp"
 
+struct originalPath {
+    string path;
+    bool isDir;
+    bool isFile;
+    bool found;
+};
+
 class Path {
     private:
         string      _fullPath;
@@ -14,6 +21,7 @@ class Path {
         bool        _isCGI;
         bool        _found;
 		bool        _isRedir;
+        bool        _isFolderRedir;
 		bool        _hasPermission;
         string      _redirCode;
         string      _redirPath;
@@ -29,12 +37,12 @@ class Path {
         void _handleDirectoryIndex(Config::Server &srv);
 		void _handleRedirection(Config::Server &srv);
         int         matchedLocationIndex; 
-
+        void _handleFolderRedirection();
     public:
         Path();
         ~Path();
-
-        void        CreatePath(Config::Server &srv, const string &reqUrl);
+        originalPath OriginalPath;
+        void        CreatePath(Config::Server &srv, const string &reqUrl, const string &method);
 
 		static string decodePath(const string& path);
 		static string encodePath(const string& path);
@@ -44,6 +52,7 @@ class Path {
         string      getCgiPath() const;
         bool        isCGI() const;
         bool        isDirectory() const;
+        bool        isRedirectionToDir() const;
         bool        isFile() const;
         bool        isFound() const;
 		bool 		emptyRoot() const;

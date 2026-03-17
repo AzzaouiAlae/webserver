@@ -51,10 +51,13 @@ protected:
 	void addCookies(Session &session);
 	
 	void HandelCGI();
+	void addAlowMethodsHeader();
+	void addCookiesHeader();
+	
 public:
+	
 	AMethod(SocketIO *sock, Routing *router);
 	virtual ~AMethod();
-
 	virtual bool HandleResponse() = 0;
 	void   HandelErrorPages(const string &err);
 	static map<string, string>& getStatusMap();

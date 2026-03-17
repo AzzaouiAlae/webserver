@@ -32,6 +32,22 @@ protected:
     bool _Thereisbody;
     int  _headersize;
     void parseCookies();
+
+    // Chunked transfer encoding state
+    bool _isChunked;
+    bool _chunkedComplete;
+    enum eChunkState { eChunkSize, eChunkData, eChunkTrailer, eChunkDone };
+    eChunkState _chunkState;
+    size_t _currentChunkSize;
+    size_t _currentChunkRead;
+    string _decodedBody;
+    bool processChunkedData();
+    
+
+    // Multipart form-data state
+    bool _isMultipart;
+    string _boundary;
+
 public:
     virtual bool getFullLine(string &line) = 0;
     virtual void parseHeaderLine(const string &line) = 0;
@@ -43,11 +59,14 @@ public:
     bool 		        getthereisbody();
     size_t		        getcontentlen();
     string              &getBody();
-    
     void initSession();
     Session* getSession();
     string getCookie(const string &name);
-
+    bool isChunkedTransferEncoding();
+    bool isMultipartFormData();
+    string getMultipartBoundary();
+    bool isChunkedComplete() const;
+    string &getDecodedBody();
 };
 
 #include "Headers.hpp"

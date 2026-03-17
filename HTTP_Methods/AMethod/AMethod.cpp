@@ -28,6 +28,11 @@ void AMethod::ResolvePath()
 	if (pathResolved == false)
 	{
 		filename = router->CreatePath(router->srv);
+		if (router->GetRequest().getMethod() != "GET" && 
+			router->GetRequest().getMethod() != "HEAD")
+		{
+			filename = router->GetPath().OriginalPath.path;
+		}
 		pathResolved = true;
 		DEBUG("AMethod") << "Socket fd: " << sock->GetFd()
 						 << " " << router->GetRequest().getMethod()
@@ -94,6 +99,51 @@ string AMethod::ResolveMimeType()
 	return Singleton::GetMime()[Utility::GetFileExtension(filename)];
 }
 
+void AMethod::addAlowMethodsHeader()
+{
+	if (code == "405")
+	{
+		responseHeader
+			<< "Allow: ";
+		if (router->loc != NULL && router->loc->allowMethodExists)
+		{
+			responseHeader << router->loc->allowMethods[0];
+			for (size_t i = 1; i < router->loc->allowMethods.size(); i++) {
+				if (router->loc->allowMethods[i] == "POST" && router->GetRequest().getMethod() == "POST")
+					continue;
+				responseHeader << ", " << router->loc->allowMethods[i];
+			}
+		}
+		else if (router->srv != NULL && router->srv->allowMethodExists)
+		{
+			responseHeader << router->srv->allowMethods[0];
+			for (size_t i = 1; i < router->srv->allowMethods.size(); i++) {
+				if (router->srv->allowMethods[i] == "POST" && router->GetRequest().getMethod() == "POST")
+					continue;
+				responseHeader << ", " << router->srv->allowMethods[i];
+			}
+		}
+		else
+		{
+			if (router->GetRequest().getMethod() == "POST")
+				responseHeader << "GET, DELETE, HEAD";
+			else
+				responseHeader << "GET, POST, DELETE, HEAD";
+		}
+		responseHeader << "\r\n";
+	}
+}
+
+void AMethod::addCookiesHeader()
+{
+	Session *session = NULL;
+	session = router->GetRequest().getSession();
+	if (session != NULL)
+	{
+		addCookies(*session);
+	}
+}
+
 void AMethod::CreateResponseHeader()
 {
 	responseHeader.str("");
@@ -103,25 +153,19 @@ void AMethod::CreateResponseHeader()
 		<< "Date: " << CreateDate() << "\r\n"
 		<< "Server: " << ResolveServerName() << "\r\n"
 		<< "Content-Type: " << ResolveMimeType() << "\r\n"
-		<< "Content-Length: " << bodySize << "\r\n"
-		<< "Connection: close\r\n";
-	Session* session = NULL;
-	session = router->GetRequest().getSession();
-	if (session != NULL) {
-		addCookies(*session);
-	}
+		<< "Content-Length: " << bodySize << "\r\n";
+	if (sock->closeConnection)
+		responseHeader << "Connection: close\r\n";
+	addAlowMethodsHeader();
+	addCookiesHeader();
 	responseHeader
 		<< "X-Content-Type-Options: nosniff\r\n"
 		<< "\r\n";
 
 	responseHeaderStr = responseHeader.str();
-	DDEBUG("AMethod")
-		<< "Socket fd: " << sock->GetFd()
-		<< ", CreateResponseHeader: code=" << code
-		<< ", status=" << statusMap[code]
-		<< ", Content-Length=" << bodySize
-		<< ", Content-Type=" << ResolveMimeType()
-		<< "\n" << responseHeaderStr;
+	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd()
+					  << ", CreateResponseHeader:\n"
+					  << responseHeaderStr;
 }
 
 void AMethod::SendDefaultRespense(const string &code)
@@ -145,11 +189,12 @@ void AMethod::CreateRedirectionHeader(const string &redirCode, const string &red
 		<< "HTTP/1.1 " << redirCode << " " << statusMap[redirCode] << "\r\n"
 		<< "Location: " << redirLocation << "\r\n"
 		<< "Date: " << CreateDate() << "\r\n"
-		<< "Content-Length: 0\r\n"
-		<< "Connection: close\r\n";
-	Session* session = NULL;
+		<< "Content-Length: 0\r\n";
+	// << "Connection: close\r\n";
+	Session *session = NULL;
 	session = router->GetRequest().getSession();
-	if (session != NULL) {
+	if (session != NULL)
+	{
 		addCookies(*session);
 	}
 	responseHeader
@@ -184,6 +229,7 @@ void AMethod::LoadStaticErrorFile(const string &errorCode)
 
 void AMethod::HandelErrorPages(const string &err)
 {
+	sock->closeConnection = true;
 	ERR() << "Client " << Socket::getRemoteName(sock->GetFd()) << " error " << err << " " << statusMap[err];
 	DEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", AMethod::HandelErrorPages, code=" << err;
 	code = err;
@@ -200,7 +246,7 @@ void AMethod::HandelErrorPages(const string &err)
 			DDEBUG("AMethod") << "  -> Failed to open error file, loading static fallback.";
 			LoadStaticErrorFile(err);
 		}
-		else 
+		else
 		{
 			bodySize = Utility::getFileSize(filename);
 			ShouldSend = bodySize;
@@ -213,6 +259,8 @@ void AMethod::HandelErrorPages(const string &err)
 		LoadStaticErrorFile(err);
 	}
 	CreateResponseHeader();
+	if ("HEAD" == router->GetRequest().getMethod())
+		ShouldSend = 0;
 	ShouldSend += responseHeaderStr.length();
 	readyToSend = true;
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
@@ -250,7 +298,8 @@ void AMethod::SendResponse()
 		size = sock->FileToSocket(fileFd, ShouldSend - sended);
 	}
 
-	if (size > 0) {
+	if (size > 0)
+	{
 		sended += size;
 		sock->UpdateTime();
 	}
@@ -270,15 +319,7 @@ void AMethod::SendResponse()
 void AMethod::HandelCGI()
 {
 	if (_cgi == NULL)
-	{
-		char *args[] = 
-		{
-			(char *)router->GetPath().getLocation()->cgiPassPath.c_str(), 
-			(char *)router->GetPath().getFullPath().c_str(),
-			NULL
-		};
-		_cgi = new Cgi(router->GetRequest(), args, sock);
-	}
+		_cgi = new Cgi(router, sock);
 	try
 	{
 		_cgi->Handle();
@@ -288,14 +329,14 @@ void AMethod::HandelCGI()
 			sock->cleanBody = true;
 		}
 	}
-	catch(exception& e) {
+	catch (exception &e)
+	{
 		HandelErrorPages(e.what());
 	}
 }
 
 void _cgiResponse()
 {
-	
 }
 
 void AMethod::SendRedirection()
@@ -308,7 +349,7 @@ void AMethod::SendRedirection()
 					  << ", SendRedirection: code=" << redirCode << ", location='" << redirLoc << "'";
 
 	CreateRedirectionHeader(redirCode, redirLoc);
-
+	DDEBUG("AMethod") << "\n" << responseHeaderStr;
 	ShouldSend = responseHeaderStr.length();
 	readyToSend = true;
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
@@ -318,23 +359,24 @@ void AMethod::SendRedirection()
 bool AMethod::IsMethodAllowed(const string &method)
 {
 	bool allowed = true;
-	if (method != "GET" && method != "POST" && method != "DELETE")
+	if (method != "GET" && method != "POST" && method != "DELETE" && method != "HEAD")
 		return false;
+	vector<string>::iterator start, end;
 	if (router->loc != NULL && router->loc->allowMethodExists)
 	{
-		vector<string>::iterator start = router->loc->allowMethods.begin();
-		vector<string>::iterator end = router->loc->allowMethods.end();
-		allowed = (find(start, end, method) != end);
-		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
+		start = router->loc->allowMethods.begin();
+		end = router->loc->allowMethods.end();
 	}
 	else if (router->srv != NULL && router->srv->allowMethodExists)
 	{
-		vector<string>::iterator start = router->srv->allowMethods.begin();
-		vector<string>::iterator end = router->srv->allowMethods.end();
-		
-		allowed = (find(start, end, method) != end);
-		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
+		start = router->srv->allowMethods.begin();
+		end = router->srv->allowMethods.end();
 	}
+	else
+		return true;
+	allowed = (find(start, end, method) != end);
+	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
+
 	return allowed;
 }
 
@@ -402,9 +444,9 @@ void AMethod::addCookies(Session &session)
 		if (it->first != "Max-Age")
 		{
 
-			responseHeader << "Set-Cookie:" << " " << it->first << "=" << it->second << ";" << " Max-Age=" << SESSION_TIMEOUT << ";" << " Path=" << path  << "\r\n";
-		DDEBUG("AddCookies") << "Set-Cookie:" << " " << it->first << "=" << it->second << ";" << " Max-Age=" << SESSION_TIMEOUT << ";" << " Path=" << path  << "\r\n";
+			responseHeader << "Set-Cookie:" << " " << it->first << "=" << it->second << ";" << " Max-Age=" << SESSION_TIMEOUT << ";" << " Path=" << path << "\r\n";
+			DDEBUG("AddCookies") << "Set-Cookie:" << " " << it->first << "=" << it->second << ";" << " Max-Age=" << SESSION_TIMEOUT << ";" << " Path=" << path << "\r\n";
 		}
 	}
 }
-map<string, string>& AMethod::getStatusMap(){return (statusMap);}
+map<string, string> &AMethod::getStatusMap() { return (statusMap); }

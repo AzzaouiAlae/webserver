@@ -26,7 +26,6 @@ class GET : public AMethod
 	void SendListFilesResponse();
 
 	void GetMethod();
-
 public:
 	GET(SocketIO *sock, Routing *router);
 	~GET();

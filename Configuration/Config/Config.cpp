@@ -8,6 +8,10 @@ Config::Server::Server()
 	allowMethodExists = false;
 	isMaxBodySize = false;
 	autoindex = -1;
+	keepAliveTimeout = 60 * USEC;
+	clientReadTimeout = 30 * USEC;
+	cgiTimeout = 10 * USEC;
+	clientMaxBodySize = UINT64_MAX;
 }
 
 Config::Server::Location::Location()
@@ -16,8 +20,10 @@ Config::Server::Location::Location()
 	clientMaxBodySize = 0;
 	isMaxBodySize = false;
 	deleteFiles = false;
+	chunkedSend = true;
 	autoindex = -1;
 	clientBodyInFileOnly = false;
+	clientMaxBodySize = UINT64_MAX;
 }
 
 bool Config::IsDuplicatedServer(int currServerIdx, const string &val, const string &srvName)
@@ -81,18 +87,33 @@ size_t Config::GetMaxBodySize(vector<Config::Server> &srvs)
 	size_t size = 0;
 	for (int i = 0; i < (int)srvs.size(); i++)
 	{
-		if (size < srvs[i].clientMaxBodySize) {
+		if (size < srvs[i].clientMaxBodySize)
+		{
 			size = srvs[i].clientMaxBodySize;
 		}
-		vector < Config::Server::Location> &loc = srvs[i].Locations;
-		for(int j = 0; j < (int)loc.size(); j++)
+		vector<Config::Server::Location> &loc = srvs[i].Locations;
+		for (int j = 0; j < (int)loc.size(); j++)
 		{
-			if (size < loc[j].clientMaxBodySize) {
+			if (size < loc[j].clientMaxBodySize)
+			{
 				size = loc[j].clientMaxBodySize;
 			}
 		}
 	}
 	return size;
+}
+
+int Config::GetMaxClientReadTimeout(vector<Config::Server> &srvs)
+{
+	int maxTimeout = 0;
+	for (int i = 0; i < (int)srvs.size(); i++)
+	{
+		if (srvs[i].clientReadTimeout > maxTimeout)
+			maxTimeout = srvs[i].clientReadTimeout;
+	}
+	if (maxTimeout == 0)
+		maxTimeout = 30;
+	return maxTimeout;
 }
 
 string Config::GetErrorPath(Config::Server &srv, const string &code)
@@ -107,79 +128,143 @@ string Config::GetErrorPath(Config::Server &srv, const string &code)
 
 bool Config::isPrefixMatch(const vector<string> &locPath, const vector<string> &reqPath)
 {
-    if (locPath.size() > reqPath.size())
-        return false;
-    for (size_t j = 0; j < locPath.size(); ++j)
-    {
-        if (locPath[j] != reqPath[j])
-            return false;
-    }
-    return true;
+	if (locPath.size() > reqPath.size())
+		return false;
+	for (size_t j = 0; j < locPath.size(); ++j)
+	{
+		if (locPath[j] != reqPath[j])
+			return false;
+	}
+	return true;
 }
 
-int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, const string &path)
+bool Config::isAllowedMethod(const vector<string> &allowMethods, const string &method)
 {
-    int    bestIndex = -1;
-    size_t maxLength = 0;
-	string pathExt = Utility::GetFileExtension(path);
+	for (size_t i = 0; i < allowMethods.size(); ++i)
+	{
+		if (allowMethods[i] == method)
+			return true;
+	}
+	return false;
+}
 
-	if (pathExt.empty())
-		return -1;
-	pathExt = '.' + pathExt;
-    for (size_t i = 0; i < srv.Locations.size(); ++i)
-    {
-        const Config::Server::Location &loc = srv.Locations[i];
-        if (loc.cgiPassExt.empty())
-            continue;
-        if (!isPrefixMatch(loc.parsedPath, reqPath))
-            continue;
-        if (loc.cgiPassExt != pathExt)
-            continue;
-        if (loc.parsedPath.size() > maxLength || bestIndex == -1)
-        {
-            maxLength = loc.parsedPath.size();
-            bestIndex = (int)i;
-        }
-    }
-    return bestIndex;
+int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, string &scriptPath, string &pathInfo, const string &method)
+{
+	int bestIndex = -1;
+	_foundMethod = false;
+	size_t maxLength = 0;
+	string script;
+	size_t idx = -1;
+	size_t i;
+	for (i = 0; i < reqPath.size(); i++)
+	{
+		string pathExt = Utility::GetFileExtension(reqPath[i]);
+		if (i != 0)
+			script += "/" + reqPath[i];
+		else
+			script = reqPath[i];
+		if (pathExt.empty())
+			continue;
+		pathExt = '.' + pathExt;
+		for (size_t j = 0; j < srv.Locations.size(); ++j)
+		{
+			const Config::Server::Location &loc = srv.Locations[j];
+			if (loc.cgiPassExt.empty())
+				continue;
+			if (!isPrefixMatch(loc.parsedPath, reqPath))
+				continue;
+			if (loc.cgiPassExt != pathExt)
+				continue;
+			bool allowed = isAllowedMethod(loc.allowMethods, method);
+			if (!allowed && _foundMethod)
+					continue;
+			if (loc.parsedPath.size() > maxLength || bestIndex == -1 || (allowed && !_foundMethod))
+			{
+				maxLength = loc.parsedPath.size();
+				bestIndex = (int)j;
+				scriptPath = script;
+				idx = i;
+				if (allowed)
+					_foundMethod = true;
+			}
+		}
+		break;
+	}
+	if (bestIndex != -1)
+	{
+		for (size_t k = idx + 1; k < reqPath.size(); k++)
+		{
+			if (k != idx + 1)
+				pathInfo += "/" + reqPath[k];
+			else
+				pathInfo = reqPath[k];
+		}
+	}
+	return bestIndex;
 }
 
 int Config::findBestStaticMatch(Config::Server &srv, const vector<string> &reqPath)
 {
-    int    bestIndex = -1;
-    size_t maxLength = 0;
+	int bestIndex = -1;
+	size_t maxLength = 0;
 
-    for (size_t i = 0; i < srv.Locations.size(); ++i)
-    {
-        const Config::Server::Location &loc = srv.Locations[i];
-        if (!loc.cgiPassExt.empty())
-            continue;
-        if (!isPrefixMatch(loc.parsedPath, reqPath))
-            continue;
-        if (loc.parsedPath.size() > maxLength || bestIndex == -1)
-        {
-            maxLength = loc.parsedPath.size();
-            bestIndex = (int)i;
-        }
-    }
-    return bestIndex;
+	for (size_t i = 0; i < srv.Locations.size(); ++i)
+	{
+		const Config::Server::Location &loc = srv.Locations[i];
+		if (!loc.cgiPassExt.empty())
+			continue;
+		if (!isPrefixMatch(loc.parsedPath, reqPath))
+			continue;
+		if (loc.parsedPath.size() > maxLength || bestIndex == -1)
+		{
+			maxLength = loc.parsedPath.size();
+			bestIndex = (int)i;
+		}
+	}
+	return bestIndex;
 }
 
-int Config::GetLocationIndex(Config::Server &srv, const string &path)
-{
-    vector<string> reqPath;
-    Utility::parseBySep(reqPath, path, "/");
+bool Config::_foundMethod;
 
-    int bestCgiIndex = findBestCgiMatch(srv, reqPath, path);
-    if (bestCgiIndex != -1)
+int Config::GetLocationIndex(Config::Server &srv, const string &path, string &scriptPath, string &pathInfo, const string &method)
+{
+	vector<string> reqPath;
+	Utility::parseBySep(reqPath, path, "/");
+
+	int bestCgiIndex = findBestCgiMatch(srv, reqPath, scriptPath, pathInfo, method);
+	if (bestCgiIndex != -1 && _foundMethod)
 	{
-        DDEBUG("Config") << "Location match for '" << path << "': CGI location index " << bestCgiIndex;
-        return bestCgiIndex;
+		DDEBUG("Config") << "Location match for '" << path << "': CGI location index " << bestCgiIndex;
+		return bestCgiIndex;
 	}
 
-    int bestStaticIndex = findBestStaticMatch(srv, reqPath);
-    DDEBUG("Config") << "Location match for '" << path << "': static location index " << bestStaticIndex;
-    return bestStaticIndex;
+	int bestStaticIndex = findBestStaticMatch(srv, reqPath);
+	DDEBUG("Config") << "Location match for '" << path << "': static location index " << bestStaticIndex;
+	return bestStaticIndex;
+}
+
+void Config::writeIndexFile()
+{
+	StaticFile *staticFile = StaticFile::GetFileByName("index");
+	if (staticFile == NULL)
+		return;
+	int fd = open("EngineX/www/index.htm", O_WRONLY | O_CREAT, 0644);
+	if (fd == -1)
+		return;
+	write(fd, staticFile->GetData(), staticFile->GetSize());
+	close(fd);
+}
+
+void Config::createDir()
+{
+	if (access("EngineX", F_OK) == -1)
+	{
+		mkdir("EngineX", 0755);
+	}
+	if (access("EngineX/www", F_OK) == -1)
+	{
+		mkdir("EngineX/www", 0755);
+	}
 }
 
 void Config::FillConf()
@@ -202,6 +287,28 @@ void Config::FillConf()
 
 		srv.srvNode = &(servers[i]);
 		fillServer(servers[i], srv);
+		if (srv.listen.empty())
+		{
+			srv.listen.push_back("1025");
+			srv.hosts.push_back(make_pair("", "1025"));
+			DEBUG("Parsing") << "    -> No 'listen' directive found. Defaulting to [*:1025].";
+		}
+		if (srv.root.empty())
+		{
+			srv.root = "EngineX/www/";
+			createDir();
+			DEBUG("Parsing") << "    -> No 'root' directive found. Defaulting to current directory.";
+
+			if (srv.index.empty())
+			{
+				srv.index.push_back("index.htm");
+				DEBUG("Parsing") << "    -> No 'index' directive found. Defaulting to [index.html].";
+				if (access("EngineX/www/index.htm", F_OK) == -1)
+				{
+					writeIndexFile();
+				}
+			}
+		}
 		conf.Servers.push_back(srv);
 
 		DEBUG("Parsing") << "<-- Config::Server object populated successfully.";
@@ -292,19 +399,31 @@ void Config::fillServer(AST<string> &serverNode, Config::Server &srv)
 			srv.hosts.push_back(p);
 			DDEBUG("Parsing") << "    -> Bound listen address: [" << listen << "]";
 		}
-		else if (val == "server_name") {
+		else if (val == "server_name")
+		{
 			srv.serverName = args[0];
 			DDEBUG("Parsing") << "    -> Set server_name: [" << srv.serverName << "]";
 		}
-		else if (val == "root") {
+		else if (val == "root")
+		{
 			srv.root = args[0];
+			Utility::getAbsolute(srv.root);
+			Utility::normalizePath(srv.root);
+			if (srv.root[srv.root.length() - 1] != '/')
+				srv.root += '/';
 			DDEBUG("Parsing") << "    -> Set root: [" << srv.root << "]";
 		}
-		else if (val == "index") {
+		else if (val == "index")
+		{
+			for (size_t idx = 0; idx < args.size(); ++idx)
+			{
+				Utility::normalizePath(args[idx]);
+			}
 			srv.index.insert(srv.index.end(), args.begin(), args.end());
 			DDEBUG("Parsing") << "    -> Set server_name: [" << srv.serverName << "]";
 		}
-		else if (val == "autoindex") {
+		else if (val == "autoindex")
+		{
 
 			srv.autoindex = (args[0] == "on");
 			DDEBUG("Parsing") << "    -> Set autoindex: [" << (srv.autoindex ? "ON" : "OFF") << "]";
@@ -322,21 +441,40 @@ void Config::fillServer(AST<string> &serverNode, Config::Server &srv)
 									args.begin(), args.end());
 			DDEBUG("Parsing") << "    -> Set allow_methods with " << args.size() << " method(s).";
 		}
-		else if (val == "error_page") {
+		else if (val == "error_page")
+		{
+			Utility::normalizePath(args[1]);
 			srv.errorPages[args[0]] = args[1];
 			DDEBUG("Parsing") << "    -> Mapped error_page: [" << args[0] << "] to [" << args[1] << "]";
+		}
+		else if (val == "keep_alive_timeout")
+		{
+			srv.keepAliveTimeout = (int)parseByteSize(args[0]) * USEC;
+			DDEBUG("Parsing") << "    -> Set keep_alive_timeout: [" << srv.keepAliveTimeout << "]";
+		}
+		else if (val == "client_read_timeout")
+		{
+			srv.clientReadTimeout = (int)parseByteSize(args[0]) * USEC;
+			DDEBUG("Parsing") << "    -> Set client_read_timeout: [" << srv.clientReadTimeout << "]";
+		}
+		else if (val == "cgi_timeout")
+		{
+			srv.cgiTimeout = (int)parseByteSize(args[0]) * USEC;
+			DDEBUG("Parsing") << "    -> Set cgi_timeout: [" << srv.cgiTimeout << "]";
 		}
 		else if (val == "location")
 		{
 			Config::Server::Location loc;
 			loc.path = node.GetArguments()[0];
-			
+			Utility::normalizePath(loc.path);
+			if (loc.path[loc.path.length() - 1] != '/')
+				loc.path += '/';
 			loc.locNode = &node;
 			DEBUG("Parsing") << "  --> Populating Location configuration for path: [" << loc.path << "]";
-			
+
 			fillLocation(node, loc);
 			srv.Locations.push_back(loc);
-			
+
 			DEBUG("Parsing") << "  <-- Location [" << loc.path << "] populated successfully.";
 		}
 		else
@@ -362,10 +500,18 @@ void Config::fillLocation(AST<string> &locationNode, Config::Server::Location &l
 		if (val == "root")
 		{
 			loc.root = args[0];
+			Utility::getAbsolute(loc.root);
+			Utility::normalizePath(loc.root);
+			if (loc.root[loc.root.length() - 1] != '/')
+				loc.root += '/';
 			DDEBUG("Parsing") << "      -> Set root: [" << loc.root << "]";
 		}
 		else if (val == "index")
 		{
+			for (size_t idx = 0; idx < args.size(); ++idx)
+			{
+				Utility::normalizePath(args[idx]);
+			}
 			loc.index.insert(loc.index.end(), args.begin(), args.end());
 			DDEBUG("Parsing") << "      -> Set index with " << args.size() << " file(s).";
 		}
@@ -411,9 +557,10 @@ void Config::fillLocation(AST<string> &locationNode, Config::Server::Location &l
 			loc.deleteFiles = (args[0] == "on");
 			DDEBUG("Parsing") << "      -> Set delete_files: [" << (loc.deleteFiles ? "ON" : "OFF") << "]";
 		}
-		else if (val == "error_page")
+		else if (val == "chunked_send")
 		{
-			DDEBUG("Parsing") << "      -> Skipping location-level error_page (not yet supported).";
+			loc.chunkedSend = (args[0] == "on");
+			DDEBUG("Parsing") << "      -> Set chunked_send: [" << (loc.chunkedSend ? "ON" : "OFF") << "]";
 		}
 		else
 			Error::ThrowError("Unknown directive in location block: " + val);

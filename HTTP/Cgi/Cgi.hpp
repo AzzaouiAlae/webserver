@@ -18,10 +18,12 @@
 
 enum estatus
 {
+	eBufferChunkedBody,
     eFork,
 	eSendBuffToPipe,
 	eSendSockToPipe,
 	eReadCgiResponse,
+	eBufferCgiResponse,
 	eCreateResponseHeader,
 	eWriteBuffToClient,
 	eWritePipeToClient,
@@ -30,6 +32,7 @@ enum estatus
 
 class Cgi
 {
+    Routing *_router;
     ClientRequest     &_req;
     CgiRequest        _cgireq;
     SocketIO    *_sok;
@@ -43,19 +46,57 @@ class Cgi
     bool        _parsheader;
 	string		_responseHeaderStr;
 	char		*_buf;
-    char        *const*_exec;
     size_t      _reqlen;
 	size_t		_responselen;
+    int _stdin;
     void createChild();
-    void writetocgi();
     void readfromcgi();
 	void _activeCgiPipe();
 	string resolveExcPath(const std::string &excName);
     Cgi();
 	size_t _shouldSend;
+    int _childErrorStatus;
+    void ErrorHandler();
+    void sendBuffToPipe();
+    void sendSockToPipe();
+    void checkWriteToCgiComplete();
+    void writeBuffToClient();
+    void writePipeToClient();
+    void bufferCgiResponse();
+    void finalizeAndSendBufferedResponse();
+    void changeDir();
+	void queueChunk(const char *data, size_t len);
+	bool flushChunkedOut();
+	void queueFinalChunk();
+
+    // Chunked body buffering to temp file
+    bool _isChunkedRequest;
+    int _tmpFd;
+    string _tmpPath;
+    void bufferChunkedBodyToFile();
+    void finalizeChunkedBodyFile();
+
+    // Chunked response when CGI doesn't provide Content-Length
+    bool _isChunkedResponse;
+    bool _chunkedFinalQueued;
+    bool _chunkedFinalSent;
+    string _chunkedOut;
+    size_t _chunkedOutSent;
+    size_t _cgiBodyOffset;
+    void _clearChunkedOut();
+
+    // Buffered response when chunked_send is disabled
+    bool _bufferedResponse;
+    int _responseTmpFd;
+    string _responseTmpPath;
+    size_t _responseBodyLen;
+    size_t _responseSentFromFile;
+    bool _initialBodyBuffered;
+    bool _endSend;
+
 public:
-    Cgi(ClientRequest &req, char* const* exec, SocketIO *sok);
-    bool isChildError();
+    Cgi(Routing *router, SocketIO *sok);
+    int isChildError();
     void Handle();
     CgiRequest   &getCgiReq();
     void SetStateByFd(int fd);
@@ -63,7 +104,7 @@ public:
     bool CanUsePipe0();
     bool CanUsePipe1();
 	void createCgiResponse();
-	void writeToClientSoket();
+	void checkWriteToClientSoket();
 	bool isComplete();
     ~Cgi();
 };

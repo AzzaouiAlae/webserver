@@ -32,6 +32,7 @@ void DefaultPages::InitErrorPages5xx()
 	StaticFile("502", PAGE_502_S, PAGE_502_E - PAGE_502_S);
 	StaticFile("503", PAGE_503_S, PAGE_503_E - PAGE_503_S);
 	StaticFile("504", PAGE_504_S, PAGE_504_E - PAGE_504_S);
+	StaticFile("505", PAGE_505_S, PAGE_505_E - PAGE_505_S);
 }
 
 void DefaultPages::InitIndex()

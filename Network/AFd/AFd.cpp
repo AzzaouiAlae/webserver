@@ -1,6 +1,8 @@
 #include "AFd.hpp"
 #include "Headers.hpp"
 
+#define CLEAN_SIZE 1024 * 1024 * 1
+
 char *AFd::buff;
 
 AFd::AFd(int fd, string type)
@@ -8,11 +10,8 @@ AFd::AFd(int fd, string type)
 	this->fd = fd;
 	this->type = type;
 	MarkedToDelete = false;
-	deleteNow = false;
 	cleanBody = false;
-	maxToClean = 1024 * 1024 * 1;
 	totalClean = 0;
-	delTime = 0;
 }
 
 AFd::operator int() const 
@@ -37,16 +36,13 @@ void AFd::cleanFd()
 {
 	if (buff == NULL)
 		buff = Utility::GetBuffer();
-	int fd = GetFd();
-	int size = 0;
-	size = read(fd, buff, 1024 * 64);
+	int size = read(fd, buff, 1024 * 64);
 	if (size > 0)
 		totalClean += size;
-	if (totalClean  >= maxToClean || size <= 0 || Utility::SigPipe) 
+	if (totalClean  >= CLEAN_SIZE || size <= 0 || Utility::SigPipe) 
 	{
 		Utility::SigPipe = false;
 		cleanBody = false;
-		MarkedToDelete = true;
 	}
-	DEBUG("AFd") << "sock fd: " << fd << ", AFd::cleanFd() read " << size;
+	DDEBUG("AFd") << "sock fd: " << fd << ", AFd::cleanFd() read " << size;
 }

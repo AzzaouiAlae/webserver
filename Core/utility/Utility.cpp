@@ -4,6 +4,7 @@
 bool Utility::SigPipe;
 bool Utility::SigInt;
 vector<char *> Utility::buffPoll;
+long Utility::maxFds;
 
 bool Utility::isNotZero(char ch)
 {
@@ -191,4 +192,66 @@ void Utility::ClearBuffPoll()
 size_t Utility::GetBuffPollSize()
 {
 	return buffPoll.size();
+}
+
+void Utility::normalizePath(string &path)
+{
+	if (path.empty())
+		return;
+	bool isAbsolute = path[0] == '/';
+	bool hasTrailingSlash = path[path.length() - 1] == '/';
+	vector<string> segments;
+	parseBySep(segments, path, "/");
+	vector<string> normalizedSegments;
+
+	for (size_t i = 0; i < segments.size(); i++)
+	{
+		if (segments[i] == "" || segments[i] == ".")
+			continue;
+		else if (segments[i] == "..")
+		{
+			if (!normalizedSegments.empty())
+				normalizedSegments.pop_back();
+		}
+		else
+			normalizedSegments.push_back(segments[i]);
+	}
+
+	string normalizedPath = isAbsolute ? "/" : "";
+	for (size_t i = 0; i < normalizedSegments.size(); i++)
+	{
+		normalizedPath += normalizedSegments[i];
+		if (i != normalizedSegments.size() - 1)
+		{
+			normalizedPath += "/";
+		}
+	}
+	if (hasTrailingSlash && (int)normalizedPath.size() > 1)
+	{
+		normalizedPath += "/";
+	}
+	path = normalizedPath;
+}
+
+bool Utility::getAbsolute(string &path)
+{
+	if (path.empty())
+		return false;
+
+	if (path[0] != '/')
+	{
+		char cwd[PATH_MAX];
+
+		if (getcwd(cwd, sizeof(cwd)) != NULL)
+		{
+			string currentDir(cwd);
+			if (!currentDir.empty() && currentDir[currentDir.length() - 1] != '/')
+				currentDir += '/';
+			path = currentDir + path;
+			return true;
+		}
+		else
+			ERR() << "Error getting current working directory";
+	}
+	return false;
 }

@@ -25,12 +25,15 @@
 #include <sys/wait.h>
 #include <netinet/tcp.h>
 #include <sys/time.h>
+#include <linux/errqueue.h>
 #include <signal.h>
 #include <sys/types.h> 
 #include <dirent.h>
 #include <iomanip>
 #include <ctime>
 #include <queue>
+#include <sys/ioctl.h>
+#include <sys/resource.h>
 
 using namespace std;
 
