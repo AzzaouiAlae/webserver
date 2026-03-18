@@ -28,6 +28,7 @@ void CgiRequest::initReqDirectives()
 CgiRequest::CgiRequest()
 {
     _parsPos = eCgiHeaders;
+    DDEBUG("CgiRequest") << "CgiRequest() initialized.";
 }
 CgiRequest::~CgiRequest() {}
 
@@ -98,20 +99,31 @@ bool CgiRequest::ParseHeader()
 {
     string line = "";
 
+    DDEBUG("CgiRequest") << "ParseHeader() entered. requestBufferSize=" << _requestbuff.size();
+
     while (_parsPos == eCgiHeaders && getFullLine(line) && line != "\n" && line != "\r\n")
+	{
+		DDEBUG("CgiRequest") << "ParseHeader(): header line=" << line;
 		parseHeaderLine(line);
+	}
     if (_parsPos == eCgiHeaders && line == "\r\n" && _requestbuff.length() > 0) _Thereisbody = true;
     if (_parsPos == eCgiHeaders && line == "\r\n")
+    {
+        DDEBUG("CgiRequest") << "ParseHeader(): end of headers found. bodyPresent=" << (_Thereisbody ? "true" : "false");
         _parsPos = eCgiHeadersEnd;
+    }
     if (eCgiHeadersEnd)
     {
+        DDEBUG("CgiRequest") << "ParseHeader(): validating headers. envSize=" << _env.size();
         checkCgiMinimum();
         parsLenTypeCont();
         parseStatus();
         parseLocation();
+        DDEBUG("CgiRequest") << "ParseHeader(): complete. statusCode=" << _statusCode << ", contentLength=" << _content_len;
         _parsPos = eCgiParsEnd;
         return (true);
     }
+    DDEBUG("CgiRequest") << "ParseHeader(): waiting for more data.";
     return (false);
 }
 
@@ -127,13 +139,18 @@ bool CgiRequest::isContentLenghtExist()
 
 bool CgiRequest::isComplete(char *request, int size)
 {
+    DDEBUG("CgiRequest") << "isComplete() called with size=" << size << ", parsPos=" << _parsPos;
 	_requestbuff.append(request, size);
     DDEBUG("CgiRequest") << "\n" << _requestbuff;
 	if (_parsPos != eCgiParsEnd)
 	{
 		if (!ParseHeader())
+        {
+            DDEBUG("CgiRequest") << "isComplete(): headers not complete yet.";
 			return (false);
+        }
 	}
+    DDEBUG("CgiRequest") << "isComplete(): CGI headers parsed successfully.";
 	return true;
 }
 
@@ -156,10 +173,12 @@ bool CgiRequest::getFullLine(string &line)
 			Error::ThrowError("502");
 		_requestbuff.erase(0, index + 1);
 		line += '\n';
+        DDEBUG("CgiRequest") << "getFullLine(): extracted line, headersize=" << _headersize;
 	}
 	else
 	{
 		line.clear();
+        DDEBUG("CgiRequest") << "getFullLine(): partial line, waiting for more data.";
 		return (false);
 	}
 	return true;
@@ -184,4 +203,5 @@ void CgiRequest::parseHeaderLine(const string &line)
 		}
     }
     _env[key] = value;
+    DDEBUG("CgiRequest") << "parseHeaderLine(): key='" << key << "', value='" << value << "'";
 }

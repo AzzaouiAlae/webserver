@@ -207,8 +207,10 @@ void Post::WriteBodyFromMemory()
 void Post::WriteBodyFromSocket()
 {
 	int written = sock->SocketToFile(uploadFd, contentBodySize - uploadedSize);
-	if (written > 0)
+	if (written > 0) {
 		uploadedSize += written;
+		sock->UpdateTime();
+	}
 }
 
 void Post::uploadFileToDisk()
@@ -340,11 +342,13 @@ void Post::uploadChunkedToDisk()
 	string &decoded = req.getDecodedBody();
 	if (decoded.length() > uploadedSize)
 	{
-		const char *data = decoded.c_str() + uploadedSize;
-		size_t toWrite = decoded.length() - uploadedSize;
+		const char *data = decoded.c_str();
+		size_t toWrite = decoded.length();
 		ssize_t written = write(uploadFd, data, toWrite);
-		if (written > 0)
+		if (written > 0) {
+			decoded.erase(0, written);
 			uploadedSize += written;
+		}
 	}
 
 	if (!req.isChunkedComplete())
@@ -371,11 +375,13 @@ void Post::uploadChunkedToDisk()
 
 			if (decoded.length() > uploadedSize)
 			{
-				const char *data = decoded.c_str() + uploadedSize;
-				size_t toWrite = decoded.length() - uploadedSize;
+				const char *data = decoded.c_str();
+				size_t toWrite = decoded.length();
 				ssize_t written = write(uploadFd, data, toWrite);
-				if (written > 0)
+				if (written > 0) {
 					uploadedSize += written;
+					decoded.erase(0, written);
+				}
 			}
 		}
 		else if (len == 0)
@@ -389,7 +395,7 @@ void Post::uploadChunkedToDisk()
 				  << " POST chunked uploaded " << uploadedSize << " bytes"
 				  << (req.isChunkedComplete() ? " [complete]" : " [in progress]");
 
-	if (req.isChunkedComplete() && uploadedSize >= decoded.length())
+	if (req.isChunkedComplete() && decoded.length() == 0)
 	{
 		contentBodySize = uploadedSize;
 		INFO() << "Client " << Socket::getRemoteName(sock->GetFd())

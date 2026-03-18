@@ -108,7 +108,7 @@ void ClientRequest::parsHttpStandard(string httpStandard)
 
 void ClientRequest::parsLenTypeCont()
 {
-	if (getthereisbody())
+	if (getthereisbody() || _env.find("Content-Length") != _env.end())
 	{
 		if (_isChunked)
 			return;
@@ -119,6 +119,9 @@ void ClientRequest::parsLenTypeCont()
 			Error::ThrowError("400");
 		DDEBUG("ClientRequest") << "parsLenTypeCont: Content-Type='" << _env["CONTENT_TYPE"]
 								<< "', Content-Length=" << _content_len;
+		if (_content_len > _maxbodysize ){
+			Error::ThrowError("413");
+		}
 	}
 }
 

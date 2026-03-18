@@ -17,7 +17,8 @@
 
 string Cgi::resolveExcPath(const string &excName)
 {
-	if (excName.find('/') != string::npos) {
+	if (excName.find('/') != string::npos)
+	{
 		char absPath[PATH_MAX];
 		if (realpath(excName.c_str(), absPath) == NULL)
 			return excName;
@@ -96,6 +97,9 @@ Cgi::Cgi(Routing *router, SocketIO *sok) : _router(router), _req(router->GetRequ
 	else
 		_status = eFork;
 
+	CGILog(DDEBUG) << "Cgi::Cgi() initialized. chunkedRequest=" << (_isChunkedRequest ? "true" : "false")
+				   << ", status=" << _status;
+
 	INFO() << "Initialized new CGI Context for executable " << _router->GetPath().getLocation()->cgiPassPath;
 }
 
@@ -142,12 +146,11 @@ void Cgi::createChild()
 	string exec = resolveExcPath(_router->GetPath().getLocation()->cgiPassPath);
 	if (access(exec.c_str(), F_OK | X_OK) != 0)
 		Error::ThrowError("500");
-	char *execArgs[] = 
-		{ 
-			(char *)exec.c_str(), 
-			(char *)_router->GetPath().getFullPath().c_str(), 
-			NULL 
-		};
+	char *execArgs[] =
+		{
+			(char *)exec.c_str(),
+			(char *)_router->GetPath().getFullPath().c_str(),
+			NULL};
 	_pid = fork();
 	if (_pid < 0)
 		Error::ThrowError("500");
@@ -155,10 +158,12 @@ void Cgi::createChild()
 	{
 		Environment::CreateEnv(_req.getrequestenv());
 		changeDir();
-		if (_isChunkedRequest) {
+		if (_isChunkedRequest)
+		{
 			dup2(_stdin, 0);
 		}
-		else {
+		else
+		{
 			dup2(_sok->pipefd[0], 0);
 		}
 		dup2(_pipefd[1], 1);
@@ -234,21 +239,34 @@ void Cgi::checkWriteToCgiComplete()
 
 void Cgi::bufferChunkedBodyToFile()
 {
+	CGILog(DDEBUG) << "bufferChunkedBodyToFile() entered. bodySize=" << _req.getBody().size()
+				   << ", decodedSize=" << _req.getDecodedBody().size()
+				   << ", writtenToFile=" << _reqlen;
+
 	// Process any data already in memory
 	string &body = _req.getBody();
 	if (!body.empty())
+	{
+		CGILog(DDEBUG) << "bufferChunkedBodyToFile(): processing buffered body bytes=" << body.size();
 		_req.processChunkedBody();
+	}
 
 	string &decoded = _req.getDecodedBody();
 
 	// Write any new decoded data to temp file
-	if (_reqlen < decoded.length())
+	if (decoded.length() > 0)
 	{
-		const char *data = decoded.c_str() + _reqlen;
-		size_t toWrite = decoded.length() - _reqlen;
+		const char *data = decoded.c_str();
+		size_t toWrite = decoded.length();
 		ssize_t written = write(_tmpFd, data, toWrite);
 		if (written > 0)
+		{
 			_reqlen += written;
+			decoded.erase(0, written);
+			CGILog(DDEBUG) << "bufferChunkedBodyToFile(): wrote " << written
+						   << " bytes to temp file. totalWritten=" << _reqlen
+						   << ", decodedRemaining=" << decoded.length();
+		}
 	}
 
 	// If chunked transfer not complete, read more from socket
@@ -258,20 +276,28 @@ void Cgi::bufferChunkedBodyToFile()
 		_sok->UpdateTime();
 		if (len > 0)
 		{
+			CGILog(DDEBUG) << "bufferChunkedBodyToFile(): read " << len << " bytes from client socket.";
 			body.append(_buf, len);
 			_req.processChunkedBody();
 
-			if (_reqlen < decoded.length())
+			if (decoded.length() > 0)
 			{
-				const char *data = decoded.c_str() + _reqlen;
-				size_t toWrite = decoded.length() - _reqlen;
+				const char *data = decoded.c_str();
+				size_t toWrite = decoded.length();
 				ssize_t written = write(_tmpFd, data, toWrite);
 				if (written > 0)
+				{
 					_reqlen += written;
+					decoded.erase(0, written);
+					CGILog(DDEBUG) << "bufferChunkedBodyToFile(): wrote " << written
+								   << " bytes after socket read. totalWritten=" << _reqlen
+								   << ", decodedRemaining=" << decoded.length();
+				}
 			}
 		}
 		else if (len == 0)
 		{
+			CGILog(DDEBUG) << "bufferChunkedBodyToFile(): client closed connection while buffering body.";
 			ErrorHandler();
 			return;
 		}
@@ -280,12 +306,17 @@ void Cgi::bufferChunkedBodyToFile()
 	CGILog(DEBUG) << "bufferChunkedBodyToFile: buffered " << _reqlen << " bytes"
 				  << (_req.isChunkedComplete() ? " [complete]" : " [in progress]");
 
-	if (_req.isChunkedComplete() && _reqlen >= decoded.length())
+	if (_req.isChunkedComplete() && decoded.length() == 0)
+	{
+		CGILog(DDEBUG) << "bufferChunkedBodyToFile(): chunked body complete, finalizing temp file.";
 		finalizeChunkedBodyFile();
+	}
 }
 
 void Cgi::finalizeChunkedBodyFile()
 {
+	CGILog(DDEBUG) << "finalizeChunkedBodyFile() entered. tempPath=" << _tmpPath
+				   << ", bytesBuffered=" << _reqlen;
 	// Set CONTENT_LENGTH in the request env
 	stringstream ss;
 	ss << _reqlen;
@@ -305,6 +336,7 @@ void Cgi::finalizeChunkedBodyFile()
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 	MulObj->ChangeToEpollOut(_sok);
 
+	CGILog(DDEBUG) << "finalizeChunkedBodyFile(): switched to fork state with CONTENT_LENGTH=" << ss.str();
 	_status = eFork;
 }
 
@@ -318,11 +350,17 @@ void Cgi::readfromcgi()
 		return;
 	}
 	len = read(_pipefd[0], _buf, MAXHEADERSIZE);
-	if (len <= 0) {
+	CGILog(DDEBUG) << "readfromcgi(): read len=" << len << ", currentStatus=" << _status;
+	if (len <= 0)
+	{
+		CGILog(DDEBUG) << "readfromcgi(): pipe EOF/error, marking complete.";
 		_status = eComplete;
 	}
 	if (_cgireq.isComplete(_buf, len))
+	{
+		CGILog(DDEBUG) << "readfromcgi(): CGI response headers parsed successfully.";
 		_status = eCreateResponseHeader;
+	}
 	CGILog(DDEBUG) << "readfromcgi(), read len: " << len;
 }
 
@@ -330,15 +368,19 @@ void Cgi::createCgiResponse()
 {
 	_responseHeaderStr = "HTTP/1.1 " + getStatusCode() + " " + AMethod::getStatusMap()[getStatusCode()] + "\r\n";
 	map<string, string> &env = _cgireq.getrequestenv();
-	for (map<string, string>::iterator it = env.begin(); it != env.end(); it++) {
+	for (map<string, string>::iterator it = env.begin(); it != env.end(); it++)
+	{
 		if (it->first == "Status")
 			continue;
 		_responseHeaderStr += it->first + ": " + it->second + "\r\n";
 	}
-	
+	CGILog(DDEBUG) << "createCgiResponse(): status=" << getStatusCode()
+				   << ", envHeaders=" << env.size();
+
 	// Check if CGI provided Content-Length
 	if (_cgireq.isContentLenghtExist())
 	{
+		CGILog(DDEBUG) << "createCgiResponse(): CGI provided Content-Length=" << _cgireq.getcontentlen();
 		// Has Content-Length, send immediately
 		_responseHeaderStr += "\r\n";
 		_shouldSend = _responseHeaderStr.length() + _cgireq.getcontentlen();
@@ -346,9 +388,11 @@ void Cgi::createCgiResponse()
 	}
 	else
 	{
+		CGILog(DDEBUG) << "createCgiResponse(): CGI has no Content-Length. chunkedSend="
+					   << (_router->GetPath().getLocation()->chunkedSend ? "true" : "false");
 		// No Content-Length - check if we should use chunked or buffered response
 		bool chunkedSendEnabled = _router->GetPath().getLocation()->chunkedSend;
-		
+
 		if (chunkedSendEnabled)
 		{
 			// Use chunked transfer encoding
@@ -357,14 +401,15 @@ void Cgi::createCgiResponse()
 				_responseHeaderStr += "Transfer-Encoding: chunked\r\n";
 			_responseHeaderStr += "\r\n";
 			_shouldSend += _responseHeaderStr.length();
+			CGILog(DDEBUG) << "createCgiResponse(): using chunked response. headerSize=" << _responseHeaderStr.length();
 			_status = eWriteBuffToClient;
 		}
 		else
 		{
 			// Buffer response to file - don't close headers yet
 			_bufferedResponse = true;
-			_responseBodyLen = 0;  // Reset body length counter for new buffering
-			_initialBodyBuffered = false;  // Reset flag to track initial body buffering
+			_responseBodyLen = 0;		  // Reset body length counter for new buffering
+			_initialBodyBuffered = false; // Reset flag to track initial body buffering
 			stringstream ss;
 			ss << "/tmp/cgi_response_" << hex;
 			for (int i = 0; i < 16; i++)
@@ -374,17 +419,22 @@ void Cgi::createCgiResponse()
 			if (_responseTmpFd == -1)
 				Error::ThrowError("500");
 			CGILog(DEBUG) << "Buffering CGI response to file: " << _responseTmpPath;
+			CGILog(DDEBUG) << "createCgiResponse(): buffering response to temp file because no Content-Length was provided.";
 			_status = eBufferCgiResponse;
 			Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 			MulObj->ChangeToEpollOut(_sok);
 		}
 	}
-	CGILog(DDEBUG) <<  "Cgi::createCgiResponse():\n" << _responseHeaderStr;
+	CGILog(DDEBUG) << "Cgi::createCgiResponse():\n"
+				   << _responseHeaderStr;
 }
 
 void Cgi::bufferCgiResponse()
 {
 	CGILog(DDEBUG) << "bufferCgiResponse() called.";
+	CGILog(DDEBUG) << "bufferCgiResponse(): bufferedSize=" << _responseBodyLen
+				   << ", responseTmpFd=" << _responseTmpFd
+				   << ", initialBodyBuffered=" << (_initialBodyBuffered ? "true" : "false");
 
 	// First, buffer any data that's already in the CGI response body (only once)
 	if (!_initialBodyBuffered && _cgireq.getBody().size() > 0)
@@ -397,6 +447,8 @@ void Cgi::bufferCgiResponse()
 			_responseBodyLen += written;
 			CGILog(DDEBUG) << "Buffered initial body data: " << written << " bytes";
 		}
+		else
+			CGILog(DDEBUG) << "bufferCgiResponse(): failed to buffer initial body data.";
 		_initialBodyBuffered = true;
 	}
 
@@ -411,22 +463,26 @@ void Cgi::bufferCgiResponse()
 		}
 		else if (len == 0 && isChildError() != -1)
 		{
+			CGILog(DDEBUG) << "bufferCgiResponse(): child finished and pipe drained, finalizing response.";
 			// No more data and child process has finished
 			finalizeAndSendBufferedResponse();
 			return;
 		}
 		else if (len < 0)
 		{
+			CGILog(DDEBUG) << "bufferCgiResponse(): pipe-to-file error.";
 			ErrorHandler();
 			return;
 		}
 	}
 	else if (!_endSend && isChildError() != -1)
 	{
+		CGILog(DDEBUG) << "bufferCgiResponse(): child finished but more data may still be pending.";
 		_endSend = true;
 	}
-	else if(isChildError() != -1)
+	else if (_endSend == true)
 	{
+		CGILog(DDEBUG) << "bufferCgiResponse(): child finished, finalizing response now.";
 		// Child finished but we haven't read all data yet
 		finalizeAndSendBufferedResponse();
 		return;
@@ -435,11 +491,12 @@ void Cgi::bufferCgiResponse()
 
 void Cgi::finalizeAndSendBufferedResponse()
 {
+	CGILog(DDEBUG) << "finalizeAndSendBufferedResponse() entered. tmpPath=" << _responseTmpPath;
 	// Get the actual file size from the file system
 	long fileSize = Utility::getFileSize(_responseTmpPath);
 	if (fileSize < 0)
 		Error::ThrowError("500");
-	
+
 	_responseBodyLen = (size_t)fileSize;
 	CGILog(DEBUG) << "finalizeAndSendBufferedResponse() called. Actual file size: " << _responseBodyLen << " bytes.";
 
@@ -448,6 +505,7 @@ void Cgi::finalizeAndSendBufferedResponse()
 	_responseTmpFd = open(_responseTmpPath.c_str(), O_RDONLY | O_CLOEXEC);
 	if (_responseTmpFd == -1)
 		Error::ThrowError("500");
+	CGILog(DDEBUG) << "finalizeAndSendBufferedResponse(): reopened response temp file for reading.";
 
 	// Complete the headers with Content-Length
 	stringstream ss;
@@ -460,8 +518,9 @@ void Cgi::finalizeAndSendBufferedResponse()
 	_responseSentFromFile = 0;
 	_bufferedResponse = false;
 	_status = eWriteBuffToClient;
-	
-	CGILog(DDEBUG) << "Response finalized. Headers: \n" << _responseHeaderStr;
+
+	CGILog(DDEBUG) << "Response finalized. Headers: \n"
+				   << _responseHeaderStr;
 }
 
 void Cgi::ErrorHandler()
@@ -489,6 +548,7 @@ void Cgi::writeBuffToClient()
 	if (_responselen == _responseHeaderStr.length())
 	{
 		INFO() << "Finished sending CGI headers. Transitioning to eWritePipeToClient.";
+		CGILog(DDEBUG) << "writeBuffToClient(): header send complete, switching to body send.";
 		_status = eWritePipeToClient;
 	}
 	checkWriteToClientSoket();
@@ -497,34 +557,49 @@ void Cgi::writeBuffToClient()
 void Cgi::writePipeToClient()
 {
 	int len = 0;
+	CGILog(DDEBUG) << "writePipeToClient() entered. responselen=" << _responselen
+				   << ", shouldSend=" << _shouldSend
+				   << ", chunked=" << (_isChunkedResponse ? "true" : "false")
+				   << ", buffered=" << (_bufferedResponse ? "true" : "false");
 
 	// Handle buffered response from temporary file
 	if (_responseTmpFd != -1 && !_bufferedResponse)
 	{
+		CGILog(DDEBUG) << "writePipeToClient(): sending buffered file body. sentFromFile=" << _responseSentFromFile
+					   << ", bodyLen=" << _responseBodyLen;
 		// Send body from temporary file using read/send loop
 		if (_responseSentFromFile < _responseBodyLen)
 		{
 			len = _sok->FileToSocket(_responseTmpFd, _responseBodyLen - _responseSentFromFile);
 			if (_sok->errorNumber == eWriteError)
 				ErrorHandler();
-			if (len > 0) {
+			if (len > 0)
+			{
 				_sok->UpdateTime();
 				_responselen += len;
 				_responseSentFromFile += len;
-			} 
+			}
 			else
 				ErrorHandler();
 			CGILog(DDEBUG) << "Sent " << len << " body bytes from buffered file. Total sent: " << _responselen << "/" << _shouldSend;
 		}
-		if (_responselen >= _shouldSend) 
+		if (_responselen >= _shouldSend)
+		{
+			CGILog(DDEBUG) << "writePipeToClient(): buffered file body fully sent.";
 			_status = eComplete;
+		}
 		return;
 	}
 	if (_isChunkedResponse)
 	{
+		CGILog(DDEBUG) << "writePipeToClient(): chunked response path. chunkedOutSize=" << _chunkedOut.size()
+					   << ", chunkedOutSent=" << _chunkedOutSent
+					   << ", cgiBodyOffset=" << _cgiBodyOffset
+					   << ", cgiBodySize=" << _cgireq.getBody().size();
 		_clearChunkedOut();
 		if (_chunkedOutSent < _chunkedOut.size())
 		{
+			CGILog(DDEBUG) << "writePipeToClient(): flushing queued chunked data.";
 			flushChunkedOut();
 			if (_chunkedFinalSent)
 				_status = eComplete;
@@ -535,6 +610,7 @@ void Cgi::writePipeToClient()
 		{
 			size_t remaining = _cgireq.getBody().size() - _cgiBodyOffset;
 			size_t chunkSize = min(remaining, (size_t)BUF_SIZE);
+			CGILog(DDEBUG) << "writePipeToClient(): queueing chunk from parsed CGI body, size=" << chunkSize;
 			queueChunk(_cgireq.getBody().data() + _cgiBodyOffset, chunkSize);
 			_cgiBodyOffset += chunkSize;
 			flushChunkedOut();
@@ -544,6 +620,7 @@ void Cgi::writePipeToClient()
 		if (CanUsePipe0())
 		{
 			ssize_t readLen = read(_pipefd[0], _buf, BUF_SIZE);
+			CGILog(DDEBUG) << "writePipeToClient(): read from CGI pipe returned " << readLen;
 			if (readLen > 0)
 			{
 				queueChunk(_buf, readLen);
@@ -559,20 +636,26 @@ void Cgi::writePipeToClient()
 				return;
 			}
 		}
-
-		if (!_chunkedFinalSent && !_chunkedFinalQueued && isChildError() != -1)
+		else if (_endSend == false && isChildError() != -1)
 		{
+			_endSend = true;
+		}
+		else if (_endSend == true && !_chunkedFinalSent && !_chunkedFinalQueued)
+		{
+			CGILog(DDEBUG) << "writePipeToClient(): child finished, queueing final chunk.";
 			queueFinalChunk();
 			flushChunkedOut();
 			if (_chunkedFinalSent)
 				_status = eComplete;
 		}
 	}
-	
+
 	else if (_cgireq.getBody().size() + _responseHeaderStr.length() > _responselen)
 	{
 		int size = _responselen - _responseHeaderStr.length();
 		void *buff = (void *)(_cgireq.getBody().data() + size);
+		CGILog(DDEBUG) << "writePipeToClient(): sending parsed CGI body from memory. offset=" << size
+					   << ", bodySize=" << _cgireq.getBody().size();
 		len = _sok->Send(buff, _cgireq.getBody().length() - size);
 		CGILog(DDEBUG) << "Writing CGI body from memory buffer. Attempting to send " << size << " bytes.";
 		if (_sok->errorNumber == eWriteError)
@@ -581,9 +664,10 @@ void Cgi::writePipeToClient()
 		_responselen += len;
 		CGILog(DDEBUG) << "Sent " << len << " body bytes from buffer. Total sent: " << _responselen;
 	}
-	
+
 	else if (CanUsePipe0())
 	{
+		CGILog(DDEBUG) << "writePipeToClient(): streaming CGI pipe directly to socket.";
 		if (_cgireq.isContentLenghtExist())
 			len = _sok->SendPipeToSock(_pipefd[0], _shouldSend - _responselen);
 		else
@@ -593,9 +677,15 @@ void Cgi::writePipeToClient()
 		_responselen += len;
 		CGILog(DDEBUG) << "Sent " << len << " body bytes from pipe. Total sent: " << _responselen;
 	}
-	
-	else if (isChildError() != -1 && !_cgireq.isContentLenghtExist() && _responselen >= _shouldSend)
+	else if (_endSend == false && isChildError() != -1)
+	{
+		_endSend = true;
+	}
+	else if (_endSend == true && !_cgireq.isContentLenghtExist() && _responselen >= _shouldSend)
+	{
+		CGILog(DDEBUG) << "writePipeToClient(): response complete by size check.";
 		_status = eComplete;
+	}
 	checkWriteToClientSoket();
 }
 
@@ -620,7 +710,10 @@ void Cgi::queueFinalChunk()
 bool Cgi::flushChunkedOut()
 {
 	if (_chunkedOutSent >= _chunkedOut.size())
+	{
+		CGILog(DDEBUG) << "flushChunkedOut(): nothing to flush.";
 		return true;
+	}
 	void *buff = (void *)(_chunkedOut.c_str() + _chunkedOutSent);
 	int len = _sok->Send(buff, _chunkedOut.size() - _chunkedOutSent);
 	if (_sok->errorNumber == eWriteError)
@@ -638,6 +731,7 @@ bool Cgi::flushChunkedOut()
 			_chunkedFinalQueued = false;
 			_chunkedFinalSent = true;
 		}
+		CGILog(DDEBUG) << "flushChunkedOut(): queued chunk data fully sent.";
 		return true;
 	}
 	return false;
@@ -676,7 +770,7 @@ void Cgi::_clearChunkedOut()
 
 void Cgi::Handle()
 {
-	
+
 	CGILog(DDEBUG) << "Handle() called. Current status: " << _status;
 
 	if (_status == eBufferChunkedBody)
@@ -703,7 +797,10 @@ void Cgi::Handle()
 	if (isChildError() == 1)
 		ErrorHandler();
 	if (_status != eComplete)
+	{
+		CGILog(DDEBUG) << "Handle(): re-arming CGI pipes for next event. status=" << _status;
 		_activeCgiPipe();
+	}
 }
 
 void Cgi::SetStateByFd(int fd)
@@ -750,7 +847,8 @@ Cgi::~Cgi()
 	}
 	else if (isChildError() == 0)
 		INFO() << "Child process already terminated with status: " << (isChildError() == 1 ? "Error" : "Success");
-	if (CanUsePipe0()) {
+	if (CanUsePipe0())
+	{
 		read(_pipefd[0], _buf, BUF_SIZE + 1);
 		_sok->UpdateTime();
 	}

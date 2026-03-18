@@ -134,7 +134,7 @@ void HTTPContext::HandleRequest()
 		INFO() << Socket::getRemoteName(sock->GetFd()) << " " << router.GetRequest().getMethod() << " " << router.GetRequest().getPath();
 		HTTPLog(DDEBUG) << "request parsing done";
 
-		if (router.GetPath().isCGI()) {
+		if (router.GetPath().isCGI() || router.GetRequest().getMethod() == "POST") {
 			_setupPipeline();
 		}
 		router.SetRequestComplete();

@@ -7,12 +7,11 @@
 void ConnectionContext::Handle(AFd *fd)
 {
 	int max = Utility::maxFds;
-	
-	if ((int)Singleton::GetFds().size() > max) {
-		SocketIO::closeTheOldestSocket();
-	}
 	Socket *sock = (Socket *)fd;
 	
+	if ((int)Singleton::GetFds().size() >= max || sock->acceptedSocket >= max) {
+		SocketIO::closeTheOldestSocket();
+	}
 	SocketIO *sockIO = new SocketIO(sock->acceptedSocket, Config::GetMaxClientReadTimeout(*servers));
 	Singleton::GetFds().insert(sockIO);
 	sockIO->context = new HTTPContext(servers, Config::GetMaxBodySize(*servers), sockIO);

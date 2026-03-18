@@ -125,7 +125,7 @@ test-6 --> this should return 200
 "Accept-Encoding: gzip\r\n"
 "\r\n"
 ====================================
-test-7 --> this should return 200 
+test-7 --> this should return 200
 "GET /directory/youpi.bla HTTP/1.1\r\n"
 "Host: 127.0.0.1:1025\r\n"
 "User-Agent: Go-http-client/1.1\r\n"
