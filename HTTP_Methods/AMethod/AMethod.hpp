@@ -7,55 +7,61 @@
 
 class AMethod
 {
-	static map<string, string> statusMap;
-	static void InitStatusMap();
+	static map<string, string> _statusMap;
+	static void _initStatusMap();
 
-	string ResolveServerName();
-	string ResolveMimeType();
+	string _resolveServerName();
+	string _resolveMimeType();
+	string _resolveErrorFilePath(const string &errorCode);
+
+	bool   _openErrorFile(const string &path);
+	void   _loadStaticErrorFile(const string &errorCode);
+	string _createDate();
+	void _addCookies(Session &session);
+	void _addAlowMethodsHeader();
+	void _addCookiesHeader();
 
 protected:
-	stringstream responseHeader;
-	string responseHeaderStr;
-	StaticFile *staticFile;
-	bool readyToSend;
-	string filename;
-	bool sendHeader;
-	int ShouldSend;
-	int bodySize;
-	string code;
-	int sended;
-	int fileFd;
-	bool del;
-	Routing *router;
-	SocketIO *sock;
-	bool pathResolved;
-	Config::Server::Location *loc;
+	enum Status {
+		eCreateResponse = 0,
+		eSendResponse = 1,
+		eCGIResponse = 2,
+		eComplete = 100,
+	};
+	int _status;
+
+	Routing *_router;
+	SocketIO *_sock;
+	Config::Server::Location *_loc;
 	Cgi	*_cgi;
-	string CreateDate();
-	void CreateResponseHeader();
-	void CreateRedirectionHeader(const string &redirCode, const string &redirLocation);
+	Multiplexer *_multiplexer;
 
-	string ResolveErrorFilePath(const string &errorCode);
-	bool   OpenErrorFile(const string &path);
-	void   LoadStaticErrorFile(const string &errorCode);
+	string _filename;
+	int _fileFd;
+	StaticFile *_staticFile;
 
-	void SendResponse();
-	void SendRedirection();
-	void SendDefaultRespense(const string &code);
-
-	bool IsMethodAllowed(const string &method);
-
-	void ResolvePath();
-
-	string escapeForJS(const string& input);
-	void addCookies(Session &session);
+	string _statusCode;
+	string _responseHeaderStr;
+	stringstream _responseHeader;
 	
-	void HandelCGI();
-	void addAlowMethodsHeader();
-	void addCookiesHeader();
-	
+	int _sended;
+	int _bodySize;
+	int _totalByteToSend;
+
+	void _createResponseHeader();
+	void _createRedirectionHeader(const string &redirCode, const string &redirLocation);
+	void _createTimeoutResponse();
+
+	void _sendResponse();
+	void _sendRedirection();
+	void _sendDefaultRespense(const string &code);
+
+	bool _isMethodAllowed(const string &method);
+	void _resolvePath();
+	string _escapeForJS(const string& input);
+	void _handelCGI();
+
 public:
-	
 	AMethod(SocketIO *sock, Routing *router);
 	virtual ~AMethod();
 	virtual bool HandleResponse() = 0;

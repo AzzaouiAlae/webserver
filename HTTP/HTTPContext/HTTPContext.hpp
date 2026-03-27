@@ -6,35 +6,44 @@
 #include "Response.hpp"
 
 #define SAFE_MARGIN 1024 * 64
-#define HTTPLog(lvl) lvl("HTTPContext") << logPrefix() << "HTTPContext, "
+#define HTTPLog(lvl) lvl("HTTPContext") << _logPrefix() << "HTTPContext, "
 
 class HTTPContext : public IContext
 {
-	Repsense repsense;
-	Routing router;
-	SocketIO *sock;
-	char *buf;
-	AFd *out;
-	AFd *in;
-	bool err;
-	string errNo;
-	bool isMaxBodyInit;
+	enum Status
+	{
+		eReadingRequest = 0,
+		eWritingResponse = 1,
+		eWriteError = 2,
+		eDone = 3,
+		eDelete = 4,
+	};
+	SocketIO *_sock;
+	Status _status;
+	Routing _router;
+	Repsense _repsense;
+	char *_buf;
+	Multiplexer *_multiplexer;
+	AFd *_out;
+	AFd *_in;
+	string _errNo;
+	bool _isMaxBodyInit;
+	int _readLen;
 
-    int  _readFromSocket();
-
-    bool _parseAndConfig(int len);
-
-    void _setupPipeline();
-	string logPrefix();
+	void _handleRequest();
+	void _readFromSocket();
+	void _parseAndConfig();
+	void _setMaxBodySize();
+	
+	void _setupPipeline();
+	void _activeInPipe();
+	void _activeOutPipe();
+	void _markedSocketToFree();
+	
+	string _logPrefix();
 public:
-	void activeInPipe();
-	void activeOutPipe();
-	HTTPContext(vector<Config::Server > *servers, size_t maxBodySize, SocketIO *sock);
+	HTTPContext(vector<Config::Server> *servers, size_t maxBodySize, SocketIO *sock);
 	~HTTPContext();
-	vector<Config::Server > *servers;
+	vector<Config::Server> *servers;
 	void Handle(AFd *fd);
-	void HandleRequest();
-	void MarkedSocketToFree();
-	void setMaxBodySize();
-	Routing &GetRouter() { return router; }
 };

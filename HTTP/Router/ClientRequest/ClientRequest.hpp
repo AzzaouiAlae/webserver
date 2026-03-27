@@ -35,7 +35,7 @@ class ClientRequest: public ARequest {
 	void detectTransferEncoding();
 	void detectMultipartBoundary();
 public:
-	bool processChunkedBody();
+	// bool processChunkedBody();
 	ClientRequest(size_t maxbodysze);
 	ClientRequest();
 	~ClientRequest();
@@ -49,5 +49,6 @@ public:
 	void SetMaxBodySize(int size);
 	bool isRequestHeaderComplete();
 	bool isKeepAlive() const;
+	size_t getMaxBodySize() const;
 };
 

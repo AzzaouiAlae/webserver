@@ -4,12 +4,18 @@
 #include "Post.hpp"
 #include "Delete.hpp"
 
+
 class Repsense
 {
-	AMethod *method;
-	SocketIO *sock;
-	Routing *router;
-
+	enum Status {
+		eCreateMethod,
+		eHandleResponse,
+	};
+	AMethod *_method;
+	SocketIO *_sock;
+	Routing *_router;
+	Repsense::Status _status;
+	void _createMethod();
 public:
 	Repsense();
 	~Repsense();

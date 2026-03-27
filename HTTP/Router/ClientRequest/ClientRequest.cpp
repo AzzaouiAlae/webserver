@@ -95,7 +95,7 @@ void ClientRequest::parsHttpStandard(string httpStandard)
 	string extra;
 
 	if (!(ss >> method >> path >> httpv) || (ss >> extra))
-		Error::ThrowError("The Request HttpStandard is Invalid");
+		Error::ThrowError("400");
 	if (!(httpv == "HTTP/1.1" || httpv == "HTTP/1.0"))
 		Error::ThrowError("505");
 	if (!parsPath(path))
@@ -134,7 +134,7 @@ void ClientRequest::parseHost()
 								<< "', SERVER_PORT='" << _env["SERVER_PORT"] << "'";
 	}
 	else
-		Error::ThrowError("Bad Request");	
+		Error::ThrowError("400");	
 }
 
 bool ClientRequest::ParseHeader()
@@ -336,14 +336,6 @@ void ClientRequest::detectMultipartBoundary()
 	}
 }
 
-bool ClientRequest::processChunkedBody()
-{
-	bool result = processChunkedData();
-	if (_decodedBody.length() > _maxbodysize)
-		Error::ThrowError("413");
-	return result;
-}
-
 bool ClientRequest::isKeepAlive() const
 {
 	map<string, string>::const_iterator it = _env.find("HTTP_CONNECTION");
@@ -358,4 +350,9 @@ bool ClientRequest::isKeepAlive() const
 	if (proto != _env.end() && proto->second == "HTTP/1.1")
 		return true;
 	return false;
+}
+
+size_t ClientRequest::getMaxBodySize() const
+{
+	return _maxbodysize;
 }

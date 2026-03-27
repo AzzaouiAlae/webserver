@@ -35,5 +35,6 @@ public:
 	static size_t parseByteSize(const string &raw);
 	static void normalizePath(string &path);
 	static bool getAbsolute(string &path);
-	
+	static string getRandomStr(size_t length = 16);
+	static string addRandomStr(string filename);
 };

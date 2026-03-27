@@ -73,6 +73,9 @@ using namespace std;
 #include "ConnectionContext.hpp"
 #include "APipe.hpp"
 
+#include "ChunkedData.hpp"
+#include "MultipartData.hpp"
+
 extern char **environ;
 
 #define DEFAULT_CONF "EngineX/EngineX.conf"

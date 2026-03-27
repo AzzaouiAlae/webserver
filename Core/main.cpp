@@ -98,7 +98,7 @@ void CreateDefaultFiles()
 		ofstream confFile(DEFAULT_CONF);
 		if (confFile.is_open())
 		{
-			confFile 
+			confFile
 				<< "server {\n"
 				<< "}\n"
 				<< "types {\n"
@@ -120,7 +120,8 @@ void InitServer(int argc, char *argv[], string &filename)
 	signal(SIGINT, sigint_handler);
 	SetFileDescriptorLimits();
 
-	if (argc < fileNameIdx + 1) {
+	if (argc < fileNameIdx + 1)
+	{
 		filename = DEFAULT_CONF;
 		CreateDefaultFiles();
 	}

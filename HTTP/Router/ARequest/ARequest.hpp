@@ -33,18 +33,7 @@ protected:
     int  _headersize;
     void parseCookies();
 
-    // Chunked transfer encoding state
     bool _isChunked;
-    bool _chunkedComplete;
-    enum eChunkState { eChunkSize, eChunkData, eChunkTrailer, eChunkDone };
-    eChunkState _chunkState;
-    size_t _currentChunkSize;
-    size_t _currentChunkRead;
-    string _decodedBody;
-    bool processChunkedData();
-    
-
-    // Multipart form-data state
     bool _isMultipart;
     string _boundary;
 
@@ -65,8 +54,6 @@ public:
     bool isChunkedTransferEncoding();
     bool isMultipartFormData();
     string getMultipartBoundary();
-    bool isChunkedComplete() const;
-    string &getDecodedBody();
 };
 
 #include "Headers.hpp"

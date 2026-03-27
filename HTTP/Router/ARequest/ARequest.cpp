@@ -23,10 +23,6 @@ ARequest::ARequest()
 	_headersize = 0;
     _currentSession = NULL;
     _isChunked = false;
-    _chunkedComplete = false;
-    _chunkState = eChunkSize;
-    _currentChunkSize = 0;
-    _currentChunkRead = 0;
     _isMultipart = false;
 }
 
@@ -54,13 +50,15 @@ map<string, string> &ARequest::getrequestenv()
 	return (_env);
 }
 
-void ARequest::parseCookies() {
+void ARequest::parseCookies()
+{
     string cookieHeader = _env["HTTP_COOKIE"];
     if (cookieHeader.empty()) return;
     
     stringstream ss(cookieHeader);
     string cookie;
-    while (getline(ss, cookie, ';')) {
+    while (getline(ss, cookie, ';')) 
+    {
         size_t start = cookie.find_first_not_of(" \t");
         if (start == string::npos) continue;
         cookie = cookie.substr(start);
@@ -74,13 +72,15 @@ void ARequest::parseCookies() {
     }
 }
 
-string ARequest::getCookie(const string &name) {
+string ARequest::getCookie(const string &name)
+{
     if ( _cookies.find(name) != _cookies.end())
         return _cookies[name];
     return "";
 }
 
-void ARequest::initSession() {
+void ARequest::initSession()
+{
     parseCookies();
     
     SessionManager* sm = SessionManager::getInstance();
@@ -104,7 +104,9 @@ void ARequest::initSession() {
     }
     _env["SESSIONID"] = _currentSession->id;
 }
-Session* ARequest::getSession() {
+
+Session *ARequest::getSession()
+{
     if (_currentSession == NULL) {
         initSession();
     }
@@ -152,86 +154,4 @@ string ARequest::getMultipartBoundary()
             boundary = boundary.substr(1, end - 1);
     }
     return boundary;
-}
-
-bool ARequest::processChunkedData()
-{
-    while (_chunkState != eChunkDone)
-    {
-        if (_chunkState == eChunkSize)
-        {
-            size_t pos = _requestbuff.find("\r\n");
-            if (pos == string::npos)
-                return false;
-            string sizeLine = _requestbuff.substr(0, pos);
-            _requestbuff.erase(0, pos + 2);
-            size_t semiPos = sizeLine.find(';');
-            if (semiPos != string::npos)
-                sizeLine = sizeLine.substr(0, semiPos);
-            char *endptr;
-            _currentChunkSize = strtoul(sizeLine.c_str(), &endptr, 16);
-            if (*endptr != '\0' && *endptr != ' ')
-                Error::ThrowError("400");
-            _currentChunkRead = 0;
-            if (_currentChunkSize == 0)
-                _chunkState = eChunkTrailer;
-            else
-                _chunkState = eChunkData;
-        }
-        else if (_chunkState == eChunkData)
-        {
-            size_t remaining = _currentChunkSize - _currentChunkRead;
-            size_t available = _requestbuff.length();
-            size_t toRead = min(remaining, available);
-            if (toRead == 0) {
-                if (remaining == 0 && _requestbuff.length() >= 2) {
-                    if (_requestbuff[0] != '\r' || _requestbuff[1] != '\n')
-                        Error::ThrowError("400");
-                    _requestbuff.erase(0, 2);
-                    _chunkState = eChunkSize;
-                    continue;
-                }
-                else
-                    return false;
-            }
-            _decodedBody.append(_requestbuff, 0, toRead);
-            _requestbuff.erase(0, toRead);
-            _currentChunkRead += toRead;
-            if (_currentChunkRead >= _currentChunkSize)
-            {
-                if (_requestbuff.length() < 2)
-                    return false;
-                if (_requestbuff[0] != '\r' || _requestbuff[1] != '\n')
-                    Error::ThrowError("400");
-                _requestbuff.erase(0, 2);
-                _chunkState = eChunkSize;
-            }
-        }
-        else if (_chunkState == eChunkTrailer)
-        {
-            size_t pos = _requestbuff.find("\r\n");
-            if (pos == string::npos)
-                return false;
-            if (pos == 0)
-            {
-                _requestbuff.erase(0, 2);
-                _chunkState = eChunkDone;
-                _chunkedComplete = true;
-                _content_len = _decodedBody.length();
-            }
-            else
-                _requestbuff.erase(0, pos + 2);
-        }
-    }
-    return true;
-}
-
-bool ARequest::isChunkedComplete() const
-{
-    return _chunkedComplete;
-}
-
-string &ARequest::getDecodedBody()
-{
-    return _decodedBody;
 }

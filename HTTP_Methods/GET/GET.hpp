@@ -3,29 +3,34 @@
 
 class GET : public AMethod
 {
-	stringstream filesList;
-	string filesListStr;
-	int sendListFiles;
-	int targetToSend;
-	int sent;
-	void OpenFile(const string &path);
-	void PrepareFileResponse();
-	void ServeFile();
+	enum GETStatus {
+		eSendAutoIndex = 3,
+	};
 
-	void GetStaticIndex();
+	stringstream _filesList;
+	string _filesListStr;
+	int _sendListFiles;
+	int _targetToSend;
+	int _sent;
 
-	string FormatDirectoryEntry(const string &name, const struct stat &st, const string &requestPath);
-	void ListFiles(const string &path);
-	int  CalculateAutoIndexSize();
-	void CreateListFilesResponse();
+	void _openFile(const string &path);
+	void _prepareFileResponse();
+	void _serveFile();
 
-	void SendChunk(const char *data, int dataSize);
-	void SendListFilesStr(const string &str);
-	void SendAutoIndex(StaticFile *f);
-	void AdvanceListFilesState();
-	void SendListFilesResponse();
+	void _getStaticIndex();
 
-	void GetMethod();
+	string _formatDirectoryEntry(const string &name, const struct stat &st, const string &requestPath);
+	void _listFiles(const string &path);
+	int  _calculateAutoIndexSize();
+	void _createListFilesResponse();
+
+	void _sendChunk(const char *data, int dataSize);
+	void _sendListFilesStr(const string &str);
+	void _sendAutoIndex(StaticFile *f);
+	void _advanceListFilesState();
+	void _sendListFilesResponse();
+
+	void _createResponse();
 public:
 	GET(SocketIO *sock, Routing *router);
 	~GET();

@@ -55,7 +55,6 @@ class Path {
         bool        isRedirectionToDir() const;
         bool        isFile() const;
         bool        isFound() const;
-		bool 		emptyRoot() const;
 		bool        hasPermission() const;
 		bool        isRedirection() const;
 		string      getRedirCode() const;

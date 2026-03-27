@@ -48,6 +48,7 @@ class Cgi
 	char		*_buf;
     size_t      _reqlen;
 	size_t		_responselen;
+    Multiplexer *_multiplexer;
     int _stdin;
     void createChild();
     void readfromcgi();

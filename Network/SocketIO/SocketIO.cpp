@@ -37,7 +37,9 @@ bool SocketIO::clearPipe()
 
 int SocketIO::Send(void *buff, int size)
 {
-	ssize_t sent = send(fd, buff, size, MSG_NOSIGNAL);
+	// ssize_t sent = send(fd, buff, size, MSG_NOSIGNAL);
+	ssize_t sent = write(fd, buff, size);
+
 	if (sent <= 0)
 		errorNumber = eWriteError;
 	return sent;
@@ -58,7 +60,6 @@ int SocketIO::SendBuffToPipe(void *buff, int size, bool usePending)
 		errorNumber = ePipe1Error;
 	}
 	status &= ~ePipe1;
-	((HTTPContext *)context)->activeOutPipe();
 	if (n <= 0)
 		return -1;
 	if (usePending)
@@ -99,10 +100,11 @@ int SocketIO::PipeToFile(int fileFD, int inputfd, int size)
 int SocketIO::SocketToFile(int fileFD, int size)
 {
 	int len = 0, flag = (eSocket | ePipe1);
+	DDEBUG("SocketIO") << "SocketToFile: fd=" << this->fd << ", pendingInPipe=" << pendingInPipe;
 
-	if ((status & flag) == flag)
+	if ((status & flag) == flag && pendingInPipe < size)
 	{
-		len = splice(this->fd, NULL, pipefd[1], NULL, size, 0);
+		len = splice(this->fd, NULL, pipefd[1], NULL, size - pendingInPipe, 0);
 		status &= ~flag;
 		if (len > 0)
 			pendingInPipe += len;
@@ -117,7 +119,6 @@ int SocketIO::SocketToFile(int fileFD, int size)
 	{
 		len = splice(pipefd[0], NULL, fileFD, NULL, pendingInPipe, 0);
 		status &= ~ePipe0;
-		((HTTPContext *)context)->activeInPipe();
 		if (len <= 0)
 		{
 			ERR() << "Socket fd: " << fd << " SocketToFile ePipe0Error";
@@ -141,7 +142,6 @@ int SocketIO::SendSocketToPipe(int size, bool usePending)
 			errorNumber = eReadError;
 		}
 		status &= ~ePipe1;
-		((HTTPContext *)context)->activeOutPipe();
 		if (len == -1)
 			return -1;
 		if (usePending)

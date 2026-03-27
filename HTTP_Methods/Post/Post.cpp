@@ -4,14 +4,10 @@ Post::Post(SocketIO *sock, Routing *router) : AMethod(sock, router)
 {
 	_path = &router->GetPath();
 	_originalPath = &_path->OriginalPath;
-	uploadFd = -1;
-	readyToUpload = false;
-	contentBodySize = 0;
-	uploadedSize = 0;
-	_isMultipartUpload = false;
-	_isChunkedUpload = false;
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	MulObj->ChangeToEpollIn(sock);
+	_uploadFd = -1;
+	_contentBodySize = 0;
+	_uploadedSize = 0;
+	_multiplexer->ChangeToEpollIn(sock);
 	DEBUG("Post")
 		<< "Post initialized, socket fd="
 		<< sock->GetFd();
@@ -20,233 +16,176 @@ Post::Post(SocketIO *sock, Routing *router) : AMethod(sock, router)
 
 Post::~Post()
 {
-	if (uploadFd != -1)
-		close(uploadFd);
+	if (_uploadFd != -1)
+		close(_uploadFd);
 	Utility::ReleaseBuffer(_buff);
+}
+
+void Post::_initPost()
+{
+	_resolvePath();
+
+	if (!_isMethodAllowed("POST"))
+		HandelErrorPages("405");
+	else if (_router->GetPath().isRedirection())
+		_sendRedirection();
+	else if (_router->GetPath().isCGI())
+		_handelCGI();
+	else if (_originalPath->found && _originalPath->isFile)
+		HandelErrorPages("405");
+	if (_status != Post::eCreateResponse)
+		return;
+	if (_originalPath->isDir)
+	{
+		if (!_router->GetRequest().isMultipartFormData())
+		{
+			string randName = Utility::getRandomStr();
+			if (!_filename.empty() && _filename[_filename.length() - 1] != '/')
+				_filename += "/";
+			_filename += randName;
+		}
+	}
+	_contentBodySize = _router->GetRequest().getcontentlen();
+	if (_router->GetPath().getLocation() == NULL)
+	{
+		HandelErrorPages("403");
+	}
+	else if (_router->GetRequest().isMultipartFormData())
+	{
+		_handleMultipartUpload();
+		if (_status == Post::eCreateResponse)
+			_status = Post::eMultipartUpload;
+	}
+	else if (_router->GetRequest().isChunkedTransferEncoding())
+	{
+		_status = Post::eChunkedUpload;
+		_openUploadFile();
+		if (_uploadFd == -1)
+			HandelErrorPages("403");
+		else
+			_uploadChunkedToDisk();
+	}
+	else
+	{
+		_openUploadFile();
+		if (_uploadFd == -1)
+			HandelErrorPages("403");
+		else
+			_uploadFileToDisk();
+	}
+	if (_status == Post::eCreateResponse)
+		_status = Post::eUploadFile;
 }
 
 bool Post::HandleResponse()
 {
-	sock->SetStateByFd(sock->GetFd());
+	_sock->SetStateByFd(_sock->GetFd());
 
 	DEBUG("Post")
-		<< "Socket fd: " << sock->GetFd()
+		<< "Socket fd: " << _sock->GetFd()
 		<< ", Post::HandleResponse() start";
-	DDEBUG("Post") << "Socket fd: " << sock->GetFd()
-				   << ", readyToSend=" << readyToSend
-				   << ", readyToUpload=" << readyToUpload
-				   << ", uploadedSize=" << uploadedSize
-				   << ", contentBodySize=" << contentBodySize;
+	DDEBUG("Post") << "Socket fd: " << _sock->GetFd()
+				   << ", uploadedSize=" << _uploadedSize
+				   << ", contentBodySize=" << _contentBodySize
+				   << ", status=" << _status;
 
-	if (sock->isTimeOut())
+	if (_sock->isTimeOut())
+		_createTimeoutResponse();
+	else if (_status == Post::eInitPost)
 	{
-		if (router->GetPath().isCGI())
-			HandelErrorPages("504");
-		else
-			HandelErrorPages("408");
-		sock->UpdateTime();
-		return del;
+		_initPost();
 	}
-	if (readyToSend)
+	else if (_status == Post::eUploadFile)
 	{
-		SendResponse();
-		return del;
+		_uploadFileToDisk();
 	}
-
-	if (readyToUpload)
+	else if (_status == Post::eMultipartUpload)
 	{
-		if (_isMultipartUpload)
-			handleMultipartUpload();
-		else if (_isChunkedUpload)
-			uploadChunkedToDisk();
-		else
-			uploadFileToDisk();
-		return del;
+		_handleMultipartUpload();
 	}
-
-	ResolvePath();
-
-	if (!IsMethodAllowed("POST"))
+	else if (_status == Post::eChunkedUpload)
 	{
-		DDEBUG("Post")
-			<< "Socket fd: " << sock->GetFd()
-			<< ", POST method not allowed, sending 405.";
-		HandelErrorPages("405");
-		return del;
+		_uploadChunkedToDisk();
 	}
-
-	if (router->GetPath().isRedirection())
+	else if (_status == Post::eCGIResponse)
 	{
-		DDEBUG("Post")
-			<< "Socket fd: " << sock->GetFd()
-			<< ", redirection detected.";
-		SendRedirection();
-		return del;
+		_handelCGI();
 	}
-
-	if (router->GetPath().isCGI())
+	else if (_status == Post::eSendResponse)
 	{
-		DDEBUG("Post")
-			<< "Socket fd: " << sock->GetFd()
-			<< ", CGI path detected .";
-		HandelCGI();
-		return del;
+		_sendResponse();
 	}
-
-	if (_originalPath->found && _originalPath->isFile)
-	{
-		DDEBUG("Post")
-			<< "Socket fd: " << sock->GetFd()
-			<< ", file already exists, sending 409.";
-		HandelErrorPages("405");
-		return del;
-	}
-
-	if (_originalPath->isDir)
-	{
-		if (!router->GetRequest().isMultipartFormData())
-		{
-			string resolvedName = resolveUploadFileName();
-			if (!filename.empty() && filename[filename.length() - 1] != '/')
-				filename += "/";
-			filename += resolvedName;
-			DEBUG("Post")
-				<< "Socket fd: " << sock->GetFd()
-				<< ", path is directory, resolved filename: " << filename;
-		}
-	}
-
-	PostMethod();
-	return del;
+	return _status == Post::eComplete;
 }
 
-void Post::OpenUploadFile()
+void Post::_openUploadFile()
 {
-	uploadFd = open(filename.c_str(), O_CREAT | O_WRONLY | O_CLOEXEC, 0644);
+	_uploadFd = open(_filename.c_str(), O_CREAT | O_WRONLY | O_CLOEXEC, 0644);
 	DDEBUG("Post")
-		<< "Socket fd: " << sock->GetFd()
-		<< ", OpenUploadFile: '" << filename
-		<< "', fd=" << uploadFd;
+		<< "Socket fd: " << _sock->GetFd()
+		<< ", OpenUploadFile: '" << _filename
+		<< "', fd=" << _uploadFd;
 }
 
-void Post::PostMethod()
+void Post::_writeBodyFromMemory()
 {
-	if (router->GetPath().getLocation() == NULL)
-	{
-		DDEBUG("Post")
-			<< "Socket fd: " << sock->GetFd()
-			<< ", PostMethod: no location matched, sending 403.";
-		HandelErrorPages("403");
-		return;
-	}
-
-	contentBodySize = router->GetRequest().getcontentlen();
-
-	if (router->GetRequest().isMultipartFormData())
-	{
-		_isMultipartUpload = true;
-		readyToUpload = true;
-		DEBUG("Post") << "Socket fd: " << sock->GetFd()
-					  << ", PostMethod: multipart upload detected.";
-		handleMultipartUpload();
-		return;
-	}
-
-	if (router->GetRequest().isChunkedTransferEncoding())
-	{
-		_isChunkedUpload = true;
-		OpenUploadFile();
-		if (uploadFd == -1)
-		{
-			DDEBUG("Post")
-				<< "Socket fd: " << sock->GetFd()
-				<< ", PostMethod: failed to open upload file for chunked, sending 403.";
-			HandelErrorPages("403");
-			return;
-		}
-		readyToUpload = true;
-		DEBUG("Post") << "Socket fd: " << sock->GetFd()
-					  << ", PostMethod: chunked upload detected.";
-		uploadChunkedToDisk();
-		return;
-	}
-
-	OpenUploadFile();
-	if (uploadFd == -1)
-	{
-		DDEBUG("Post")
-			<< "Socket fd: " << sock->GetFd()
-			<< ", PostMethod: failed to open upload file, sending 403.";
-		HandelErrorPages("403");
-		return;
-	}
-
-	contentBodySize = router->GetRequest().getcontentlen();
-	readyToUpload = true;
-	DDEBUG("Post")
-		<< "Socket fd: " << sock->GetFd()
-		<< ", PostMethod: starting upload, contentBodySize="
-		<< contentBodySize;
-	uploadFileToDisk();
-}
-
-void Post::WriteBodyFromMemory()
-{
-	string &body = router->GetRequest().getBody();
-	if (body.length() <= uploadedSize)
+	string &body = _router->GetRequest().getBody();
+	if (body.length() <= _uploadedSize)
 		return;
 
-	const char *data = &(body[uploadedSize]);
-	int toWrite = body.length() - uploadedSize;
-	int written = write(uploadFd, data, toWrite);
+	char *data = &(body[_uploadedSize]);
+	int toWrite = body.length() - _uploadedSize;
+	int written = _uploadToDisk(_uploadFd, data, toWrite);
 
 	if (written > 0)
-		uploadedSize += written;
+		_uploadedSize += written;
 }
 
-void Post::WriteBodyFromSocket()
+void Post::_writeBodyFromSocket()
 {
-	int written = sock->SocketToFile(uploadFd, contentBodySize - uploadedSize);
-	if (written > 0) {
-		uploadedSize += written;
-		sock->UpdateTime();
+	int written = _sock->SocketToFile(_uploadFd, _contentBodySize - _uploadedSize);
+	if (written > 0)
+	{
+		_uploadedSize += written;
+		_sock->UpdateTime();
 	}
+	else
+		_multiplexer->ChangeToEpollInOut(_sock);
 }
 
-void Post::uploadFileToDisk()
+void Post::_uploadFileToDisk()
 {
-	string &body = router->GetRequest().getBody();
+	string &body = _router->GetRequest().getBody();
 
-	if (body.length() > uploadedSize)
+	if (body.length() > _uploadedSize)
 	{
-		WriteBodyFromMemory();
+		_writeBodyFromMemory();
 	}
-	else if (uploadedSize < contentBodySize)
+	else if (_uploadedSize < _contentBodySize)
 	{
-		WriteBodyFromSocket();
+		_writeBodyFromSocket();
 	}
 
 	DEBUG("Post")
-		<< "Socket fd: " << sock->GetFd()
-		<< " POST uploaded " << uploadedSize
-		<< " / " << contentBodySize << " bytes";
+		<< "Socket fd: " << _sock->GetFd()
+		<< " POST uploaded " << _uploadedSize
+		<< " / " << _contentBodySize << " bytes";
 
-	if (uploadedSize >= contentBodySize)
+	if (_uploadedSize >= _contentBodySize)
 	{
 		INFO()
-			<< "Client " << Socket::getRemoteName(sock->GetFd())
-			<< " upload complete: " << filename << " ("
-			<< contentBodySize << " bytes)";
-		close(uploadFd);
-		uploadFd = -1;
-		readyToUpload = false;
-		createPostResponse();
+			<< "Client " << Socket::getRemoteName(_sock->GetFd())
+			<< " upload complete: " << _filename << " ("
+			<< _contentBodySize << " bytes)";
+		close(_uploadFd);
+		_uploadFd = -1;
+		_createPostResponse();
 	}
 }
 
-bool Post::GetLocationReturn(string &retCode, string &retBody)
+bool Post::_getLocationReturn(string &retCode, string &retBody)
 {
-	const Config::Server::Location *loc = router->GetPath().getLocation();
+	const Config::Server::Location *loc = _router->GetPath().getLocation();
 	if (loc == NULL || loc->returnCode.empty())
 		return false;
 
@@ -255,502 +194,253 @@ bool Post::GetLocationReturn(string &retCode, string &retBody)
 	return true;
 }
 
-void Post::SendPostRedirection(const string &retCode, const string &retBody)
+void Post::_sendPostRedirection(const string &retCode, const string &retBody)
 {
-	CreateRedirectionHeader(retCode, retBody);
+	_createRedirectionHeader(retCode, retBody);
 	DEBUG("Post")
-		<< "Socket fd: " << sock->GetFd()
+		<< "Socket fd: " << _sock->GetFd()
 		<< " POST redirect " << retCode
 		<< " to " << retBody;
-	ShouldSend = responseHeaderStr.length();
-	readyToSend = true;
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	MulObj->ChangeToEpollOut(sock);
+	_totalByteToSend = _responseHeaderStr.length();
+	_status = Post::eSendResponse;
+	_multiplexer->ChangeToEpollOut(_sock);
 }
 
-void Post::SendPostCustomBody(const string &retCode, const string &retBody)
+void Post::_sendPostCustomBody(const string &retCode, const string &retBody)
 {
 	DDEBUG("Post")
-		<< "Socket fd: " << sock->GetFd()
+		<< "Socket fd: " << _sock->GetFd()
 		<< ", SendPostCustomBody: code="
 		<< retCode << ", bodyLen="
 		<< retBody.length();
-	code = retCode;
-	bodySize = retBody.length();
-	filename = ".json";
-	CreateResponseHeader();
-	responseHeaderStr += retBody;
-	ShouldSend = responseHeaderStr.length();
-	readyToSend = true;
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	MulObj->ChangeToEpollOut(sock);
+	_statusCode = retCode;
+	_bodySize = retBody.length();
+	_filename = ".json";
+	_createResponseHeader();
+	_responseHeaderStr += retBody;
+	_totalByteToSend = _responseHeaderStr.length();
+	_status = Post::eSendResponse;
+	_multiplexer->ChangeToEpollOut(_sock);
 }
 
-void Post::createPostResponse()
+void Post::_createPostResponse()
 {
 	string retCode, retBody;
 
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	_multiplexer->ChangeToEpollOut(_sock);
 
-	MulObj->ChangeToEpollOut(sock);
-
-	if (GetLocationReturn(retCode, retBody))
+	if (_getLocationReturn(retCode, retBody))
 	{
 		DDEBUG("Post")
-			<< "Socket fd: " << sock->GetFd()
+			<< "Socket fd: " << _sock->GetFd()
 			<< ", createPostResponse: location return code="
 			<< retCode;
 
 		if (retCode == "301" || retCode == "302")
-			SendPostRedirection(retCode, retBody);
+			_sendPostRedirection(retCode, retBody);
 		else
-			SendPostCustomBody(retCode, retBody);
+			_sendPostCustomBody(retCode, retBody);
 	}
 	else
 	{
 		DDEBUG("Post")
-			<< "Socket fd: " << sock->GetFd()
+			<< "Socket fd: " << _sock->GetFd()
 			<< ", createPostResponse: no return directive, sending 201 Created.";
-		SendDefaultRespense("201");
+		_sendDefaultRespense("201");
 	}
 }
 
-void Post::uploadChunkedToDisk()
+void Post::_checkMaxBodySize(size_t bodySize)
 {
-	ClientRequest &req = router->GetRequest();
-	string &body = req.getBody();
-
-	if (!body.empty())
+	size_t maxSize = _router->GetRequest().getMaxBodySize();
+	if (maxSize > 0 && bodySize > maxSize)
 	{
-		try
+		DDEBUG("Post")
+			<< "Socket fd: " << _sock->GetFd()
+			<< ", checkMaxBodySize: body size " << bodySize
+			<< " exceeds max body size " << maxSize
+			<< ", sending 413.";
+		Error::ThrowError("413");
+	}
+}
+
+void Post::_decodBody(string &body, ChunkedData &decoder, int &status)
+{
+	ssize_t maxSize = _router->GetRequest().getMaxBodySize();
+	if ((int)body.length() > decoder.GetUnchunkedSize())
+	{
+		status = decoder.UnchunkData(body);
+		if (decoder.GetTotalUnchunkedSize() > maxSize)
 		{
-			req.processChunkedBody();
-		}
-		catch (const std::exception &e)
-		{
-			if (sended == 0)
-				HandelErrorPages(e.what());
-			else
-			{
-				del = true;
-				sock->closeConnection = true;
-			}
+			HandelErrorPages("413");
 			return;
 		}
 	}
-
-	string &decoded = req.getDecodedBody();
-	if (decoded.length() > uploadedSize)
+	if (decoder.GetStatus() < ChunkedData::eComplete &&
+		_status != Post::eInitPost)
 	{
-		const char *data = decoded.c_str();
-		size_t toWrite = decoded.length();
-		ssize_t written = write(uploadFd, data, toWrite);
-		if (written > 0) {
-			decoded.erase(0, written);
-			uploadedSize += written;
-		}
-	}
-
-	if (!req.isChunkedComplete())
-	{
-		ssize_t len = read(sock->GetFd(), _buff, BUF_SIZE);
-		if (len > 0)
+		int readLen = read(_sock->GetFd(), _buff, BUF_SIZE);
+		if (readLen > 0)
+			body.append(_buff, readLen);
+		else
 		{
-			body.append(_buff, len);
-			try
-			{
-				req.processChunkedBody();
-			}
-			catch (const std::exception &e)
-			{
-				if (sended == 0)
-					HandelErrorPages(e.what());
-				else
-				{
-					del = true;
-					sock->closeConnection = true;
-				}
-				return;
-			}
-
-			if (decoded.length() > uploadedSize)
-			{
-				const char *data = decoded.c_str();
-				size_t toWrite = decoded.length();
-				ssize_t written = write(uploadFd, data, toWrite);
-				if (written > 0) {
-					uploadedSize += written;
-					decoded.erase(0, written);
-				}
-			}
-		}
-		else if (len == 0)
-		{
-			HandelErrorPages("400");
+			_sock->closeConnection = true;
+			_status = Post::eComplete;
 			return;
 		}
+		status = decoder.UnchunkData(body);
 	}
-
-	DEBUG("Post") << "Socket fd: " << sock->GetFd()
-				  << " POST chunked uploaded " << uploadedSize << " bytes"
-				  << (req.isChunkedComplete() ? " [complete]" : " [in progress]");
-
-	if (req.isChunkedComplete() && decoded.length() == 0)
+	if (decoder.GetTotalUnchunkedSize() > maxSize)
 	{
-		contentBodySize = uploadedSize;
-		INFO() << "Client " << Socket::getRemoteName(sock->GetFd())
-			   << " chunked upload complete: " << filename
-			   << " (" << contentBodySize << " bytes)";
-		close(uploadFd);
-		uploadFd = -1;
-		readyToUpload = false;
-		createPostResponse();
+		HandelErrorPages("413");
+		return;
+	}
+	if (status == -1)
+	{
+		HandelErrorPages("400");
+		return;
 	}
 }
 
-string Post::extractFilenameFromDisposition(const string &header)
+ssize_t Post::_uploadToDisk(int fd, char *data, ssize_t bodySize)
 {
-	size_t fnPos = header.find("filename=\"");
-	if (fnPos == string::npos)
-		return "";
-	fnPos += 10;
-	size_t fnEnd = header.find('"', fnPos);
-	if (fnEnd == string::npos || fnEnd == fnPos)
-		return "";
-	string fname = header.substr(fnPos, fnEnd - fnPos);
-	// sanitize: strip path components, keep only the base name
-	size_t slashPos = fname.find_last_of("/\\");
-	if (slashPos != string::npos)
-		fname = fname.substr(slashPos + 1);
-	return fname;
+	ssize_t totalWritten = 0;
+	while (totalWritten < bodySize)
+	{
+		char *s = data + totalWritten;
+		ssize_t writeLen = write(fd, s, bodySize - totalWritten);
+		if (writeLen <= 0)
+		{
+			return writeLen;
+		}
+		_uploadedSize += writeLen;
+		totalWritten += writeLen;
+	}
+	return totalWritten;
 }
 
-string Post::resolveUploadFileName()
+void Post::_uploadChunkedToDisk()
 {
-	map<string, string> &env = router->GetRequest().getrequestenv();
-
-	// 1. Check Content-Disposition header for filename="..."
-	if (env.find("Content-Disposition") != env.end())
-	{
-		string name = extractFilenameFromDisposition(env["Content-Disposition"]);
-		if (!name.empty())
-		{
-			DDEBUG("Post") << "Socket fd: " << sock->GetFd()
-						   << ", filename from Content-Disposition: " << name;
-			return name;
-		}
-	}
-
-	// 2. Check X-File-Name custom header
-	if (env.find("X-File-Name") != env.end() && !env["X-File-Name"].empty())
-	{
-		string name = env["X-File-Name"];
-		size_t slashPos = name.find_last_of("/\\");
-		if (slashPos != string::npos)
-			name = name.substr(slashPos + 1);
-		if (!name.empty())
-		{
-			DDEBUG("Post") << "Socket fd: " << sock->GetFd()
-						   << ", filename from X-File-Name: " << name;
-			return name;
-		}
-	}
-
-	// 3. Fallback: generate a random filename with extension from Content-Type
-	string extension;
-	string contentType;
-	if (env.find("CONTENT_TYPE") != env.end())
-		contentType = env["CONTENT_TYPE"];
-
-	size_t semiPos = contentType.find(';');
-	if (semiPos != string::npos)
-		contentType = contentType.substr(0, semiPos);
-
-	map<string, string> &mime = Singleton::GetMime();
-	for (map<string, string>::iterator it = mime.begin(); it != mime.end(); ++it)
-	{
-		if (it->second == contentType)
-		{
-			extension = "." + it->first;
-			break;
-		}
-	}
-
-	stringstream ss;
-	ss << hex;
-	for (int i = 0; i < 16; i++)
-		ss << (rand() % 16);
-
-	DDEBUG("Post") << "Socket fd: " << sock->GetFd()
-				   << ", no filename provided, generated random: " << ss.str() + extension;
-	return ss.str() + extension;
-}
-
-void Post::handleMultipartUpload()
-{
-	ClientRequest &req = router->GetRequest();
+	ClientRequest &req = _router->GetRequest();
 	string &body = req.getBody();
+	ChunkedData &decoder = _router->GetChunkedData();
+	int status;
+
+	_decodBody(body, decoder, status);
+	if (_status != Post::eChunkedUpload)
+		return;
+	ssize_t writeLen = _uploadToDisk(_uploadFd, (char *)body.c_str(), decoder.GetUnchunkedSize());
+	if (writeLen < 0)
+	{
+		HandelErrorPages("403");
+		return;
+	}
+	decoder.SizeWritting(writeLen);
+	body.erase(0, writeLen);
+	if (status == 1 && body.empty())
+		_createPostResponse();
+}
+
+void Post::_uploadDataForm(FormData *formData)
+{
+	if (formData->filename.empty())
+		formData->filename = Utility::getRandomStr();
+	formData->filename = _filename + "/" + formData->filename;
+
+	DDEBUG("Post") << "_uploadDataForm: "
+			<< "is formData queue empty? " 
+			<< (_router->GetMultipartData().getFormData().empty() ? "yes" : "no")
+			<< "name: " <<formData->name
+			<< ", filename: " << formData->filename
+			<< ", contentType: " << formData->contentType
+			<< ", startIdx: " << formData->startIdx
+			<< ", size: " << formData->size
+			<< ", isComplete: " << formData->isComplete
+			<< ", isHeaderParsed: " << formData->isHeaderParsed
+			<< ", data: \n" << string(formData->data(), formData->size);
+
+	
+	int fd = open(formData->filename.c_str(), O_CREAT | O_WRONLY | O_CLOEXEC, 0644);
+	if (fd == -1)
+	{
+		HandelErrorPages("403");
+		return;
+	}
+	ssize_t written = _uploadToDisk(fd, formData->data(), formData->size);
+	DDEBUG("Post") << "_uploadDataForm: \n"
+				   << string(formData->data(), written);
+	if (written <= 0)
+		HandelErrorPages("403");
+	close(fd);
+}
+
+int Post::_initMultipartUpload()
+{
+	ClientRequest &req = _router->GetRequest();
+	string &body = req.getBody();
+	ChunkedData &decoder = _router->GetChunkedData();
 	bool isChunked = req.isChunkedTransferEncoding();
+	int status, chunkStatus = 0;
 
 	if (isChunked)
 	{
-		try
-		{
-			if (!body.empty())
-				req.processChunkedBody();
-
-			if (!req.isChunkedComplete())
-			{
-				char readBuf[8192];
-				ssize_t len = read(sock->GetFd(), readBuf, sizeof(readBuf));
-				if (len > 0)
-				{
-					body.append(readBuf, len);
-					req.processChunkedBody();
-				}
-				else if (len == 0)
-				{
-					HandelErrorPages("400");
-					return;
-				}
-			}
-		}
-		catch (const std::exception &e)
-		{
-			if (sended == 0)
-				HandelErrorPages(e.what());
-			else
-			{
-				del = true;
-				sock->closeConnection = true;
-			}
-			return;
-		}
-		if (!req.isChunkedComplete())
-			return;
-
-		_multipartBuffer = req.getDecodedBody();
+		_decodBody(body, decoder, chunkStatus);
+		if (_status != Post::eMultipartUpload && _status != Post::eInitPost)
+			return chunkStatus;
 	}
-	else
+	else if (_status != Post::eInitPost)
 	{
-		if (body.length() > uploadedSize)
-		{
-			_multipartBuffer.append(body, uploadedSize, body.length() - uploadedSize);
-			uploadedSize = body.length();
-		}
-
-		if (uploadedSize < contentBodySize)
-		{
-			char readBuf[8192];
-			size_t toRead = contentBodySize - uploadedSize;
-			if (toRead > sizeof(readBuf))
-				toRead = sizeof(readBuf);
-			ssize_t len = read(sock->GetFd(), readBuf, toRead);
-			if (len > 0)
-			{
-				_multipartBuffer.append(readBuf, len);
-				uploadedSize += len;
-			}
-			else if (len == 0)
-			{
-				HandelErrorPages("400");
-				return;
-			}
-		}
+		int size = read(_sock->GetFd(), _buff, BUF_SIZE);
+		body.append(_buff, size);
 	}
-
-	if (uploadedSize < contentBodySize)
-		return;
-
-	DEBUG("Post") << "Socket fd: " << sock->GetFd()
-				  << ", handleMultipartUpload: full body received ("
-				  << _multipartBuffer.length() << " bytes), parsing multipart.";
-
-	if (!parseMultipartBody())
-	{
+	MultipartData &multipartData = _router->GetMultipartData();
+	string boundary = "--" + req.getMultipartBoundary();
+	DDEBUG("Post") << "_initMultipartUpload: calling MultipartData::Parse";
+	status = multipartData.Parse(body, boundary);
+	if (chunkStatus == ChunkedData::eComplete
+		&& status != MultipartData::eComplete) 
 		HandelErrorPages("400");
-		return;
-	}
-	uploadMultipartParts();
+	DDEBUG("Post") << "_initMultipartUpload: Parse result=" << status;
+	return status;
 }
 
-bool Post::parseMultipartBody()
+void Post::_handleMultipartUpload()
 {
-	string boundary = router->GetRequest().getMultipartBoundary();
-	string firstDelimiter = "--" + boundary + "\r\n";
-	string delimiter = "\r\n--" + boundary;
-
-	_parts.clear();
-
-	size_t start = _multipartBuffer.find(firstDelimiter);
-	if (start == string::npos)
-		return false;
-	start += firstDelimiter.length();
-
-	while (start < _multipartBuffer.length())
+	DDEBUG("Post") << "1-_handleMultipartUpload: enter";
+	int parseResult = _initMultipartUpload();
+	if (parseResult == -1)
 	{
-		size_t end = _multipartBuffer.find(delimiter, start);
-		if (end == string::npos)
-			break;
-
-		string partContent = _multipartBuffer.substr(start, end - start);
-
-		size_t headerEnd = partContent.find("\r\n\r\n");
-		if (headerEnd == string::npos)
-			return false;
-
-		string headerSection = partContent.substr(0, headerEnd);
-		string bodyContent = partContent.substr(headerEnd + 4);
-
-		MultipartPart part;
-		if (!extractPartInfo(headerSection, part))
-			return false;
-		part.body = bodyContent;
-		_parts.push_back(part);
-
-		start = end + delimiter.length();
-		if (start + 1 < _multipartBuffer.length() && _multipartBuffer[start] == '-' && _multipartBuffer[start + 1] == '-')
-			break;
-		if (start < _multipartBuffer.length() && _multipartBuffer[start] == '\r')
-			start += 2;
-	}
-
-	DEBUG("Post") << "Socket fd: " << sock->GetFd()
-				  << ", parseMultipartBody: found " << _parts.size() << " parts.";
-	return !_parts.empty();
-}
-
-bool Post::extractPartInfo(const string &headerSection, MultipartPart &part)
-{
-	stringstream ss(headerSection);
-	string line;
-	while (getline(ss, line))
-	{
-		if (!line.empty() && line[line.length() - 1] == '\r')
-			line.erase(line.length() - 1);
-		if (line.empty())
-			continue;
-
-		size_t colonPos = line.find(':');
-		if (colonPos == string::npos)
-			continue;
-
-		string key = line.substr(0, colonPos);
-		string value = line.substr(colonPos + 1);
-		if (!value.empty() && value[0] == ' ')
-			value.erase(0, 1);
-
-		part.headers[key] = value;
-
-		if (key == "Content-Disposition")
-		{
-			size_t namePos = value.find("name=\"");
-			if (namePos != string::npos)
-			{
-				namePos += 6;
-				size_t nameEnd = value.find('"', namePos);
-				if (nameEnd != string::npos)
-					part.name = value.substr(namePos, nameEnd - namePos);
-			}
-
-			size_t fnPos = value.find("filename=\"");
-			if (fnPos != string::npos)
-			{
-				fnPos += 10;
-				size_t fnEnd = value.find('"', fnPos);
-				if (fnEnd != string::npos)
-					part.filename = value.substr(fnPos, fnEnd - fnPos);
-			}
-		}
-		else if (key == "Content-Type")
-		{
-			part.contentType = value;
-		}
-	}
-	return true;
-}
-
-void Post::uploadMultipartParts()
-{
-	if (_parts.empty())
-	{
+		DDEBUG("Post") << "2-_handleMultipartUpload: parse error (-1), sending 400";
 		HandelErrorPages("400");
+	}
+	if (_status != Post::eMultipartUpload && _status != Post::eInitPost)
+		return;
+	ClientRequest &req = _router->GetRequest();
+	string &body = req.getBody();
+	DDEBUG("Post") << "3-_handleMultipartUpload: body:\n"
+				   << body;
+	MultipartData &multipartData = _router->GetMultipartData();
+	FormData *formData;
+	ChunkedData &decoder = _router->GetChunkedData();
+	DDEBUG("Post") << "4-_handleMultipartUpload: processing queued form-data entries: " << multipartData.getFormData().size();
+	while (!multipartData.getFormData().empty())
+	{
+		formData = multipartData.getFormData().front();
+		multipartData.getFormData().pop();
+		_uploadDataForm(formData);
+		delete formData;
+	}
+	if (parseResult == 0)
+	{
+		formData = multipartData.getCurrentFormData();
+		if (formData && formData->isHeaderParsed)
+			_uploadDataForm(formData);
+		size_t idx = multipartData.getLastIndex();
+		decoder.SizeWritting(idx + 1);
+		body.erase(0, idx);
+		multipartData.resetIndex();
 		return;
 	}
-
-	string uploadDir = filename;
-	if (!uploadDir.empty() && uploadDir[uploadDir.length() - 1] != '/')
-		uploadDir += "/";
-
-	bool anyUploaded = false;
-	for (size_t i = 0; i < _parts.size(); i++)
-	{
-		if (_parts[i].filename.empty())
-			continue;
-
-		string filePath = uploadDir + _parts[i].filename;
-		int fd = open(filePath.c_str(), O_CREAT | O_WRONLY | O_CLOEXEC, 0644);
-		if (fd == -1)
-		{
-			DEBUG("Post") << "Socket fd: " << sock->GetFd()
-						  << ", uploadMultipartParts: failed to create " << filePath;
-			continue;
-		}
-
-		const char *data = _parts[i].body.c_str();
-		size_t remaining = _parts[i].body.length();
-		while (remaining > 0)
-		{
-			ssize_t written = write(fd, data, remaining);
-			if (written <= 0)
-				break;
-			data += written;
-			remaining -= written;
-		}
-		close(fd);
-
-		INFO() << "Client " << Socket::getRemoteName(sock->GetFd())
-			   << " multipart upload: " << filePath
-			   << " (" << _parts[i].body.length() << " bytes)";
-		anyUploaded = true;
-	}
-
-	if (!anyUploaded)
-	{
-		// No file parts found — save non-file form-data parts
-		for (size_t i = 0; i < _parts.size(); i++)
-		{
-			string partName = _parts[i].name;
-			if (partName.empty())
-			{
-				stringstream ss;
-				ss << "part_" << i;
-				partName = ss.str();
-			}
-			string filePath = uploadDir + partName;
-			int fd = open(filePath.c_str(), O_CREAT | O_WRONLY | O_CLOEXEC, 0644);
-			if (fd == -1)
-				continue;
-			const char *data = _parts[i].body.c_str();
-			size_t remaining = _parts[i].body.length();
-			while (remaining > 0)
-			{
-				ssize_t written = write(fd, data, remaining);
-				if (written <= 0)
-					break;
-				data += written;
-				remaining -= written;
-			}
-			close(fd);
-			anyUploaded = true;
-		}
-		if (!anyUploaded)
-		{
-			HandelErrorPages("400");
-			return;
-		}
-	}
-
-	readyToUpload = false;
-	createPostResponse();
+	DDEBUG("Post") << "5-_handleMultipartUpload: complete, creating post response";
+	_createPostResponse();
 }

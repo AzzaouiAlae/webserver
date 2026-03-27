@@ -195,8 +195,6 @@ void Path::CreatePath(Config::Server &srv, const string &reqUrl, const string &m
 				  << ", isCGI=" << _isCGI << ", hasPermission=" << _hasPermission << "]";
 }
 
-bool Path::emptyRoot() const{ return _root.empty(); }
-
 string Path::encodePath(const string& path)
 {
     ostringstream escaped;

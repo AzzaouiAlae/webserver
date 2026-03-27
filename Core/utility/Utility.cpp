@@ -255,3 +255,25 @@ bool Utility::getAbsolute(string &path)
 	}
 	return false;
 }
+
+string Utility::getRandomStr(size_t length)
+{
+	stringstream ss;
+	ss << hex;
+	for (size_t i = 0; i < length; i++)
+		ss << (rand() % 16);
+	return ss.str();
+}
+
+string Utility::addRandomStr(string filename)
+{
+	if (filename.empty())
+		return Utility::getRandomStr();
+	
+	string randName = Utility::getRandomStr(6);
+	size_t lastDot = filename.find_last_of(".");
+	size_t lastSlash = filename.find_last_of("/");
+	if (lastDot == string::npos || (lastDot < lastSlash && lastSlash != string::npos))
+		return filename + "_" + randName;
+	return filename.substr(0, lastDot) + "_" + randName + filename.substr(lastDot);
+}

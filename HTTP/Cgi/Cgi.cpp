@@ -70,20 +70,19 @@ Cgi::Cgi(Routing *router, SocketIO *sok) : _router(router), _req(router->GetRequ
 	_responseBodyLen = 0;
 	_responseSentFromFile = 0;
 	_initialBodyBuffered = false;
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
+	_multiplexer = Multiplexer::GetCurrentMultiplexer();
 
 	_in = new CGIPipe(_pipefd[0], this);
-	MulObj->AddAsEpollIn(_in);
+	_multiplexer->AddAsEpollIn(_in);
 
 	_out = new CGIPipe(_pipefd[1], this);
-	MulObj->AddAsEpollOut(_out);
+	_multiplexer->AddAsEpollOut(_out);
 
 	_stdin = _pipefd[0];
 	_chunkedOut.reserve(BUF_SIZE * 2);
 
 	if (_isChunkedRequest)
 	{
-		// Generate temp file path for buffering chunked body
 		stringstream ss;
 		ss << "/tmp/cgi_chunked_" << hex;
 		for (int i = 0; i < 16; i++)
@@ -105,10 +104,8 @@ Cgi::Cgi(Routing *router, SocketIO *sok) : _router(router), _req(router->GetRequ
 
 void Cgi::_activeCgiPipe()
 {
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-
-	MulObj->ChangeToEpollIn(_in);
-	MulObj->ChangeToEpollOut(_out);
+	_multiplexer->ChangeToEpollIn(_in);
+	_multiplexer->ChangeToEpollOut(_out);
 }
 
 int Cgi::isChildError()
@@ -134,7 +131,7 @@ int Cgi::isChildError()
 
 void Cgi::changeDir()
 {
-	string dir = _router->GetPath().getLocation()->cgiPassPath;
+	string dir = _router->GetPath().getFullPath().c_str();
 	dir = dir.substr(0, dir.find_last_of('/'));
 	if (chdir(dir.c_str()) != 0)
 		throw "500";
@@ -227,8 +224,7 @@ void Cgi::checkWriteToCgiComplete()
 	if (_req.getBody().length() == _req.getcontentlen() || _reqlen >= _req.getcontentlen())
 	{
 		CGILog(DDEBUG) << "Body fully received from client. Switching Multiplexer to EpollOut.";
-		Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-		MulObj->ChangeToEpollOut(_sok);
+		_multiplexer->ChangeToEpollOut(_sok);
 	}
 	if (_reqlen >= _req.getcontentlen() || _req.getthereisbody() == false)
 	{
@@ -239,78 +235,81 @@ void Cgi::checkWriteToCgiComplete()
 
 void Cgi::bufferChunkedBodyToFile()
 {
-	CGILog(DDEBUG) << "bufferChunkedBodyToFile() entered. bodySize=" << _req.getBody().size()
-				   << ", decodedSize=" << _req.getDecodedBody().size()
-				   << ", writtenToFile=" << _reqlen;
+	if (!_isChunkedRequest)
+		return;
+	
+	// CGILog(DDEBUG) << "bufferChunkedBodyToFile() entered. bodySize=" << _req.getBody().size()
+	// 			   << ", decodedSize=" << _req.getDecodedBody().size()
+	// 			   << ", writtenToFile=" << _reqlen;
 
-	// Process any data already in memory
-	string &body = _req.getBody();
-	if (!body.empty())
-	{
-		CGILog(DDEBUG) << "bufferChunkedBodyToFile(): processing buffered body bytes=" << body.size();
-		_req.processChunkedBody();
-	}
+	// // Process any data already in memory
+	// string &body = _req.getBody();
+	// if (!body.empty())
+	// {
+	// 	CGILog(DDEBUG) << "bufferChunkedBodyToFile(): processing buffered body bytes=" << body.size();
+	// 	_req.processChunkedBody();
+	// }
 
-	string &decoded = _req.getDecodedBody();
+	// string &decoded = _req.getDecodedBody();
 
-	// Write any new decoded data to temp file
-	if (decoded.length() > 0)
-	{
-		const char *data = decoded.c_str();
-		size_t toWrite = decoded.length();
-		ssize_t written = write(_tmpFd, data, toWrite);
-		if (written > 0)
-		{
-			_reqlen += written;
-			decoded.erase(0, written);
-			CGILog(DDEBUG) << "bufferChunkedBodyToFile(): wrote " << written
-						   << " bytes to temp file. totalWritten=" << _reqlen
-						   << ", decodedRemaining=" << decoded.length();
-		}
-	}
+	// // Write any new decoded data to temp file
+	// if (decoded.length() > 0)
+	// {
+	// 	const char *data = decoded.c_str();
+	// 	size_t toWrite = decoded.length();
+	// 	ssize_t written = write(_tmpFd, data, toWrite);
+	// 	if (written > 0)
+	// 	{
+	// 		_reqlen += written;
+	// 		decoded.erase(0, written);
+	// 		CGILog(DDEBUG) << "bufferChunkedBodyToFile(): wrote " << written
+	// 					   << " bytes to temp file. totalWritten=" << _reqlen
+	// 					   << ", decodedRemaining=" << decoded.length();
+	// 	}
+	// }
 
-	// If chunked transfer not complete, read more from socket
-	if (!_req.isChunkedComplete())
-	{
-		ssize_t len = read(_sok->GetFd(), _buf, BUF_SIZE);
-		_sok->UpdateTime();
-		if (len > 0)
-		{
-			CGILog(DDEBUG) << "bufferChunkedBodyToFile(): read " << len << " bytes from client socket.";
-			body.append(_buf, len);
-			_req.processChunkedBody();
+	// // If chunked transfer not complete, read more from socket
+	// if (!_req.isChunkedComplete())
+	// {
+	// 	ssize_t len = read(_sok->GetFd(), _buf, BUF_SIZE);
+	// 	_sok->UpdateTime();
+	// 	if (len > 0)
+	// 	{
+	// 		CGILog(DDEBUG) << "bufferChunkedBodyToFile(): read " << len << " bytes from client socket.";
+	// 		body.append(_buf, len);
+	// 		_req.processChunkedBody();
 
-			if (decoded.length() > 0)
-			{
-				const char *data = decoded.c_str();
-				size_t toWrite = decoded.length();
-				ssize_t written = write(_tmpFd, data, toWrite);
-				if (written > 0)
-				{
-					_reqlen += written;
-					decoded.erase(0, written);
-					CGILog(DDEBUG) << "bufferChunkedBodyToFile(): wrote " << written
-								   << " bytes after socket read. totalWritten=" << _reqlen
-								   << ", decodedRemaining=" << decoded.length();
-				}
-			}
-		}
-		else if (len == 0)
-		{
-			CGILog(DDEBUG) << "bufferChunkedBodyToFile(): client closed connection while buffering body.";
-			ErrorHandler();
-			return;
-		}
-	}
+	// 		if (decoded.length() > 0)
+	// 		{
+	// 			const char *data = decoded.c_str();
+	// 			size_t toWrite = decoded.length();
+	// 			ssize_t written = write(_tmpFd, data, toWrite);
+	// 			if (written > 0)
+	// 			{
+	// 				_reqlen += written;
+	// 				decoded.erase(0, written);
+	// 				CGILog(DDEBUG) << "bufferChunkedBodyToFile(): wrote " << written
+	// 							   << " bytes after socket read. totalWritten=" << _reqlen
+	// 							   << ", decodedRemaining=" << decoded.length();
+	// 			}
+	// 		}
+	// 	}
+	// 	else if (len == 0)
+	// 	{
+	// 		CGILog(DDEBUG) << "bufferChunkedBodyToFile(): client closed connection while buffering body.";
+	// 		ErrorHandler();
+	// 		return;
+	// 	}
+	// }
 
-	CGILog(DEBUG) << "bufferChunkedBodyToFile: buffered " << _reqlen << " bytes"
-				  << (_req.isChunkedComplete() ? " [complete]" : " [in progress]");
+	// CGILog(DEBUG) << "bufferChunkedBodyToFile: buffered " << _reqlen << " bytes"
+	// 			  << (_req.isChunkedComplete() ? " [complete]" : " [in progress]");
 
-	if (_req.isChunkedComplete() && decoded.length() == 0)
-	{
-		CGILog(DDEBUG) << "bufferChunkedBodyToFile(): chunked body complete, finalizing temp file.";
-		finalizeChunkedBodyFile();
-	}
+	// if (_req.isChunkedComplete() && decoded.length() == 0)
+	// {
+	// 	CGILog(DDEBUG) << "bufferChunkedBodyToFile(): chunked body complete, finalizing temp file.";
+	// 	finalizeChunkedBodyFile();
+	// }
 }
 
 void Cgi::finalizeChunkedBodyFile()
@@ -333,8 +332,7 @@ void Cgi::finalizeChunkedBodyFile()
 	_stdin = _tmpFd;
 
 	// Switch multiplexer so we stop reading from socket
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	MulObj->ChangeToEpollOut(_sok);
+	_multiplexer->ChangeToEpollOut(_sok);
 
 	CGILog(DDEBUG) << "finalizeChunkedBodyFile(): switched to fork state with CONTENT_LENGTH=" << ss.str();
 	_status = eFork;
@@ -421,8 +419,7 @@ void Cgi::createCgiResponse()
 			CGILog(DEBUG) << "Buffering CGI response to file: " << _responseTmpPath;
 			CGILog(DDEBUG) << "createCgiResponse(): buffering response to temp file because no Content-Length was provided.";
 			_status = eBufferCgiResponse;
-			Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-			MulObj->ChangeToEpollOut(_sok);
+			_multiplexer->ChangeToEpollOut(_sok);
 		}
 	}
 	CGILog(DDEBUG) << "Cgi::createCgiResponse():\n"
@@ -814,17 +811,16 @@ void Cgi::SetStateByFd(int fd)
 
 Cgi::~Cgi()
 {
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
 	if (_in)
 	{
 		DDEBUG("HTTPContext") << "  -> Deleting in-pipe fd=" << _in->GetFd();
-		MulObj->DeleteFromEpoll(_in);
+		_multiplexer->DeleteFromEpoll(_in);
 		delete _in;
 	}
 	if (_out)
 	{
 		DDEBUG("HTTPContext") << "  -> Deleting out-pipe fd=" << _out->GetFd();
-		MulObj->DeleteFromEpoll(_out);
+		_multiplexer->DeleteFromEpoll(_out);
 		delete _out;
 	}
 	Utility::ReleaseBuffer(_buf);
