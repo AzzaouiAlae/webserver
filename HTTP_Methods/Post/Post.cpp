@@ -347,10 +347,10 @@ void Post::_uploadDataForm(FormData *formData)
 		formData->filename = Utility::getRandomStr();
 	formData->filename = _filename + "/" + formData->filename;
 
-	DDEBUG("Post") << "_uploadDataForm: "
+	DDEBUG("Post") << "1-_uploadDataForm: "
 			<< "is formData queue empty? " 
 			<< (_router->GetMultipartData().getFormData().empty() ? "yes" : "no")
-			<< "name: " <<formData->name
+			<< ", name: " <<formData->name
 			<< ", filename: " << formData->filename
 			<< ", contentType: " << formData->contentType
 			<< ", startIdx: " << formData->startIdx
@@ -358,20 +358,23 @@ void Post::_uploadDataForm(FormData *formData)
 			<< ", isComplete: " << formData->isComplete
 			<< ", isHeaderParsed: " << formData->isHeaderParsed
 			<< ", data: \n" << string(formData->data(), formData->size);
-
 	
-	int fd = open(formData->filename.c_str(), O_CREAT | O_WRONLY | O_CLOEXEC, 0644);
+	
+	int fd = formData->openFile();
 	if (fd == -1)
 	{
+		DDEBUG("Post") << "2-_uploadDataForm: failed to open file '" << formData->filename << "' for writing, error: " << strerror(errno);
 		HandelErrorPages("403");
 		return;
 	}
 	ssize_t written = _uploadToDisk(fd, formData->data(), formData->size);
-	DDEBUG("Post") << "_uploadDataForm: \n"
+	DDEBUG("Post") << "3-_uploadDataForm: \n"
 				   << string(formData->data(), written);
 	if (written <= 0)
+	{
+		DDEBUG("Post") << "4-_uploadDataForm: failed to write to file '" << formData->filename << "', error: " << strerror(errno);
 		HandelErrorPages("403");
-	close(fd);
+	}
 }
 
 int Post::_initMultipartUpload()
@@ -408,7 +411,7 @@ void Post::_handleMultipartUpload()
 {
 	DDEBUG("Post") << "1-_handleMultipartUpload: enter";
 	int parseResult = _initMultipartUpload();
-	if (parseResult == -1)
+	if (parseResult == MultipartData::eError)
 	{
 		DDEBUG("Post") << "2-_handleMultipartUpload: parse error (-1), sending 400";
 		HandelErrorPages("400");
@@ -428,19 +431,21 @@ void Post::_handleMultipartUpload()
 		formData = multipartData.getFormData().front();
 		multipartData.getFormData().pop();
 		_uploadDataForm(formData);
+		DDEBUG("Post") << "5-_handleMultipartUpload: processed form-data entry";
 		delete formData;
 	}
-	if (parseResult == 0)
+	if (parseResult < MultipartData::eComplete)
 	{
 		formData = multipartData.getCurrentFormData();
-		if (formData && formData->isHeaderParsed)
-			_uploadDataForm(formData);
+		if (formData == NULL || formData->size == 0)
+			return;
+		_uploadDataForm(formData);
 		size_t idx = multipartData.getLastIndex();
 		decoder.SizeWritting(idx + 1);
 		body.erase(0, idx);
 		multipartData.resetIndex();
 		return;
 	}
-	DDEBUG("Post") << "5-_handleMultipartUpload: complete, creating post response";
+	DDEBUG("Post") << "7-_handleMultipartUpload: complete, creating post response";
 	_createPostResponse();
 }

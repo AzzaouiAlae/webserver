@@ -6,7 +6,11 @@
 struct FormData {
 private: 
     string *_rowData;
+    int fd;
 public:
+    FormData(string &data);
+    ~FormData();
+
     string name;
     string filename;
     string contentType;
@@ -15,7 +19,8 @@ public:
     ssize_t size;
     bool isComplete;
     bool isHeaderParsed;
-    FormData(string &data);
+    
+    int openFile();
 };
 
 class MultipartData {
@@ -33,6 +38,7 @@ class MultipartData {
     void _parseContentType(string &data);
     void _parseHeader(string &data);
     void _parseBody(string &data, const string &boundary);
+    void _parseBodyComplete();
 public:
     enum Status {
         eParseBoundary,

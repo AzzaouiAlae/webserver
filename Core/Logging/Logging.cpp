@@ -129,8 +129,9 @@ void Logging::WriteDebug(const string &msg)
 	string timeStr = getTime();
 	string prefix = "[DEBUG] ";
 	
+	if (PRINT_LOGGING)
 	cout << BLUE << timeStr << " " << prefix << msg << RESET << endl;
-	if (logFile.is_open())
+	if (logFile.is_open() && WRITE_FILE)
 		logFile << timeStr << " " << prefix << msg << endl;
 }
 
@@ -139,8 +140,9 @@ void Logging::WriteInfo(const string &msg)
 	string timeStr = getTime();
 	string prefix = "[INFO]  ";
 	
-	cout << GREEN << timeStr << " " << prefix << msg << RESET << endl;
-	if (logFile.is_open())
+	if (PRINT_LOGGING)
+		cout << GREEN << timeStr << " " << prefix << msg << RESET << endl;
+	if (logFile.is_open() && WRITE_FILE)
 		logFile << timeStr << " " << prefix << msg << endl;
 }
 
@@ -149,8 +151,9 @@ void Logging::WriteWarn(const string &msg)
 	string timeStr = getTime();
 	string prefix = "[WARN]  ";
 	
-	cout << YELLOW << timeStr << " " << prefix << msg << RESET << endl;
-	if (logFile.is_open())
+	if (PRINT_LOGGING)
+		cout << YELLOW << timeStr << " " << prefix << msg << RESET << endl;
+	if (logFile.is_open() && WRITE_FILE)
 		logFile << timeStr << " " << prefix << msg << endl;
 }
 
@@ -159,7 +162,8 @@ void Logging::WriteError(const string &msg)
 	string timeStr = getTime();
 	string prefix = "[ERROR] ";
 	
-	cout << RED << timeStr << " " << prefix << msg << RESET << endl;
-	if (logFile.is_open())
+	if (PRINT_LOGGING)
+		cout << RED << timeStr << " " << prefix << msg << RESET << endl;
+	if (logFile.is_open() && WRITE_FILE)
 		logFile << timeStr << " " << prefix << msg << endl;
 }

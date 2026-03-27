@@ -9,6 +9,7 @@
 #define BLUE "\033[34m"
 
 
+
 // #define	DEBUG	Logging::Debug
 // #define	INFO	Logging::Info
 // #define	WARN	Logging::Warn
@@ -86,6 +87,8 @@ public:
 
 
 // #define DISABLE_LOGGING
+#define PRINT_LOGGING false
+#define WRITE_FILE true
 
 
 

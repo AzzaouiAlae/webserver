@@ -1,14 +1,30 @@
 #include "MultipartData.hpp"
 
-FormData::FormData(string &data) :
-_rowData(&data), startIdx(0), size(0), isComplete(false), isHeaderParsed(false)
-{}
+FormData::FormData(string &data) : _rowData(&data), fd(-1), startIdx(0), size(0), isComplete(false), isHeaderParsed(false)
+{
+}
+
+int FormData::openFile()
+{
+    if (filename.empty() || fd != -1)
+        return fd;
+    fd = open(filename.c_str(), O_CREAT | O_WRONLY | O_CLOEXEC, 0644);
+    return fd;
+}
+
+FormData::~FormData()
+{
+    if (fd != -1)
+    {
+        close(fd);
+    }
+}
 
 char *FormData::data()
 {
     if (_rowData)
     {
-        return (char *)&(_rowData->data()[startIdx]);
+        return (char *)(_rowData->data() + startIdx);
     }
     return NULL;
 }
@@ -27,6 +43,14 @@ MultipartData::MultipartData()
 
 MultipartData::~MultipartData()
 {
+    while (!_formData.empty()) {
+        FormData *formData = _formData.front();
+        _formData.pop();
+        delete formData;
+    }
+    if (_currentFormData != NULL) {
+        delete _currentFormData;
+    }
 }
 
 void MultipartData::_parseContentDisposition(string &data)
@@ -37,7 +61,8 @@ void MultipartData::_parseContentDisposition(string &data)
     while (_idx < boundaryPos)
     {
         size_t endPos = data.find(";", _idx);
-        if (endPos == string::npos || endPos > boundaryPos) {
+        if (endPos == string::npos || endPos > boundaryPos)
+        {
             endPos = boundaryPos;
         }
         if (endPos == string::npos || endPos > boundaryPos)
@@ -85,31 +110,38 @@ void MultipartData::_parseBoundry(string &data, const string &boundary)
 {
     if (data.length() - _idx < boundary.length() + 2)
         return;
-    if (data.find(boundary, _idx) == _idx) {
+    if (data.find(boundary, _idx) == _idx)
+    {
         _idx += boundary.length() + 2;
-        if (data.substr(_idx - 2, 2) == "--") 
+        if (data.substr(_idx - 2, 2) == "--")
             _status = eComplete;
-        else
+        else {
             _status = eParseHeader;
+            _currentFormData = new FormData(data);
+        }
     }
-    else 
+    else
         _status = eError;
 }
 
 void MultipartData::_parseHeader(string &data)
 {
     size_t boundaryPos = data.find("\r\n\r\n", _idx);
-    if (boundaryPos == string::npos) {
-        if (data.length() - _startHeaderIdx > MAX_HEADER_SIZE) {
+    if (boundaryPos == string::npos)
+    {
+        if (data.length() - _startHeaderIdx > MAX_HEADER_SIZE)
+        {
             _status = eError;
             return;
         }
         boundaryPos = data.find("\r\n", _idx);
-        if (boundaryPos == string::npos) {
+        if (boundaryPos == string::npos)
+        {
             return;
         }
     }
-    else if (boundaryPos - _startHeaderIdx > MAX_HEADER_SIZE) {
+    else if (boundaryPos - _startHeaderIdx > MAX_HEADER_SIZE)
+    {
         _status = eError;
         return;
     }
@@ -120,13 +152,13 @@ void MultipartData::_parseHeader(string &data)
             return;
         string key = data.substr(_idx, pos - _idx);
         _idx = pos + 1;
-        if (key == "Content-Disposition") 
+        if (key == "Content-Disposition")
             _parseContentDisposition(data);
-        else if (key == "Content-Type") 
+        else if (key == "Content-Type")
             _parseContentType(data);
         else
             _idx = data.find("\r\n", _idx) + 2;
-        if ((_contentDispositionParsed && _contentTypeParsed) || 
+        if ((_contentDispositionParsed && _contentTypeParsed) ||
             _idx >= boundaryPos)
         {
             _currentFormData->isHeaderParsed = true;
@@ -162,10 +194,36 @@ void MultipartData::_parseBody(string &data, const string &boundary)
     }
 }
 
+void MultipartData::_parseBodyComplete()
+{
+    DDEBUG("MultipartData") << "1-_parseBodyComplete: "
+			<< "is formData queue empty? " 
+			<< (getFormData().empty() ? "yes" : "no")
+			<< ", name: " << _currentFormData->name
+			<< ", filename: " << _currentFormData->filename
+			<< ", contentType: " << _currentFormData->contentType
+			<< ", startIdx: " << _currentFormData->startIdx
+			<< ", size: " << _currentFormData->size
+			<< ", isComplete: " << _currentFormData->isComplete
+			<< ", isHeaderParsed: " << _currentFormData->isHeaderParsed
+			<< ", data: \n" << string(_currentFormData->data(), _currentFormData->size);
+
+    _formData.push(_currentFormData);
+    _contentDispositionParsed = false;
+    _contentTypeParsed = false;
+    _currentFormData = NULL;
+    _startHeaderIdx = _idx;
+    _status = eParseBoundary;
+}
+
+
 int MultipartData::Parse(string &data, const string &boundary)
 {
+    if (_status == eError || _status == eComplete)
+        return _status;
+    
     if (_currentFormData)
-        DDEBUG("MultipartData") 
+        DDEBUG("MultipartData")
             << "MultipartData::Parse: enter, dataLen=" << data.length()
             << ", filename=" << _currentFormData->filename
             << ", startIdx=" << _currentFormData->startIdx
@@ -173,31 +231,28 @@ int MultipartData::Parse(string &data, const string &boundary)
             << ", name=" << _currentFormData->name
             << ", idx=" << _idx
             << ", status=" << _status
-            << ", contentDispositionParsed=\n" << string(_currentFormData->data(), _currentFormData->size);
-    do {
-        if (_status == eParseBodyComplete || _currentFormData == NULL) 
-            _currentFormData = new FormData(data);
-        if (_status == eParseBodyComplete) {
-            _status = eParseBoundary;
-            _startHeaderIdx = _idx;
-            _contentDispositionParsed = false;
-            _contentTypeParsed = false;
-        }
-        if (_status == eParseBoundary)
+            << ", contentDispositionParsed=\n"
+            << string(_currentFormData->data(), _currentFormData->size);
+    
+    if (_currentFormData == NULL)
+        _currentFormData = new FormData(data);
+    do
+    {
+        if (_status == eParseBoundary) {
             _parseBoundry(data, boundary);
+            if (_status == eParseBoundary) {
+                break;
+            }
+        }
         if (_status == eParseHeader)
             _parseHeader(data);
         if (_status == eParseBody)
             _parseBody(data, boundary);
-        if (_status == eParseBodyComplete || _status == eComplete) {
-            _formData.push(_currentFormData);
-            _currentFormData = NULL;
-        }
-    } while (_status == eParseBodyComplete);
-    if (_status == eError)
-        return -1;
+        if (_status == eParseBodyComplete)
+            _parseBodyComplete();
+    } while (_status == eParseBoundary);
     DDEBUG("MultipartData") << "MultipartData::Parse: exit status=" << _status << " queued=" << _formData.size();
-    return _status == eComplete ? 1 : 0;
+    return _status;
 }
 
 queue<FormData *> &MultipartData::getFormData()
@@ -206,10 +261,10 @@ queue<FormData *> &MultipartData::getFormData()
     return _formData;
 }
 
-FormData *MultipartData::getCurrentFormData() 
-{ 
+FormData *MultipartData::getCurrentFormData()
+{
     DDEBUG("MultipartData") << "MultipartData::getCurrentFormData: returning currentFormData (headerParsed=" << (_currentFormData ? _currentFormData->isHeaderParsed : false) << ")";
-    return _currentFormData; 
+    return _currentFormData;
 }
 
 size_t MultipartData::getLastIndex()
@@ -222,6 +277,6 @@ void MultipartData::resetIndex()
 {
     DDEBUG("MultipartData") << "MultipartData::resetIndex: resetting idx and currentFormData startIdx";
     _idx = 0;
-    if (_currentFormData) 
+    if (_currentFormData)
         _currentFormData->startIdx = 0;
 }

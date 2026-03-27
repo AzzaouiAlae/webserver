@@ -166,6 +166,7 @@ size_t Utility::parseByteSize(const string &raw)
 
 	return value;
 }
+
 char *Utility::GetBuffer()
 {
 	if (buffPoll.size() > 0)
