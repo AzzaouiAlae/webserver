@@ -36,13 +36,14 @@ void AFd::cleanFd()
 {
 	if (buff == NULL)
 		buff = Utility::GetBuffer();
-	int size = read(fd, buff, 1024 * 64);
+	int size = read(fd, buff, BUF_SIZE);
 	if (size > 0)
 		totalClean += size;
 	if (totalClean  >= CLEAN_SIZE || size <= 0 || Utility::SigPipe) 
 	{
 		Utility::SigPipe = false;
 		cleanBody = false;
+		MarkedToDelete = true;
 	}
 	DDEBUG("AFd") << "sock fd: " << fd << ", AFd::cleanFd() read " << size;
 }

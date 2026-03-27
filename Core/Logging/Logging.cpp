@@ -130,7 +130,7 @@ void Logging::WriteDebug(const string &msg)
 	string prefix = "[DEBUG] ";
 	
 	if (PRINT_LOGGING)
-	cout << BLUE << timeStr << " " << prefix << msg << RESET << endl;
+		cout << BLUE << timeStr << " " << prefix << msg << RESET << endl;
 	if (logFile.is_open() && WRITE_FILE)
 		logFile << timeStr << " " << prefix << msg << endl;
 }

@@ -95,9 +95,10 @@ bool Multiplexer::ChangeToEpollOneShot(AFd *fd)
 
 bool Multiplexer::DeleteFromEpoll(AFd *fd)
 {
-	count--;
 	bool res = epoll_ctl(epollFd, EPOLL_CTL_DEL, fd->GetFd(), NULL) == 0;
-	DDEBUG("Multiplexer") << "DeleteFromEpoll fd=" << fd->GetFd() << ", count=" << count << ", EPOLL_CTL_DEL: " << res;
+	DEBUG("Multiplexer") << "DeleteFromEpoll fd=" << fd->GetFd() << ", count=" << count << ", EPOLL_CTL_DEL: " << res;
+	if (res)
+		count--;
 	return res;
 }
 
@@ -130,6 +131,7 @@ void Multiplexer::MainLoop()
 			break;
 		}
 		INFO() << "epoll_wait, Handle: " << size << " AFd, loop iteration complete " << Count++ << "\n";
+		// Utility::LogBufferPullSize();
 	}
 }
 

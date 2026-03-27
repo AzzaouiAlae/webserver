@@ -26,7 +26,6 @@ void HTTPContext::Handle(AFd *fd)
 		shutdown(_sock->GetFd(), SHUT_WR);
 		_sock->setKeepAlive(false);
 	}
-	
 }
 
 void HTTPContext::_readFromSocket()
@@ -127,7 +126,8 @@ void HTTPContext::_handleRequest()
 	{
 		INFO() << Socket::getRemoteName(_sock->GetFd()) << " " << _router.GetRequest().getMethod() << " " << _router.GetRequest().getPath();
 		HTTPLog(DDEBUG) << "request parsing done";
-
+		Utility::ReleaseBuffer(_buf);
+		_buf = NULL;
 		if (_router.GetPath().isCGI() || _router.GetRequest().getMethod() == "POST") {
 			_setupPipeline();
 		}
@@ -156,14 +156,17 @@ HTTPContext::HTTPContext(vector<Config::Server > *servers, size_t maxBodySize, S
 
 void HTTPContext::_markedSocketToFree()
 {
-	INFO() << "Client " << Socket::getRemoteName(_sock->GetFd()) << " marking for deletion";
-
-	if (_router.GetRequest().isKeepAlive() && _sock->closeConnection == false)
+	if (_router.GetRequest().isKeepAlive() && _sock->closeConnection == false) {
 		_sock->setKeepAlive(true);
+		INFO() << "Socket fd: " << _sock->GetFd() << " marked for keep-alive.";
+	}
 	else {
+		INFO() << "Socket fd: " << _sock->GetFd() << " marked for deletion.";
 		_status = HTTPContext::eDelete;
+		shutdown(_sock->GetFd(), SHUT_WR);
 		_sock->cleanBody = true;
 		_multiplexer->ChangeToEpollIn(_sock);
+		// _sock->setTimeout(50);
 		HTTPLog(DDEBUG) << "cleanBody: marking socket fd=" << _sock->GetFd();
 	}
 
@@ -192,7 +195,9 @@ HTTPContext::~HTTPContext()
 		DDEBUG("HTTPContext") << "  -> Deleting out-pipe fd=" << _out->GetFd() << ", deleted: " << res;
 		delete _out;
 	}
-	Utility::ReleaseBuffer(_buf);
+	if (_buf) {
+		Utility::ReleaseBuffer(_buf);
+	}
 }
 
 void HTTPContext::_activeInPipe()

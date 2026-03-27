@@ -37,9 +37,7 @@ bool SocketIO::clearPipe()
 
 int SocketIO::Send(void *buff, int size)
 {
-	// ssize_t sent = send(fd, buff, size, MSG_NOSIGNAL);
-	ssize_t sent = write(fd, buff, size);
-
+	ssize_t sent = send(fd, buff, size, MSG_NOSIGNAL);
 	if (sent <= 0)
 		errorNumber = eWriteError;
 	return sent;
@@ -182,7 +180,7 @@ SocketIO::~SocketIO()
 	if (!_isKeepAlive || isTimeOut())
 	{
 		int closeResult = close(fd);
-		WARN() << "Socket fd: " << this->fd << " closed,  closeResult: " << closeResult;
+		INFO() << "Socket fd: " << this->fd << " closed,  closeResult: " << closeResult;
 	}
 	delete context;
 	if (pipeInitialized && pendingInPipe == 0)

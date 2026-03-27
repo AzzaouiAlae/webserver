@@ -76,6 +76,8 @@ using namespace std;
 #include "ChunkedData.hpp"
 #include "MultipartData.hpp"
 
+#include "IStrategy.hpp"
+
 extern char **environ;
 
 #define DEFAULT_CONF "EngineX/EngineX.conf"

@@ -16,7 +16,7 @@ void ConnectionContext::Handle(AFd *fd)
 	Singleton::GetFds().insert(sockIO);
 	sockIO->context = new HTTPContext(servers, Config::GetMaxBodySize(*servers), sockIO);
 	Multiplexer::GetCurrentMultiplexer()->AddAsEpollIn(sockIO);
-	INFO() << "New client connected from " << Socket::getRemoteName(sockIO->GetFd());
+	INFO()<< "New client connected from " << Socket::getRemoteName(sockIO->GetFd());
 }
 
 ConnectionContext::ConnectionContext()

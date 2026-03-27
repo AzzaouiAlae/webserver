@@ -78,7 +78,7 @@ void ChunkedData::SizeWritting(ssize_t size)
 int ChunkedData::UnchunkData(string &data)
 {
     if (_status == eComplete || _status == eError)
-        return _status == eComplete ? 1 : -1;
+        return _status == eComplete;
     do
     {
         if (_status == eChunkComplete)
@@ -94,9 +94,7 @@ int ChunkedData::UnchunkData(string &data)
             _decodeFirstChunk(data);
         }
     } while (_status == eChunkComplete);
-    if (_status == eError)
-        return -1;
-    return _status == eComplete ? 1 : 0;
+    return _status;
 }
 
 ssize_t ChunkedData::GetCurrentChunkSize() const

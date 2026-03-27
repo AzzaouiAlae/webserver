@@ -43,6 +43,9 @@ protected:
 	string _statusCode;
 	string _responseHeaderStr;
 	stringstream _responseHeader;
+
+	IStrategy *_sendStrategy;
+	vector<pair<char *, size_t> > _buffers;
 	
 	int _sended;
 	int _bodySize;

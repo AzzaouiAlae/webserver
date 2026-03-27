@@ -1,4 +1,5 @@
 #include "AMethod.hpp"
+#include "BuffersStrategy.hpp"
 
 map<string, string> AMethod::_statusMap;
 
@@ -19,6 +20,7 @@ AMethod::AMethod(SocketIO *sock, Routing *router)
 	DEBUG("AMethod") << "AMethod initialized, socket fd=" << sock->GetFd();
 	_status = eCreateResponse;
 	_multiplexer = Multiplexer::GetCurrentMultiplexer();
+	_sendStrategy = NULL;
 }
 
 void AMethod::_createTimeoutResponse()
@@ -83,6 +85,9 @@ AMethod::~AMethod()
 		close(_fileFd);
 	}
 	delete _cgi;
+	if (_sendStrategy) {
+		delete _sendStrategy;
+	}
 }
 
 string AMethod::_createDate()
@@ -178,6 +183,7 @@ void AMethod::_createResponseHeader()
 	DDEBUG("AMethod") << "Socket fd: " << _sock->GetFd()
 					  << ", CreateResponseHeader:\n"
 					  << _responseHeaderStr;
+	_buffers.insert(_buffers.begin(), make_pair((char *)_responseHeaderStr.c_str(), _responseHeaderStr.length()));
 }
 
 void AMethod::_sendDefaultRespense(const string &code)
@@ -233,6 +239,8 @@ void AMethod::_loadStaticErrorFile(const string &errorCode)
 		_staticFile = StaticFile::GetFileByName("404");
 		_statusCode = "404";
 	}
+	_buffers.push_back(make_pair((char *)_staticFile->GetData(), _staticFile->GetSize()));
+	_sendStrategy = new BuffersStrategy(_buffers, *_sock);
 	_bodySize = _staticFile->GetSize();
 	_totalByteToSend = _bodySize;
 	_filename = ".html";

@@ -175,7 +175,12 @@ char *Utility::GetBuffer()
 		buffPoll.pop_back();
 		return buffer;
 	}
-	return new char[BUF_SIZE + 1];
+	return new char[BUF_SIZE + 1];	
+}
+
+void Utility::LogBufferPullSize()
+{
+	Logging::Info() << "Current buffer pool size: " << buffPoll.size();
 }
 
 void Utility::ReleaseBuffer(char *buffer)

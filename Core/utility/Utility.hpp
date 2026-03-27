@@ -1,7 +1,7 @@
 #pragma once
 #include "Headers.hpp"
  
-#define BUF_SIZE 1024 * 1024 * 2
+#define BUF_SIZE 1024 * 1024
 
 class Utility
 {
@@ -12,6 +12,7 @@ public:
 	static size_t GetBuffPollSize();
 	static char *GetBuffer();
 	static void ReleaseBuffer(char *buffer);
+	static void LogBufferPullSize();
 	static void ClearBuffPoll();
 	static bool SigPipe;
 	static bool SigInt;

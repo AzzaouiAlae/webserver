@@ -58,12 +58,14 @@ void Post::_initPost()
 	}
 	else if (_router->GetRequest().isChunkedTransferEncoding())
 	{
-		_status = Post::eChunkedUpload;
 		_openUploadFile();
 		if (_uploadFd == -1)
 			HandelErrorPages("403");
-		else
+		else {
 			_uploadChunkedToDisk();
+			if (_status == Post::eInitPost) 
+				_status = Post::eChunkedUpload;
+		}
 	}
 	else
 	{
@@ -284,6 +286,7 @@ void Post::_decodBody(string &body, ChunkedData &decoder, int &status)
 			body.append(_buff, readLen);
 		else
 		{
+			ERR() << "Error reading chunked body from socket, readLen=" << readLen;
 			_sock->closeConnection = true;
 			_status = Post::eComplete;
 			return;
@@ -324,11 +327,14 @@ void Post::_uploadChunkedToDisk()
 	ClientRequest &req = _router->GetRequest();
 	string &body = req.getBody();
 	ChunkedData &decoder = _router->GetChunkedData();
-	int status;
+	int status = -1;
 
-	_decodBody(body, decoder, status);
-	if (_status != Post::eChunkedUpload)
+	if (_status == Post::eChunkedUpload) {
+		_decodBody(body, decoder, status);
+	}
+	if (decoder.GetUnchunkedSize() == 0) {
 		return;
+	}
 	ssize_t writeLen = _uploadToDisk(_uploadFd, (char *)body.c_str(), decoder.GetUnchunkedSize());
 	if (writeLen < 0)
 	{
@@ -337,7 +343,7 @@ void Post::_uploadChunkedToDisk()
 	}
 	decoder.SizeWritting(writeLen);
 	body.erase(0, writeLen);
-	if (status == 1 && body.empty())
+	if (status >= ChunkedData::eComplete && body.empty())
 		_createPostResponse();
 }
 

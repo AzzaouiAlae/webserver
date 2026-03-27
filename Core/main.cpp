@@ -80,7 +80,7 @@ void SetFileDescriptorLimits()
 			Utility::maxFds = 10000;
 		else
 		{
-			Utility::maxFds = limit.rlim_cur / 4;
+			Utility::maxFds = limit.rlim_cur - 100;
 			if (Utility::maxFds > 10000)
 				Utility::maxFds = 10000;
 			if (Utility::maxFds < 10 && limit.rlim_cur > 10)
@@ -129,7 +129,7 @@ void InitServer(int argc, char *argv[], string &filename)
 	{
 		filename = argv[fileNameIdx];
 	}
-	Logging::Info() << "Server start with configuation file: " << filename << "";
+	INFO() << "Server start with configuation file: " << filename << "";
 }
 
 void LaunchServer(string &filename)

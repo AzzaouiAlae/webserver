@@ -1,6 +1,7 @@
 #include "GET.hpp"
+#include "BuffersStrategy.hpp"
 
-GET::GET(SocketIO *sock, Routing *router): AMethod(sock, router)
+GET::GET(SocketIO *sock, Routing *router) : AMethod(sock, router)
 {
 	_sendListFiles = 0;
 	_targetToSend = 0;
@@ -10,28 +11,31 @@ GET::GET(SocketIO *sock, Routing *router): AMethod(sock, router)
 }
 
 GET::~GET()
-{}
+{
+}
 
 bool GET::HandleResponse()
 {
 	if (_sock->isTimeOut())
 		_createTimeoutResponse();
-	else if (_status ==  GET::eCreateResponse)
-		_createResponse();
-	else if (_status == GET::eCGIResponse) {
-		_handelCGI();
+	if (_sendStrategy)
+	{
+		if (_sendStrategy->Execute() || _sock->errorNumber == eWriteError)
+			_status = GET::eComplete;
 	}
-	else if (_status == GET::eSendAutoIndex) {
-		_sendListFilesResponse();
-	}
-	else {
+	else if (_status == GET::eSendResponse)
 		_sendResponse();
-	}
-	
+	else if (_status == GET::eCreateResponse)
+		_createResponse();
+	else if (_status == GET::eCGIResponse)
+		_handelCGI();
+	else if (_status == GET::eSendAutoIndex)
+		_sendListFilesResponse();
 	return _status == GET::eComplete;
 }
 
-void GET::_createResponse() {
+void GET::_createResponse()
+{
 	DEBUG("GET") << "Socket fd: " << _sock->GetFd() << ", GET::HandleResponse() start";
 
 	ClientRequest &req = _router->GetRequest();
@@ -39,7 +43,7 @@ void GET::_createResponse() {
 	string method = req.getMethod();
 	_resolvePath();
 
-	DDEBUG("GET") 
+	DDEBUG("GET")
 		<< "Socket fd: " << _sock->GetFd()
 		<< ", GetMethod: isRedir=" << _router->GetPath().isRedirection()
 		<< ", found=" << _router->GetPath().isFound()
@@ -52,7 +56,7 @@ void GET::_createResponse() {
 	{
 		if (method == "GET" || method == "POST" || method == "DELETE" || method == "HEAD")
 			HandelErrorPages("405");
-		else 
+		else
 			HandelErrorPages("501");
 	}
 	else if (_router->GetPath().isRedirection() || _router->GetPath().isRedirectionToDir())
@@ -61,27 +65,31 @@ void GET::_createResponse() {
 		HandelErrorPages("404");
 	else if (_router->GetPath().hasPermission() == false)
 		HandelErrorPages("403");
-	else if (_router->GetPath().isDirectory()) {
+	else if (_router->GetPath().isDirectory())
+	{
 		int idxSrv = _router->srv->autoindex, idxLoc = -1;
-		if (_router->loc) {
+		if (_router->loc)
+		{
 			idxLoc = _router->loc->autoindex;
 		}
-		if ((idxSrv <= 0 && idxLoc == -1) || idxLoc == 0 )
+		if ((idxSrv <= 0 && idxLoc == -1) || idxLoc == 0)
 			HandelErrorPages("403");
 		else
 			_createListFilesResponse();
 	}
-	else if (_router->GetPath().isCGI()) {
+	else if (_router->GetPath().isCGI())
+	{
 		_handelCGI();
 	}
-	else if (_router->GetPath().isFile()) {
+	else if (_router->GetPath().isFile())
+	{
 		_serveFile();
 	}
-	if (_status == GET::eCreateResponse) {
+	if (_status == GET::eCreateResponse)
+	{
 		_status = GET::eSendResponse;
 	}
 }
-
 
 void GET::_openFile(const string &path)
 {
@@ -128,10 +136,10 @@ string GET::_formatDirectoryEntry(const string &name, const struct stat &st, con
 	stringstream entry;
 
 	entry << "{ name: '" << _escapeForJS(name)
-		<< "', href: '" << Path::encodePath(requestPath)
-		<< (requestPath[requestPath.size() - 1] == '/' ? "" : "/")
-		<< Path::encodePath(name)
-		<< "', isDir: ";
+		  << "', href: '" << Path::encodePath(requestPath)
+		  << (requestPath[requestPath.size() - 1] == '/' ? "" : "/")
+		  << Path::encodePath(name)
+		  << "', isDir: ";
 
 	if (S_ISDIR(st.st_mode))
 	{
@@ -209,12 +217,20 @@ void GET::_createListFilesResponse()
 	_status = eSendAutoIndex;
 	_sendListFiles = 1;
 	_multiplexer->ChangeToEpollOut(_sock);
+
+	_buffers.push_back(make_pair((char *)StaticFile::GetFileByName("autoIndex1")->GetData(), StaticFile::GetFileByName("autoIndex1")->GetSize()));
+	_buffers.push_back(make_pair((char *)_filesListStr.c_str(), _filesListStr.length()));
+	_buffers.push_back(make_pair((char *)StaticFile::GetFileByName("autoIndex2")->GetData(), StaticFile::GetFileByName("autoIndex2")->GetSize()));
+	_buffers.push_back(make_pair((char *)_router->GetRequest().getPath().c_str(), _router->GetRequest().getPath().length()));
+	_buffers.push_back(make_pair((char *)StaticFile::GetFileByName("autoIndex3")->GetData(), StaticFile::GetFileByName("autoIndex3")->GetSize()));
+	_sendStrategy = new BuffersStrategy(_buffers, *_sock);
 }
 
 void GET::_sendChunk(const char *data, int dataSize)
 {
 	int sent = _sock->Send((void *)data, dataSize);
-	if (sent > 0) {
+	if (sent > 0)
+	{
 		_sended += sent;
 		_sock->UpdateTime();
 	}
@@ -242,7 +258,8 @@ void GET::_advanceListFilesState()
 {
 	if (_sended >= _targetToSend)
 		_sendListFiles++;
-	if (_sendListFiles == 7 || Utility::SigPipe || _sock->errorNumber == eWriteError) {
+	if (_sendListFiles == 7 || Utility::SigPipe || _sock->errorNumber == eWriteError)
+	{
 		_status = eComplete;
 	}
 }
