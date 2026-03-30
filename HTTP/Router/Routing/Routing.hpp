@@ -18,5 +18,6 @@ public:
 	string CreatePath(Config::Server *srv);
 	ChunkedData &GetChunkedData();
 	MultipartData &GetMultipartData();
+	void AddPath(string &filename);
 };
 

@@ -17,6 +17,11 @@ Path &Routing::GetPath()
 	return _path;
 }
 
+void Routing::AddPath(string &filename)
+{
+	filename = _strPath + "/" + filename;
+}
+
 string Routing::CreatePath(Config::Server *srv)
 {
 	if (_strPath != "")

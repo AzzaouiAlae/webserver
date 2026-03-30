@@ -1,7 +1,7 @@
 #pragma once
 #include "Headers.hpp"
 #include "SocketIO.hpp"
-class BuffersStrategy : public IStrategy
+class BuffersStrategy : public AStrategy
 {
     vector<pair<char *, size_t> > &_buffers;
     size_t _currentBuffer;
@@ -10,5 +10,5 @@ class BuffersStrategy : public IStrategy
 public:
     BuffersStrategy(vector<pair<char *, size_t> > &buffers, SocketIO &socketIO);
     ~BuffersStrategy();
-    bool Execute();
+    int Execute();
 };

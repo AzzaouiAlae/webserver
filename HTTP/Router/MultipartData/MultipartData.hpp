@@ -1,58 +1,48 @@
 #pragma once
 #include "Headers.hpp"
 
-#define MAX_HEADER_SIZE 4096
-
 struct FormData {
-private: 
-    string *_rowData;
-    int fd;
-public:
-    FormData(string &data);
-    ~FormData();
-
     string name;
     string filename;
     string contentType;
-    char *data();
-    ssize_t startIdx;
-    ssize_t size;
-    bool isComplete;
-    bool isHeaderParsed;
     
-    int openFile();
+    size_t bodyStart;
+    size_t bodyLen;
+    
+    bool   isNewPart;
+    bool   bodyComplete;
+    
+    void reset();
 };
 
 class MultipartData {
-    
-    size_t _startHeaderIdx;
-    size_t _idx;
-    int _status;
-    bool _isIncompleteParse;
-    bool _contentDispositionParsed;
-    bool _contentTypeParsed;
-    queue<FormData *> _formData;
-    FormData *_currentFormData;
-    void _parseBoundry(string &data, const string &boundary);
-    void _parseContentDisposition(string &data);
-    void _parseContentType(string &data);
-    void _parseHeader(string &data);
-    void _parseBody(string &data, const string &boundary);
-    void _parseBodyComplete();
 public:
-    enum Status {
-        eParseBoundary,
-        eParseHeader,
-        eParseBody,
-        eParseBodyComplete,
-        eComplete,
-        eError
-    };
-    MultipartData();
+    enum Status { eParsingBoundary, eParsingHeader, eParsingBody, eComplete, eError };
+
+    MultipartData(const string &boundary);
     ~MultipartData();
-    int Parse(string &data, const string &boundary);
-    queue<FormData *> &getFormData();
-    FormData *getCurrentFormData();
-    size_t getLastIndex();
-    void resetIndex();
+
+    void Feed(char *buf, size_t len);
+    queue<FormData> &GetParts();
+    Status GetStatus() const;
+
+private:
+    string           _boundary;
+    string           _delimiter;
+    string           _partialMatch;
+    Status           _status;
+    FormData         _current;
+    size_t           _parseIdx;
+    string           _partialHeader;
+    queue<FormData> _parts;
+
+    void _parseBoundary(char *buf, size_t len);
+    void _parseHeader(char *buf, size_t len);
+    void _processHeaderLine(const string &line);
+    void _parseContentDisposition(const string &line);
+    void _parseContentType(const string &line);
+    void _scanBody(char *buf, size_t len);
+    void _emitBodyPart(size_t start, size_t len, bool complete);
+    size_t _findPartialDelimiter(char *buf, size_t len);
+    string _extractValue(const string &line, const string &key);
 };

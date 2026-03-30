@@ -44,7 +44,8 @@ protected:
 	string _responseHeaderStr;
 	stringstream _responseHeader;
 
-	IStrategy *_sendStrategy;
+	AStrategy *_sendStrategy;
+	AStrategy *_readStrategy;
 	vector<pair<char *, size_t> > _buffers;
 	
 	int _sended;
@@ -64,6 +65,15 @@ protected:
 	string _escapeForJS(const string& input);
 	void _handelCGI();
 
+	void _addPair(StaticFile *f);
+	void _addPair(string &str);
+	void _insertPair(string &str, int idx = 0);
+	void _addPair(const string &str);
+	void _addPair(const char *data, size_t size);
+	void _addPair(char *data, size_t size);
+	void _addPair(pair<char *, size_t> &data);
+
+	void _executeStrategy(AStrategy *strategy);
 public:
 	AMethod(SocketIO *sock, Routing *router);
 	virtual ~AMethod();

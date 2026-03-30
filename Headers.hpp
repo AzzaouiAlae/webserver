@@ -76,7 +76,7 @@ using namespace std;
 #include "ChunkedData.hpp"
 #include "MultipartData.hpp"
 
-#include "IStrategy.hpp"
+#include "AStrategy.hpp"
 
 extern char **environ;
 

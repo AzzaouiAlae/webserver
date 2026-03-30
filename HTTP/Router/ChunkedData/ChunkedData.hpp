@@ -1,36 +1,28 @@
 #pragma once
 #include "Headers.hpp"
 
-class ChunkedData
-{
-    int _status;
-    ssize_t _currentChunkSize;
-    ssize_t _unchunkedSize;
-    ssize_t _totalUnchunkedSize;
-    ssize_t _startIdx;
-
-    void _ParseChunkSize(string& data);
-    void _decodeFirstChunk(string &data);
-    void _checkHexString(const string &data);
-    string _toHex(ssize_t num);
+class ChunkedData {
 public:
-    enum Status
-    {
-        eParssingChunkSize,
-        eParsingChunk,
-        eChunkComplete,
-        eComplete,
-        eError
-    };
-    ChunkedData();
-    void SizeWritting(ssize_t size);
-    int UnchunkData(string& data);
-    
-    ssize_t ChunkeData(string &data, ssize_t startIdx, ssize_t size);
+    enum Status { eParsingSize, eParsingBody, eComplete, eError };
 
-    ssize_t GetCurrentChunkSize() const;
-    ssize_t GetUnchunkedSize() const;
-    ssize_t GetTotalUnchunkedSize() const;
-    ssize_t GetStartIdx() const;
-    int GetStatus() const;
+    struct Result {
+        size_t rawConsumed;  // how many bytes of buf were processed
+        size_t decodedLen;   // decoded bytes now at buf[0 .. decodedLen)
+    };
+
+    ChunkedData();
+
+    // Decodes buf[0..len) in-place. Decoded bytes land at buf[0..Result.decodedLen).
+    // rawConsumed tells the caller how many raw bytes to discard before the next read.
+    Result Feed(char *buf, size_t len);
+
+    Status GetStatus() const;
+
+private:
+    Status  _status;
+    ssize_t _remaining;    // body bytes still expected in the current chunk
+    string  _partialSize;  // leftover hex digits when a size line is split across reads
+
+    void _parseSize(char *buf, size_t &r, size_t end);
+    void _copyBody(char *buf, size_t &r, size_t &w, size_t end);
 };

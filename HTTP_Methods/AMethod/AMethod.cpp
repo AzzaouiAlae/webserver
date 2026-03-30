@@ -1,5 +1,6 @@
 #include "AMethod.hpp"
 #include "BuffersStrategy.hpp"
+#include "FileStrategy.hpp"
 
 map<string, string> AMethod::_statusMap;
 
@@ -21,6 +22,7 @@ AMethod::AMethod(SocketIO *sock, Routing *router)
 	_status = eCreateResponse;
 	_multiplexer = Multiplexer::GetCurrentMultiplexer();
 	_sendStrategy = NULL;
+	_readStrategy = NULL;
 }
 
 void AMethod::_createTimeoutResponse()
@@ -31,6 +33,7 @@ void AMethod::_createTimeoutResponse()
 		_status = eComplete;
 		return;
 	}
+	_buffers.clear();
 	if (_router->GetPath().isCGI())
 		HandelErrorPages("504");
 	else
@@ -46,7 +49,7 @@ void AMethod::_resolvePath()
 	{
 		_filename = _router->GetPath().OriginalPath.path;
 	}
-	DEBUG("AMethod") 
+	DEBUG("AMethod")
 		<< "Socket fd: " << _sock->GetFd()
 		<< ", method: " << _router->GetRequest().getMethod()
 		<< ", resolved path: " << _filename
@@ -85,7 +88,8 @@ AMethod::~AMethod()
 		close(_fileFd);
 	}
 	delete _cgi;
-	if (_sendStrategy) {
+	if (_sendStrategy)
+	{
 		delete _sendStrategy;
 	}
 }
@@ -183,7 +187,58 @@ void AMethod::_createResponseHeader()
 	DDEBUG("AMethod") << "Socket fd: " << _sock->GetFd()
 					  << ", CreateResponseHeader:\n"
 					  << _responseHeaderStr;
-	_buffers.insert(_buffers.begin(), make_pair((char *)_responseHeaderStr.c_str(), _responseHeaderStr.length()));
+	_insertPair(_responseHeaderStr, 0);
+}
+
+void AMethod::_addPair(StaticFile *f)
+{
+	if (f == NULL)
+		return;
+	char *data = (char *)f->GetData();
+	size_t size = f->GetSize();
+	_addPair(data, size);
+}
+
+void AMethod::_addPair(string &str)
+{
+	char *data = (char *)str.c_str();
+	size_t size = str.length();
+	_addPair(data, size);
+}
+
+void AMethod::_insertPair(string &str, int idx)
+{
+	char *data = (char *)str.c_str();
+	size_t size = str.length();
+	pair<char *, size_t> pairData = make_pair(data, size);
+	if (idx < 0 || idx >= (int)_buffers.size())
+		_buffers.push_back(pairData);
+	else
+		_buffers.insert(_buffers.begin() + idx, pairData);
+}
+
+void AMethod::_addPair(const string &str)
+{
+	char *data = (char *)str.c_str();
+	size_t size = str.length();
+	_addPair(data, size);
+}
+
+void AMethod::_addPair(const char *data, size_t size)
+{
+	char *dataPtr = (char *)data;
+	_addPair(dataPtr, size);
+}
+
+void AMethod::_addPair(char *data, size_t size)
+{
+	pair<char *, size_t> pairData = make_pair(data, size);
+	_addPair(pairData);
+}
+
+void AMethod::_addPair(pair<char *, size_t> &data)
+{
+	_buffers.push_back(data);
 }
 
 void AMethod::_sendDefaultRespense(const string &code)
@@ -196,6 +251,7 @@ void AMethod::_sendDefaultRespense(const string &code)
 	_totalByteToSend = _responseHeaderStr.length();
 	_status = eSendResponse;
 	_multiplexer->ChangeToEpollOut(_sock);
+	_insertPair(_responseHeaderStr, 0);
 }
 
 void AMethod::_createRedirectionHeader(const string &redirCode, const string &redirLocation)
@@ -218,6 +274,7 @@ void AMethod::_createRedirectionHeader(const string &redirCode, const string &re
 		<< "\r\n";
 
 	_responseHeaderStr = _responseHeader.str();
+	_insertPair(_responseHeaderStr, 0);
 }
 
 string AMethod::_resolveErrorFilePath(const string &errorCode)
@@ -239,11 +296,11 @@ void AMethod::_loadStaticErrorFile(const string &errorCode)
 		_staticFile = StaticFile::GetFileByName("404");
 		_statusCode = "404";
 	}
-	_buffers.push_back(make_pair((char *)_staticFile->GetData(), _staticFile->GetSize()));
-	_sendStrategy = new BuffersStrategy(_buffers, *_sock);
 	_bodySize = _staticFile->GetSize();
 	_totalByteToSend = _bodySize;
 	_filename = ".html";
+	_addPair(_staticFile);
+	_sendStrategy = new BuffersStrategy(_buffers, *_sock);
 }
 
 void AMethod::HandelErrorPages(const string &err)
@@ -258,19 +315,15 @@ void AMethod::HandelErrorPages(const string &err)
 
 	DDEBUG("AMethod") << "  -> errorFilePath='" << path << "', isPath=" << isPath << ", filename='" << _filename << "'";
 
-	if (isPath)
+	if (isPath && _openErrorFile(_filename))
 	{
-		if (!_openErrorFile(_filename))
-		{
-			DDEBUG("AMethod") << "  -> Failed to open error file, loading static fallback.";
-			_loadStaticErrorFile(err);
-		}
+		_bodySize = Utility::getFileSize(_filename);
+		_totalByteToSend = _bodySize;
+		if ("HEAD" == _router->GetRequest().getMethod())
+			_sendStrategy = new BuffersStrategy(_buffers, *_sock);
 		else
-		{
-			_bodySize = Utility::getFileSize(_filename);
-			_totalByteToSend = _bodySize;
-			DDEBUG("AMethod") << "  -> Opened error file, bodySize=" << _bodySize;
-		}
+			_sendStrategy = new FileStrategy(_buffers, _fileFd, _bodySize, *_sock);
+		DDEBUG("AMethod") << "  -> Opened error file, bodySize=" << _bodySize;
 	}
 	else
 	{
@@ -279,7 +332,9 @@ void AMethod::HandelErrorPages(const string &err)
 	}
 	_createResponseHeader();
 	if ("HEAD" == _router->GetRequest().getMethod())
+	{
 		_totalByteToSend = 0;
+	}
 	_totalByteToSend += _responseHeaderStr.length();
 	_multiplexer->ChangeToEpollOut(_sock);
 	_status = AMethod::eSendResponse;
@@ -370,8 +425,11 @@ void AMethod::_sendRedirection()
 	DDEBUG("AMethod") << "\n"
 					  << _responseHeaderStr;
 	_totalByteToSend = _responseHeaderStr.length();
+
 	_status = AMethod::eSendResponse;
 	_multiplexer->ChangeToEpollOut(_sock);
+
+	_sendStrategy = new BuffersStrategy(_buffers, *_sock);
 }
 
 bool AMethod::_isMethodAllowed(const string &method)
@@ -396,6 +454,22 @@ bool AMethod::_isMethodAllowed(const string &method)
 	DDEBUG("AMethod") << "Socket fd: " << _sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
 
 	return allowed;
+}
+
+void AMethod::_executeStrategy(AStrategy *strategy)
+{
+	int status = strategy->Execute();
+	if (status == AStrategy::eWriteError)
+	{
+		_sock->closeConnection = true;
+		_status = eComplete;
+	}
+	else if (status == AStrategy::eOpenFileError)
+		HandelErrorPages("403");
+	else if   (status == AStrategy::eChunkedError
+			|| status == AStrategy::eMultipartError
+			|| status == AStrategy::eReadError)
+		HandelErrorPages("400");
 }
 
 void AMethod::_initStatusMap()

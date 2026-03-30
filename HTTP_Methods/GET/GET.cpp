@@ -1,11 +1,9 @@
 #include "GET.hpp"
 #include "BuffersStrategy.hpp"
+#include "FileStrategy.hpp"
 
 GET::GET(SocketIO *sock, Routing *router) : AMethod(sock, router)
 {
-	_sendListFiles = 0;
-	_targetToSend = 0;
-	_sent = -1;
 	_filesListStr = "";
 	DEBUG("GET") << "GET initialized, socket fd=" << sock->GetFd();
 }
@@ -18,19 +16,16 @@ bool GET::HandleResponse()
 {
 	if (_sock->isTimeOut())
 		_createTimeoutResponse();
-	if (_sendStrategy)
+	if (_status == AMethod::eSendResponse)
 	{
-		if (_sendStrategy->Execute() || _sock->errorNumber == eWriteError)
-			_status = GET::eComplete;
+		_executeStrategy(_sendStrategy);
+		if (_sendStrategy->GetStatus() == AStrategy::eComplete)
+			_status = eComplete;
 	}
-	else if (_status == GET::eSendResponse)
-		_sendResponse();
 	else if (_status == GET::eCreateResponse)
 		_createResponse();
 	else if (_status == GET::eCGIResponse)
 		_handelCGI();
-	else if (_status == GET::eSendAutoIndex)
-		_sendListFilesResponse();
 	return _status == GET::eComplete;
 }
 
@@ -114,22 +109,9 @@ void GET::_serveFile()
 	DDEBUG("GET") << "Socket fd: " << _sock->GetFd() << ", ServeFile: '" << _filename << "'";
 	_openFile(_filename);
 	_prepareFileResponse();
+	_sendStrategy = new FileStrategy(_buffers, _fileFd, _bodySize, *_sock);
 }
 
-void GET::_getStaticIndex()
-{
-	_statusCode = "200";
-	_staticFile = StaticFile::GetFileByName("index");
-	_bodySize = _staticFile->GetSize();
-	_totalByteToSend = _bodySize;
-	_filename = ".html";
-	_createResponseHeader();
-	if ("HEAD" == _router->GetRequest().getMethod())
-		_totalByteToSend = 0;
-	_totalByteToSend += _responseHeaderStr.length();
-	_status = GET::eSendResponse;
-	_multiplexer->ChangeToEpollOut(_sock);
-}
 
 string GET::_formatDirectoryEntry(const string &name, const struct stat &st, const string &requestPath)
 {
@@ -210,95 +192,17 @@ void GET::_createListFilesResponse()
 
 	_bodySize = _totalByteToSend;
 	_createResponseHeader();
-	if ("HEAD" == _router->GetRequest().getMethod())
-		_totalByteToSend = 0;
-	_totalByteToSend += _responseHeaderStr.length();
 
-	_status = eSendAutoIndex;
-	_sendListFiles = 1;
 	_multiplexer->ChangeToEpollOut(_sock);
 
-	_buffers.push_back(make_pair((char *)StaticFile::GetFileByName("autoIndex1")->GetData(), StaticFile::GetFileByName("autoIndex1")->GetSize()));
-	_buffers.push_back(make_pair((char *)_filesListStr.c_str(), _filesListStr.length()));
-	_buffers.push_back(make_pair((char *)StaticFile::GetFileByName("autoIndex2")->GetData(), StaticFile::GetFileByName("autoIndex2")->GetSize()));
-	_buffers.push_back(make_pair((char *)_router->GetRequest().getPath().c_str(), _router->GetRequest().getPath().length()));
-	_buffers.push_back(make_pair((char *)StaticFile::GetFileByName("autoIndex3")->GetData(), StaticFile::GetFileByName("autoIndex3")->GetSize()));
+	if ("HEAD" != _router->GetRequest().getMethod()) {
+		_addPair(StaticFile::GetFileByName("autoIndex1"));
+		_addPair(_filesListStr);
+		_addPair(StaticFile::GetFileByName("autoIndex2"));
+		_addPair(_router->GetRequest().getPath());
+		_addPair(StaticFile::GetFileByName("autoIndex3"));
+	}
 	_sendStrategy = new BuffersStrategy(_buffers, *_sock);
 }
 
-void GET::_sendChunk(const char *data, int dataSize)
-{
-	int sent = _sock->Send((void *)data, dataSize);
-	if (sent > 0)
-	{
-		_sended += sent;
-		_sock->UpdateTime();
-	}
-}
 
-void GET::_sendListFilesStr(const string &str)
-{
-	int len = _targetToSend - _sended;
-	int offset = str.length() - len;
-
-	const char *b = &(str[offset]);
-	_sendChunk(b, len);
-}
-
-void GET::_sendAutoIndex(StaticFile *f)
-{
-	int len = _targetToSend - _sended;
-	int offset = f->GetSize() - len;
-	const char *b = &((f->GetData())[offset]);
-
-	_sendChunk(b, len);
-}
-
-void GET::_advanceListFilesState()
-{
-	if (_sended >= _targetToSend)
-		_sendListFiles++;
-	if (_sendListFiles == 7 || Utility::SigPipe || _sock->errorNumber == eWriteError)
-	{
-		_status = eComplete;
-	}
-}
-
-void GET::_sendListFilesResponse()
-{
-	int s1 = _responseHeaderStr.length();
-	int s2 = _filesList.str().length();
-	int s3 = _router->GetRequest().getPath().length();
-	int l1 = StaticFile::GetFileByName("autoIndex1")->GetSize();
-	int l2 = StaticFile::GetFileByName("autoIndex2")->GetSize();
-	int l3 = StaticFile::GetFileByName("autoIndex3")->GetSize();
-
-	switch (_sendListFiles)
-	{
-	case 1:
-		_targetToSend = s1;
-		_sendListFilesStr(_responseHeaderStr);
-		break;
-	case 2:
-		_targetToSend = s1 + l1;
-		_sendAutoIndex(StaticFile::GetFileByName("autoIndex1"));
-		break;
-	case 3:
-		_targetToSend = s1 + l1 + s2;
-		_sendListFilesStr(_filesListStr);
-		break;
-	case 4:
-		_targetToSend = s1 + l1 + s2 + l2;
-		_sendAutoIndex(StaticFile::GetFileByName("autoIndex2"));
-		break;
-	case 5:
-		_targetToSend = s1 + l1 + s2 + l2 + s3;
-		_sendListFilesStr(_router->GetRequest().getPath());
-		break;
-	case 6:
-		_targetToSend = s1 + l1 + s2 + l2 + s3 + l3;
-		_sendAutoIndex(StaticFile::GetFileByName("autoIndex3"));
-		break;
-	}
-	_advanceListFilesState();
-}

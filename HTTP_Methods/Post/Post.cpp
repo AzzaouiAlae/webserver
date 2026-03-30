@@ -1,4 +1,6 @@
 #include "Post.hpp"
+#include "MulipartUploadStrategy.hpp"
+#include "BuffersStrategy.hpp"
 
 Post::Post(SocketIO *sock, Routing *router) : AMethod(sock, router)
 {
@@ -38,12 +40,7 @@ void Post::_initPost()
 	if (_originalPath->isDir)
 	{
 		if (!_router->GetRequest().isMultipartFormData())
-		{
-			string randName = Utility::getRandomStr();
-			if (!_filename.empty() && _filename[_filename.length() - 1] != '/')
-				_filename += "/";
-			_filename += randName;
-		}
+			Utility::addRandomStr(_filename);
 	}
 	_contentBodySize = _router->GetRequest().getcontentlen();
 	if (_router->GetPath().getLocation() == NULL)
@@ -52,7 +49,7 @@ void Post::_initPost()
 	}
 	else if (_router->GetRequest().isMultipartFormData())
 	{
-		_handleMultipartUpload();
+		_readStrategy = new MulipartUploadStrategy(_sock, _router);
 		if (_status == Post::eCreateResponse)
 			_status = Post::eMultipartUpload;
 	}
@@ -93,30 +90,28 @@ bool Post::HandleResponse()
 
 	if (_sock->isTimeOut())
 		_createTimeoutResponse();
+	else if (_readStrategy && _readStrategy->GetStatus() == AStrategy::eContinue)
+	{
+		_executeStrategy(_readStrategy);
+		if (_readStrategy->GetStatus() == AStrategy::eComplete)
+			_createPostResponse();
+	}
+	else if (_sendStrategy && _sendStrategy->GetStatus() == AStrategy::eContinue)
+	{
+		_executeStrategy(_sendStrategy);
+		if (_sendStrategy->GetStatus() == AStrategy::eComplete)
+			_status = eComplete;
+	}
 	else if (_status == Post::eInitPost)
-	{
 		_initPost();
-	}
 	else if (_status == Post::eUploadFile)
-	{
 		_uploadFileToDisk();
-	}
 	else if (_status == Post::eMultipartUpload)
-	{
 		_handleMultipartUpload();
-	}
 	else if (_status == Post::eChunkedUpload)
-	{
 		_uploadChunkedToDisk();
-	}
 	else if (_status == Post::eCGIResponse)
-	{
 		_handelCGI();
-	}
-	else if (_status == Post::eSendResponse)
-	{
-		_sendResponse();
-	}
 	return _status == Post::eComplete;
 }
 
@@ -242,6 +237,7 @@ void Post::_createPostResponse()
 			_sendPostRedirection(retCode, retBody);
 		else
 			_sendPostCustomBody(retCode, retBody);
+		_addPair(_responseHeaderStr);
 	}
 	else
 	{
@@ -250,6 +246,7 @@ void Post::_createPostResponse()
 			<< ", createPostResponse: no return directive, sending 201 Created.";
 		_sendDefaultRespense("201");
 	}
+	_sendStrategy = new BuffersStrategy(_buffers, *_sock);
 }
 
 void Post::_checkMaxBodySize(size_t bodySize)
