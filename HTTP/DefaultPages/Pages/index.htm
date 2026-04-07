@@ -71,8 +71,7 @@ body.light-theme {
 			body.light-theme .metric-card,
 			body.light-theme .feat-card,
 			body.light-theme .arch-node,
-			body.light-theme .tcard,
-			body.light-theme .demo-card {
+			body.light-theme .tcard {
 				background: rgba(255, 255, 255, 0.92);
 				border-color: rgba(99, 102, 241, 0.18);
 				box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
@@ -152,6 +151,11 @@ body.light-theme {
 				background-clip: text;
 			}
 
+			body.light-theme .hero-note {
+				background: rgba(99, 102, 241, 0.06);
+				border-color: rgba(99, 102, 241, 0.28);
+			}
+
 			body.light-theme .logo-text {
 				background: linear-gradient(
 					135deg,
@@ -189,8 +193,7 @@ body.light-theme {
 			body.light-theme .feat-card h3,
 			body.light-theme .arch-node-name,
 			body.light-theme .tcard h4,
-			body.light-theme .demo-text h3,
-			body.light-theme .demo-card h3 {
+			body.light-theme .demo-text h3 {
 				color: #1e1b4b;
 			}
 
@@ -198,8 +201,7 @@ body.light-theme {
 			body.light-theme .arch-node-desc,
 			body.light-theme .tcard p,
 			body.light-theme .demo-text p,
-			body.light-theme .demo-list li,
-			body.light-theme .demo-card p {
+			body.light-theme .demo-list li {
 				color: #4c5169;
 			}
 
@@ -277,10 +279,6 @@ body.light-theme {
 				color: #0e7490;
 			}
 
-			body.light-theme .demo-card .demo-tag {
-				background: rgba(99, 102, 241, 0.1);
-				color: #4338ca;
-			}
 			body.light-theme .error-grid .err-item {
 				background: rgba(255, 255, 255, 0.9);
 				border-color: rgba(99, 102, 241, 0.15);
@@ -553,6 +551,21 @@ body.light-theme {
 				color: var(--text-muted);
 				max-width: 620px;
 				margin: 0 auto 2.5rem;
+			}
+			.hero-note {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.55rem;
+				padding: 0.5rem 1rem;
+				margin: 0 auto 2.2rem;
+				border: 1px dashed rgba(99, 102, 241, 0.35);
+				border-radius: 12px;
+				font-size: 0.88rem;
+				color: var(--text-muted);
+			}
+			.hero-note strong {
+				color: var(--primary-light);
+				font-weight: 700;
 			}
 			.hero-buttons {
 				display: flex;
@@ -931,91 +944,6 @@ body.light-theme {
 				line-height: 1.7;
 			}
 
-			/* ===== LIVE DEMOS ===== */
-			.demo-grid-cards {
-				display: grid;
-				grid-template-columns: repeat(3, 1fr);
-				gap: 1.5rem;
-			}
-			.demo-card {
-				background: rgba(15, 23, 42, 0.95);
-				border: 1px solid var(--border);
-				border-radius: 20px;
-				padding: 2rem;
-				transition: all 0.4s;
-				text-decoration: none;
-				color: inherit;
-				display: block;
-				position: relative;
-				overflow: hidden;
-			}
-			.demo-card:hover {
-				transform: translateY(-5px);
-				border-color: var(--primary);
-			}
-			.demo-card::before {
-				content: "";
-				position: absolute;
-				top: 0;
-				left: 0;
-				right: 0;
-				height: 3px;
-				background: linear-gradient(
-					90deg,
-					var(--primary),
-					var(--accent),
-					var(--accent2)
-				);
-				opacity: 0;
-				transition: opacity 0.3s;
-			}
-			.demo-card:hover::before {
-				opacity: 1;
-			}
-			.demo-card-icon {
-				font-size: 2rem;
-				margin-bottom: 0.8rem;
-				display: block;
-			}
-			.demo-card h3 {
-				font-size: 1.05rem;
-				font-weight: 700;
-				margin-bottom: 0.4rem;
-			}
-			.demo-card p {
-				color: var(--text-muted);
-				font-size: 0.85rem;
-				line-height: 1.6;
-				margin-bottom: 1rem;
-			}
-			.demo-tag {
-				display: inline-block;
-				font-size: 0.7rem;
-				font-weight: 600;
-				padding: 0.25rem 0.6rem;
-				border-radius: 6px;
-				background: rgba(99, 102, 241, 0.15);
-				color: var(--primary-light);
-				text-transform: uppercase;
-				letter-spacing: 1px;
-			}
-			.demo-tag.green {
-				background: rgba(52, 211, 153, 0.15);
-				color: #34d399;
-			}
-			.demo-tag.amber {
-				background: rgba(251, 191, 36, 0.15);
-				color: #fbbf24;
-			}
-			.demo-tag.red {
-				background: rgba(239, 68, 68, 0.15);
-				color: #f87171;
-			}
-			.demo-tag.cyan {
-				background: rgba(6, 182, 212, 0.15);
-				color: #22d3ee;
-			}
-
 			/* ===== ERROR PAGES GRID ===== */
 			.error-grid {
 				display: grid;
@@ -1179,17 +1107,8 @@ body.light-theme {
 			.fill-cpp {
 				background: linear-gradient(90deg, #f34b7d, #e879a0);
 			}
-			.fill-py {
-				background: linear-gradient(90deg, #3572a5, #4b8bbe);
-			}
-			.fill-html {
-				background: linear-gradient(90deg, #e34c26, #f06529);
-			}
 			.fill-make {
 				background: linear-gradient(90deg, #427819, #5a9e24);
-			}
-			.fill-oth {
-				background: linear-gradient(90deg, #6e7681, #8b949e);
 			}
 			.tech-cards {
 				display: grid;
@@ -1439,51 +1358,12 @@ body.light-theme {
 				text-decoration: none;
 			}
 
-			/* ===== MIME TABLE ===== */
-			.mime-table {
-				width: 100%;
-				border-collapse: collapse;
-				margin-top: 1.5rem;
-			}
-			.mime-table th,
-			.mime-table td {
-				padding: 0.7rem 1rem;
-				font-size: 0.85rem;
-				text-align: left;
-				border-bottom: 1px solid var(--border);
-			}
-			.mime-table th {
-				color: var(--primary-light);
-				font-weight: 600;
-				font-size: 0.75rem;
-				text-transform: uppercase;
-				letter-spacing: 1px;
-			}
-			.mime-table td {
-				color: var(--text-muted);
-				font-family: "JetBrains Mono", monospace;
-				font-size: 0.8rem;
-			}
-			.mime-table tr:hover td {
-				color: var(--text);
-			}
-			body.light-theme .mime-table th {
-				color: var(--primary);
-			}
-			body.light-theme .mime-table td {
-				color: #4c5169;
-			}
-			body.light-theme .mime-table tr:hover td {
-				color: #1e1b4b;
-			}
-
 			/* ===== RESPONSIVE ===== */
 			@media (max-width: 1024px) {
 				.metrics-grid {
 					grid-template-columns: repeat(2, 1fr);
 				}
-				.feat-grid,
-				.demo-grid-cards {
+				.feat-grid {
 					grid-template-columns: repeat(2, 1fr);
 				}
 				.tech-grid,
@@ -1521,8 +1401,7 @@ body.light-theme {
 				.metrics-grid {
 					grid-template-columns: 1fr;
 				}
-				.feat-grid,
-				.demo-grid-cards {
+				.feat-grid {
 					grid-template-columns: 1fr;
 				}
 				.hero-buttons {
@@ -1590,7 +1469,7 @@ body.light-theme {
 			<ul class="nav-links">
 				<li><a href="#highlights">Overview</a></li>
 				<li><a href="#features">Features</a></li>
-				<li><a href="#demos">Live Demos</a></li>
+				<li><a href="#directives">Directives</a></li>
 				<li><a href="#architecture">Architecture</a></li>
 				<li><a href="#tech">Tech Stack</a></li>
 				<li>
@@ -1631,6 +1510,13 @@ body.light-theme {
 					management, file uploads, themed error pages, and dark/light
 					theming.
 				</p>
+				<div class="hero-note">
+					<span>&#x2728;</span>
+					<span>
+						Latest directive: <strong>method_redirect</strong> for
+						method-specific internal routing.
+					</span>
+				</div>
 				<div class="hero-buttons">
 					<a
 						target="_blank"
@@ -1649,8 +1535,8 @@ body.light-theme {
 						</svg>
 						View Source Code
 					</a>
-					<a href="#demos" class="btn btn-glass"
-						>Try Live Demos &#x2193;</a
+					<a href="#features" class="btn btn-glass"
+						>Explore Features &#x2193;</a
 					>
 				</div>
 
@@ -1783,8 +1669,9 @@ body.light-theme {
 						<h3>CGI Execution</h3>
 						<p>
 							Run Python &amp; C# scripts via Common Gateway
-							Interface with environment variables, pipe IPC, and
-							timeout management.
+							Interface with environment variables, pipe IPC,
+							timeout management, and chunked/buffered response
+							strategies.
 						</p>
 					</div>
 					<div class="feat-card">
@@ -1800,9 +1687,10 @@ body.light-theme {
 						<div class="feat-icon">&#x1F4E4;</div>
 						<h3>File Upload &amp; Deletion</h3>
 						<p>
-							Upload files via POST with configurable body size
+							Upload files via POST with multipart parsing,
+							chunked transfer decoding, and configurable body size
 							limits (1MB, 64B). Delete uploaded files with DELETE
-							method support.
+							support.
 						</p>
 					</div>
 					<div class="feat-card">
@@ -1817,9 +1705,9 @@ body.light-theme {
 						<div class="feat-icon">&#x1F504;</div>
 						<h3>HTTP Redirections</h3>
 						<p>
-							301 permanent &amp; 302 temporary redirects
-							configured per location. External redirect support
-							(e.g., to Google).
+							Use <span class="ck">return</span> for full-location
+							redirects and <span class="ck">method_redirect</span>
+							to route GET/POST/DELETE/HEAD to internal targets.
 						</p>
 					</div>
 					<div class="feat-card">
@@ -1844,9 +1732,9 @@ body.light-theme {
 						<div class="feat-icon">&#x1F4C4;</div>
 						<h3>MIME Type System</h3>
 						<p>
-							Custom types block mapping 8+ MIME types: HTML, CSS,
-							JS, JPEG, PNG, GIF, plain text, and binary
-							octet-stream.
+							MIME types are loaded from the active configuration
+							file types block, so content handling follows your
+							server config.
 						</p>
 					</div>
 					<div class="feat-card">
@@ -1871,233 +1759,75 @@ body.light-theme {
 			</div>
 		</section>
 
-		<!-- LIVE DEMOS -->
-		<section id="demos">
+		<!-- DIRECTIVES -->
+		<section id="directives">
 			<div class="container">
 				<div class="reveal">
-					<span class="slabel">Interactive</span>
-					<h2 class="sheading">Live Demos &mdash; Try It Now</h2>
+					<span class="slabel">Runtime Controls</span>
+					<h2 class="sheading">Directives &amp; Body Strategies</h2>
 					<p class="sdesc">
-						Every link below hits a real endpoint served by this
-						Enginx instance. Click to explore.
+						The config layer does more than map routes: it controls
+						body decoding, CGI delivery mode, method-level redirects,
+						and timeout behavior at runtime.
 					</p>
 				</div>
-				<div class="demo-grid-cards reveal">
-					<a href="/scripts/login.py" class="demo-card">
-						<span class="demo-card-icon">&#x1F512;</span>
-						<h3>Login System</h3>
+				<div class="feat-grid reveal">
+					<div class="feat-card">
+						<div class="feat-icon">&#x1F500;</div>
+						<h3>method_redirect</h3>
 						<p>
-							Full session-based auth with cookies. Login,
-							dashboard, and logout flow. Try
-							<code
-								style="
-									color: var(--accent);
-									font-family:
-										&quot;JetBrains Mono&quot;, monospace;
-									font-size: 0.82em;
-								"
-								>admin / admin123</code
-							>
+							Route a specific method to an internal path inside the
+							same location block. Useful for splitting GET and POST
+							workflows cleanly.
 						</p>
-						<span class="demo-tag">CGI &bull; Sessions</span>
-					</a>
-					<a href="/scripts/clickMe.py" class="demo-card">
-						<span class="demo-card-icon">&#x1F4A5;</span>
-						<h3>Click Counter</h3>
+					</div>
+					<div class="feat-card">
+						<div class="feat-icon">&#x1F4E6;</div>
+						<h3>chunked_send Toggle</h3>
 						<p>
-							Cookie-stored counter that persists across requests.
-							POST/redirect/GET pattern with Set-Cookie headers.
+							Enable streaming CGI responses with chunked transfer,
+							or disable it to buffer output and send a fixed
+							Content-Length response.
 						</p>
-						<span class="demo-tag green">Cookies &bull; PRG</span>
-					</a>
-					<a href="/scripts/delete.py" class="demo-card">
-						<span class="demo-card-icon">&#x1F5D1;&#xFE0F;</span>
-						<h3>DELETE Method Tester</h3>
+					</div>
+					<div class="feat-card">
+						<div class="feat-icon">&#x1F4C2;</div>
+						<h3>Multipart + Chunked Input</h3>
 						<p>
-							Test HTTP DELETE via Fetch API. Forms only support
-							GET/POST &mdash; this uses JavaScript to send DELETE
-							requests.
+							Incoming request bodies support chunked transfer
+							decoding and multipart form-data parsing for robust
+							upload pipelines.
 						</p>
-						<span class="demo-tag red"
-							>DELETE &bull; Fetch API</span
-						>
-					</a>
-					<a href="/Pages" class="demo-card">
-						<span class="demo-card-icon">&#x1F4C2;</span>
-						<h3>Directory Listing</h3>
+					</div>
+					<div class="feat-card">
+						<div class="feat-icon">&#x23F1;&#xFE0F;</div>
+						<h3>Timeout Directives</h3>
 						<p>
-							Autoindex-enabled directory showing all files with
-							size, date, and type. Beautiful file manager
-							interface.
+							Tune connection behavior using
+							<span class="ck">keep_alive_timeout</span>,
+							<span class="ck">client_read_timeout</span>, and
+							<span class="ck">cgi_timeout</span>.
 						</p>
-						<span class="demo-tag cyan">Autoindex On</span>
-					</a>
-					<a href="/upload" class="demo-card">
-						<span class="demo-card-icon">&#x1F4E4;</span>
-						<h3>File Upload</h3>
+					</div>
+					<div class="feat-card">
+						<div class="feat-icon">&#x1F4DD;</div>
+						<h3>Method Guardrails</h3>
 						<p>
-							Upload files to the server via multipart POST. Files
-							stored on disk with
-							<code
-								style="
-									color: var(--accent);
-									font-family:
-										&quot;JetBrains Mono&quot;, monospace;
-									font-size: 0.82em;
-								"
-								>client_body_in_file_only</code
-							>.
+							Use <span class="ck">allow_methods</span> to enforce
+							verb-level access policy per location and reduce
+							unexpected handler paths.
 						</p>
-						<span class="demo-tag amber">POST &bull; Upload</span>
-					</a>
-					<a href="/upload-limit" class="demo-card">
-						<span class="demo-card-icon">&#x1F6AB;</span>
-						<h3>Upload Size Limit</h3>
+					</div>
+					<div class="feat-card">
+						<div class="feat-icon">&#x1F4E4;</div>
+						<h3>Upload Controls</h3>
 						<p>
-							Same upload endpoint but limited to 64 bytes.
-							Exceeding the limit triggers a 413 Payload Too Large
-							response.
+							Combine <span class="ck">client_max_body_size</span>,
+							<span class="ck">client_body_in_file_only</span>, and
+							<span class="ck">delete_files</span> to shape upload
+							storage and lifecycle behavior.
 						</p>
-						<span class="demo-tag red">64B Limit &bull; 413</span>
-					</a>
-					<a href="/Hello" class="demo-card">
-						<span class="demo-card-icon">&#x1F44B;</span>
-						<h3>Root Remapping</h3>
-						<p>
-							The
-							<code
-								style="
-									color: var(--accent);
-									font-family:
-										&quot;JetBrains Mono&quot;, monospace;
-									font-size: 0.82em;
-								"
-								>/Hello</code
-							>
-							path maps to
-							<code
-								style="
-									color: var(--accent);
-									font-family:
-										&quot;JetBrains Mono&quot;, monospace;
-									font-size: 0.82em;
-								"
-								>rootMappedPath/Hello</code
-							>
-							via a custom root directive.
-						</p>
-						<span class="demo-tag">Root Directive</span>
-					</a>
-					<a href="/google" class="demo-card">
-						<span class="demo-card-icon">&#x1F517;</span>
-						<h3>301 Redirect (External)</h3>
-						<p>
-							Permanent redirect to Google. The server sends a
-							<code
-								style="
-									color: var(--accent);
-									font-family:
-										&quot;JetBrains Mono&quot;, monospace;
-									font-size: 0.82em;
-								"
-								>301 Moved Permanently</code
-							>
-							with Location header.
-						</p>
-						<span class="demo-tag green">301 &bull; External</span>
-					</a>
-					<a href="/old-page" class="demo-card">
-						<span class="demo-card-icon">&#x27A1;&#xFE0F;</span>
-						<h3>301 Redirect (Internal)</h3>
-						<p>
-							Redirects
-							<code
-								style="
-									color: var(--accent);
-									font-family:
-										&quot;JetBrains Mono&quot;, monospace;
-									font-size: 0.82em;
-								"
-								>/old-page</code
-							>
-							to
-							<code
-								style="
-									color: var(--accent);
-									font-family:
-										&quot;JetBrains Mono&quot;, monospace;
-									font-size: 0.82em;
-								"
-								>/new-location</code
-							>
-							permanently. Useful for URL migration demos.
-						</p>
-						<span class="demo-tag">301 &bull; Internal</span>
-					</a>
-					<a href="/temp-page" class="demo-card">
-						<span class="demo-card-icon">&#x1F504;</span>
-						<h3>302 Temporary Redirect</h3>
-						<p>
-							Temporary redirect from
-							<code
-								style="
-									color: var(--accent);
-									font-family:
-										&quot;JetBrains Mono&quot;, monospace;
-									font-size: 0.82em;
-								"
-								>/temp-page</code
-							>
-							to
-							<code
-								style="
-									color: var(--accent);
-									font-family:
-										&quot;JetBrains Mono&quot;, monospace;
-									font-size: 0.82em;
-								"
-								>/other-location</code
-							>. Browser won't cache this redirect.
-						</p>
-						<span class="demo-tag amber">302 &bull; Temporary</span>
-					</a>
-					<a href="/get-only" class="demo-card">
-						<span class="demo-card-icon">&#x1F6E1;&#xFE0F;</span>
-						<h3>Method Restrictions</h3>
-						<p>
-							This location only allows GET requests. Any POST or
-							DELETE will receive a
-							<code
-								style="
-									color: var(--accent);
-									font-family:
-										&quot;JetBrains Mono&quot;, monospace;
-									font-size: 0.82em;
-								"
-								>405 Method Not Allowed</code
-							>.
-						</p>
-						<span class="demo-tag red">GET Only &bull; 405</span>
-					</a>
-					<a href="/secret" class="demo-card">
-						<span class="demo-card-icon">&#x1F510;</span>
-						<h3>Static Serving</h3>
-						<p>
-							Serves static files from the
-							<code
-								style="
-									color: var(--accent);
-									font-family:
-										&quot;JetBrains Mono&quot;, monospace;
-									font-size: 0.82em;
-								"
-								>/secret</code
-							>
-							directory under the default root with inherited
-							rules.
-						</p>
-						<span class="demo-tag">Static Files</span>
-					</a>
+					</div>
 				</div>
 			</div>
 		</section>
@@ -2186,24 +1916,31 @@ body.light-theme {
 					<span class="slabel">System Design</span>
 					<h2 class="sheading">Modular Architecture</h2>
 					<p class="sdesc">
-						A layered design &mdash; each module with a single
-						responsibility. Clean, testable, maintainable.
+						End-to-end flow from socket accept to final response,
+						with directive-driven behavior at each runtime stage.
 					</p>
 				</div>
 				<div class="reveal">
 					<div class="arch-layer">
-						<div class="arch-layer-title">Network Layer</div>
+						<div class="arch-layer-title">Network I/O Layer</div>
 						<div class="arch-row">
 							<div class="arch-node">
 								<div class="arch-node-icon">&#x1F50C;</div>
 								<div class="arch-node-name">Socket</div>
 								<div class="arch-node-desc">
-									TCP socket management
+									Bind/listen/accept lifecycle
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F4F6;</div>
+								<div class="arch-node-name">ClientSocket</div>
+								<div class="arch-node-desc">
+									Client endpoint abstraction
 								</div>
 							</div>
 							<div class="arch-node">
 								<div class="arch-node-icon">&#x1F4E1;</div>
-								<div class="arch-node-name">SocketIO</div>
+								<div class="arch-node-name">NetIO</div>
 								<div class="arch-node-desc">
 									Non-blocking read/write
 								</div>
@@ -2212,66 +1949,14 @@ body.light-theme {
 								<div class="arch-node-icon">&#x1F500;</div>
 								<div class="arch-node-name">Multiplexer</div>
 								<div class="arch-node-desc">
-									Event-driven I/O poll
-								</div>
-							</div>
-							<div class="arch-node">
-								<div class="arch-node-icon">&#x1F4C1;</div>
-								<div class="arch-node-name">AFd</div>
-								<div class="arch-node-desc">
-									FD abstraction layer
+									poll()-driven event loop
 								</div>
 							</div>
 							<div class="arch-node">
 								<div class="arch-node-icon">&#x1F517;</div>
-								<div class="arch-node-name">ConnectionCtx</div>
+								<div class="arch-node-name">ConnectionContext</div>
 								<div class="arch-node-desc">
-									Per-connection state
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="arch-arrow-wrap">
-						<div class="arch-arrow"></div>
-					</div>
-					<div class="arch-layer">
-						<div class="arch-layer-title">Protocol Layer</div>
-						<div class="arch-row">
-							<div class="arch-node">
-								<div class="arch-node-icon">&#x1F4E8;</div>
-								<div class="arch-node-name">ARequest</div>
-								<div class="arch-node-desc">
-									Base request class
-								</div>
-							</div>
-							<div class="arch-node">
-								<div class="arch-node-icon">&#x1F464;</div>
-								<div class="arch-node-name">ClientRequest</div>
-								<div class="arch-node-desc">
-									HTTP request parsing
-								</div>
-							</div>
-							<div class="arch-node">
-								<div class="arch-node-icon">&#x1F310;</div>
-								<div class="arch-node-name">HTTPContext</div>
-								<div class="arch-node-desc">
-									Request/response lifecycle
-								</div>
-							</div>
-							<div class="arch-node">
-								<div class="arch-node-icon">
-									&#x1F5FA;&#xFE0F;
-								</div>
-								<div class="arch-node-name">Routing</div>
-								<div class="arch-node-desc">
-									URL pattern matching
-								</div>
-							</div>
-							<div class="arch-node">
-								<div class="arch-node-icon">&#x1F4E4;</div>
-								<div class="arch-node-name">Response</div>
-								<div class="arch-node-desc">
-									HTTP response builder
+									Per-connection request state
 								</div>
 							</div>
 						</div>
@@ -2281,21 +1966,82 @@ body.light-theme {
 					</div>
 					<div class="arch-layer">
 						<div class="arch-layer-title">
-							HTTP Methods &amp; Content
+							HTTP Parse &amp; Context Layer
 						</div>
 						<div class="arch-row">
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F4E8;</div>
+								<div class="arch-node-name">ARequest</div>
+								<div class="arch-node-desc">
+									Request parsing contract
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F464;</div>
+								<div class="arch-node-name">ClientRequest</div>
+								<div class="arch-node-desc">
+									Start-line/header/body parse
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F310;</div>
+								<div class="arch-node-name">HTTPContext</div>
+								<div class="arch-node-desc">
+									Runtime request state machine
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F9E9;</div>
+								<div class="arch-node-name">IContext</div>
+								<div class="arch-node-desc">
+									Context transition interface
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">
+									&#x1F5FA;&#xFE0F;
+								</div>
+								<div class="arch-node-name">Response</div>
+								<div class="arch-node-desc">
+									Status/header/body assembly
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="arch-arrow-wrap">
+						<div class="arch-arrow"></div>
+					</div>
+					<div class="arch-layer">
+						<div class="arch-layer-title">
+							Routing &amp; Method Dispatch Layer
+						</div>
+						<div class="arch-row">
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F5FA;&#xFE0F;</div>
+								<div class="arch-node-name">Routing</div>
+								<div class="arch-node-desc">
+									Location match + root remap
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F4CB;</div>
+								<div class="arch-node-name">AMethod</div>
+								<div class="arch-node-desc">
+									Shared method guard logic
+								</div>
+							</div>
 							<div class="arch-node">
 								<div class="arch-node-icon">&#x1F4E5;</div>
 								<div class="arch-node-name">GET</div>
 								<div class="arch-node-desc">
-									Static file serving
+									Static files + autoindex path
 								</div>
 							</div>
 							<div class="arch-node">
 								<div class="arch-node-icon">&#x1F4E4;</div>
 								<div class="arch-node-name">POST</div>
 								<div class="arch-node-desc">
-									Form &amp; file upload
+									Upload and CGI request entry
 								</div>
 							</div>
 							<div class="arch-node">
@@ -2304,21 +2050,7 @@ body.light-theme {
 								</div>
 								<div class="arch-node-name">DELETE</div>
 								<div class="arch-node-desc">
-									Resource removal
-								</div>
-							</div>
-							<div class="arch-node">
-								<div class="arch-node-icon">&#x1F4C4;</div>
-								<div class="arch-node-name">StaticFile</div>
-								<div class="arch-node-desc">
-									Zero-copy file I/O
-								</div>
-							</div>
-							<div class="arch-node">
-								<div class="arch-node-icon">&#x1F4C3;</div>
-								<div class="arch-node-name">DefaultPages</div>
-								<div class="arch-node-desc">
-									Error &amp; index pages
+									Targeted resource removal
 								</div>
 							</div>
 						</div>
@@ -2327,43 +2059,98 @@ body.light-theme {
 						<div class="arch-arrow"></div>
 					</div>
 					<div class="arch-layer">
-						<div class="arch-layer-title">CGI &amp; Sessions</div>
+						<div class="arch-layer-title">
+							Body Processing Strategy Layer
+						</div>
+						<div class="arch-row">
+							<div class="arch-node">
+								<div class="arch-node-icon">
+									&#x1F4E6;
+								</div>
+								<div class="arch-node-name">ChunkedData</div>
+								<div class="arch-node-desc">
+									Chunked transfer decoding
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F9EA;</div>
+								<div class="arch-node-name">MultipartData</div>
+								<div class="arch-node-desc">
+									Form-data boundary parser
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F4BE;</div>
+								<div class="arch-node-name">UploadStrategy</div>
+								<div class="arch-node-desc">
+									Raw body storage policy
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F4C2;</div>
+								<div class="arch-node-name">
+									MultipartUploadStrategy
+								</div>
+								<div class="arch-node-desc">
+									File and field extraction
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F4E4;</div>
+								<div class="arch-node-name">POST Strategy Switch</div>
+								<div class="arch-node-desc">
+									Chooses parser/write path
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="arch-arrow-wrap">
+						<div class="arch-arrow"></div>
+					</div>
+					<div class="arch-layer">
+						<div class="arch-layer-title">
+							CGI &amp; Response Delivery Layer
+						</div>
 						<div class="arch-row">
 							<div class="arch-node">
 								<div class="arch-node-icon">
 									&#x2699;&#xFE0F;
 								</div>
-								<div class="arch-node-name">CGI</div>
+								<div class="arch-node-name">Cgi</div>
 								<div class="arch-node-desc">
-									Script execution
-								</div>
-							</div>
-							<div class="arch-node">
-								<div class="arch-node-icon">&#x1F4E8;</div>
-								<div class="arch-node-name">CgiRequest</div>
-								<div class="arch-node-desc">
-									CGI request handler
+									Script process execution
 								</div>
 							</div>
 							<div class="arch-node">
 								<div class="arch-node-icon">&#x1F517;</div>
 								<div class="arch-node-name">CGIPipe</div>
 								<div class="arch-node-desc">
-									Pipe IPC management
+									Pipe-based stdin/stdout IPC
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F30A;</div>
+								<div class="arch-node-name">
+									WriteChunkedCGIStrategy
+								</div>
+								<div class="arch-node-desc">
+									Stream CGI output in chunks
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F4E6;</div>
+								<div class="arch-node-name">
+									WriteBufferedCGIStrategy
+								</div>
+								<div class="arch-node-desc">
+									Buffer then send with length
 								</div>
 							</div>
 							<div class="arch-node">
 								<div class="arch-node-icon">&#x1F36A;</div>
-								<div class="arch-node-name">Session</div>
+								<div class="arch-node-name">SessionManager</div>
 								<div class="arch-node-desc">
-									Cookie-based sessions
-								</div>
-							</div>
-							<div class="arch-node">
-								<div class="arch-node-icon">&#x1F30D;</div>
-								<div class="arch-node-name">Environment</div>
-								<div class="arch-node-desc">
-									CGI env variables
+									Cookie-backed session state
 								</div>
 							</div>
 						</div>
@@ -2372,41 +2159,97 @@ body.light-theme {
 						<div class="arch-arrow"></div>
 					</div>
 					<div class="arch-layer">
-						<div class="arch-layer-title">Configuration Layer</div>
+						<div class="arch-layer-title">Directive Policy Layer</div>
+						<div class="arch-row">
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F500;</div>
+								<div class="arch-node-name">method_redirect</div>
+								<div class="arch-node-desc">
+									Method-specific internal reroute
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F4E6;</div>
+								<div class="arch-node-name">chunked_send</div>
+								<div class="arch-node-desc">
+									Select CGI send strategy
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x1F6E1;&#xFE0F;</div>
+								<div class="arch-node-name">allow_methods</div>
+								<div class="arch-node-desc">
+									Verb-level access guardrails
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x23F1;&#xFE0F;</div>
+								<div class="arch-node-name">
+									keep_alive_timeout
+								</div>
+								<div class="arch-node-desc">
+									Idle keep-alive lifetime
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x231B;</div>
+								<div class="arch-node-name">
+									client_read_timeout
+								</div>
+								<div class="arch-node-desc">
+									Request read time budget
+								</div>
+							</div>
+							<div class="arch-node">
+								<div class="arch-node-icon">&#x23F3;</div>
+								<div class="arch-node-name">cgi_timeout</div>
+								<div class="arch-node-desc">
+									CGI execution time limit
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="arch-arrow-wrap">
+						<div class="arch-arrow"></div>
+					</div>
+					<div class="arch-layer">
+						<div class="arch-layer-title">
+							Configuration Compiler Layer
+						</div>
 						<div class="arch-row">
 							<div class="arch-node">
 								<div class="arch-node-icon">&#x1F524;</div>
 								<div class="arch-node-name">Tokenizing</div>
 								<div class="arch-node-desc">
-									Lexical analysis
+									Lexical directive scan
 								</div>
 							</div>
 							<div class="arch-node">
 								<div class="arch-node-icon">&#x1F333;</div>
 								<div class="arch-node-name">AST</div>
 								<div class="arch-node-desc">
-									Syntax tree builder
+									Hierarchy construction
 								</div>
 							</div>
 							<div class="arch-node">
 								<div class="arch-node-icon">&#x1F4C4;</div>
 								<div class="arch-node-name">Parsing</div>
 								<div class="arch-node-desc">
-									Config file parser
+									Node to runtime mapping
 								</div>
 							</div>
 							<div class="arch-node">
 								<div class="arch-node-icon">&#x2705;</div>
 								<div class="arch-node-name">Validation</div>
 								<div class="arch-node-desc">
-									Semantic checks
+									Semantic and conflict checks
 								</div>
 							</div>
 							<div class="arch-node">
 								<div class="arch-node-icon">&#x1F4BE;</div>
 								<div class="arch-node-name">Config</div>
 								<div class="arch-node-desc">
-									Runtime config store
+									In-memory policy store
 								</div>
 							</div>
 						</div>
@@ -2467,8 +2310,8 @@ body.light-theme {
 					<span class="slabel">Tech Stack</span>
 					<h2 class="sheading">Languages &amp; Tools</h2>
 					<p class="sdesc">
-						Built with the languages that power the internet's
-						backbone.
+						Core implementation is in C++, with Makefile-based
+						build orchestration.
 					</p>
 				</div>
 				<div class="tech-grid reveal">
@@ -2481,46 +2324,12 @@ body.light-theme {
 										style="background: #f34b7d"
 									></span>
 									C++</span
-								><span class="lang-pct">55.9%</span>
+								><span class="lang-pct">97.7%</span>
 							</div>
 							<div class="lang-track">
 								<div
 									class="lang-fill fill-cpp"
-									data-w="55.9"
-								></div>
-							</div>
-						</div>
-						<div>
-							<div class="lang-header">
-								<span class="lang-name"
-									><span
-										class="ldot"
-										style="background: #3572a5"
-									></span>
-									Python (CGI)</span
-								><span class="lang-pct">5.2%</span>
-							</div>
-							<div class="lang-track">
-								<div
-									class="lang-fill fill-py"
-									data-w="5.2"
-								></div>
-							</div>
-						</div>
-						<div>
-							<div class="lang-header">
-								<span class="lang-name"
-									><span
-										class="ldot"
-										style="background: #e34c26"
-									></span>
-									HTML/CSS/JS</span
-								><span class="lang-pct">37.0%</span>
-							</div>
-							<div class="lang-track">
-								<div
-									class="lang-fill fill-html"
-									data-w="37.0"
+									data-w="97.7"
 								></div>
 							</div>
 						</div>
@@ -2532,29 +2341,12 @@ body.light-theme {
 										style="background: #427819"
 									></span>
 									Makefile</span
-								><span class="lang-pct">1.3%</span>
+								><span class="lang-pct">2.3%</span>
 							</div>
 							<div class="lang-track">
 								<div
 									class="lang-fill fill-make"
-									data-w="1.3"
-								></div>
-							</div>
-						</div>
-						<div>
-							<div class="lang-header">
-								<span class="lang-name"
-									><span
-										class="ldot"
-										style="background: #178600"
-									></span>
-									C# (CGI)</span
-								><span class="lang-pct">0.6%</span>
-							</div>
-							<div class="lang-track">
-								<div
-									class="lang-fill fill-oth"
-									data-w="0.6"
+									data-w="2.3"
 								></div>
 							</div>
 						</div>
@@ -2567,8 +2359,11 @@ body.light-theme {
 						</div>
 						<div class="tcard">
 							<div class="tcard-icon">&#x1F40D;</div>
-							<h4>Python CGI Scripts</h4>
-							<p>Login, counter, delete &mdash; 7 scripts</p>
+							<h4>CGI Examples</h4>
+							<p>
+								Python/C# scripts are demo endpoints, not core server
+								implementation languages.
+							</p>
 						</div>
 						<div class="tcard">
 							<div class="tcard-icon">&#x1F527;</div>
@@ -2595,91 +2390,16 @@ body.light-theme {
 			</div>
 		</section>
 
-		<!-- MIME TYPES -->
-		<section id="mime">
-			<div class="container">
-				<div class="reveal">
-					<span class="slabel">Content Delivery</span>
-					<h2 class="sheading">MIME Type Mapping</h2>
-					<p class="sdesc">
-						Custom types block in the configuration maps file
-						extensions to content types for proper browser
-						rendering.
-					</p>
-				</div>
-				<div class="reveal" style="max-width: 700px">
-					<div class="code-box">
-						<div class="code-head">
-							<span
-								class="term-dot r"
-								style="width: 10px; height: 10px"
-							></span>
-							<span
-								class="term-dot y"
-								style="width: 10px; height: 10px"
-							></span>
-							<span
-								class="term-dot g"
-								style="width: 10px; height: 10px"
-							></span>
-							<span class="code-tab">types { }</span>
-						</div>
-						<table class="mime-table">
-							<thead>
-								<tr>
-									<th>MIME Type</th>
-									<th>Extensions</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr>
-									<td>text/html</td>
-									<td>html htm shtml</td>
-								</tr>
-								<tr>
-									<td>text/css</td>
-									<td>css</td>
-								</tr>
-								<tr>
-									<td>text/plain</td>
-									<td>txt</td>
-								</tr>
-								<tr>
-									<td>image/jpeg</td>
-									<td>jpeg jpg</td>
-								</tr>
-								<tr>
-									<td>image/png</td>
-									<td>png</td>
-								</tr>
-								<tr>
-									<td>image/gif</td>
-									<td>gif</td>
-								</tr>
-								<tr>
-									<td>application/javascript</td>
-									<td>js</td>
-								</tr>
-								<tr>
-									<td>application/octet-stream</td>
-									<td>bin exe dll</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
-		</section>
-
 		<!-- CONFIG DEMO -->
 		<section id="config">
 			<div class="container">
 				<div class="reveal">
 					<span class="slabel">Configuration</span>
-					<h2 class="sheading">NGINX-Style Config Engine</h2>
+					<h2 class="sheading">NGINX-Style Config + Runtime Policies</h2>
 					<p class="sdesc">
 						A full compiler pipeline: tokenizer &#x2192; AST
-						&#x2192; semantic validator.
+						&#x2192; semantic validator, with directive-level runtime
+						behavior controls.
 					</p>
 				</div>
 				<div class="demo-grid reveal">
@@ -2688,8 +2408,8 @@ body.light-theme {
 						<p>
 							Enginx parses configuration files using the same
 							paradigm as real-world compilers &mdash; lexical
-							tokenization, abstract syntax tree generation, and
-							semantic validation.
+							tokenization, abstract syntax tree generation,
+							semantic validation, and directive conflict checks.
 						</p>
 						<ul class="demo-list">
 							<li>
@@ -2697,40 +2417,40 @@ body.light-theme {
 								server blocks with virtual hosting
 							</li>
 							<li>
-								<span class="chk">&#x2713;</span> Location
-								directives with root remapping
+								<span class="chk">&#x2713;</span> method_redirect
+								per method in one location
+							</li>
+							<li>
+								<span class="chk">&#x2713;</span> chunked_send
+								on/off for CGI response strategy
+							</li>
+							<li>
+								<span class="chk">&#x2713;</span> Timeout
+								directives for connection and CGI lifecycle
+							</li>
+							<li>
+								<span class="chk">&#x2713;</span> allow_methods
+								guardrails per location
+							</li>
+							<li>
+								<span class="chk">&#x2713;</span> return 301/302
+								redirections per location
 							</li>
 							<li>
 								<span class="chk">&#x2713;</span> CGI pass for
 								.py and .cs extensions
 							</li>
 							<li>
-								<span class="chk">&#x2713;</span> Autoindex
-								on/off per location
-							</li>
-							<li>
 								<span class="chk">&#x2713;</span> Client body
 								size limits (1m, 64b)
 							</li>
 							<li>
-								<span class="chk">&#x2713;</span> 301/302
-								redirections per location
-							</li>
-							<li>
-								<span class="chk">&#x2713;</span> Per-location
-								method restrictions
-							</li>
-							<li>
-								<span class="chk">&#x2713;</span> Custom error
-								pages per server
-							</li>
-							<li>
-								<span class="chk">&#x2713;</span> File upload
-								&amp; delete toggles
+								<span class="chk">&#x2713;</span> Upload file
+								storage and delete toggles
 							</li>
 							<li>
 								<span class="chk">&#x2713;</span> Custom MIME
-								type definitions
+								types and per-server error pages
 							</li>
 						</ul>
 					</div>
@@ -2766,118 +2486,65 @@ body.light-theme {
 							<span class="cv">HTTP/DefaultPages</span
 							><span class="cb">;</span>
 							<span class="ln"> 5</span>
-							<span class="ck">autoindex</span>
-							<span class="ct">off</span><span class="cb">;</span>
+							<span class="ck">keep_alive_timeout</span>
+							<span class="cn">20</span><span class="cb">;</span>
 							<span class="ln"> 6</span>
+							<span class="ck">client_read_timeout</span>
+							<span class="cn">5</span><span class="cb">;</span>
+							<span class="ln"> 7</span>
+							<span class="ck">cgi_timeout</span>
+							<span class="cn">5</span><span class="cb">;</span>
+							<span class="ln"> 8</span>
 							<span class="ck">client_max_body_size</span>
 							<span class="cn">1m</span><span class="cb">;</span>
-							<span class="ln"> 7</span>
-							<span class="ck">error_page</span>
-							<span class="cn">404</span>
-							<span class="cv">/errors/404.html</span
-							><span class="cb">;</span>
-							<span class="ln"> 8</span>
 							<span class="ln"> 9</span>
 							<span class="ck">location</span>
-							<span class="cv">/scripts</span>
+							<span class="cv">/directory/</span>
 							<span class="cb">{</span> <span class="ln">10</span>
+							<span class="ck">method_redirect</span>
+							<span class="cv">GET /directory_get/</span
+							><span class="cb">;</span>
+							<span class="ln">11</span>
+							<span class="ck">method_redirect</span>
+							<span class="cv">POST /directory_post/</span
+							><span class="cb">;</span>
+							<span class="ln">12</span> <span class="cb">}</span>
+							<span class="ln">13</span>
+							<span class="ck">location</span>
+							<span class="cv">/cgi-buffered</span>
+							<span class="cb">{</span> <span class="ln">14</span>
 							<span class="ck">cgi_pass</span>
 							<span class="cv">.py /usr/bin/python3</span
 							><span class="cb">;</span>
-							<span class="ln">11</span> <span class="cb">}</span>
-							<span class="ln">12</span>
+							<span class="ln">15</span>
+							<span class="ck">chunked_send</span>
+							<span class="ct">off</span><span class="cb">;</span>
+							<span class="ln">16</span> <span class="cb">}</span>
+							<span class="ln">17</span>
 							<span class="ck">location</span>
 							<span class="cv">/upload</span>
-							<span class="cb">{</span> <span class="ln">13</span>
+							<span class="cb">{</span> <span class="ln">18</span>
+							<span class="ck">allow_methods</span>
+							<span class="cv">POST DELETE</span
+							><span class="cb">;</span>
+							<span class="ln">19</span>
 							<span class="ck">client_body_in_file_only</span>
 							<span class="ct">on</span><span class="cb">;</span>
-							<span class="ln">14</span>
+							<span class="ln">20</span>
 							<span class="ck">delete_files</span>
 							<span class="ct">on</span><span class="cb">;</span>
-							<span class="ln">15</span> <span class="cb">}</span>
-							<span class="ln">16</span>
+							<span class="ln">21</span> <span class="cb">}</span>
+							<span class="ln">22</span>
 							<span class="ck">location</span>
 							<span class="cv">/google</span>
-							<span class="cb">{</span> <span class="ln">17</span>
+							<span class="cb">{</span> <span class="ln">23</span>
 							<span class="ck">return</span>
 							<span class="cn">301</span>
 							<span class="cv">https://www.google.com</span
 							><span class="cb">;</span>
-							<span class="ln">18</span> <span class="cb">}</span>
-							<span class="ln">19</span><span class="cb">}</span>
+							<span class="ln">24</span> <span class="cb">}</span>
+							<span class="ln">25</span><span class="cb">}</span>
 						</div>
-					</div>
-				</div>
-			</div>
-		</section>
-
-		<!-- CGI SCRIPTS -->
-		<section id="cgi">
-			<div class="container">
-				<div class="reveal">
-					<span class="slabel">Dynamic Content</span>
-					<h2 class="sheading">CGI Scripts</h2>
-					<p class="sdesc">
-						Seven Python scripts and one C# script demonstrate
-						dynamic content generation via the Common Gateway
-						Interface.
-					</p>
-				</div>
-				<div
-					class="demo-grid-cards reveal"
-					style="grid-template-columns: repeat(4, 1fr)"
-				>
-					<div class="demo-card" style="cursor: default">
-						<span class="demo-card-icon">&#x1F512;</span>
-						<h3>login.py</h3>
-						<p>
-							Full auth with sessions, cookies, dashboard, logout
-						</p>
-						<span class="demo-tag">Python</span>
-					</div>
-					<div class="demo-card" style="cursor: default">
-						<span class="demo-card-icon">&#x1F4A5;</span>
-						<h3>clickMe.py</h3>
-						<p>Cookie counter with POST/redirect/GET pattern</p>
-						<span class="demo-tag">Python</span>
-					</div>
-					<div class="demo-card" style="cursor: default">
-						<span class="demo-card-icon">&#x1F5D1;&#xFE0F;</span>
-						<h3>delete.py</h3>
-						<p>
-							DELETE method demo via Fetch API &amp; JSON response
-						</p>
-						<span class="demo-tag">Python</span>
-					</div>
-					<div class="demo-card" style="cursor: default">
-						<span class="demo-card-icon">&#x1F4BB;</span>
-						<h3>Hello.cs</h3>
-						<p>C# CGI script served via dotnet runtime</p>
-						<span class="demo-tag green">C#</span>
-					</div>
-					<div class="demo-card" style="cursor: default">
-						<span class="demo-card-icon">&#x1F511;</span>
-						<h3>login2.py</h3>
-						<p>Alternative login implementation</p>
-						<span class="demo-tag">Python</span>
-					</div>
-					<div class="demo-card" style="cursor: default">
-						<span class="demo-card-icon">&#x1F513;</span>
-						<h3>login-with.py</h3>
-						<p>Login with extended cookie handling</p>
-						<span class="demo-tag">Python</span>
-					</div>
-					<div class="demo-card" style="cursor: default">
-						<span class="demo-card-icon">&#x1F6AB;</span>
-						<h3>without_cookies.py</h3>
-						<p>Auth without cookie support</p>
-						<span class="demo-tag amber">Python</span>
-					</div>
-					<div class="demo-card" style="cursor: default">
-						<span class="demo-card-icon">&#x1F50D;</span>
-						<h3>login_without_cookies.py</h3>
-						<p>Stateless login comparison</p>
-						<span class="demo-tag amber">Python</span>
 					</div>
 				</div>
 			</div>
@@ -2961,7 +2628,7 @@ body.light-theme {
 				<div class="foot-links">
 					<a href="#highlights">Overview</a>
 					<a href="#features">Features</a>
-					<a href="#demos">Live Demos</a>
+					<a href="#directives">Directives</a>
 					<a href="#errors">Error Pages</a>
 					<a href="#architecture">Architecture</a>
 					<a href="#tech">Tech Stack</a>
@@ -3123,7 +2790,6 @@ body.light-theme {
 								target.classList.contains("feat-grid") ||
 								target.classList.contains("tech-cards") ||
 								target.classList.contains("arch-row") ||
-								target.classList.contains("demo-grid-cards") ||
 								target.classList.contains("error-grid")
 							) {
 								var children = target.children;
@@ -3195,7 +2861,7 @@ body.light-theme {
 
 					document
 						.querySelectorAll(
-							".reveal, .lang-fill, .metrics-grid, .feat-grid, .tech-cards, .arch-row, .metric-val, .hero-terminal, .demo-grid-cards, .error-grid",
+							".reveal, .lang-fill, .metrics-grid, .feat-grid, .tech-cards, .arch-row, .metric-val, .hero-terminal, .error-grid",
 						)
 						.forEach(function (el) {
 							unifiedObserver.observe(el);
