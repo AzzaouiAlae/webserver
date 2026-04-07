@@ -276,7 +276,7 @@ string Utility::addRandomStr(string filename)
 	string randName = Utility::getRandomStr(6);
 	size_t lastDot = filename.find_last_of(".");
 	size_t lastSlash = filename.find_last_of("/");
-	if (lastDot == string::npos || (lastDot > lastSlash && lastSlash != string::npos))
+	if (lastDot == string::npos || (lastDot < lastSlash && lastSlash != string::npos))
 		return filename + "_" + randName;
 	return filename.substr(0, lastDot) + "_" + randName + filename.substr(lastDot);
 }
