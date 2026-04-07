@@ -1212,6 +1212,67 @@ body.light-theme {
 				line-height: 1.9;
 				overflow-x: auto;
 			}
+			.bench-wrap {
+				overflow-x: auto;
+			}
+			.bench-code-box {
+				margin-top: 3rem;
+			}
+			.bench-table {
+				width: 100%;
+				border-collapse: collapse;
+				min-width: 880px;
+			}
+			.bench-table th,
+			.bench-table td {
+				padding: 0.75rem 0.9rem;
+				text-align: left;
+				border-bottom: 1px solid var(--border);
+				font-family: "JetBrains Mono", monospace;
+				font-size: 0.78rem;
+			}
+			.bench-table th {
+				font-size: 0.72rem;
+				text-transform: uppercase;
+				letter-spacing: 1.2px;
+				color: var(--primary-light);
+				font-weight: 700;
+			}
+			.bench-table td {
+				color: var(--text-muted);
+			}
+			.bench-table tbody tr:hover td {
+				color: var(--text);
+			}
+			.bench-table td.best {
+				color: #34d399;
+				font-weight: 700;
+			}
+			.bench-table td.hot {
+				color: #fbbf24;
+				font-weight: 700;
+			}
+			.bench-note {
+				margin-top: 1rem;
+				font-size: 0.86rem;
+				color: var(--text-muted);
+				line-height: 1.7;
+			}
+			body.light-theme .bench-table th {
+				color: var(--primary);
+			}
+			body.light-theme .bench-table td {
+				color: #4c5169;
+			}
+			body.light-theme .bench-table tbody tr:hover td {
+				color: #1e1b4b;
+			}
+			body.light-theme .bench-table td.best {
+				color: #047857;
+			}
+			body.light-theme .bench-table td.hot {
+				color: #92400e;
+			}
 			.ck {
 				color: #c792ea;
 			}
@@ -1472,6 +1533,7 @@ body.light-theme {
 				<li><a href="#directives">Directives</a></li>
 				<li><a href="#architecture">Architecture</a></li>
 				<li><a href="#tech">Tech Stack</a></li>
+				<li><a href="#benchmarks">Benchmarks</a></li>
 				<li>
 					<a
 						target="_blank"
@@ -2550,6 +2612,174 @@ body.light-theme {
 			</div>
 		</section>
 
+		<!-- BENCHMARKS -->
+		<section id="benchmarks">
+			<div class="container">
+				<div class="reveal">
+					<span class="slabel">Performance</span>
+					<h2 class="sheading">Siege Benchmark Matrix</h2>
+					<p class="sdesc">
+						Loopback load test on
+						<span class="ck">GET /</span> with
+						<span class="ck">80118</span>-byte responses using
+						<span class="ck">siege -b -t 30s</span>.
+					</p>
+				</div>
+				<div class="feat-grid reveal">
+					<div class="feat-card">
+						<div class="feat-icon">&#x2705;</div>
+						<h3>100% Availability</h3>
+						<p>
+							All runs completed with zero failed transactions
+							across 1,864,258 successful requests.
+						</p>
+					</div>
+					<div class="feat-card">
+						<div class="feat-icon">&#x26A1;</div>
+						<h3>Peak Rate: 10919.93 req/s</h3>
+						<p>
+							Highest transaction rate at concurrency 20,
+							with low response latency.
+						</p>
+					</div>
+					<div class="feat-card">
+						<div class="feat-icon">&#x1F4A7;</div>
+						<h3>Peak Throughput: 834.38 MB/s</h3>
+						<p>
+							Throughput remained above 750 MB/s even at
+							concurrency 255.
+						</p>
+					</div>
+					<div class="feat-card">
+						<div class="feat-icon">&#x23F1;&#xFE0F;</div>
+						<h3>Latency Growth Is Controlled</h3>
+						<p>
+							Average response moved from 1.80 ms (c=20)
+							to 18.63 ms (c=255), max 220 ms.
+						</p>
+					</div>
+					<div class="feat-card">
+						<div class="feat-icon">&#x1F4CA;</div>
+						<h3>Throughput Plateau</h3>
+						<p>
+							Server enters a steady high-throughput plateau
+							after roughly c=80 with graceful degradation.
+						</p>
+					</div>
+					<div class="feat-card">
+						<div class="feat-icon">&#x1F680;</div>
+						<h3>Stress Ready</h3>
+						<p>
+							At c=255 the server still sustained 9830.94 req/s
+							and 751.16 MB/s with no failures.
+						</p>
+					</div>
+				</div>
+				<div class="code-box bench-code-box reveal">
+					<div class="code-head">
+						<span
+							class="term-dot r"
+							style="width: 10px; height: 10px"
+						></span>
+						<span
+							class="term-dot y"
+							style="width: 10px; height: 10px"
+						></span>
+						<span
+							class="term-dot g"
+							style="width: 10px; height: 10px"
+						></span>
+						<span class="code-tab"
+							>siege -b -t 30s http://127.0.0.1:1025/</span
+						>
+					</div>
+					<div class="bench-wrap">
+						<table class="bench-table">
+							<thead>
+								<tr>
+									<th>Clients</th>
+									<th>Successful Tx</th>
+									<th>Tx Rate (req/s)</th>
+									<th>Throughput (MB/s)</th>
+									<th>Avg Resp (ms)</th>
+									<th>Max Resp (ms)</th>
+									<th>Concurrency</th>
+									<th>Failed Tx</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>20</td>
+									<td>333177</td>
+									<td class="best">10919.93</td>
+									<td class="best">834.38</td>
+									<td class="best">1.80</td>
+									<td>20</td>
+									<td>19.61</td>
+									<td>0</td>
+								</tr>
+								<tr>
+									<td>40</td>
+									<td>324104</td>
+									<td>10792.34</td>
+									<td>824.63</td>
+									<td>3.47</td>
+									<td>20</td>
+									<td>37.50</td>
+									<td>0</td>
+								</tr>
+								<tr>
+									<td>80</td>
+									<td>307064</td>
+									<td>10170.72</td>
+									<td>777.13</td>
+									<td>6.85</td>
+									<td>40</td>
+									<td>69.68</td>
+									<td>0</td>
+								</tr>
+								<tr>
+									<td>120</td>
+									<td>301726</td>
+									<td>10033.87</td>
+									<td>766.93</td>
+									<td>9.92</td>
+									<td>140</td>
+									<td>99.57</td>
+									<td>0</td>
+								</tr>
+								<tr>
+									<td>180</td>
+									<td>298534</td>
+									<td>9904.65</td>
+									<td>756.80</td>
+									<td>12.96</td>
+									<td>160</td>
+									<td>128.38</td>
+									<td>0</td>
+								</tr>
+								<tr>
+									<td>255</td>
+									<td>299653</td>
+									<td>9830.94</td>
+									<td>751.16</td>
+									<td>18.63</td>
+									<td class="hot">220</td>
+									<td>183.16</td>
+									<td>0</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<p class="bench-note reveal">
+					Result: Enginx sustains high throughput across increasing
+					concurrency while preserving 100% availability and zero
+					errors on all recorded runs.
+				</p>
+			</div>
+		</section>
+
 		<!-- CTA -->
 		<section id="cta">
 			<div class="container">
@@ -2632,6 +2862,7 @@ body.light-theme {
 					<a href="#errors">Error Pages</a>
 					<a href="#architecture">Architecture</a>
 					<a href="#tech">Tech Stack</a>
+					<a href="#benchmarks">Benchmarks</a>
 					<a
 						target="_blank"
 						href="https://github.com/AzzaouiAlae/webserver"
