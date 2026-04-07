@@ -4,7 +4,6 @@
 
 class WriteToPipeStrategy : public AStrategy
 {
-    Routing *_routing;
     int _outputFd;
     ClientRequest &_request;
     char *_buffer;

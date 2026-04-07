@@ -1,7 +1,7 @@
 #include "WriteToPipeStrategy.hpp"
 
 WriteToPipeStrategy::WriteToPipeStrategy(Routing *routing, int outputFd, char *buffer, int &len)
-    : _routing(routing), _outputFd(outputFd), _request(routing->GetRequest()), _buffer(buffer), _len(len)
+    : _outputFd(outputFd), _request(routing->GetRequest()), _buffer(buffer), _len(len)
 {
     _writtenBytes = 0;
     _totalToWrite = 0;
