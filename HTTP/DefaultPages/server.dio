@@ -1,9 +1,12 @@
 <mxfile host="65bd71144e">
     <diagram id="0zUADn6mOgkwIpK2y2ZY" name="Page-1">
-        <mxGraphModel dx="3326" dy="2536" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="1922" dy="1315" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
+                <mxCell id="241" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+                    <mxGeometry x="-1700" y="-1100" width="1700" height="3300" as="geometry"/>
+                </mxCell>
                 <mxCell id="3" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="2" target="5" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="-1000" y="-880" as="targetPoint"/>
@@ -478,16 +481,16 @@
                 <mxCell id="204" value="WriteToPipeStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="-570" y="540" width="120" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="206" value="ReadPipeStrategy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="206" value="ReadPipeStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="-570" y="600" width="120" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="207" value="WriteBufferedCGIStrategy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="207" value="WriteBufferedCGIStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="-570" y="660" width="150" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="208" value="WriteChunkedCGIStrategy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                <mxCell id="208" value="WriteChunkedCGIStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
                     <mxGeometry x="-570" y="720" width="150" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="214" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.658;exitY=1.003;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1">
+                <mxCell id="214" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.658;exitY=1.003;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="-570" y="619.82" as="targetPoint"/>
                         <Array as="points">
@@ -496,7 +499,7 @@
                         <mxPoint x="-611" y="509.82" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="215" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.658;exitY=1.003;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1">
+                <mxCell id="215" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.658;exitY=1.003;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="-570" y="680" as="targetPoint"/>
                         <Array as="points">
@@ -505,7 +508,7 @@
                         <mxPoint x="-611" y="570" as="sourcePoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="216" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.658;exitY=1.003;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1">
+                <mxCell id="216" style="edgeStyle=none;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.658;exitY=1.003;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="-570" y="740" as="targetPoint"/>
                         <Array as="points">
@@ -535,43 +538,43 @@
                 <mxCell id="159" value="Post" style="rounded=0;whiteSpace=wrap;html=1;" parent="153" vertex="1">
                     <mxGeometry x="165" y="103.87096774193549" width="120" height="44.516129032258064" as="geometry"/>
                 </mxCell>
-                <mxCell id="240" value="" style="group" vertex="1" connectable="0" parent="153">
+                <mxCell id="240" value="" style="group" parent="153" vertex="1" connectable="0">
                     <mxGeometry x="30" y="160" width="280" height="340" as="geometry"/>
                 </mxCell>
-                <mxCell id="223" value="" style="group;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;container=0;" vertex="1" connectable="0" parent="240">
+                <mxCell id="223" value="" style="group;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;container=0;" parent="240" vertex="1" connectable="0">
                     <mxGeometry width="280" height="340" as="geometry"/>
                 </mxCell>
-                <mxCell id="224" value="AStrategy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="240">
+                <mxCell id="224" value="AStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="240" vertex="1">
                     <mxGeometry x="12.5" y="50" width="120" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="225" value="BuffersStrategy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="240">
+                <mxCell id="225" value="BuffersStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="240" vertex="1">
                     <mxGeometry x="12.5" y="93" width="120" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="226" value="FileStrategy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="240">
+                <mxCell id="226" value="FileStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="240" vertex="1">
                     <mxGeometry x="12.5" y="135" width="120" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="227" value="MultipartUploadStrategy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="240">
+                <mxCell id="227" value="MultipartUploadStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="240" vertex="1">
                     <mxGeometry x="12.5" y="178" width="205" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="228" value="SubBufferUploadStrategy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="240">
+                <mxCell id="228" value="SubBufferUploadStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="240" vertex="1">
                     <mxGeometry x="12.5" y="220" width="205" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="229" value="ReadPipeStrategy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="240">
+                <mxCell id="229" value="ReadPipeStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="240" vertex="1">
                     <mxGeometry x="147.5" y="50" width="120" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="230" value="UploadStrategy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="240">
+                <mxCell id="230" value="UploadStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="240" vertex="1">
                     <mxGeometry x="147.5" y="93" width="120" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="234" value="WriteBufferedCGIStrategy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="240">
+                <mxCell id="234" value="WriteBufferedCGIStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="240" vertex="1">
                     <mxGeometry x="12.5" y="260" width="205" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="235" value="WriteChunkedCGIStrategy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="240">
+                <mxCell id="235" value="WriteChunkedCGIStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="240" vertex="1">
                     <mxGeometry x="12.5" y="300" width="205" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="236" value="WriteToPipeStrategy" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="240">
+                <mxCell id="236" value="WriteToPipeStrategy" style="rounded=0;whiteSpace=wrap;html=1;" parent="240" vertex="1">
                     <mxGeometry x="147.5" y="135" width="120" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="237" value="Strategies" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;" vertex="1" parent="240">
+                <mxCell id="237" value="Strategies" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;" parent="240" vertex="1">
                     <mxGeometry x="12.5" y="10" width="112.5" height="22.26" as="geometry"/>
                 </mxCell>
                 <mxCell id="162" value="" style="group" parent="1" vertex="1" connectable="0">
@@ -607,10 +610,10 @@
                 <mxCell id="173" value="Client&lt;span style=&quot;color: rgb(63, 63, 63); background-color: transparent;&quot;&gt;Socket&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="162" vertex="1">
                     <mxGeometry x="155" y="217.74096774193572" width="120" height="44.516129032258064" as="geometry"/>
                 </mxCell>
-                <mxCell id="217" value="NetIO" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="162">
+                <mxCell id="217" value="NetIO" style="rounded=0;whiteSpace=wrap;html=1;" parent="162" vertex="1">
                     <mxGeometry x="8" y="270.0009677419357" width="120" height="44.516129032258064" as="geometry"/>
                 </mxCell>
-                <mxCell id="239" value="" style="group" vertex="1" connectable="0" parent="1">
+                <mxCell id="239" value="" style="group" parent="1" vertex="1" connectable="0">
                     <mxGeometry x="-1140" y="1140" width="680" height="330" as="geometry"/>
                 </mxCell>
                 <mxCell id="131" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="239" vertex="1">
@@ -634,7 +637,7 @@
                 <mxCell id="138" value="StaticFile" style="rounded=0;whiteSpace=wrap;html=1;" parent="239" vertex="1">
                     <mxGeometry x="17.586206896551744" y="206.45161290322585" width="140.68965517241378" height="61.935483870967744" as="geometry"/>
                 </mxCell>
-                <mxCell id="238" value="" style="group" vertex="1" connectable="0" parent="239">
+                <mxCell id="238" value="" style="group" parent="239" vertex="1" connectable="0">
                     <mxGeometry x="340" y="43.63000000000011" width="315" height="266.3699999999999" as="geometry"/>
                 </mxCell>
                 <mxCell id="144" value="" style="group;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;container=0;" parent="238" vertex="1" connectable="0">
@@ -658,10 +661,10 @@
                 <mxCell id="151" value="ClientRequest" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="238" vertex="1">
                     <mxGeometry x="15" y="90.09387096774162" width="120" height="45.044792626728096" as="geometry"/>
                 </mxCell>
-                <mxCell id="218" value="&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;ChunkedData&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="238">
+                <mxCell id="218" value="&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;ChunkedData&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="238" vertex="1">
                     <mxGeometry x="155" y="146.3738709677416" width="120" height="45.044792626728096" as="geometry"/>
                 </mxCell>
-                <mxCell id="219" value="&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;MultipartData&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="238">
+                <mxCell id="219" value="&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;MultipartData&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="238" vertex="1">
                     <mxGeometry x="15" y="201.3738709677416" width="120" height="45.044792626728096" as="geometry"/>
                 </mxCell>
             </root>
