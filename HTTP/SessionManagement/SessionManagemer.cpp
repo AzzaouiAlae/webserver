@@ -41,7 +41,7 @@ SessionManager *SessionManager::getInstance()
 string SessionManager::generateSessionId()
 {
 	stringstream ss;
-	srand(time(NULL) + rand());
+	srand(Utility::CurrentTime() + rand());
 	for (int i = 0; i < 16; i++)
 	{
 		int random = rand() % 256;
@@ -52,7 +52,11 @@ string SessionManager::generateSessionId()
 
 Session *SessionManager::createSession()
 {
-	string sessionId = generateSessionId();
+	string sessionId;
+	do {
+		sessionId = generateSessionId();
+		DDEBUG("SessionManager") << "Generated session ID: " << sessionId;
+	} while(sessions.find(sessionId) != sessions.end());
 	Session *session = new Session(sessionId);
 	sessions[sessionId] = session;
 	DEBUG("SessionManager") << "Session created: id=" << sessionId;
@@ -88,7 +92,11 @@ void SessionManager::cleanupExpiredSessions()
 		if (now - s->lastAccessedAt > SESSION_TIMEOUT)
 		{
 			Session::timeoutList.pop();
-			sessions.erase(sessions.find(s->id));
+			map<string, Session *>::iterator it = sessions.find(s->id);
+			if (it != sessions.end())
+			{
+				sessions.erase(it);
+			}
 			delete s;
 		}
 		else

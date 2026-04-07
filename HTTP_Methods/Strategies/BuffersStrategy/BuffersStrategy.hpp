@@ -1,14 +1,14 @@
 #pragma once
 #include "Headers.hpp"
-#include "SocketIO.hpp"
+#include "NetIO.hpp"
 class BuffersStrategy : public AStrategy
 {
     vector<pair<char *, size_t> > &_buffers;
     size_t _currentBuffer;
     size_t _currentBufferOffset;
-    SocketIO &_socketIO;
+    ClientSocket &_socketIO;
 public:
-    BuffersStrategy(vector<pair<char *, size_t> > &buffers, SocketIO &socketIO);
+    BuffersStrategy(vector<pair<char *, size_t> > &buffers, ClientSocket &socketIO);
     ~BuffersStrategy();
     int Execute();
 };

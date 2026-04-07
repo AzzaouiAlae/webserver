@@ -24,6 +24,7 @@ ARequest::ARequest()
     _currentSession = NULL;
     _isChunked = false;
     _isMultipart = false;
+    _requestbuff.reserve(1024);
 }
 
 ARequest::~ARequest()

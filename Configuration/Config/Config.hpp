@@ -49,6 +49,7 @@ public:
 			vector<string> parsedPath;
 			bool allowMethodExists;
 			vector<string> allowMethods;
+			map<string, string> methodRedirects;
 			bool deleteFiles;
 			bool chunkedSend;
 		};
@@ -67,10 +68,9 @@ public:
 	static void writeIndexFile();
 	static void createDir();
 private:
-	static bool _foundMethod;
 	static bool isPrefixMatch(const vector<string> &locPath, const vector<string> &reqPath);
-	
-    static int findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, string &scriptPath, string &pathInfo, const string &method);
+	static int findMethodRedirects(const Config::Server::Location &loc, const string &method, Config::Server &srv, int bestLocIndex, string &scriptPath, string &pathInfo, const vector<string> &reqPath);
+    static int findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, string &scriptPath, string &pathInfo);
     static int findBestStaticMatch(Config::Server &srv, const vector<string> &reqPath);
 	static void fillServer(AST<string> &serverNode, Config::Server &srv);
 	static void fillLocation(AST<string> &locationNode, Config::Server::Location &loc);

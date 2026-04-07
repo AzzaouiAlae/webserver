@@ -6,14 +6,15 @@ bool Utility::SigInt;
 vector<char *> Utility::buffPoll;
 long Utility::maxFds;
 
-bool Utility::isNotZero(char ch)
+void Utility::clearFds()
 {
-	return ch != '0';
-}
-
-bool Utility::isNotDot(char ch)
-{
-	return ch != '.';
+	set<AFd *> &fds = Singleton::GetFds();
+	while (!fds.empty())
+	{
+		AFd *obj = *fds.begin();
+		fds.erase(fds.begin());
+		delete obj;
+	}
 }
 
 bool Utility::isStrToTrime(char ch)
@@ -28,33 +29,25 @@ bool Utility::isStrToTrime(char ch)
 
 string Utility::toTrime;
 
-bool Utility::isNotSquareBracket(char ch)
+void Utility::ltrim(string &s,  string toTrime)
 {
-	return ch != ']' && ch != '[';
+	Utility::toTrime = toTrime;
+	s.erase(s.begin(), find_if(s.begin(), s.end(), isStrToTrime));
 }
 
-void Utility::ltrim(string &s, bool (*f)(char ch))
+void Utility::rtrim(string &s, string toTrime)
 {
-	s.erase(s.begin(), find_if(s.begin(), s.end(), f));
-}
+	Utility::toTrime = toTrime;
 
-void Utility::rtrim(string &s, bool (*f)(char ch))
-{
-	string::reverse_iterator reverse_it = find_if(s.rbegin(), s.rend(), f);
+	string::reverse_iterator reverse_it = find_if(s.rbegin(), s.rend(), isStrToTrime);
 	string::iterator *it = (string::iterator *)&reverse_it;
 	s.erase(*it, s.end());
 }
 
-void Utility::trim(string &s, bool (*f)(char ch))
-{
-	ltrim(s, f);
-	rtrim(s, f);
-}
-
 void Utility::trim(string &s, string toTrime)
 {
-	Utility::toTrime = toTrime;
-	trim(s, isStrToTrime);
+	rtrim(s, toTrime);
+	ltrim(s, toTrime);
 }
 
 long Utility::CurrentTime()
@@ -185,7 +178,11 @@ void Utility::LogBufferPullSize()
 
 void Utility::ReleaseBuffer(char *buffer)
 {
-	buffPoll.push_back(buffer);
+	if (buffer && buffPoll.size() < 200) {
+		buffPoll.push_back(buffer);
+	} 
+	else
+		delete[] buffer;
 }
 
 void Utility::ClearBuffPoll()

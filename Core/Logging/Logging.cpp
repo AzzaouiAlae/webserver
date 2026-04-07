@@ -14,6 +14,8 @@ Logging::Logging(string filename)
 	logFile.open(filename.c_str(), ios::app);
 }
 
+bool writeInfo = true;
+
 Logging::~Logging()
 {
 	if (logFile.is_open())
@@ -128,7 +130,7 @@ void Logging::WriteDebug(const string &msg)
 {
 	string timeStr = getTime();
 	string prefix = "[DEBUG] ";
-	
+	writeInfo = true;
 	if (PRINT_LOGGING)
 		cout << BLUE << timeStr << " " << prefix << msg << RESET << endl;
 	if (logFile.is_open() && WRITE_FILE)
@@ -137,6 +139,9 @@ void Logging::WriteDebug(const string &msg)
 
 void Logging::WriteInfo(const string &msg)
 {
+	if (!writeInfo)
+		return;
+	writeInfo = false;
 	string timeStr = getTime();
 	string prefix = "[INFO]  ";
 	
@@ -150,7 +155,7 @@ void Logging::WriteWarn(const string &msg)
 {
 	string timeStr = getTime();
 	string prefix = "[WARN]  ";
-	
+	writeInfo = true;
 	if (PRINT_LOGGING)
 		cout << YELLOW << timeStr << " " << prefix << msg << RESET << endl;
 	if (logFile.is_open() && WRITE_FILE)
@@ -161,7 +166,7 @@ void Logging::WriteError(const string &msg)
 {
 	string timeStr = getTime();
 	string prefix = "[ERROR] ";
-	
+	writeInfo = true;
 	if (PRINT_LOGGING)
 		cout << RED << timeStr << " " << prefix << msg << RESET << endl;
 	if (logFile.is_open() && WRITE_FILE)

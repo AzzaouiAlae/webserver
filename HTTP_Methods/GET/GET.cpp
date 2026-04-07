@@ -2,7 +2,7 @@
 #include "BuffersStrategy.hpp"
 #include "FileStrategy.hpp"
 
-GET::GET(SocketIO *sock, Routing *router) : AMethod(sock, router)
+GET::GET(ClientSocket *sock, Routing *router) : AMethod(sock, router)
 {
 	_filesListStr = "";
 	DEBUG("GET") << "GET initialized, socket fd=" << sock->GetFd();
@@ -14,18 +14,18 @@ GET::~GET()
 
 bool GET::HandleResponse()
 {
-	if (_sock->isTimeOut())
+	if (_sock->IsTimeOut())
 		_createTimeoutResponse();
 	if (_status == AMethod::eSendResponse)
 	{
-		_executeStrategy(_sendStrategy);
-		if (_sendStrategy->GetStatus() == AStrategy::eComplete)
+		_executeStrategy(_router->GetSendStrategy());
+		if (_router->GetSendStrategy()->GetStatus() == AStrategy::eComplete)
 			_status = eComplete;
 	}
-	else if (_status == GET::eCreateResponse)
+	else if (_status == GET::eInit)
 		_createResponse();
 	else if (_status == GET::eCGIResponse)
-		_handelCGI();
+		_handleCGI();
 	return _status == GET::eComplete;
 }
 
@@ -34,7 +34,6 @@ void GET::_createResponse()
 	DEBUG("GET") << "Socket fd: " << _sock->GetFd() << ", GET::HandleResponse() start";
 
 	ClientRequest &req = _router->GetRequest();
-	_sock->SetStateByFd(_sock->GetFd());
 	string method = req.getMethod();
 	_resolvePath();
 
@@ -50,16 +49,16 @@ void GET::_createResponse()
 	if (!_isMethodAllowed(method))
 	{
 		if (method == "GET" || method == "POST" || method == "DELETE" || method == "HEAD")
-			HandelErrorPages("405");
+			HandleErrorPages("405");
 		else
-			HandelErrorPages("501");
+			HandleErrorPages("501");
 	}
 	else if (_router->GetPath().isRedirection() || _router->GetPath().isRedirectionToDir())
-		_sendRedirection();
+		_createRedirection();
 	else if (_router->GetPath().isFound() == false)
-		HandelErrorPages("404");
+		HandleErrorPages("404");
 	else if (_router->GetPath().hasPermission() == false)
-		HandelErrorPages("403");
+		HandleErrorPages("403");
 	else if (_router->GetPath().isDirectory())
 	{
 		int idxSrv = _router->srv->autoindex, idxLoc = -1;
@@ -68,22 +67,19 @@ void GET::_createResponse()
 			idxLoc = _router->loc->autoindex;
 		}
 		if ((idxSrv <= 0 && idxLoc == -1) || idxLoc == 0)
-			HandelErrorPages("403");
+			HandleErrorPages("403");
 		else
 			_createListFilesResponse();
 	}
 	else if (_router->GetPath().isCGI())
 	{
-		_handelCGI();
+		_status = GET::eCGIResponse;
+		_handleCGI();
 	}
 	else if (_router->GetPath().isFile())
-	{
 		_serveFile();
-	}
-	if (_status == GET::eCreateResponse)
-	{
+	if (_status == GET::eInit)
 		_status = GET::eSendResponse;
-	}
 }
 
 void GET::_openFile(const string &path)
@@ -96,7 +92,7 @@ void GET::_prepareFileResponse()
 	_bodySize = Utility::getFileSize(_filename);
 	_totalByteToSend = _bodySize;
 	_statusCode = "200";
-	_createResponseHeader();
+	_createResponseHeader("");
 	if ("HEAD" == _router->GetRequest().getMethod())
 		_totalByteToSend = 0;
 	_totalByteToSend += _responseHeaderStr.length();
@@ -109,7 +105,7 @@ void GET::_serveFile()
 	DDEBUG("GET") << "Socket fd: " << _sock->GetFd() << ", ServeFile: '" << _filename << "'";
 	_openFile(_filename);
 	_prepareFileResponse();
-	_sendStrategy = new FileStrategy(_buffers, _fileFd, _bodySize, *_sock);
+	_router->SetSendStrategy(new FileStrategy(_buffers, _fileFd, _bodySize, *_sock));
 }
 
 
@@ -191,7 +187,7 @@ void GET::_createListFilesResponse()
 	_filename = ".html";
 
 	_bodySize = _totalByteToSend;
-	_createResponseHeader();
+	_createResponseHeader("");
 
 	_multiplexer->ChangeToEpollOut(_sock);
 
@@ -202,7 +198,5 @@ void GET::_createListFilesResponse()
 		_addPair(_router->GetRequest().getPath());
 		_addPair(StaticFile::GetFileByName("autoIndex3"));
 	}
-	_sendStrategy = new BuffersStrategy(_buffers, *_sock);
+	_router->SetSendStrategy(new BuffersStrategy(_buffers, *_sock));
 }
-
-

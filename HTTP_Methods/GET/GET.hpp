@@ -3,10 +3,6 @@
 
 class GET : public AMethod
 {
-	enum GETStatus {
-		eSendAutoIndex = 3,
-	};
-
 	stringstream _filesList;
 	string _filesListStr;
 
@@ -21,7 +17,7 @@ class GET : public AMethod
 
 	void _createResponse();
 public:
-	GET(SocketIO *sock, Routing *router);
+	GET(ClientSocket *sock, Routing *router);
 	~GET();
 
 	bool HandleResponse();

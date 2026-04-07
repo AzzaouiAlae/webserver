@@ -6,7 +6,7 @@
             "command": "make",
             "args": [],
             "options": {
-                "cwd": "${workspaceFolder}/Test/MultipartTests"
+                "cwd": "${workspaceFolder}"
             },
             "problemMatcher": [
                 "$gcc"

@@ -108,14 +108,14 @@ void ClientRequest::parsHttpStandard(string httpStandard)
 
 void ClientRequest::parsLenTypeCont()
 {
-	if (getthereisbody() || _env.find("Content-Length") != _env.end())
+	if (getthereisbody() || _env.find("CONTENT_LENGTH") != _env.end())
 	{
 		if (_isChunked)
 			return;
 		if (_env.find("CONTENT_LENGTH") != _env.end())
 			if (!Utility::strtosize_t(_env["CONTENT_LENGTH"], _content_len))
 				Error::ThrowError("400");
-		if (_content_len == 0 || _env.find("CONTENT_LENGTH") == _env.end())
+		if (_env.find("CONTENT_LENGTH") == _env.end())
 			Error::ThrowError("400");
 		DDEBUG("ClientRequest") << "parsLenTypeCont: Content-Type='" << _env["CONTENT_TYPE"]
 								<< "', Content-Length=" << _content_len;
@@ -186,7 +186,7 @@ bool ClientRequest::isComplete(char *request, int size)
 	DDEBUG("ClientRequest") 
 		<< "isComplete: appended " << size 
 		<< " bytes, total buffer=" << _requestbuff.length() 
-		<< "\n" << _requestbuff;
+		<< "\n" << _requestbuff.substr(0, 300);
 	if (_Parspos != eParsEnd)
 	{
 		if (!ParseHeader())
@@ -258,6 +258,8 @@ bool  ClientRequest::getFullLine(string &line)
 	int index = 0;
 	line.clear();
 
+	if (_firstline)
+		Utility::ltrim(_requestbuff, "\r\n");
 	while (_requestbuff[index] && _requestbuff[index] != '\n')
 	{
 		if (index > MAXHEADERSIZE)
@@ -270,7 +272,8 @@ bool  ClientRequest::getFullLine(string &line)
 		index++;
 	}
 	DDEBUG("ClientRequest") << "getFullLine: extracted line='" << line << "' from buffer, index=" << index;	
-    _firstline = false;
+	if (_requestbuff.length())
+    	_firstline = false;
 	if (_requestbuff[index] == '\n' && (index == 0 || (index > 0 && _requestbuff[index - 1] != '\r') ))
         Error::ThrowError("400");
 	else if (_requestbuff[index] == '\n')

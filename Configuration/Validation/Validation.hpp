@@ -50,6 +50,7 @@ class Validation
 			bool bodyInFile;
 			bool deleteFiles;
 			bool chunkedSend;
+			set<string> methodRedirectMethods;
 			ReturnKind returnKind;
 
 			LocationSeen() : root(false), index(false), autoindex(false),
@@ -73,6 +74,7 @@ class Validation
 		void validateAllowMethods(AST<string> &node, bool &seen);
 		void validateErrorPage(AST<string> &node, bool &seen);
 		void validateTimeout(AST<string> &node, bool &seen, const string &name);
+		void validateMethodRedirect(AST<string> &node, LocationSeen &seen);
 		
 
 		// --- directive validators (location-only scope) ---

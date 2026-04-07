@@ -17,7 +17,7 @@ Repsense::~Repsense()
 	}
 }
 
-void Repsense::Init(SocketIO *sock, Routing *router)
+void Repsense::Init(ClientSocket *sock, Routing *router)
 {
 	this->_sock = sock;
 	this->_router = router;
@@ -53,12 +53,12 @@ bool Repsense::HandleResponse()
 	return false;
 }
 
-void Repsense::HandelErrorPages(const string &err)
+void Repsense::HandleErrorPages(const string &err)
 {
 	if (_method == NULL)
 	{
 		_method = new GET(_sock, _router);
 	}
-	_method->HandelErrorPages(err);
+	_method->HandleErrorPages(err);
 	_status = Repsense::eHandleResponse;
 }

@@ -12,6 +12,7 @@ AFd::AFd(int fd, string type)
 	MarkedToDelete = false;
 	cleanBody = false;
 	totalClean = 0;
+	DDEBUG("AFd") << "AFd constructor called for fd=" << fd << ", type=" << type << ", address: " << this;
 }
 
 AFd::operator int() const 
@@ -30,7 +31,11 @@ int AFd::GetFd()
 }
 
 AFd::~AFd()
-{}
+{
+	
+	close(fd);
+	DDEBUG("AFd") << "AFd destructor called for fd=" << fd << ", type=" << type << ", address: " << this;
+}
 
 void AFd::cleanFd()
 {
@@ -43,7 +48,11 @@ void AFd::cleanFd()
 	{
 		Utility::SigPipe = false;
 		cleanBody = false;
-		MarkedToDelete = true;
+		Multiplexer::GetCurrentMultiplexer()->ScheduleForDeletion(this);
 	}
 	DDEBUG("AFd") << "sock fd: " << fd << ", AFd::cleanFd() read " << size;
 }
+
+void AFd::SetEvents(unsigned int ev) { events = ev; }
+
+unsigned int AFd::GetEvents() const { return events; }

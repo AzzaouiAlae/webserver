@@ -1,5 +1,5 @@
 #include "Socket.hpp"
-#include "SocketIO.hpp"
+#include "NetIO.hpp"
 #include "HTTPContext.hpp"
 
 int Socket::errorNumber = 0;
@@ -327,7 +327,5 @@ Socket::~Socket()
 {
 	DDEBUG("Socket") << "Socket destructor called, fd=" << fd;
 	delete context;
-	close(fd);
-	Singleton::GetFds().erase(this);
 }
 

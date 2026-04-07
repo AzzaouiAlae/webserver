@@ -8,4 +8,5 @@ public:
 	ConnectionContext();
 	~ConnectionContext();
 	void Handle(AFd *fd);
+	static void HandleKeepAlive(AFd *fd);
 };

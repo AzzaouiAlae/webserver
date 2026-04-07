@@ -12,7 +12,7 @@ class Repsense
 		eHandleResponse,
 	};
 	AMethod *_method;
-	SocketIO *_sock;
+	ClientSocket *_sock;
 	Routing *_router;
 	Repsense::Status _status;
 	void _createMethod();
@@ -20,7 +20,7 @@ public:
 	Repsense();
 	~Repsense();
 
-	void Init(SocketIO *sock, Routing *router);
+	void Init(ClientSocket *sock, Routing *router);
 	bool HandleResponse();
-	void HandelErrorPages(const string &err);
+	void HandleErrorPages(const string &err);
 };

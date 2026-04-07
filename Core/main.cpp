@@ -140,37 +140,38 @@ void LaunchServer(string &filename)
 	token.split_tokens();
 	DEBUG("main") << "Tokenizing complete";
 
-	Logging::Debug() << "Parsing start";
+	DEBUG("main") << "Parsing start";
 	Parsing pars(token.get_tokens());
 	pars.BuildAST();
-	Logging::Debug() << "Parsing complete";
+	DEBUG("main") << "Parsing complete";
 
-	Logging::Debug() << "Validation start";
+	DEBUG("main") << "Validation start";
 	Validation val(Singleton::GetASTroot());
 	val.Validate();
-	Logging::Debug() << "Validation complete";
+	DEBUG("main") << "Validation complete";
 
 	Config::FillConf();
 
 	DEBUG("main") << "The main loop start";
-	Multiplexer m;
-	m.MainLoop();
-	DEBUG("main") << "The main loop stop";
+	
+	
+	
+}
+
+void Cleanup()
+{
+	Utility::clearFds();
+	Utility::ClearBuffPoll();
+	SessionManager *p = SessionManager::getInstance();
+	delete p;
+	delete[] AFd::buff;
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
 }
 
 void HandelError(const char *what)
 {
 	ERR() << what;
-
-	set<AFd *> &fds = Singleton::GetFds();
-	set<AFd *>::iterator it = fds.begin();
-
-	for (; it != fds.end(); it = fds.begin())
-	{
-		delete *it;
-	}
-	close(STDIN_FILENO);
-	close(STDOUT_FILENO);
 }
 
 int main(int argc, char *argv[])
@@ -179,9 +180,12 @@ int main(int argc, char *argv[])
 
 	string filename;
 	InitServer(argc, argv, filename);
+	Multiplexer m(Singleton::GetFds());
 	try
 	{
 		LaunchServer(filename);
+		m.MainLoop();
+		DEBUG("main") << "The main loop stop";
 	}
 	catch (const exception &e)
 	{
@@ -193,4 +197,5 @@ int main(int argc, char *argv[])
 		HandelError("Unknown exception occurred during server launch.");
 		return 1;
 	}
+	Cleanup();
 }

@@ -6,6 +6,19 @@ Validation::Validation(AST<string> &astRoot)
 	DEBUG("Validation") << "Validation initialized.";
 }
 
+static string normalizeLocationPath(const string &path)
+{
+	string normalized = path;
+	Utility::normalizePath(normalized);
+
+	if (normalized.empty() || normalized[0] != '/')
+		normalized = "/" + normalized;
+	if (normalized[normalized.length() - 1] != '/')
+		normalized += '/';
+
+	return normalized;
+}
+
 void Validation::Validate()
 {
 	vector<AST<string> > &topLevel = _root.GetChildren();
@@ -33,6 +46,7 @@ void Validation::Validate()
 void Validation::validateServer(AST<string> &serverNode)
 {
 	ServerSeen seen;
+	set<string> locationPaths;
 
 	vector<AST<string> > &children = serverNode.GetChildren();
 
@@ -76,6 +90,7 @@ void Validation::validateServer(AST<string> &serverNode)
 			const string &path = node.GetArguments()[0];
 			if (path.empty() || path[0] != '/')
 				Error::ThrowError("Config Error: location path must start with '/' — got '" + path + "'");
+			locationPaths.insert(normalizeLocationPath(path));
 
 			DEBUG("Validation") << "  --> Validating 'location' block: " << path;
 			LocationSeen locSeen;
@@ -83,6 +98,35 @@ void Validation::validateServer(AST<string> &serverNode)
 		}
 		else
 			Error::ThrowError("Config Error: unknown directive '" + directive + "' in server block");
+	}
+
+	for (int i = 0; i < (int)children.size(); i++)
+	{
+		AST<string> &node = children[i];
+		if (node.GetValue() != "location")
+			continue;
+
+		const string sourcePath = normalizeLocationPath(node.GetArguments()[0]);
+		vector<AST<string> > &locationChildren = node.GetChildren();
+
+		for (int j = 0; j < (int)locationChildren.size(); j++)
+		{
+			AST<string> &locDirective = locationChildren[j];
+			if (locDirective.GetValue() != "method_redirect")
+				continue;
+
+			const vector<string> &args = locDirective.GetArguments();
+			if (args.size() < 2)
+				continue;
+
+			const string targetPath = normalizeLocationPath(args[1]);
+			if (locationPaths.find(targetPath) == locationPaths.end())
+			{
+				Error::ThrowError("Config Error: method_redirect target '" + args[1] +
+					"' in location '" + sourcePath +
+					"' does not match any location path in this server block");
+			}
+		}
 	}
 
 	DEBUG("Validation") << "  'server' block validation passed.";
@@ -121,6 +165,8 @@ void Validation::validateLocation(AST<string> &locationNode, LocationSeen &seen)
 			validateDeleteFiles(node, seen);
 		else if (directive == "chunked_send")
 			validateChunkedSend(node, seen);
+		else if (directive == "method_redirect")
+			validateMethodRedirect(node, seen);
 		else
 			Error::ThrowError("Config Error: unknown directive '" + directive + "' in location block");
 	}
@@ -388,6 +434,7 @@ void Validation::validateDeleteFiles(AST<string> &node, LocationSeen &seen)
 	DDEBUG("Validation") << "    'delete_files' validated: " << val;
 }
 
+// --- chunked use ---
 void Validation::validateChunkedSend(AST<string> &node, LocationSeen &seen)
 {
 	if (seen.chunkedSend)
@@ -400,6 +447,34 @@ void Validation::validateChunkedSend(AST<string> &node, LocationSeen &seen)
 	if (val != "on" && val != "off")
 		Error::ThrowError("Config Error: chunked_send must be 'on' or 'off' — got '" + val + "'");
 	DDEBUG("Validation") << "    'chunked_send' validated: " << val;
+}
+
+// --- method_redirect ---
+void Validation::validateMethodRedirect(AST<string> &node, LocationSeen &seen)
+{
+	checkArgCount(node, 2, 2, "method_redirect");
+
+	if (seen.returnDir)
+		Error::ThrowError("Config Error: 'method_redirect' cannot be used with 'return' in the same location block");
+
+	const string &method = node.GetArguments()[0];
+	const string &target = node.GetArguments()[1];
+
+	if (!isValidMethod(method))
+		Error::ThrowError("Config Error: invalid HTTP method '" + method +
+						  "' in method_redirect — allowed: GET, POST, DELETE, HEAD");
+
+	if (target.empty() || target[0] != '/')
+		Error::ThrowError("Config Error: method_redirect target must start with '/' — got '" + target + "'");
+
+	if (target.find("://") != string::npos)
+		Error::ThrowError("Config Error: method_redirect target must be an internal path, got '" + target + "'");
+
+	if (!seen.methodRedirectMethods.insert(method).second)
+		Error::ThrowError("Config Error: duplicate 'method_redirect' for method '" + method + "' in location block");
+
+	DDEBUG("Validation") << "    'method_redirect' validated: method=" << method
+						 << ", target=" << target;
 }
 
 ReturnKind Validation::classifyReturnCode(long code)

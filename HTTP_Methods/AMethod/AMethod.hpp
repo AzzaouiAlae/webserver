@@ -1,6 +1,6 @@
 #pragma once
 #include "Headers.hpp"
-#include "SocketIO.hpp"
+#include "NetIO.hpp"
 #include "Socket.hpp"
 #include "SessionManager.hpp"
 #include "Cgi.hpp"
@@ -23,16 +23,17 @@ class AMethod
 
 protected:
 	enum Status {
-		eCreateResponse = 0,
+		eInit = 0,
 		eSendResponse = 1,
 		eCGIResponse = 2,
-		eComplete = 100,
+		eUploadFile = 3,
+		eSendAutoIndex = 4,
+		eComplete = 5,
 	};
 	int _status;
 
 	Routing *_router;
-	SocketIO *_sock;
-	Config::Server::Location *_loc;
+	ClientSocket *_sock;
 	Cgi	*_cgi;
 	Multiplexer *_multiplexer;
 
@@ -44,26 +45,21 @@ protected:
 	string _responseHeaderStr;
 	stringstream _responseHeader;
 
-	AStrategy *_sendStrategy;
-	AStrategy *_readStrategy;
 	vector<pair<char *, size_t> > _buffers;
 	
-	int _sended;
-	int _bodySize;
-	int _totalByteToSend;
+	size_t _bodySize;
+	size_t _totalByteToSend;
 
-	void _createResponseHeader();
+	void _createResponseHeader(const string &body);
 	void _createRedirectionHeader(const string &redirCode, const string &redirLocation);
 	void _createTimeoutResponse();
-
-	void _sendResponse();
-	void _sendRedirection();
-	void _sendDefaultRespense(const string &code);
+	void _createRedirection();
+	void _createDefaultResponse(const string &code);
 
 	bool _isMethodAllowed(const string &method);
 	void _resolvePath();
 	string _escapeForJS(const string& input);
-	void _handelCGI();
+	void _handleCGI();
 
 	void _addPair(StaticFile *f);
 	void _addPair(string &str);
@@ -72,12 +68,12 @@ protected:
 	void _addPair(const char *data, size_t size);
 	void _addPair(char *data, size_t size);
 	void _addPair(pair<char *, size_t> &data);
-
+	void _handleStrategyStatus(AStrategy *strategy);
 	void _executeStrategy(AStrategy *strategy);
 public:
-	AMethod(SocketIO *sock, Routing *router);
+	AMethod(ClientSocket *sock, Routing *router);
 	virtual ~AMethod();
 	virtual bool HandleResponse() = 0;
-	void   HandelErrorPages(const string &err);
+	void   HandleErrorPages(const string &err);
 	static map<string, string>& getStatusMap();
 };

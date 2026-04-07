@@ -8,6 +8,7 @@ protected:
 	int fd;
 	string type;
 	size_t totalClean;
+	unsigned int events;
 
 public:
 	AFd(int fd, string type);
@@ -20,4 +21,6 @@ public:
 	bool MarkedToDelete;
 	bool cleanBody;
 	void cleanFd();
+	void SetEvents(unsigned int ev);
+	unsigned int GetEvents() const;
 };

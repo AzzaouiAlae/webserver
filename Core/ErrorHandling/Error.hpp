@@ -39,7 +39,7 @@ private:
     Error();
 public:
     static ErrorType errorType;
-    static void printError(string custoMessage);
-    static void ThrowError(string custoMessage);
+    static void printError(const string& custoMessage);
+    static void ThrowError(const string& custoMessage);
 
 };

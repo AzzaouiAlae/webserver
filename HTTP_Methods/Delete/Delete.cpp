@@ -1,6 +1,7 @@
 #include "Delete.hpp"
+#include "BuffersStrategy.hpp"
 
-Delete::Delete(SocketIO *sock, Routing *router) : AMethod(sock, router)
+Delete::Delete(ClientSocket *sock, Routing *router) : AMethod(sock, router)
 {
 	DEBUG("Delete") << "Delete initialized, socket fd=" << sock->GetFd();
 }
@@ -8,7 +9,6 @@ Delete::Delete(SocketIO *sock, Routing *router) : AMethod(sock, router)
 void Delete::_initDelete()
 {
 	_resolvePath();
-	_loc = _router->GetPath().getLocation();
 
 	DDEBUG("Delete") 
 		<< "Socket fd: " << _sock->GetFd()
@@ -17,35 +17,38 @@ void Delete::_initDelete()
 		<< ", isCGI=" << _router->GetPath().isCGI();
 
 	if (!_isMethodAllowed("DELETE"))
-		HandelErrorPages("405");
+		HandleErrorPages("405");
 	else if (_router->GetPath().isFound() == false)
-		HandelErrorPages("404");
+		HandleErrorPages("404");
 	else if (_router->GetPath().hasPermission() == false)
-		HandelErrorPages("403");
-	else if (_router->GetPath().isCGI())
-		_handelCGI();
-	else if (_loc == NULL || _loc->deleteFiles == false)
-		HandelErrorPages("403");
+		HandleErrorPages("403");
+	else if (_router->GetPath().isCGI()) {
+		_status = Delete::eCGIResponse;
+		_handleCGI();
+	}
+	else if (_router->loc == NULL || _router->loc->deleteFiles == false)
+		HandleErrorPages("403");
 	else 
 		_deleteFile();
 }
 
 bool Delete::HandleResponse()
 {
-	_sock->SetStateByFd(_sock->GetFd());
-
 	DEBUG("Delete") 
 		<< "Socket fd: " << _sock->GetFd() 
 		<< ", Delete::HandleResponse() start";
 
-	if (_sock->isTimeOut())
+	if (_sock->IsTimeOut())
 		_createTimeoutResponse();
 	else if (_status == Delete::eInit)
 		_initDelete();
-	else if (_status == Delete::eSendResponse)
-		_sendResponse();
+	else if (_status == Delete::eSendResponse) {
+		_executeStrategy(_router->GetSendStrategy());
+		if (_router->GetSendStrategy()->GetStatus() == AStrategy::eComplete)
+			_status = Delete::eComplete;
+	}
 	else if (_status == Delete::eCGIResponse)
-		_handelCGI();
+		_handleCGI();
 
 	return _status == Delete::eComplete;
 }
@@ -57,12 +60,14 @@ void Delete::_deleteFile()
 	{
 		ERR() << "Client " << Socket::getRemoteName(_sock->GetFd()) << " delete failed: " << _filename;
 		DDEBUG("Delete") << "Socket fd: " << _sock->GetFd() << ", unlink failed, sending 500.";
-		HandelErrorPages("500");
+		HandleErrorPages("500");
 	}
 	else
 	{
 		INFO() << "Client " << Socket::getRemoteName(_sock->GetFd()) << " file deleted: " << _filename;
 		DDEBUG("Delete") << "Socket fd: " << _sock->GetFd() << ", file deleted successfully.";
-		_sendDefaultRespense("204");
+		_createDefaultResponse("204");
+		_router->SetSendStrategy(new BuffersStrategy(_buffers, *_sock));
+		_handleStrategyStatus(_router->GetSendStrategy());
 	}
 }

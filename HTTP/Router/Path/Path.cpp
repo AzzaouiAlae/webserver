@@ -101,13 +101,15 @@ void Path::_handleDirectoryIndex(Config::Server &srv)
 {
     vector<string> indices = srv.index;
 
-    if (matchedLocationIndex != -1 ) {
-		if (_decodedPath != srv.Locations[matchedLocationIndex].path)
-			return;
-        indices = srv.Locations[matchedLocationIndex].index;
+    if (matchedLocationIndex != -1) {
+        const Config::Server::Location &loc = srv.Locations[matchedLocationIndex];
+        if (!loc.index.empty() && loc.path == _decodedPath) {
+            indices = loc.index;
+            DDEBUG("Path") << "_handleDirectoryIndex: using location-specific index files";
+        }
+        else if (_decodedPath != "/")
+            return;
     }
-	else if (_decodedPath != "/")
-		return;
 
     DDEBUG("Path") << "_handleDirectoryIndex: trying " << indices.size() << " index file(s) in '" << _fullPath << "'";
 

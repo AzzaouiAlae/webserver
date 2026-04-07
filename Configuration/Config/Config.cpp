@@ -148,10 +148,9 @@ bool Config::isAllowedMethod(const vector<string> &allowMethods, const string &m
 	return false;
 }
 
-int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, string &scriptPath, string &pathInfo, const string &method)
+int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, string &scriptPath, string &pathInfo)
 {
 	int bestIndex = -1;
-	_foundMethod = false;
 	size_t maxLength = 0;
 	string script;
 	size_t idx = -1;
@@ -175,19 +174,16 @@ int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath,
 				continue;
 			if (loc.cgiPassExt != pathExt)
 				continue;
-			bool allowed = isAllowedMethod(loc.allowMethods, method);
-			if (!allowed && _foundMethod)
-					continue;
-			if (loc.parsedPath.size() > maxLength || bestIndex == -1 || (allowed && !_foundMethod))
+			if (loc.parsedPath.size() > maxLength || bestIndex == -1)
 			{
 				maxLength = loc.parsedPath.size();
 				bestIndex = (int)j;
 				scriptPath = script;
 				idx = i;
-				if (allowed)
-					_foundMethod = true;
 			}
 		}
+		if (bestIndex == -1)
+			continue;
 		break;
 	}
 	if (bestIndex != -1)
@@ -224,23 +220,77 @@ int Config::findBestStaticMatch(Config::Server &srv, const vector<string> &reqPa
 	return bestIndex;
 }
 
-bool Config::_foundMethod;
+void makeCgiArgs(const Config::Server::Location &loc, string &scriptPath, string &pathInfo, const vector<string> &reqPath)
+{
+	string script;
+	if (!loc.cgiPassExt.empty())
+	{
+		for (size_t i = 0; i < reqPath.size(); i++)
+		{
+			string pathExt = Utility::GetFileExtension(reqPath[i]);
+			if (i != 0)
+				script += "/" + reqPath[i];
+			else
+				script = reqPath[i];
+			if (pathExt.empty())
+				continue;
+			pathExt = '.' + pathExt;
+			if (pathExt != loc.cgiPassExt)
+				continue;
+			scriptPath = script;
+			for (size_t k = i + 1; k < reqPath.size(); k++)
+			{
+				if (k != i + 1)
+					pathInfo += "/" + reqPath[k];
+				else
+					pathInfo = reqPath[k];
+			}
+			return;
+		}
+	}
+}
+
+int Config::findMethodRedirects(const Config::Server::Location &loc,
+								const string &method, Config::Server &srv, int bestLocIndex,
+								string &scriptPath, string &pathInfo, const vector<string> &reqPath)
+{
+	string path;
+	if (loc.methodRedirects.empty())
+		return bestLocIndex;
+	map<string, string>::const_iterator it = loc.methodRedirects.find(method);
+	if (it != loc.methodRedirects.end())
+		path = it->second;
+	else
+		return bestLocIndex;
+	for (size_t i = 0; i < srv.Locations.size(); ++i)
+	{
+		if (srv.Locations[i].path == path)
+		{
+			const Config::Server::Location &loc = srv.Locations[i];
+			makeCgiArgs(loc, scriptPath, pathInfo, reqPath);
+			return (int)i;
+		}
+	}
+	return bestLocIndex;
+}
 
 int Config::GetLocationIndex(Config::Server &srv, const string &path, string &scriptPath, string &pathInfo, const string &method)
 {
 	vector<string> reqPath;
 	Utility::parseBySep(reqPath, path, "/");
 
-	int bestCgiIndex = findBestCgiMatch(srv, reqPath, scriptPath, pathInfo, method);
-	if (bestCgiIndex != -1 && _foundMethod)
+	int bestCgiIndex = findBestCgiMatch(srv, reqPath, scriptPath, pathInfo);
+	if (bestCgiIndex != -1)
 	{
 		DDEBUG("Config") << "Location match for '" << path << "': CGI location index " << bestCgiIndex;
-		return bestCgiIndex;
+		return findMethodRedirects(srv.Locations[bestCgiIndex], method, srv, bestCgiIndex, scriptPath, pathInfo, reqPath);
 	}
 
 	int bestStaticIndex = findBestStaticMatch(srv, reqPath);
 	DDEBUG("Config") << "Location match for '" << path << "': static location index " << bestStaticIndex;
-	return bestStaticIndex;
+	if (bestStaticIndex == -1)
+		return -1;
+	return findMethodRedirects(srv.Locations[bestStaticIndex], method, srv, bestStaticIndex, scriptPath, pathInfo, reqPath);
 }
 
 void Config::writeIndexFile()
@@ -561,6 +611,16 @@ void Config::fillLocation(AST<string> &locationNode, Config::Server::Location &l
 		{
 			loc.chunkedSend = (args[0] == "on");
 			DDEBUG("Parsing") << "      -> Set chunked_send: [" << (loc.chunkedSend ? "ON" : "OFF") << "]";
+		}
+		else if (val == "method_redirect")
+		{
+			string method = args[0];
+			string redirectUrl = args[1];
+			Utility::normalizePath(redirectUrl);
+			if (redirectUrl[redirectUrl.length() - 1] != '/')
+				redirectUrl += '/';
+			loc.methodRedirects[method] = redirectUrl;
+			DDEBUG("Parsing") << "      -> Set method_redirect: method=[" << method << "], url=[" << redirectUrl << "]";
 		}
 		else
 			Error::ThrowError("Unknown directive in location block: " + val);

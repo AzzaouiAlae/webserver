@@ -141,7 +141,7 @@ bool CgiRequest::isComplete(char *request, int size)
 {
     DDEBUG("CgiRequest") << "isComplete() called with size=" << size << ", parsPos=" << _parsPos;
 	_requestbuff.append(request, size);
-    DDEBUG("CgiRequest") << "\n" << _requestbuff;
+    DDEBUG("CgiRequest") << "\n" << _requestbuff.substr(0, 300);
 	if (_parsPos != eCgiParsEnd)
 	{
 		if (!ParseHeader())

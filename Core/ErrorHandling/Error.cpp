@@ -21,12 +21,12 @@ string Error::_CYANCOLOR    = "\x1b[36m";
 string Error::_BOLD         = "\x1b[1m";
 string Error::_RESETCOLOR   = "\x1b[0m";
 
-void Error::printError(string custoMessage)
+void Error::printError(const string& custoMessage)
 {
     cerr << _REDCOLOR  << _BOLD <<  "Error :\n	" << custoMessage << _RESETCOLOR << endl;
 }
 
-void Error::ThrowError(string custoMessage)
+void Error::ThrowError(const string& custoMessage)
 {
     throw runtime_error(custoMessage);
 }

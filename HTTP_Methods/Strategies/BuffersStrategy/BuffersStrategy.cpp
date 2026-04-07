@@ -1,6 +1,7 @@
 #include "BuffersStrategy.hpp"
 
-BuffersStrategy::BuffersStrategy(vector<pair<char *, size_t> > &buffers, SocketIO &socketIO) : AStrategy(), _buffers(buffers), _currentBuffer(0), _currentBufferOffset(0), _socketIO(socketIO)
+BuffersStrategy::BuffersStrategy(vector<pair<char *, size_t> > &buffers, ClientSocket &socketIO) : 
+AStrategy(), _buffers(buffers), _currentBuffer(0), _currentBufferOffset(0), _socketIO(socketIO)
 {}
 
 BuffersStrategy::~BuffersStrategy()
@@ -8,20 +9,28 @@ BuffersStrategy::~BuffersStrategy()
 
 int BuffersStrategy::Execute()
 {
-    DEBUG("BuffersStrategy") 
+    DDEBUG("BuffersStrategy") 
         << "Executing BuffersStrategy:" 
         << "currentBuffer=" << _currentBuffer 
         << ", currentBufferOffset=" << _currentBufferOffset 
-        << ",  status=" << _status;
+        << ",  status=" << _status
+        << ", buffers size=" << _buffers.size();
+       
     if (_status != eContinue)
         return _status;
     pair<char *, size_t> &current = _buffers[_currentBuffer];
-    int sent = _socketIO.Send(current.first + _currentBufferOffset, current.second - _currentBufferOffset);
+    int sent = NetIO::Send(current.first + _currentBufferOffset, current.second - _currentBufferOffset, _socketIO.GetFd());
     if (sent <= 0) {
-        _socketIO.closeConnection = true;
+        _socketIO.SetCloseConnection(true);
         _status = eWriteError;
         return _status;
     }
+    else
+        _socketIO.SetSendStart(true);
+    DDEBUG("BuffersStrategy") 
+        << "Executing BuffersStrategy:"
+        << ", str sended\n"
+        << string(current.first + _currentBufferOffset, sent);
     _currentBufferOffset += sent;
     if (_currentBufferOffset >= current.second) 
     {
@@ -30,5 +39,7 @@ int BuffersStrategy::Execute()
     }
     if (_currentBuffer >= _buffers.size())
         _status = eComplete;
+    _socketIO.UpdateTime();
+    
     return _status;
 }
