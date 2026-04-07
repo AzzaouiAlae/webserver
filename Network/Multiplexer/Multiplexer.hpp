@@ -4,22 +4,36 @@
 
 class AFd;
 
+class MyEpollEvent
+{
+	public:
+	enum EpollEvents
+	{
+		eEPOLLIN = (EPOLLRDBAND | EPOLLRDNORM | EPOLLPRI | EPOLLIN),
+		eEPOLLOUT = (EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND),
+		eEPOLLERR = (EPOLLERR | EPOLLHUP | EPOLLRDHUP)
+	};
+};
+
 class Multiplexer
 {
+	vector<AFd *> _deletedList;
 	int epollFd;
-	void epoolInit();
+	void epollInit();
 	static Multiplexer *currentMultiplexer;
-	static set<AFd *> toDelete;
 	int count;
-	static void DeleteItem(AFd *item);
-
+	vector<epoll_event> eventList;
+	set<AFd *> &_fds;
+	bool _modifyEpoll(int operation, AFd *fd, int type);
+	void _tryCleanup(epoll_event &event);
+	void _handleEpollAfd(epoll_event &event);
+	void _cleanupDeletedList();
+	
 public:
-	Multiplexer();
+	Multiplexer(set<AFd *> &fds);
 	~Multiplexer();
 	bool AddAsEpollIn(AFd *fd);
 	bool AddAsEpollOut(AFd *fd);
-	bool AddAsEpoll(AFd *fd, int type);
-	bool ChangeToEpoll(AFd *fd, int type);
 	bool ChangeToEpollIn(AFd *fd);
 	bool ChangeToEpollOut(AFd *fd);
 	bool ChangeToEpollInOut(AFd *fd);
@@ -27,9 +41,5 @@ public:
 	bool DeleteFromEpoll(AFd *fd);
 	static Multiplexer *GetCurrentMultiplexer();
 	void MainLoop();
-	void ClearToDelete();
-	bool ClearEventObj(epoll_event &event);
-	static void ClearObj(AFd *obj);
-	void handelEpollPipes(epoll_event &event);
-	void handelEpollSocket(epoll_event &event);
+	void ScheduleForDeletion(AFd *obj);
 };

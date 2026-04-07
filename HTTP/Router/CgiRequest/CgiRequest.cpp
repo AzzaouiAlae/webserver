@@ -28,6 +28,7 @@ void CgiRequest::initReqDirectives()
 CgiRequest::CgiRequest()
 {
     _parsPos = eCgiHeaders;
+    DDEBUG("CgiRequest") << "CgiRequest() initialized.";
 }
 CgiRequest::~CgiRequest() {}
 
@@ -41,15 +42,17 @@ void CgiRequest::parseStatus()
         string optionalmsg;
         string extra;
     
-        if (!(ss >> status) || ((ss >> optionalmsg) && (ss >> extra)))
+        // if (!(ss >> status) || ((ss >> optionalmsg) && (ss >> extra)))
+        //     Error::ThrowError("502");
+        if (!(ss >> status))
             Error::ThrowError("502");
         if (statusMap.find(status) == statusMap.end())
             Error::ThrowError("502");
         _statusCode = status;
-        if (status[0] == '4' || status[0] == '5') {
-		}
-        else if (status[0] != '2' && status[0] != '3')
-            Error::ThrowError("502");
+        // if (status[0] == '4' || status[0] == '5') {
+		// }
+        // else if (status[0] != '2' && status[0] != '3')
+        //     Error::ThrowError("502");
     }
     else
     {
@@ -80,7 +83,7 @@ void CgiRequest::parsLenTypeCont()
     {
         if (_env.find("Content-Type") == _env.end())
             Error::ThrowError("502");
-        if (_content_len == 0 || _env.find("Content-Length") == _env.end())
+        if (_env.find("Content-Length") != _env.end() && _content_len == 0)
 			Error::ThrowError("502");
     }
 }
@@ -96,20 +99,31 @@ bool CgiRequest::ParseHeader()
 {
     string line = "";
 
-    while (_parsPos == eCgiHeaders && getFullLine(line) && line != "\n")
+    DDEBUG("CgiRequest") << "ParseHeader() entered. requestBufferSize=" << _requestbuff.size();
+
+    while (_parsPos == eCgiHeaders && getFullLine(line) && line != "\n" && line != "\r\n")
+	{
+		DDEBUG("CgiRequest") << "ParseHeader(): header line=" << line;
 		parseHeaderLine(line);
+	}
     if (_parsPos == eCgiHeaders && line == "\r\n" && _requestbuff.length() > 0) _Thereisbody = true;
     if (_parsPos == eCgiHeaders && line == "\r\n")
+    {
+        DDEBUG("CgiRequest") << "ParseHeader(): end of headers found. bodyPresent=" << (_Thereisbody ? "true" : "false");
         _parsPos = eCgiHeadersEnd;
+    }
     if (eCgiHeadersEnd)
     {
+        DDEBUG("CgiRequest") << "ParseHeader(): validating headers. envSize=" << _env.size();
         checkCgiMinimum();
         parsLenTypeCont();
         parseStatus();
         parseLocation();
+        DDEBUG("CgiRequest") << "ParseHeader(): complete. statusCode=" << _statusCode << ", contentLength=" << _content_len;
         _parsPos = eCgiParsEnd;
         return (true);
     }
+    DDEBUG("CgiRequest") << "ParseHeader(): waiting for more data.";
     return (false);
 }
 
@@ -118,15 +132,25 @@ string &CgiRequest::getStatusCode()
     return (_statusCode);
 }
 
+bool CgiRequest::isContentLenghtExist()
+{
+    return (_env.find("Content-Length") != _env.end());
+}
 
 bool CgiRequest::isComplete(char *request, int size)
 {
+    DDEBUG("CgiRequest") << "isComplete() called with size=" << size << ", parsPos=" << _parsPos;
 	_requestbuff.append(request, size);
+    DDEBUG("CgiRequest") << "\n" << _requestbuff.substr(0, 300);
 	if (_parsPos != eCgiParsEnd)
 	{
 		if (!ParseHeader())
+        {
+            DDEBUG("CgiRequest") << "isComplete(): headers not complete yet.";
 			return (false);
+        }
 	}
+    DDEBUG("CgiRequest") << "isComplete(): CGI headers parsed successfully.";
 	return true;
 }
 
@@ -149,10 +173,12 @@ bool CgiRequest::getFullLine(string &line)
 			Error::ThrowError("502");
 		_requestbuff.erase(0, index + 1);
 		line += '\n';
+        DDEBUG("CgiRequest") << "getFullLine(): extracted line, headersize=" << _headersize;
 	}
 	else
 	{
 		line.clear();
+        DDEBUG("CgiRequest") << "getFullLine(): partial line, waiting for more data.";
 		return (false);
 	}
 	return true;
@@ -177,4 +203,5 @@ void CgiRequest::parseHeaderLine(const string &line)
 		}
     }
     _env[key] = value;
+    DDEBUG("CgiRequest") << "parseHeaderLine(): key='" << key << "', value='" << value << "'";
 }

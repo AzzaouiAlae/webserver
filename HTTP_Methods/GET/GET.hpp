@@ -3,32 +3,21 @@
 
 class GET : public AMethod
 {
-	stringstream filesList;
-	string filesListStr;
-	int sendListFiles;
-	int targetToSend;
-	int sent;
-	void OpenFile(const string &path);
-	void PrepareFileResponse();
-	void ServeFile();
+	stringstream _filesList;
+	string _filesListStr;
 
-	void GetStaticIndex();
+	void _openFile(const string &path);
+	void _prepareFileResponse();
+	void _serveFile();
 
-	string FormatDirectoryEntry(const string &name, const struct stat &st, const string &requestPath);
-	void ListFiles(const string &path);
-	int  CalculateAutoIndexSize();
-	void CreateListFilesResponse();
+	string _formatDirectoryEntry(const string &name, const struct stat &st, const string &requestPath);
+	void _listFiles(const string &path);
+	int  _calculateAutoIndexSize();
+	void _createListFilesResponse();
 
-	void SendChunk(const char *data, int dataSize);
-	void SendListFilesStr(const string &str);
-	void SendAutoIndex(StaticFile *f);
-	void AdvanceListFilesState();
-	void SendListFilesResponse();
-
-	void GetMethod();
-
+	void _createResponse();
 public:
-	GET(SocketIO *sock, Routing *router);
+	GET(ClientSocket *sock, Routing *router);
 	~GET();
 
 	bool HandleResponse();

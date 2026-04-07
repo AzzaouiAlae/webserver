@@ -11,59 +11,89 @@
 /* ************************************************************************** */
 
 #pragma once
-#include "SocketIO.hpp"
+#include "NetIO.hpp"
 #include "Headers.hpp"
+#include "ReadPipeStrategy.hpp"
 
 #define CGILog(lvl) lvl("Cgi") << "[CGI PID: " << _pid << "] "
 
-enum estatus
-{
-    eFork,
-	eSendBuffToPipe,
-	eSendSockToPipe,
-	eReadCgiResponse,
-	eCreateResponseHeader,
-	eWriteBuffToClient,
-	eWritePipeToClient,
-	eComplete
-};
-
 class Cgi
 {
-    ClientRequest     &_req;
-    CgiRequest        _cgireq;
-    SocketIO    *_sok;
-    pid_t       _pid;
-    estatus     _status;
-    int         _statusfd;
-    string      _copybuf;
-    AFd         *_out;
-	AFd         *_in;
-    int        _pipefd[2];
-    bool        _parsheader;
-	string		_responseHeaderStr;
-	char		*_buf;
-    char        *const*_exec;
-    size_t      _reqlen;
-	size_t		_responselen;
-    void createChild();
-    void writetocgi();
-    void readfromcgi();
-	void _activeCgiPipe();
-	string resolveExcPath(const std::string &excName);
-    Cgi();
-	size_t _shouldSend;
+    // Core members
+    Routing *_router;
+    ClientRequest &_req;
+    CgiRequest _cgireq;
+    int _status;
+    AFd *_in;
+    int _pipefd[2];
+    int _pipe2fd[2];
+    Multiplexer *_multiplexer;
+    string _errorCode;
+    bool _activeSocketIn;
+    bool _activeSocketOut;
+    bool _activePipeOut;
+    void _activeFds();
+
+    //create child related members
+    int _stdin;
+    pid_t _pid;
+    void _createChild();
+    void _prepareChild(string &exec);
+    string _resolveExcPath(const std::string &excName);
+    void _execChild(string &exec);
+    void _changeDir();
+    void _closeFds(int pipe1[2], int pipe2[2]);
+    
+
+    //create child related members
+    AStrategy *_readStrategy;
+    char *_buffer;
+    int _availableClientBufferLen;
+    ClientSocket *_sok;
+    size_t _totalReadFromClient;
+    void _readFromClient();
+
+    // Write strategy for sending data to CGI process
+    AStrategy *_writePipeStrategy;
+    AFd *_out;
+    size_t _totalWritenToPipe;
+    void _sendBuffToPipe();
+    
+    // Read strategy for reading data from CGI process
+    AStrategy *_readPipeStrategy;
+    char *_readBuffer;
+    size_t _availableCgiBufferLen;
+    bool _headerParsed;
+    size_t _totalReadFromPipe;
+    void _readFromCGI();
+
+    //write strategy for sending data to client
+    AStrategy *_writeStrategy;
+    size_t _totalSendToClient;
+    bool _pipeEof;
+    void _writeToClient();
+
+    // Error handling
+    int _childErrorStatus;
+    void _errorHandler();
+    void _handleStrategyStatus(AStrategy *strategy);
+    int _isChildError();
 public:
-    Cgi(ClientRequest &req, char* const* exec, SocketIO *sok);
-    bool isChildError();
-    void Handle();
-    CgiRequest   &getCgiReq();
-    void SetStateByFd(int fd);
-    string &getStatusCode();
-    bool CanUsePipe0();
-    bool CanUsePipe1();
-	void createCgiResponse();
-	void writeToClientSoket();
-	bool isComplete();
+    enum Status
+    {
+        eFork,
+        eHandleClient,
+        eWriteToClientComplete,
+        eComplete,
+        eError,
+    };
+
+    Cgi(Routing *router, ClientSocket *sok);
     ~Cgi();
+    void Handle();
+    void SetStateByFd(int fd);
+    void PipeClosed(int fd);
+    bool isComplete();
+    int getStatus() const;
+    string getErrorCode() const;
 };

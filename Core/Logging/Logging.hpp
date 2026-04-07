@@ -8,13 +8,6 @@
 #define YELLOW "\033[33m"
 #define BLUE "\033[34m"
 
-
-// #define	DEBUG	Logging::Debug
-// #define	INFO	Logging::Info
-// #define	WARN	Logging::Warn
-// #define	ERR		Logging::Error
-// #define DDEBUG(className) Logging::Debug(className, true)
-
 class Logging
 {
 	ofstream logFile;
@@ -85,7 +78,9 @@ public:
 };
 
 
-// #define DISABLE_LOGGING
+#define DISABLE_LOGGING
+#define PRINT_LOGGING true
+#define WRITE_FILE true
 
 
 

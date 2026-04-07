@@ -11,6 +11,8 @@ void sigpipe_handler(int signum)
 void sigint_handler(int signum)
 {
 	(void)signum;
+	if (Utility::SigInt)
+		exit(0);
 	Utility::SigInt = true;
 }
 
@@ -68,59 +70,108 @@ int ParseLoggingArgs(int argc, char *argv[])
 	return fileNameIdx;
 }
 
+void SetFileDescriptorLimits()
+{
+	struct rlimit limit;
+
+	if (getrlimit(RLIMIT_NOFILE, &limit) == 0)
+	{
+		if (limit.rlim_cur == RLIM_INFINITY)
+			Utility::maxFds = 10000;
+		else
+		{
+			Utility::maxFds = limit.rlim_cur - 100;
+			if (Utility::maxFds > 10000)
+				Utility::maxFds = 10000;
+			if (Utility::maxFds < 10 && limit.rlim_cur > 10)
+				Utility::maxFds = 5;
+		}
+	}
+}
+
+void CreateDefaultFiles()
+{
+	Config::createDir();
+	Config::writeIndexFile();
+	if (access(DEFAULT_CONF, F_OK) == -1)
+	{
+		ofstream confFile(DEFAULT_CONF);
+		if (confFile.is_open())
+		{
+			confFile
+				<< "server {\n"
+				<< "}\n"
+				<< "types {\n"
+				<< "\ttext/html htm html;\n"
+				<< "}";
+			confFile.close();
+			INFO() << "Default configuration file created at: " << DEFAULT_CONF;
+		}
+		else
+			Error::ThrowError("Failed to create default configuration file.");
+	}
+}
+
 void InitServer(int argc, char *argv[], string &filename)
 {
 	int fileNameIdx = ParseLoggingArgs(argc, argv);
 
 	signal(SIGPIPE, sigpipe_handler);
 	signal(SIGINT, sigint_handler);
+	SetFileDescriptorLimits();
 
 	if (argc < fileNameIdx + 1)
+	{
 		filename = DEFAULT_CONF;
+		CreateDefaultFiles();
+	}
 	else
 	{
 		filename = argv[fileNameIdx];
 	}
-	Logging::Info() << "Server start with configuation file: " << filename << "";
+	INFO() << "Server start with configuation file: " << filename << "";
 }
 
 void LaunchServer(string &filename)
 {
+	DefaultPages::InitDefaultPages();
 	DEBUG("main") << "Tokenizing start";
 	Tokenizing token(filename);
 	token.split_tokens();
 	DEBUG("main") << "Tokenizing complete";
 
-	Logging::Debug() << "Parsing start";
+	DEBUG("main") << "Parsing start";
 	Parsing pars(token.get_tokens());
 	pars.BuildAST();
-	Logging::Debug() << "Parsing complete";
-	Config::FillConf();
+	DEBUG("main") << "Parsing complete";
 
-	Logging::Debug() << "Validation start";
+	DEBUG("main") << "Validation start";
 	Validation val(Singleton::GetASTroot());
 	val.Validate();
-	Logging::Debug() << "Validation complete";
-	DefaultPages::InitDefaultPages();
+	DEBUG("main") << "Validation complete";
+
+	Config::FillConf();
+
 	DEBUG("main") << "The main loop start";
-	Multiplexer m;
-	m.MainLoop();
-	DEBUG("main") << "The main loop stop";
+	
+	
+	
+}
+
+void Cleanup()
+{
+	Utility::clearFds();
+	Utility::ClearBuffPoll();
+	SessionManager *p = SessionManager::getInstance();
+	delete p;
+	delete[] AFd::buff;
+	close(STDIN_FILENO);
+	close(STDOUT_FILENO);
 }
 
 void HandelError(const char *what)
 {
 	ERR() << what;
-
-	set<AFd *> &fds = Singleton::GetFds();
-	set<AFd *>::iterator it = fds.begin();
-
-	for (; it != fds.end(); it = fds.begin())
-	{
-		delete *it;
-	}
-	close(STDIN_FILENO);
-	close(STDOUT_FILENO);
 }
 
 int main(int argc, char *argv[])
@@ -129,15 +180,22 @@ int main(int argc, char *argv[])
 
 	string filename;
 	InitServer(argc, argv, filename);
-	try {
+	Multiplexer m(Singleton::GetFds());
+	try
+	{
 		LaunchServer(filename);
+		m.MainLoop();
+		DEBUG("main") << "The main loop stop";
 	}
-	catch (const exception &e) {
+	catch (const exception &e)
+	{
 		HandelError(e.what());
 		return 1;
 	}
-	catch (...) {
+	catch (...)
+	{
 		HandelError("Unknown exception occurred during server launch.");
 		return 1;
 	}
+	Cleanup();
 }

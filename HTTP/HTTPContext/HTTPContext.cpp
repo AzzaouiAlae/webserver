@@ -3,237 +3,190 @@
 void HTTPContext::Handle(AFd *fd)
 {
 	(void)fd;
-	HTTPLog(DDEBUG) << ", Handle() start";
-	if (router.isRequestComplete() == false &&
-		sock->isTimeOut() == false && err == false)
+	HTTPLog(DDEBUG) << "Handle() start";
+	if (_status == HTTPContext::eReadingRequest)
 	{
-		HTTPLog(DDEBUG)
-			<< ", Handle() router.isRequestComplete(): "
-			<< router.isRequestComplete() << ", err: " << err;
-		HandleRequest();
+		_handleRequest();
 	}
-	if (router.isRequestComplete())
+	if (_status == HTTPContext::eWritingResponse)
 	{
-		if (sock->isTimeOut())
-			_setupPipeline();
-		HTTPLog(DDEBUG) << ", request complete, handling response.";
-		if (repsense.HandleResponse())
-		{
-			HTTPLog(DDEBUG) << ", response done, marking socket to free.";
-			MarkedSocketToFree();
-		}
+		if (_repsense.HandleResponse())
+			_status = HTTPContext::eDone;
 	}
-	if (sock->MarkedToDelete == false)
+	if (_status == eDone || _status == eDelete)
 	{
-		activeInPipe();
-		activeOutPipe();
-	}
-	else {
-		shutdown(sock->GetFd(), SHUT_RDWR);
+		HTTPLog(DDEBUG) << "Handle() done";
+		_handleConnectionEnd();
 	}
 }
 
-int HTTPContext::_readFromSocket()
+void HTTPContext::_readFromSocket()
 {
-	if (buf == NULL)
-	{
-		buf = Utility::GetBuffer();
-		HTTPLog(DDEBUG)
-			<< ", allocated read buffer (" << BUF_SIZE
-			<< " bytes).";
-	}
-	int len = read(sock->GetFd(), buf, BUF_SIZE);
-	sock->UpdateTime();
+	Utility::SigPipe = false;
+	_readLen = read(_sock->GetFd(), _buf, BUF_SIZE);
+	_sock->UpdateTime();
 	HTTPLog(DDEBUG)
-		<< ", _readFromSocket: read returned "
-		<< len;
-	if (len <= 0 || Utility::SigPipe)
+		<< "_readFromSocket: read returned "
+		<< _readLen;
+	if (_readLen <= 0 || Utility::SigPipe)
 	{
-		HTTPLog(DDEBUG) << ", _readFromSocket: connection closed or SigPipe, setting err=true.";
-		err = true;
-		return 0;
+		HTTPLog(DDEBUG) << "_readFromSocket: connection closed or SigPipe, setting err=true.";
+		_status = HTTPContext::eDelete;
 	}
-	return len;
 }
 
-void HTTPContext::setMaxBodySize()
+void HTTPContext::_setMaxBodySize()
 {
-	HTTPLog(DEBUG) << "setMaxBodySize, err: " << err;
-	router.srv = &Config::GetServerName(*servers, router.GetRequest().getHost());
-	router.CreatePath(router.srv);
+	_router.srv = &Config::GetServerName(*_servers, _router.GetRequest().getHost());
+	_router.CreatePath(_router.srv);
 
-	if (router.loc != NULL && router.loc->isMaxBodySize)
+	if (_router.loc != NULL && _router.loc->isMaxBodySize)
 	{
-		router.GetRequest().SetMaxBodySize(router.loc->clientMaxBodySize);
-		HTTPLog(DDEBUG) 
-			<< ", max body size set from location: " 
-			<< router.GetPath().getLocation()->clientMaxBodySize;
+		_router.GetRequest().SetMaxBodySize(_router.loc->clientMaxBodySize);
+		HTTPLog(DDEBUG)
+			<< ", max body size set from location: "
+			<< _router.GetPath().getLocation()->clientMaxBodySize;
 	}
-	else if (router.srv->isMaxBodySize)
+	else if (_router.srv->isMaxBodySize)
 	{
-		router.GetRequest().SetMaxBodySize(router.srv->clientMaxBodySize);
-		HTTPLog(DDEBUG) 
-			<< ", max body size set from server: " 
-			<< router.srv->clientMaxBodySize;
+		_router.GetRequest().SetMaxBodySize(_router.srv->clientMaxBodySize);
+		HTTPLog(DDEBUG)
+			<< ", max body size set from server: "
+			<< _router.srv->clientMaxBodySize;
 	}
-	isMaxBodyInit = true;
+	_isMaxBodyInit = true;
+	if (_router.GetPath().isCGI())
+		_sock->SetTimeout(_router.srv->cgiTimeout);
+	else
+		_sock->SetTimeout(_router.srv->clientReadTimeout);
+	HTTPLog(DDEBUG) << ", client_read_timeout updated to: " << _sock->GetEndTime();
 }
 
-bool HTTPContext::_parseAndConfig(int len)
+void HTTPContext::_parseAndConfig()
 {
 	try
 	{
-		if (err)
-			return true;
-
-		bool complete = router.GetRequest().isComplete(buf, len);
-		HTTPLog(DEBUG) << "_parseAndConfig, " << complete;
-		if (!isMaxBodyInit && router.GetRequest().getHost() != "")
+		if (_router.GetRequest().isComplete(_buf, _readLen))
+			_status = HTTPContext::eWritingResponse;
+		HTTPLog(DEBUG) << "_parseAndConfig, " << _status;
+		if (!_isMaxBodyInit && _router.GetRequest().getHost() != "")
 		{
-			HTTPLog(DEBUG) << ", host detected: [" << router.GetRequest().getHost() << "], initializing max body size.";
-			setMaxBodySize();
+			HTTPLog(DEBUG) << ", host detected: [" << _router.GetRequest().getHost() << "], initializing max body size.";
+			_setMaxBodySize();
 		}
-		return complete;
 	}
 	catch (exception &e)
 	{
-		ERR() << "Socket fd: " << sock->GetFd() << "_parseAndConfig, exception: " << e.what();
-		errNo = e.what();
-		err = true;
-		return true;
+		_errNo = e.what();
+		_status = HTTPContext::eWriteError;
 	}
 }
 
-void HTTPContext::_setupPipeline()
+void HTTPContext::_handleRequest()
 {
-	if (in)
-		return;
-	HTTPLog(DDEBUG) << ", _setupPipeline: setting up pipes and switching epoll state.";
-
-	router.SetRequestComplete();
-
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-
-	in = new SocketPipe(sock->pipefd[0], sock);
-	MulObj->AddAsEpollIn(in);
-
-	out = new SocketPipe(sock->pipefd[1], sock);
-	MulObj->AddAsEpollOut(out);
-	HTTPLog(DDEBUG) 
-		<< ", _setupPipeline complete: in_pipe_fd=" 
-		<< sock->pipefd[0] << ", out_pipe_fd=" << sock->pipefd[1];
-}
-
-void HTTPContext::HandleRequest()
-{
-	int len = _readFromSocket();
-	HTTPLog(DEBUG) << "HandleRequest, len: " << len;
-	if (len == -1 && !err)
-	{
-		return;
-	}
-	bool isComplete = _parseAndConfig(len);
 	HTTPLog(DDEBUG)
-		<< "HandleRequest(), isComplete: "
-		<< isComplete << ", err: " << err;
-
-	if (isComplete || router.GetRequest().isRequestHeaderComplete())
+		<< ", _handleRequest: _status=" << _status;
+	if (_sock->IsTimeOut())
 	{
-		INFO() << Socket::getRemoteName(sock->GetFd()) << " " << router.GetRequest().getMethod() << " " << router.GetRequest().getPath();
-		HTTPLog(DDEBUG) << ", request parsing done, setting up pipeline.";
-
-		_setupPipeline();
-
-		if (err)
+		_status = HTTPContext::eWritingResponse;
+		return;
+	}
+	_readFromSocket();
+	if (_status == HTTPContext::eDelete)
+	{
+		Utility::ReleaseBuffer(_buf);
+		_buf = NULL;
+		return;
+	}
+	_parseAndConfig();
+	if (_status >= HTTPContext::eWritingResponse)
+	{
+		INFO() << Socket::getRemoteName(_sock->GetFd()) << " " << _router.GetRequest().getMethod() << " " << _router.GetRequest().getPath();
+		HTTPLog(DDEBUG) << "request parsing done";
+		Utility::ReleaseBuffer(_buf);
+		_buf = NULL;
+		if (_status == HTTPContext::eWriteError)
 		{
-			ERR() << "Socket fd: " << sock->GetFd() << ", error detected, errNo=" << errNo << ", handling error pages.";
-			if (Config::GetErrorPath(*router.srv, errNo) != "" || StaticFile::GetFileByName(errNo) != NULL)
-			{
-				repsense.HandelErrorPages(errNo);
-			}
-			else
-			{
-				repsense.HandelErrorPages("400");
-			}
+			ERR() << "Socket fd: " << _sock->GetFd() << ", error detected, errNo=" << _errNo << ", handling error pages.";
+			_repsense.HandleErrorPages(_errNo);
+			_status = HTTPContext::eWritingResponse;
 		}
 	}
 }
 
-
-
-HTTPContext::HTTPContext(vector<Config::Server > *servers, size_t maxBodySize, SocketIO *sock): sock(sock), servers(servers)
+HTTPContext::HTTPContext(vector<Config::Server> *servers, size_t maxBodySize, ClientSocket *sock) : _sock(sock), _servers(servers)
 {
-	in = NULL;
-	out = NULL;
-	buf = NULL;
-	err = false;
-	router.srv = &((*servers)[0]);
-	router.GetRequest().SetMaxBodySize(maxBodySize);
-	repsense.Init(sock, &(router));
-	buf = Utility::GetBuffer();
-	isMaxBodyInit = false;
+	_router.srv = &((*servers)[0]);
+	_router.GetRequest().SetMaxBodySize(maxBodySize);
+	_repsense.Init(sock, &(_router));
+	_buf = Utility::GetBuffer();
+	_isMaxBodyInit = false;
+	_status = HTTPContext::eReadingRequest;
+	_readLen = 0;
+	_multiplexer = Multiplexer::GetCurrentMultiplexer();
 }
 
-void HTTPContext::MarkedSocketToFree()
+void HTTPContext::_handleConnectionEnd()
 {
-	INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " disconnected";
-	HTTPLog(DDEBUG) << ", MarkedSocketToFree: marking for deletion.";
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-
-	Utility::SigPipe = false;
-	if (in != NULL)
-		MulObj->ChangeToEpollOneShot(in);
-	if (out != NULL)
-		MulObj->ChangeToEpollOneShot(out);
-	sock->MarkedToDelete = true;
+	if (_router.GetRequest().isKeepAlive() && _sock->ClosedConnection() == false && _status != HTTPContext::eDelete)
+	{
+		_sock->SetKeepAlive(true);
+		_status = HTTPContext::eDone;
+		INFO() << "Socket fd: " << _sock->GetFd() << " marked for keep-alive.";
+	}
+	else
+	{
+		INFO() << "Socket fd: " << _sock->GetFd() << " marked for deletion.";
+		shutdown(_sock->GetFd(), SHUT_WR);
+		if (!_router.GetRequest().isKeepAlive())
+		{
+			_multiplexer->ScheduleForDeletion(_sock);
+		}
+		else
+		{
+			_sock->cleanBody = true;
+			_multiplexer->ChangeToEpollIn(_sock);
+			_sock->SetTimeout(30);
+		}
+		Utility::SigPipe = false;
+		_status = HTTPContext::eDelete;
+		HTTPLog(DDEBUG) << "cleanBody: marking socket fd=" << _sock->GetFd();
+	}
 }
 
 HTTPContext::~HTTPContext()
 {
-	DDEBUG("HTTPContext") << "HTTPContext destructor called, sock=" << (sock ? sock->GetFd() : -1);
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	bool res;
+	DDEBUG("HTTPContext") << "HTTPContext destructor called, sock=" << (_sock ? _sock->GetFd() : -1);
 
-	if (in)
+	if (_buf)
 	{
-		res = MulObj->DeleteFromEpoll(in);
-		DDEBUG("HTTPContext") << "  -> Deleting in-pipe fd=" << in->GetFd() << ", deleted: " << res;
-		delete in;
+		Utility::ReleaseBuffer(_buf);
 	}
-	if (out)
-	{
-		res = MulObj->DeleteFromEpoll(out);
-		DDEBUG("HTTPContext") << "  -> Deleting out-pipe fd=" << out->GetFd() << ", deleted: " << res;
-		delete out;
-	}
-	Utility::ReleaseBuffer(buf);
 }
 
-void HTTPContext::activeInPipe()
+string HTTPContext::_logPrefix()
 {
-	if (in == NULL)
-		return;
-	HTTPLog(DDEBUG) << ", activeInPipe: activating in-pipe fd=" << in->GetFd();
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-
-	MulObj->ChangeToEpollIn(in);
-}
-
-void HTTPContext::activeOutPipe()
-{
-	if (out == NULL)
-		return;
-	HTTPLog(DDEBUG) << ", activeOutPipe: activating out-pipe fd=" << out->GetFd();
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-
-	MulObj->ChangeToEpollOut(out);
-}
-
-string HTTPContext::logPrefix() 
-{ 
+	if (_prefix != "")
+		return _prefix;
 	stringstream s;
-	if (sock == NULL)
+	if (_sock == NULL)
 		return "";
-	s << "Socket fd: " << sock->GetFd() << ", ";
-	return s.str(); 
+	s << "Socket fd: " << _sock->GetFd() << ", ";
+	_prefix = s.str();
+	return _prefix;
+}
+
+int HTTPContext::GetStatus() const
+{
+	return _status;
+}
+
+vector<Config::Server> *HTTPContext::GetServers() const
+{
+	return _servers;
+}
+
+void HTTPContext::SetServers(vector<Config::Server> *servers)
+{
+	_servers = servers;
 }

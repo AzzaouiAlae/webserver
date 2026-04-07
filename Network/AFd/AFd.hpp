@@ -2,24 +2,25 @@
 #include <iostream>
 using namespace std;
 
-class AFd 
+class AFd
 {
 protected:
 	int fd;
 	string type;
 	size_t totalClean;
+	unsigned int events;
+
 public:
-	long delTime;
-	size_t maxToClean;
-	static char *buff;
-	bool deleteNow;
 	AFd(int fd, string type);
+	virtual ~AFd();
 	virtual void Handle() = 0;
-	operator int() const ;
+	static char *buff;
+	operator int() const;
 	string GetType();
 	int GetFd();
 	bool MarkedToDelete;
 	bool cleanBody;
-	virtual ~AFd();
 	void cleanFd();
+	void SetEvents(unsigned int ev);
+	unsigned int GetEvents() const;
 };

@@ -1,5 +1,5 @@
 #include "Socket.hpp"
-#include "SocketIO.hpp"
+#include "NetIO.hpp"
 #include "HTTPContext.hpp"
 
 int Socket::errorNumber = 0;
@@ -13,7 +13,10 @@ void Socket::Handle()
 		return;
 	}
 	DDEBUG("Socket") << "Handle: accepted new connection, fd=" << acceptedSocket << " on listener fd=" << fd;
+	int opt = 1;
+    setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt));
 	context->Handle(this);
+	
 }
 
 int Socket::inetConnect(const string &host, const string &service, int type)
@@ -39,7 +42,7 @@ int Socket::inetConnect(const string &host, const string &service, int type)
 
 	for (rp = result; rp != NULL; rp = rp->ai_next)
 	{
-		sock = socket(rp->ai_family, rp->ai_socktype | O_NONBLOCK, rp->ai_protocol);
+		sock = socket(rp->ai_family, rp->ai_socktype | O_NONBLOCK | O_CLOEXEC, rp->ai_protocol);
 		if (sock == -1)
 			continue;
 
@@ -57,7 +60,7 @@ int Socket::inetPassiveSocket(const char *host, const char *service, int type,
 							bool doListen, int backlog)
 {
 	addrinfo hints, *result, *rp;
-	int sock = 0, optVal = 1, res;
+	int sock = 0, optVal = 1, res = 0;
 	(void)res;
 	(void)optVal;
 	memset(&hints, 0, sizeof(hints));
@@ -75,12 +78,12 @@ int Socket::inetPassiveSocket(const char *host, const char *service, int type,
 			continue;
 		if (doListen)
 		{
-			if (rp->ai_family != AF_INET6)
-				res = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
-								&optVal, sizeof(optVal));
-			else
-				res = setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
-								&optVal, sizeof(optVal));
+			if (rp->ai_family == AF_INET6)
+				res = setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &optVal, sizeof(optVal));
+
+			res += setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optVal, sizeof(optVal));
+			
+			res += setsockopt(sock, SOL_SOCKET, SO_ZEROCOPY, &optVal, sizeof(optVal));
 			if (res != 0)
 			{
 				close(sock);
@@ -324,7 +327,5 @@ Socket::~Socket()
 {
 	DDEBUG("Socket") << "Socket destructor called, fd=" << fd;
 	delete context;
-	close(fd);
-	Singleton::GetFds().erase(this);
 }
 

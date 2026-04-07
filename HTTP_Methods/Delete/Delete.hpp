@@ -4,9 +4,9 @@
 
 class Delete: public AMethod
 {
-	void deleteFile();
-	
+	void _deleteFile();
+	void _initDelete();
 public:
 	bool HandleResponse();
-	Delete(SocketIO *sock, Routing *router);
+	Delete(ClientSocket *sock, Routing *router);
 };

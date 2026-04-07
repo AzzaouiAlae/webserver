@@ -29,7 +29,13 @@ class ClientRequest: public ARequest {
 	void parsLenTypeCont();
 	bool getFullLine(string &line);
 	void parseHeaderLine(const string &line);
+	void checkHost();
+
+	// Chunked & multipart support
+	void detectTransferEncoding();
+	void detectMultipartBoundary();
 public:
+	// bool processChunkedBody();
 	ClientRequest(size_t maxbodysze);
 	ClientRequest();
 	~ClientRequest();
@@ -42,5 +48,7 @@ public:
 	string		 &getPath();
 	void SetMaxBodySize(int size);
 	bool isRequestHeaderComplete();
+	bool isKeepAlive() const;
+	size_t getMaxBodySize() const;
 };
 

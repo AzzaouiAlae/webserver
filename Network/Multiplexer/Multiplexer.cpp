@@ -1,257 +1,184 @@
 #include "Multiplexer.hpp"
-#include "SocketIO.hpp"
+#include "NetIO.hpp"
 #include "SessionManager.hpp"
 #include "HTTPContext.hpp"
+#include "Config.hpp"
 
-set<AFd *> Multiplexer::toDelete;
+Multiplexer *Multiplexer::currentMultiplexer;
 
-Multiplexer* Multiplexer::currentMultiplexer;
-
-Multiplexer* Multiplexer::GetCurrentMultiplexer()
+Multiplexer *Multiplexer::GetCurrentMultiplexer()
 {
 	return currentMultiplexer;
 }
 
-Multiplexer::Multiplexer()
+Multiplexer::Multiplexer(set<AFd *> &fds): _fds(fds)
 {
 	currentMultiplexer = this;
 	count = 0;
 	DEBUG("Multiplexer") << "Multiplexer initialized, starting epoll setup.";
-	epoolInit();
+	eventList.resize(64);
 }
 
-void Multiplexer::epoolInit()
+Multiplexer::~Multiplexer()
+{
+	close(epollFd);
+}
+
+void Multiplexer::epollInit()
 {
 	epollFd = epoll_create1(EPOLL_CLOEXEC);
 	if (epollFd == -1)
 		Error::ThrowError("epoll_create");
 	DDEBUG("Multiplexer") << "epoll_create1 succeeded, epollFd=" << epollFd;
-	set<AFd *> &fds = Singleton::GetFds();
-	set<AFd *>::iterator it = fds.begin();
-	DDEBUG("Multiplexer") << "Registering " << fds.size() << " initial fd(s) as EPOLLIN.";
-	for(; it != fds.end(); it++)
+	set<AFd *>::iterator it = _fds.begin();
+	DDEBUG("Multiplexer") << "Registering " << _fds.size() << " initial fd(s) as EPOLLIN.";
+	for (; it != _fds.end(); it++)
 	{
 		AddAsEpollIn(*it);
 	}
-	DEBUG("Multiplexer") << "epoolInit complete, " << fds.size() << " fd(s) registered.";
+	DEBUG("Multiplexer") << "epollInit complete, " << _fds.size() << " fd(s) registered.";
+}
+
+bool Multiplexer::_modifyEpoll(int operation, AFd *fd, int type)
+{
+	if (fd->MarkedToDelete)
+		return false;
+	
+	epoll_event ev;
+
+	ev.events = type;
+	ev.data.ptr = (void *)fd;
+	if (epoll_ctl(epollFd, operation, fd->GetFd(), &ev) == -1)
+	{
+		DDEBUG("Multiplexer") << "epoll_ctl " << operation << " failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
+		return false;
+	}
+	return true;
 }
 
 bool Multiplexer::AddAsEpollIn(AFd *fd)
 {
-	return AddAsEpoll(fd, EPOLLIN);
+	bool res = _modifyEpoll(EPOLL_CTL_ADD, fd, EPOLLIN);
+	if (res)
+		count++;
+	return res;
 }
 
 bool Multiplexer::AddAsEpollOut(AFd *fd)
 {
-	return AddAsEpoll(fd, EPOLLOUT);
-}
-
-bool Multiplexer::AddAsEpoll(AFd *fd, int type)
-{
-	epoll_event ev;
-
-	ev.events = type;
-	ev.data.ptr = (void *)fd;
-	//INFO() << "AddAsEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
-	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, fd->GetFd(), &ev) == -1)
-	{
-		DDEBUG("Multiplexer") << "epoll_ctl ADD failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
-		return false;
-	}
-	count++;
-	DDEBUG("Multiplexer") << "epoll_ctl ADD succeeded for fd=" << fd->GetFd() << ", type=" << fd->GetType() << ", count=" << count;
-	return true;
-}
-
-bool Multiplexer::ChangeToEpoll(AFd *fd, int type)
-{
-	epoll_event ev;
-
-	ev.events = type;
-	ev.data.ptr = (void *)fd;
-	//INFO() << "ChangeToEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
-	if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd->GetFd(), &ev) == -1)
-	{
-		DDEBUG("Multiplexer") << "ChangeToEpoll: "<< type <<", failed for fd=" << fd->GetFd() << ", type=" << fd->GetType();
-		return false;
-	}
-	DDEBUG("Multiplexer") << "ChangeToEpoll: "<< type <<", succeeded for fd=" << fd->GetFd() << ", type=" << fd->GetType();
-	return true;
-}
-
-bool Multiplexer::ChangeToEpollOut(AFd *fd)
-{
-	return ChangeToEpoll(fd, EPOLLOUT);
+	bool res = _modifyEpoll(EPOLL_CTL_ADD, fd, EPOLLOUT);
+	if (res)
+		count++;
+	return res;	
 }
 
 bool Multiplexer::ChangeToEpollIn(AFd *fd)
 {
-	return ChangeToEpoll(fd, EPOLLIN);
+	return _modifyEpoll(EPOLL_CTL_MOD, fd, EPOLLIN);
 }
 
-bool Multiplexer::ChangeToEpollOneShot(AFd *fd)
+bool Multiplexer::ChangeToEpollOut(AFd *fd)
 {
-	return ChangeToEpoll(fd, EPOLLONESHOT);
-}
-
-bool Multiplexer::DeleteFromEpoll(AFd *fd)
-{
-	count--;
-	bool res = epoll_ctl(epollFd, EPOLL_CTL_DEL, fd->GetFd(), NULL) == 0;
-	DDEBUG("Multiplexer") << "DeleteFromEpoll fd=" << fd->GetFd() << ", count=" << count << ", EPOLL_CTL_DEL: " << res;
-	//INFO() << "DeleteFromEpoll addr: " << (void *)fd << ", fd: " <<  fd->GetFd() << ", type: " << fd->GetType();
-	return res;
+	return _modifyEpoll(EPOLL_CTL_MOD, fd, EPOLLOUT);
 }
 
 bool Multiplexer::ChangeToEpollInOut(AFd *fd)
 {
-	return ChangeToEpoll(fd, EPOLLIN | EPOLLOUT);
+	return  _modifyEpoll(EPOLL_CTL_MOD, fd, EPOLLIN | EPOLLOUT);
+}
+
+bool Multiplexer::ChangeToEpollOneShot(AFd *fd)
+{
+	return  _modifyEpoll(EPOLL_CTL_MOD, fd, EPOLLONESHOT);
+}
+
+bool Multiplexer::DeleteFromEpoll(AFd *fd)
+{
+	bool res = epoll_ctl(epollFd, EPOLL_CTL_DEL, fd->GetFd(), NULL) == 0;
+	DEBUG("Multiplexer") << "DeleteFromEpoll fd=" << fd->GetFd() << ", count=" << count << ", EPOLL_CTL_DEL: " << res;
+	if (res)
+		count--;
+	return res;
 }
 
 void Multiplexer::MainLoop()
 {
+	epollInit();
 	size_t Count = 0;
 	INFO() << "Server is ready, waiting for connections...";
-	while(true)
+	while (true)
 	{
-		int timeout = TIMEOUT * 1000; // 20 seconds 
-
-		epoll_event eventList[count];
-		int size = epoll_wait(epollFd, eventList, count, timeout);
-
-		for(int i = 0; i < size; i++) {
-			handelEpollPipes(eventList[i]);
+		int timeout = NetIO::GetSocketTimeout();
+		DDEBUG("Multiplexer") 
+			<< "Starting epoll_wait with timeout=" << timeout 
+			<< " ms, current count=" << count;
+		if (count > (int)eventList.size())
+			eventList.resize(count * 2);
+		int size = epoll_wait(epollFd, eventList.data(), eventList.size(), timeout);
+		for (int i = 0; i < size; i++)
+		{
+			_handleEpollAfd(eventList[i]);
+			_tryCleanup(eventList[i]);
 		}
-		for(int i = 0; i < size; i++) {
-			handelEpollSocket(eventList[i]);
-		}
-		ClearToDelete();
-		if (Utility::SigInt) {
+		_cleanupDeletedList();
+		NetIO::ClearTimeout();
+		if (Utility::SigInt)
+		{
 			INFO() << "SIGINT received. Shutting down server.";
 			break;
 		}
-		INFO() << "epoll_wait, Handle: " << size << " AFd, loop iteration complete " << Count++ << "\n";
+		Logging::Info() << "epoll_wait, Handle: " << size << " AFd, loop iteration complete " << Count++ << "\n";
 	}
 }
 
-void Multiplexer::DeleteItem(AFd *item)
-{
-	tcp_info info;
-    socklen_t len;
-	len = sizeof(info);
-
-	if (item->deleteNow || item->GetType() == "Socket")
-	{
-		delete item;
-		toDelete.erase(item);
-	}
-	else if (getsockopt(item->GetFd(), IPPROTO_TCP, TCP_INFO, &info, &len) == 0)
-	{
-		if (info.tcpi_unacked == 0) {
-			item->deleteNow = true;
-		}
-	}
-}
-
-void Multiplexer::ClearToDelete()
-{
-	SocketIO::CloseSockFD(-1);
-	SocketIO::clearTimeout();
-
-	if (toDelete.size() == 0)
-		return;
-	DDEBUG("Multiplexer") << "ClearToDelete: " << toDelete.size() << " item(s) pending deletion.";
-	set<AFd *>::iterator it = toDelete.begin();
-	set<AFd *>::iterator next;
-	
-	for(; it != toDelete.end(); it = next)
-	{
-		next = it;
-		next++;
-		DeleteItem(*it);
-	}
-}
-
-Multiplexer::~Multiplexer()
-{
-	DEBUG("Multiplexer") << "Multiplexer destructor called, cleaning up.";
-	set<AFd *> &fds = Singleton::GetFds();
-	set<AFd *>::iterator it = fds.begin();
-
-	for(; it != fds.end(); it++)
-	{
-		DEBUG("Multiplexer") << "Deleting fd=" << (*it)->GetFd() << ", type=" << (*it)->GetType();
-		toDelete.insert(*it);
-	}
-	DDEBUG("Multiplexer") << "Marked " << fds.size() << " fd(s) for deletion, closing epollFd=" << epollFd;
-	close(epollFd);
-	while (toDelete.size()) {
-		DEBUG("Multiplexer") << "Waiting for " << toDelete.size() << " item(s) to be deleted.";
-		ClearToDelete();
-	}
-	while (SocketIO::CloseSockFD(-1)) {
-		DEBUG("Multiplexer") << "Waiting for all socket fds to be closed.";
-	}
-	APipe::ClearPipePool();
-	SessionManager *p = SessionManager::getInstance();
-	delete p;
-	delete[] AFd::buff;
-	Utility::ClearBuffPoll();
-	DEBUG("Multiplexer") << "Multiplexer cleanup complete.";
-}
-
-bool Multiplexer::ClearEventObj(epoll_event &event)
+void Multiplexer::_tryCleanup(epoll_event &event)
 {
 	AFd *obj = (AFd *)(event.data.ptr);
-
-	if (obj->MarkedToDelete || (event.events & (EPOLLIN | EPOLLOUT)) == 0)
-	{
-		ClearObj(obj);
-		return true;
-	}
-	return false;
-}
-
-void Multiplexer::ClearObj(AFd *obj)
-{
-	DEBUG("Multiplexer") << "Socket fd: " << obj->GetFd() << ", MarkedToDelete";
-	obj->MarkedToDelete = true;
-	if (currentMultiplexer == NULL)
+	if (obj->MarkedToDelete)
 		return;
-	currentMultiplexer->DeleteFromEpoll(obj);
-	toDelete.insert(obj);
+	
+	if (event.events & MyEpollEvent::eEPOLLERR) {
+		DDEBUG("Multiplexer") << "ClearEventObj() for fd=" << obj->GetFd() << ", event=" << event.events;
+		ScheduleForDeletion(obj);
+	}
 }
 
-void Multiplexer::handelEpollPipes(epoll_event &event)
+void Multiplexer::_handleEpollAfd(epoll_event &event)
 {
 	AFd *obj = (AFd *)(event.data.ptr);
 	
-	if (obj->GetType() == "Pipe") 
-	{
-		DDEBUG("Multiplexer") << "handelEpollPipes: handling Pipe fd=" << obj->GetFd();
-		obj->Handle();
-	}
-}
-
-void Multiplexer::handelEpollSocket(epoll_event &event)
-{
-	AFd *obj = (AFd *)(event.data.ptr);
-	
-	if (obj->GetType() == "Pipe") 
+	if (obj->MarkedToDelete)
 		return;
-	DDEBUG("Multiplexer") 
-		<< "handelEpollSocket: fd=" << obj->GetFd()
+	DDEBUG("Multiplexer")
+		<< "handleEpollSocket: fd=" << obj->GetFd()
 		<< ", type=" << obj->GetType()
 		<< ", events=" << event.events
 		<< ", cleanBody=" << obj->cleanBody;
-	if (obj->cleanBody && (event.events & EPOLLIN)) {
-		DDEBUG("Multiplexer") << "  -> cleanFd() for fd=" << obj->GetFd();
+	
+	obj->SetEvents(event.events);
+	if (obj->cleanBody && (event.events & (MyEpollEvent::eEPOLLIN | EPOLLRDHUP)))
 		obj->cleanFd();
-	}
-	else if (ClearEventObj(event))
-		return;
-	else if (event.events & (EPOLLIN | EPOLLOUT)) {
-		DDEBUG("Multiplexer") << "  -> Handle() for fd=" << obj->GetFd();
+	else if (event.events & (MyEpollEvent::eEPOLLIN | MyEpollEvent::eEPOLLOUT) || obj->GetType() == "Pipe")
 		obj->Handle();
+}
+
+void Multiplexer::_cleanupDeletedList()
+{
+	for (int i = 0; i < (int)_deletedList.size(); i++)
+	{
+		AFd *obj = _deletedList[i];
+		DeleteFromEpoll(obj);
+		_fds.erase(obj);
+		delete obj;
 	}
+	_deletedList.clear();
+}
+
+void Multiplexer::ScheduleForDeletion(AFd *obj)
+{
+	if (obj->MarkedToDelete) 
+		return;
+    
+    obj->MarkedToDelete = true;
+    _deletedList.push_back(obj);
 }

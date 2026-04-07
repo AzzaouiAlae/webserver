@@ -30,6 +30,7 @@ class CgiRequest : public ARequest
     void parseHeaderLine(const string &line);
 
 public:
+    bool isContentLenghtExist();
     CgiRequest();
     ~CgiRequest();
     string &getStatusCode();

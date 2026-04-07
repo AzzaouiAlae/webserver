@@ -1,0 +1,5 @@
+--LargeStreamBound
+Content-Disposition: form-data; name="file"; filename="bigfile.bin"
+Content-Type: application/octet-stream
+
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX

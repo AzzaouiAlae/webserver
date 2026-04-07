@@ -25,12 +25,15 @@
 #include <sys/wait.h>
 #include <netinet/tcp.h>
 #include <sys/time.h>
+#include <linux/errqueue.h>
 #include <signal.h>
 #include <sys/types.h> 
 #include <dirent.h>
 #include <iomanip>
 #include <ctime>
 #include <queue>
+#include <sys/ioctl.h>
+#include <sys/resource.h>
 
 using namespace std;
 
@@ -69,6 +72,11 @@ using namespace std;
 #include "Tokenizing.hpp"
 #include "ConnectionContext.hpp"
 #include "APipe.hpp"
+
+#include "ChunkedData.hpp"
+#include "MultipartData.hpp"
+
+#include "AStrategy.hpp"
 
 extern char **environ;
 

@@ -12,6 +12,7 @@
 
 #include "ARequest.hpp"
 
+
 ARequest::ARequest()
 {
     _reqDirectives = NULL;
@@ -21,11 +22,14 @@ ARequest::ARequest()
     _Thereisbody = false;
 	_headersize = 0;
     _currentSession = NULL;
+    _isChunked = false;
+    _isMultipart = false;
+    _requestbuff.reserve(1024);
 }
 
 ARequest::~ARequest()
-{
-}
+{}
+
 
 bool ARequest::getthereisbody()
 {
@@ -47,13 +51,15 @@ map<string, string> &ARequest::getrequestenv()
 	return (_env);
 }
 
-void ARequest::parseCookies() {
+void ARequest::parseCookies()
+{
     string cookieHeader = _env["HTTP_COOKIE"];
     if (cookieHeader.empty()) return;
     
     stringstream ss(cookieHeader);
     string cookie;
-    while (getline(ss, cookie, ';')) {
+    while (getline(ss, cookie, ';')) 
+    {
         size_t start = cookie.find_first_not_of(" \t");
         if (start == string::npos) continue;
         cookie = cookie.substr(start);
@@ -67,13 +73,15 @@ void ARequest::parseCookies() {
     }
 }
 
-string ARequest::getCookie(const string &name) {
+string ARequest::getCookie(const string &name)
+{
     if ( _cookies.find(name) != _cookies.end())
         return _cookies[name];
     return "";
 }
 
-void ARequest::initSession() {
+void ARequest::initSession()
+{
     parseCookies();
     
     SessionManager* sm = SessionManager::getInstance();
@@ -97,9 +105,54 @@ void ARequest::initSession() {
     }
     _env["SESSIONID"] = _currentSession->id;
 }
-Session* ARequest::getSession() {
+
+Session *ARequest::getSession()
+{
     if (_currentSession == NULL) {
         initSession();
     }
     return _currentSession;
+}
+
+bool ARequest::isChunkedTransferEncoding()
+{
+    if (_env.find("HTTP_TRANSFER_ENCODING") != _env.end())
+        return _env["HTTP_TRANSFER_ENCODING"] == "chunked";
+    if (_env.find("Transfer-Encoding") != _env.end())
+        return _env["Transfer-Encoding"] == "chunked";
+    return false;
+}
+
+bool ARequest::isMultipartFormData()
+{
+    string ct;
+    if (_env.find("CONTENT_TYPE") != _env.end())
+        ct = _env["CONTENT_TYPE"];
+    else if (_env.find("Content-Type") != _env.end())
+        ct = _env["Content-Type"];
+    if (ct.empty())
+        return false;
+    return ct.find("multipart/form-data") != string::npos;
+}
+
+string ARequest::getMultipartBoundary()
+{
+    string ct;
+    if (_env.find("CONTENT_TYPE") != _env.end())
+        ct = _env["CONTENT_TYPE"];
+    else if (_env.find("Content-Type") != _env.end())
+        ct = _env["Content-Type"];
+    if (ct.empty())
+        return "";
+    size_t pos = ct.find("boundary=");
+    if (pos == string::npos)
+        return "";
+    string boundary = ct.substr(pos + 9);
+    if (!boundary.empty() && boundary[0] == '"')
+    {
+        size_t end = boundary.find('"', 1);
+        if (end != string::npos)
+            boundary = boundary.substr(1, end - 1);
+    }
+    return boundary;
 }

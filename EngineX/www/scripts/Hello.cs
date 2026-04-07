@@ -26,7 +26,7 @@ if (File.Exists(filePath))
         $"Server: Enginx/CGI-CSharp\r\n" +
         $"Content-Type: text/html; charset=utf-8\r\n" +
         $"Content-Length: {bodySize}\r\n" +
-        $"Connection: close\r\n" +
+        // $"Connection: close\r\n" +
         $"\r\n"; 
 
     Console.Write(header);
@@ -45,7 +45,7 @@ else
         $"Server: Enginx/CGI-CSharp\r\n" +
         $"Content-Type: text/html; charset=utf-8\r\n" +
         $"Content-Length: {bodySize}\r\n" +
-        $"Connection: close\r\n" +
+        // $"Connection: close\r\n" +
         $"\r\n";
 
     Console.Write(errorHeader);

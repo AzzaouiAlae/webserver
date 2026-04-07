@@ -60,6 +60,9 @@ extern "C" {
     extern const char _binary_HTTP_DefaultPages_Pages_504_htm_start[];
     extern const char _binary_HTTP_DefaultPages_Pages_504_htm_end[];
 
+	extern const char _binary_HTTP_DefaultPages_Pages_505_htm_start[];
+	extern const char _binary_HTTP_DefaultPages_Pages_505_htm_end[];
+
     extern const char _binary_HTTP_DefaultPages_Pages_autoindex1_htm_start[];
     extern const char _binary_HTTP_DefaultPages_Pages_autoindex1_htm_end[];
 
@@ -117,6 +120,9 @@ extern "C" {
 
 #define PAGE_504_S _binary_HTTP_DefaultPages_Pages_504_htm_start
 #define PAGE_504_E _binary_HTTP_DefaultPages_Pages_504_htm_end
+
+#define PAGE_505_S _binary_HTTP_DefaultPages_Pages_505_htm_start
+#define PAGE_505_E _binary_HTTP_DefaultPages_Pages_505_htm_end
 
 #define PAGE_AUTOINDEX1_S _binary_HTTP_DefaultPages_Pages_autoindex1_htm_start
 #define PAGE_AUTOINDEX1_E _binary_HTTP_DefaultPages_Pages_autoindex1_htm_end

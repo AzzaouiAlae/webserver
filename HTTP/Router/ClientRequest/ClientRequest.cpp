@@ -30,6 +30,7 @@ void ClientRequest::initReqDirectives()
 	_clientreqDirectives["Cookie"] = "HTTP_COOKIE";
 	_clientreqDirectives["Referer"] = "HTTP_REFERER";
 	_clientreqDirectives["Origin"] = "HTTP_ORIGIN";
+	_clientreqDirectives["Transfer-Encoding"] = "HTTP_TRANSFER_ENCODING";
 }
 
 ClientRequest::ClientRequest(size_t maxbodysze) : ARequest()
@@ -67,8 +68,9 @@ bool ClientRequest::parsPath(string path)
 {
 	size_t pos = path.find('?');
 
-	if (path[0] != '/' || path.find("..") != string::npos)
+	if (path[0] != '/')
 		return (false);
+	Utility::normalizePath(path);
 	_env["REQUEST_URI"] = path;
 	if (pos != string::npos)
 	{
@@ -93,7 +95,7 @@ void ClientRequest::parsHttpStandard(string httpStandard)
 	string extra;
 
 	if (!(ss >> method >> path >> httpv) || (ss >> extra))
-		Error::ThrowError("The Request HttpStandard is Invalid");
+		Error::ThrowError("400");
 	if (!(httpv == "HTTP/1.1" || httpv == "HTTP/1.0"))
 		Error::ThrowError("505");
 	if (!parsPath(path))
@@ -106,15 +108,20 @@ void ClientRequest::parsHttpStandard(string httpStandard)
 
 void ClientRequest::parsLenTypeCont()
 {
-	if (getthereisbody())
+	if (getthereisbody() || _env.find("CONTENT_LENGTH") != _env.end())
 	{
+		if (_isChunked)
+			return;
 		if (_env.find("CONTENT_LENGTH") != _env.end())
 			if (!Utility::strtosize_t(_env["CONTENT_LENGTH"], _content_len))
 				Error::ThrowError("400");
-		if (_content_len == 0 || _env.find("CONTENT_LENGTH") == _env.end())
+		if (_env.find("CONTENT_LENGTH") == _env.end())
 			Error::ThrowError("400");
 		DDEBUG("ClientRequest") << "parsLenTypeCont: Content-Type='" << _env["CONTENT_TYPE"]
 								<< "', Content-Length=" << _content_len;
+		if (_content_len > _maxbodysize ){
+			Error::ThrowError("413");
+		}
 	}
 }
 
@@ -127,7 +134,7 @@ void ClientRequest::parseHost()
 								<< "', SERVER_PORT='" << _env["SERVER_PORT"] << "'";
 	}
 	else
-		Error::ThrowError("Bad Request");	
+		Error::ThrowError("400");	
 }
 
 bool ClientRequest::ParseHeader()
@@ -142,18 +149,30 @@ bool ClientRequest::ParseHeader()
 	if (_Parspos == eParsHttpStand && line == "\r\n" && _requestbuff.length() > 0) _Thereisbody = true;
 	if (_Parspos == eParsHttpStand && line == "\r\n" && 
 		(_env["REQUEST_METHOD"] == "POST" || _env["REQUEST_METHOD"] == "DELETE"))
+	{
+		detectTransferEncoding();
+		detectMultipartBoundary();
 		parsLenTypeCont();
+	}
 	if (_Parspos == eParsHttpStand && line == "\r\n")
 	{
-		
 		_Parspos = eParsEnd;
 		DEBUG("ClientRequest") 
 			<< "Request header parsing complete: method=" << _env["REQUEST_METHOD"]
 			<< ", path=" << _env["REQUEST_URI"]
 			<< ", host=" << _env["HTTP_HOST"];
+		checkHost();
 		return (true);
 	}
 	return (false);
+}
+
+void ClientRequest::checkHost()
+{
+	if (_env["SERVER_PROTOCOL"] != "HTTP/1.1")
+		return;
+	if (_env["HTTP_HOST"] == "")
+		Error::ThrowError("400");
 }
 
 bool ClientRequest::isRequestHeaderComplete()
@@ -167,7 +186,7 @@ bool ClientRequest::isComplete(char *request, int size)
 	DDEBUG("ClientRequest") 
 		<< "isComplete: appended " << size 
 		<< " bytes, total buffer=" << _requestbuff.length() 
-		<< "\n" << _requestbuff;
+		<< "\n" << _requestbuff.substr(0, 300);
 	if (_Parspos != eParsEnd)
 	{
 		if (!ParseHeader())
@@ -229,7 +248,7 @@ void ClientRequest::SetMaxBodySize(int size)
 							<< ", bufferLen=" << _requestbuff.length()
 							<< ", contentLen=" << _content_len;
 	
-	if (_requestbuff.length() > _maxbodysize || _content_len > _maxbodysize){
+	if (_content_len > _maxbodysize ){
 		Error::ThrowError("413");
 	}
 }
@@ -239,6 +258,8 @@ bool  ClientRequest::getFullLine(string &line)
 	int index = 0;
 	line.clear();
 
+	if (_firstline)
+		Utility::ltrim(_requestbuff, "\r\n");
 	while (_requestbuff[index] && _requestbuff[index] != '\n')
 	{
 		if (index > MAXHEADERSIZE)
@@ -251,7 +272,8 @@ bool  ClientRequest::getFullLine(string &line)
 		index++;
 	}
 	DDEBUG("ClientRequest") << "getFullLine: extracted line='" << line << "' from buffer, index=" << index;	
-    _firstline = false;
+	if (_requestbuff.length())
+    	_firstline = false;
 	if (_requestbuff[index] == '\n' && (index == 0 || (index > 0 && _requestbuff[index - 1] != '\r') ))
         Error::ThrowError("400");
 	else if (_requestbuff[index] == '\n')
@@ -292,4 +314,48 @@ void ClientRequest::parseHeaderLine(const string &line)
             Error::ThrowError("400");
     }
     _env[key] = value;
+}
+
+void ClientRequest::detectTransferEncoding()
+{
+	if (_env.find("HTTP_TRANSFER_ENCODING") != _env.end()
+		&& _env["HTTP_TRANSFER_ENCODING"] == "chunked")
+	{
+		_isChunked = true;
+		_Thereisbody = true;
+		DEBUG("ClientRequest") << "Detected chunked transfer encoding.";
+	}
+}
+
+void ClientRequest::detectMultipartBoundary()
+{
+	if (isMultipartFormData())
+	{
+		_isMultipart = true;
+		_boundary = getMultipartBoundary();
+		if (_boundary.empty())
+			Error::ThrowError("400");
+		DEBUG("ClientRequest") << "Detected multipart/form-data, boundary='" << _boundary << "'";
+	}
+}
+
+bool ClientRequest::isKeepAlive() const
+{
+	map<string, string>::const_iterator it = _env.find("HTTP_CONNECTION");
+	if (it != _env.end())
+	{
+		string val = it->second;
+		for (size_t i = 0; i < val.size(); i++)
+			val[i] = tolower(val[i]);
+		return val == "keep-alive";
+	}
+	map<string, string>::const_iterator proto = _env.find("SERVER_PROTOCOL");
+	if (proto != _env.end() && proto->second == "HTTP/1.1")
+		return true;
+	return false;
+}
+
+size_t ClientRequest::getMaxBodySize() const
+{
+	return _maxbodysize;
 }

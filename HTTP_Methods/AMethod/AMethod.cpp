@@ -1,46 +1,57 @@
 #include "AMethod.hpp"
+#include "BuffersStrategy.hpp"
+#include "FileStrategy.hpp"
 
-map<string, string> AMethod::statusMap;
+map<string, string> AMethod::_statusMap;
 
-AMethod::AMethod(SocketIO *sock, Routing *router)
+AMethod::AMethod(ClientSocket *sock, Routing *router)
 {
 	_cgi = NULL;
-	readyToSend = false;
-	sendHeader = false;
-	staticFile = NULL;
-	ShouldSend = 0;
-	bodySize = 0;
-	del = false;
-	sended = 0;
-	fileFd = -1;
-	code = "";
-	filename = "";
-	responseHeaderStr = "";
-	this->sock = sock;
-	this->router = router;
-	InitStatusMap();
-	pathResolved = false;
+	_staticFile = NULL;
+	_totalByteToSend = 0;
+	_bodySize = 0;
+	_fileFd = -1;
+	_statusCode = "";
+	_filename = "";
+	_responseHeaderStr = "";
+	this->_sock = sock;
+	this->_router = router;
+	_initStatusMap();
 	DEBUG("AMethod") << "AMethod initialized, socket fd=" << sock->GetFd();
+	_status = eInit;
+	_multiplexer = Multiplexer::GetCurrentMultiplexer();
 }
 
-void AMethod::ResolvePath()
+void AMethod::_createTimeoutResponse()
 {
-	if (pathResolved == false)
-	{
-		filename = router->CreatePath(router->srv);
-		pathResolved = true;
-		DEBUG("AMethod") << "Socket fd: " << sock->GetFd()
-						 << " " << router->GetRequest().getMethod()
-						 << " resolved path: " << filename;
-		DDEBUG("AMethod") << "  -> isCGI=" << router->GetPath().isCGI()
-						  << ", isDir=" << router->GetPath().isDirectory()
-						  << ", isFile=" << router->GetPath().isFile()
-						  << ", isRedir=" << router->GetPath().isRedirection()
-						  << ", found=" << router->GetPath().isFound();
-	}
+	_buffers.clear();
+	if (_router->GetPath().isCGI())
+		HandleErrorPages("504");
+	else
+		HandleErrorPages("408");
+	_sock->UpdateTime();
 }
 
-string AMethod::escapeForJS(const string &input)
+void AMethod::_resolvePath()
+{
+	_filename = _router->CreatePath(_router->srv);
+	if (_router->GetRequest().getMethod() != "GET" &&
+		_router->GetRequest().getMethod() != "HEAD")
+	{
+		_filename = _router->GetPath().OriginalPath.path;
+	}
+	DEBUG("AMethod")
+		<< "Socket fd: " << _sock->GetFd()
+		<< ", method: " << _router->GetRequest().getMethod()
+		<< ", resolved path: " << _filename
+		<< ", isCGI=" << _router->GetPath().isCGI()
+		<< ", isDir=" << _router->GetPath().isDirectory()
+		<< ", isFile=" << _router->GetPath().isFile()
+		<< ", isRedir=" << _router->GetPath().isRedirection()
+		<< ", found=" << _router->GetPath().isFound();
+}
+
+string AMethod::_escapeForJS(const string &input)
 {
 	string output;
 	for (size_t i = 0; i < input.length(); ++i)
@@ -63,14 +74,15 @@ string AMethod::escapeForJS(const string &input)
 
 AMethod::~AMethod()
 {
-	if (fileFd != -1)
+	if (_fileFd != -1)
 	{
-		close(fileFd);
+		close(_fileFd);
 	}
-	delete _cgi;
+	if (_cgi != NULL)
+		delete _cgi;
 }
 
-string AMethod::CreateDate()
+string AMethod::_createDate()
 {
 	char date[100];
 	time_t now = time(0);
@@ -79,332 +91,389 @@ string AMethod::CreateDate()
 	return date;
 }
 
-string AMethod::ResolveServerName()
+string AMethod::_resolveServerName()
 {
+	if (_router->srv == NULL)
+		return "";
+
 	string serverName = "";
-	if (router->srv)
-		serverName = router->srv->serverName;
+	serverName = _router->srv->serverName;
 	if (serverName == "")
-		serverName = router->srv->listen[0];
+		serverName = _router->srv->listen[0];
 	return serverName;
 }
 
-string AMethod::ResolveMimeType()
+string AMethod::_resolveMimeType()
 {
-	return Singleton::GetMime()[Utility::GetFileExtension(filename)];
+	string ext = Utility::GetFileExtension(_filename);
+	map<string,string>::iterator it = Singleton::GetMime().find(ext);
+	if (it == Singleton::GetMime().end())
+		return "application/octet-stream";
+	return it->second;
 }
 
-void AMethod::CreateResponseHeader()
+void AMethod::_addAlowMethodsHeader()
 {
-	responseHeader.str("");
-
-	responseHeader
-		<< "HTTP/1.1 " << code << " " << statusMap[code] << "\r\n"
-		<< "Date: " << CreateDate() << "\r\n"
-		<< "Server: " << ResolveServerName() << "\r\n"
-		<< "Content-Type: " << ResolveMimeType() << "\r\n"
-		<< "Content-Length: " << bodySize << "\r\n"
-		<< "Connection: close\r\n";
-	Session* session = NULL;
-	session = router->GetRequest().getSession();
-	if (session != NULL) {
-		addCookies(*session);
+	if (_statusCode == "405")
+	{
+		_responseHeader
+			<< "Allow: ";
+		vector<string>::iterator start, end;
+		if (_router->loc != NULL && _router->loc->allowMethodExists)
+		{
+			_responseHeader << _router->loc->allowMethods[0];
+			for (size_t i = 1; i < _router->loc->allowMethods.size(); i++)
+				_responseHeader << ", " << _router->loc->allowMethods[i];
+		}
+		else if (_router->srv != NULL && _router->srv->allowMethodExists)
+		{
+			_responseHeader << _router->srv->allowMethods[0];
+			for (size_t i = 1; i < _router->srv->allowMethods.size(); i++)
+				_responseHeader << ", " << _router->srv->allowMethods[i];
+		}
+		else
+			_responseHeader << "GET, POST, DELETE, HEAD";
+		_responseHeader << "\r\n";
 	}
-	responseHeader
+}
+
+void AMethod::_addCookiesHeader()
+{
+	Session *session = NULL;
+	session = _router->GetRequest().getSession();
+	if (session != NULL)
+	{
+		_addCookies(*session);
+	}
+}
+
+void AMethod::_createResponseHeader(const string &body)
+{
+	_responseHeader.str("");
+
+	_responseHeader
+		<< "HTTP/1.1 " << _statusCode << " " << _statusMap[_statusCode] << "\r\n"
+		<< "Date: " << _createDate() << "\r\n"
+		<< "Server: " << _resolveServerName() << "\r\n"
+		<< "Content-Type: " << _resolveMimeType() << "\r\n"
+		<< "Content-Length: " << _bodySize << "\r\n";
+	if (_sock->ClosedConnection())
+		_responseHeader << "Connection: close\r\n";
+	_addAlowMethodsHeader();
+	_addCookiesHeader();
+	_responseHeader
 		<< "X-Content-Type-Options: nosniff\r\n"
 		<< "\r\n";
 
-	responseHeaderStr = responseHeader.str();
-	DDEBUG("AMethod")
-		<< "Socket fd: " << sock->GetFd()
-		<< ", CreateResponseHeader: code=" << code
-		<< ", status=" << statusMap[code]
-		<< ", Content-Length=" << bodySize
-		<< ", Content-Type=" << ResolveMimeType()
-		<< "\n" << responseHeaderStr;
+	_responseHeaderStr = _responseHeader.str() + body;
+	DDEBUG("AMethod") << "Socket fd: " << _sock->GetFd()
+					  << ", CreateResponseHeader:\n"
+					  << _responseHeaderStr;
+	_insertPair(_responseHeaderStr, 0);
 }
 
-void AMethod::SendDefaultRespense(const string &code)
+void AMethod::_addPair(StaticFile *f)
 {
-	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendDefaultRespense: sending 201 Created.";
-	this->code = code;
-	bodySize = 0;
-	filename = ".html";
-	CreateResponseHeader();
-	ShouldSend = responseHeaderStr.length();
-	readyToSend = true;
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	MulObj->ChangeToEpollOut(sock);
+	if (f == NULL)
+		return;
+	char *data = (char *)f->GetData();
+	size_t size = f->GetSize();
+	_addPair(data, size);
 }
 
-void AMethod::CreateRedirectionHeader(const string &redirCode, const string &redirLocation)
+void AMethod::_addPair(string &str)
 {
-	responseHeader.str("");
+	char *data = (char *)str.c_str();
+	size_t size = str.length();
+	_addPair(data, size);
+}
 
-	responseHeader
-		<< "HTTP/1.1 " << redirCode << " " << statusMap[redirCode] << "\r\n"
+void AMethod::_insertPair(string &str, int idx)
+{
+	char *data = (char *)str.c_str();
+	size_t size = str.length();
+	pair<char *, size_t> pairData = make_pair(data, size);
+	if (idx < 0 || idx >= (int)_buffers.size())
+		_buffers.push_back(pairData);
+	else
+		_buffers.insert(_buffers.begin() + idx, pairData);
+}
+
+void AMethod::_addPair(const string &str)
+{
+	char *data = (char *)str.c_str();
+	size_t size = str.length();
+	_addPair(data, size);
+}
+
+void AMethod::_addPair(const char *data, size_t size)
+{
+	char *dataPtr = (char *)data;
+	_addPair(dataPtr, size);
+}
+
+void AMethod::_addPair(char *data, size_t size)
+{
+	pair<char *, size_t> pairData = make_pair(data, size);
+	_addPair(pairData);
+}
+
+void AMethod::_addPair(pair<char *, size_t> &data)
+{
+	_buffers.push_back(data);
+}
+
+void AMethod::_createDefaultResponse(const string &code)
+{
+	DDEBUG("AMethod") << "Socket fd: " << _sock->GetFd() << ", CreateDefaultResponse: sending " << code;
+	this->_statusCode = code;
+	_bodySize = 0;
+	_filename = ".html";
+	_createResponseHeader("");
+	_totalByteToSend = _responseHeaderStr.length();
+	_status = eSendResponse;
+	_multiplexer->ChangeToEpollOut(_sock);
+}
+
+void AMethod::_createRedirectionHeader(const string &redirCode, const string &redirLocation)
+{
+	_responseHeader.str("");
+
+	_responseHeader
+		<< "HTTP/1.1 " << redirCode << " " << _statusMap[redirCode] << "\r\n"
 		<< "Location: " << redirLocation << "\r\n"
-		<< "Date: " << CreateDate() << "\r\n"
-		<< "Content-Length: 0\r\n"
-		<< "Connection: close\r\n";
-	Session* session = NULL;
-	session = router->GetRequest().getSession();
-	if (session != NULL) {
-		addCookies(*session);
+		<< "Date: " << _createDate() << "\r\n"
+		<< "Content-Length: 0\r\n";
+	Session *session = NULL;
+	session = _router->GetRequest().getSession();
+	if (session != NULL)
+	{
+		_addCookies(*session);
 	}
-	responseHeader
+	_responseHeader
 		<< "\r\n";
 
-	responseHeaderStr = responseHeader.str();
+	_responseHeaderStr = _responseHeader.str();
+	_insertPair(_responseHeaderStr, 0);
 }
 
-string AMethod::ResolveErrorFilePath(const string &errorCode)
+string AMethod::_resolveErrorFilePath(const string &errorCode)
 {
-	return Config::GetErrorPath(*router->srv, errorCode);
+	return Config::GetErrorPath(*_router->srv, errorCode);
 }
 
-bool AMethod::OpenErrorFile(const string &path)
+bool AMethod::_openErrorFile(const string &path)
 {
-	fileFd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
-	return (fileFd != -1);
+	if (_fileFd != -1)
+		close(_fileFd);
+	
+	_fileFd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
+	return (_fileFd != -1);
 }
 
-void AMethod::LoadStaticErrorFile(const string &errorCode)
+void AMethod::_loadStaticErrorFile(const string &errorCode)
 {
-	staticFile = StaticFile::GetFileByName(errorCode.c_str());
-	if (staticFile == NULL)
+	_staticFile = StaticFile::GetFileByName(errorCode.c_str());
+	if (_staticFile == NULL)
 	{
-		staticFile = StaticFile::GetFileByName("404");
-		code = "404";
+		_staticFile = StaticFile::GetFileByName("404");
+		_statusCode = "404";
 	}
-	bodySize = staticFile->GetSize();
-	ShouldSend = bodySize;
-	filename = ".html";
+	_bodySize = _staticFile->GetSize();
+	_totalByteToSend = _bodySize;
+	_filename = ".html";
+	_addPair(_staticFile);
+	_router->SetSendStrategy(new BuffersStrategy(_buffers, *_sock));
 }
 
-void AMethod::HandelErrorPages(const string &err)
+void AMethod::HandleErrorPages(const string &err)
 {
-	ERR() << "Client " << Socket::getRemoteName(sock->GetFd()) << " error " << err << " " << statusMap[err];
-	DEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", AMethod::HandelErrorPages, code=" << err;
-	code = err;
-	string path = ResolveErrorFilePath(err);
+	_sock->SetCloseConnection(true);
+	ERR() << "Client " << Socket::getRemoteName(_sock->GetFd()) << " error " << err << " " << _statusMap[err];
+	DEBUG("AMethod") << "Socket fd: " << _sock->GetFd() << ", AMethod::HandleErrorPages, code=" << err;
+	_statusCode = err;
+	string path = _resolveErrorFilePath(err);
 	bool isPath = (path != "");
-	filename = router->srv->root + "/" + path;
+	_filename = _router->srv->root + "/" + path;
 
-	DDEBUG("AMethod") << "  -> errorFilePath='" << path << "', isPath=" << isPath << ", filename='" << filename << "'";
+	DDEBUG("AMethod") << "  -> errorFilePath='" << path << "', isPath=" << isPath << ", filename='" << _filename << "'";
 
-	if (isPath)
+	if (isPath && _openErrorFile(_filename))
 	{
-		if (!OpenErrorFile(filename))
-		{
-			DDEBUG("AMethod") << "  -> Failed to open error file, loading static fallback.";
-			LoadStaticErrorFile(err);
-		}
-		else 
-		{
-			bodySize = Utility::getFileSize(filename);
-			ShouldSend = bodySize;
-			DDEBUG("AMethod") << "  -> Opened error file, bodySize=" << bodySize;
-		}
+		_bodySize = Utility::getFileSize(_filename);
+		_totalByteToSend = _bodySize;
+		if ("HEAD" == _router->GetRequest().getMethod())
+			_router->SetSendStrategy(new BuffersStrategy(_buffers, *_sock));
+		else
+			_router->SetSendStrategy(new FileStrategy(_buffers, _fileFd, _bodySize, *_sock));
+		DDEBUG("AMethod") << "  -> Opened error file, bodySize=" << _bodySize;
 	}
 	else
 	{
 		DDEBUG("AMethod") << "  -> No custom error page, loading static fallback.";
-		LoadStaticErrorFile(err);
+		_loadStaticErrorFile(err);
 	}
-	CreateResponseHeader();
-	ShouldSend += responseHeaderStr.length();
-	readyToSend = true;
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	MulObj->ChangeToEpollOut(sock);
+	_createResponseHeader("");
+	if ("HEAD" == _router->GetRequest().getMethod())
+	{
+		_totalByteToSend = 0;
+	}
+	_totalByteToSend += _responseHeaderStr.length();
+	_multiplexer->ChangeToEpollOut(_sock);
+	_status = AMethod::eSendResponse;
 }
 
-void AMethod::SendResponse()
+void AMethod::_handleCGI()
 {
-	const char *h;
-	int size = 0, len;
-
-	if (staticFile != NULL)
+	if (_cgi == NULL){
+		_cgi = new Cgi(_router, _sock);
+	}
+	_cgi->Handle();
+	if (_cgi->isComplete())
 	{
-		if (sended < (int)responseHeaderStr.length())
-		{
-			h = &((responseHeaderStr.c_str())[sended]);
-			len = responseHeaderStr.length() - sended;
-			size = sock->Send((void *)h, len);
-		}
-		else
-		{
-			len = sended - (int)responseHeaderStr.length();
-			h = &((staticFile->GetData())[len]);
-			size = sock->Send((void *)h, staticFile->GetSize() - len);
-		}
+		_status = eComplete;
 	}
-	else if (sended < (int)responseHeaderStr.length())
-	{
-		h = &((responseHeaderStr.c_str())[sended]);
-		len = responseHeaderStr.length() - sended;
-		size = sock->Send((void *)h, len);
-	}
-	else if (sended >= (int)responseHeaderStr.length())
-	{
-		size = sock->FileToSocket(fileFd, ShouldSend - sended);
-	}
-
-	if (size > 0) {
-		sended += size;
-		sock->UpdateTime();
-	}
-
-	if (ShouldSend <= sended || Utility::SigPipe || sock->errorNumber == eWriteError)
-	{
-		if (sock->errorNumber == eWriteError)
-			ERR() << "Error to write to socket";
-		del = true;
-		sock->cleanBody = true;
-		INFO() << "Client " << Socket::getRemoteName(sock->GetFd()) << " <- " << code << " " << statusMap[code];
-		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendResponse complete, code=" << code;
-	}
-	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", SendResponse: sent=" << size << ", progress=" << sended << "/" << ShouldSend;
+	else if (_cgi->getStatus() == Cgi::eError) 
+		HandleErrorPages(_cgi->getErrorCode());
 }
 
-void AMethod::HandelCGI()
+void AMethod::_createRedirection()
 {
-	if (_cgi == NULL)
-	{
-		char *args[] = 
-		{
-			(char *)router->GetPath().getLocation()->cgiPassPath.c_str(), 
-			(char *)router->GetPath().getFullPath().c_str(),
-			NULL
-		};
-		_cgi = new Cgi(router->GetRequest(), args, sock);
-	}
-	try
-	{
-		_cgi->Handle();
-		if (_cgi->isComplete())
-		{
-			del = true;
-			sock->cleanBody = true;
-		}
-	}
-	catch(exception& e) {
-		HandelErrorPages(e.what());
-	}
-}
-
-void _cgiResponse()
-{
-	
-}
-
-void AMethod::SendRedirection()
-{
-	Path &path = router->GetPath();
+	Path &path = _router->GetPath();
 	string redirCode = path.getRedirCode();
 	string redirLoc = path.getRedirPath();
 
-	DDEBUG("AMethod") << "Socket fd: " << sock->GetFd()
+	DDEBUG("AMethod") << "Socket fd: " << _sock->GetFd()
 					  << ", SendRedirection: code=" << redirCode << ", location='" << redirLoc << "'";
 
-	CreateRedirectionHeader(redirCode, redirLoc);
+	_createRedirectionHeader(redirCode, redirLoc);
+	DDEBUG("AMethod") << "\n"
+					  << _responseHeaderStr;
+	_totalByteToSend = _responseHeaderStr.length();
 
-	ShouldSend = responseHeaderStr.length();
-	readyToSend = true;
-	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	MulObj->ChangeToEpollOut(sock);
+	_status = AMethod::eSendResponse;
+	_multiplexer->ChangeToEpollOut(_sock);
+
+	_router->SetSendStrategy(new BuffersStrategy(_buffers, *_sock));
 }
 
-bool AMethod::IsMethodAllowed(const string &method)
+bool AMethod::_isMethodAllowed(const string &method)
 {
 	bool allowed = true;
-	if (method != "GET" && method != "POST" && method != "DELETE")
+	if (method != "GET" && method != "POST" && method != "DELETE" && method != "HEAD")
 		return false;
-	if (router->loc != NULL && router->loc->allowMethodExists)
+	vector<string>::iterator start, end;
+	if (_router->loc != NULL && _router->loc->allowMethodExists)
 	{
-		vector<string>::iterator start = router->loc->allowMethods.begin();
-		vector<string>::iterator end = router->loc->allowMethods.end();
-		allowed = (find(start, end, method) != end);
-		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
+		start = _router->loc->allowMethods.begin();
+		end = _router->loc->allowMethods.end();
 	}
-	else if (router->srv != NULL && router->srv->allowMethodExists)
+	else if (_router->srv != NULL && _router->srv->allowMethodExists)
 	{
-		vector<string>::iterator start = router->srv->allowMethods.begin();
-		vector<string>::iterator end = router->srv->allowMethods.end();
-		
-		allowed = (find(start, end, method) != end);
-		DDEBUG("AMethod") << "Socket fd: " << sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
+		start = _router->srv->allowMethods.begin();
+		end = _router->srv->allowMethods.end();
 	}
+	else
+		return true;
+	allowed = (find(start, end, method) != end);
+	DDEBUG("AMethod") << "Socket fd: " << _sock->GetFd() << ", IsMethodAllowed('" << method << "')=" << allowed;
+
 	return allowed;
 }
 
-void AMethod::InitStatusMap()
+void AMethod::_handleStrategyStatus(AStrategy *strategy)
 {
-	if (statusMap.size() > 0)
+	int status = strategy->GetStatus();
+	if (status == AStrategy::eWriteError)
+	{
+		_sock->SetCloseConnection(true);
+		_status = AMethod::eComplete;
+	}
+	else if (status == AStrategy::eOpenFileError)
+		HandleErrorPages("403");
+	else if (status == AStrategy::eChunkedError || status == AStrategy::eMultipartError || status == AStrategy::eReadError)
+		HandleErrorPages("400");
+	else if (status == AStrategy::eMaxBodySizeExceeded)
+		HandleErrorPages("413");
+}
+
+void AMethod::_executeStrategy(AStrategy *strategy)
+{
+	strategy->Execute();
+	_handleStrategyStatus(strategy);
+}
+
+void AMethod::_initStatusMap()
+{
+	if (_statusMap.size() > 0)
 		return;
 
 	// ---- 1xx Informational ----
-	statusMap["100"] = "Continue";
-	statusMap["101"] = "Switching Protocols";
-	statusMap["102"] = "Processing";
+	_statusMap["100"] = "Continue";
+	_statusMap["101"] = "Switching Protocols";
+	_statusMap["102"] = "Processing";
 
 	// ---- 2xx Success ----
-	statusMap["200"] = "OK";
-	statusMap["201"] = "Created";
-	statusMap["202"] = "Accepted";
-	statusMap["203"] = "Non-Authoritative Information";
-	statusMap["204"] = "No Content";
-	statusMap["205"] = "Reset Content";
-	statusMap["206"] = "Partial Content";
+	_statusMap["200"] = "OK";
+	_statusMap["201"] = "Created";
+	_statusMap["202"] = "Accepted";
+	_statusMap["203"] = "Non-Authoritative Information";
+	_statusMap["204"] = "No Content";
+	_statusMap["205"] = "Reset Content";
+	_statusMap["206"] = "Partial Content";
 
 	// ---- 3xx Redirection ----
-	statusMap["300"] = "Multiple Choices";
-	statusMap["301"] = "Moved Permanently";
-	statusMap["302"] = "Found";
-	statusMap["303"] = "See Other";
-	statusMap["304"] = "Not Modified";
-	statusMap["305"] = "Use Proxy";
-	statusMap["307"] = "Temporary Redirect";
-	statusMap["308"] = "Permanent Redirect";
+	_statusMap["300"] = "Multiple Choices";
+	_statusMap["301"] = "Moved Permanently";
+	_statusMap["302"] = "Found";
+	_statusMap["303"] = "See Other";
+	_statusMap["304"] = "Not Modified";
+	_statusMap["305"] = "Use Proxy";
+	_statusMap["307"] = "Temporary Redirect";
+	_statusMap["308"] = "Permanent Redirect";
 
 	// ---- 4xx Client Errors ----
-	statusMap["400"] = "Bad Request";
-	statusMap["401"] = "Unauthorized";
-	statusMap["403"] = "Forbidden";
-	statusMap["404"] = "Not Found";
-	statusMap["405"] = "Method Not Allowed";
-	statusMap["408"] = "Request Timeout";
-	statusMap["409"] = "Conflict";
-	statusMap["410"] = "Gone";
-	statusMap["411"] = "Length Required";
-	statusMap["413"] = "Payload Too Large";
-	statusMap["414"] = "URI Too Long";
-	statusMap["415"] = "Unsupported Media Type";
-	statusMap["429"] = "Too Many Requests";
-	statusMap["431"] = "Request Header Fields Too Large";
+	_statusMap["400"] = "Bad Request";
+	_statusMap["401"] = "Unauthorized";
+	_statusMap["403"] = "Forbidden";
+	_statusMap["404"] = "Not Found";
+	_statusMap["405"] = "Method Not Allowed";
+	_statusMap["408"] = "Request Timeout";
+	_statusMap["409"] = "Conflict";
+	_statusMap["410"] = "Gone";
+	_statusMap["411"] = "Length Required";
+	_statusMap["413"] = "Payload Too Large";
+	_statusMap["414"] = "URI Too Long";
+	_statusMap["415"] = "Unsupported Media Type";
+	_statusMap["429"] = "Too Many Requests";
+	_statusMap["431"] = "Request Header Fields Too Large";
 
 	// ---- 5xx Server Errors ----
-	statusMap["500"] = "Internal Server Error";
-	statusMap["501"] = "Not Implemented";
-	statusMap["502"] = "Bad Gateway";
-	statusMap["503"] = "Service Unavailable";
-	statusMap["504"] = "Gateway Timeout";
-	statusMap["505"] = "HTTP Version Not Supported";
+	_statusMap["500"] = "Internal Server Error";
+	_statusMap["501"] = "Not Implemented";
+	_statusMap["502"] = "Bad Gateway";
+	_statusMap["503"] = "Service Unavailable";
+	_statusMap["504"] = "Gateway Timeout";
+	_statusMap["505"] = "HTTP Version Not Supported";
 }
 
-void AMethod::addCookies(Session &session)
+void AMethod::_addCookies(Session &session)
 {
-	string Max_age = session.data["Max-Age"];
-	string path = router->GetRequest().getPath();
+	string Max_age = "";
+	map<string, string>::iterator maxAgeIt = session.data.find("Max-Age");
+	if (maxAgeIt != session.data.end())
+    	Max_age = maxAgeIt->second;
+	else
+		Max_age = SESSION_TIMEOUT_STR;
+	string path = _router->GetRequest().getPath();
 	map<string, string>::iterator it = session.data.begin();
 	for (; it != session.data.end(); it++)
 	{
 		if (it->first != "Max-Age")
 		{
-
-			responseHeader << "Set-Cookie:" << " " << it->first << "=" << it->second << ";" << " Max-Age=" << SESSION_TIMEOUT << ";" << " Path=" << path  << "\r\n";
-		DDEBUG("AddCookies") << "Set-Cookie:" << " " << it->first << "=" << it->second << ";" << " Max-Age=" << SESSION_TIMEOUT << ";" << " Path=" << path  << "\r\n";
+			_responseHeader << "Set-Cookie:" << " " << it->first << "=" << it->second << ";" << " Max-Age=" << Max_age << ";" << " Path=" << path << "\r\n";
+			DDEBUG("AddCookies") << "Set-Cookie:" << " " << it->first << "=" << it->second << ";" << " Max-Age=" << Max_age << ";" << " Path=" << path << "\r\n";
 		}
 	}
 }
-map<string, string>& AMethod::getStatusMap(){return (statusMap);}
+map<string, string> &AMethod::getStatusMap() { return (_statusMap); }

@@ -2,8 +2,9 @@
 #include <unistd.h>
 
 Path::Path() : 	_isDir(false), _isFile(false), _isCGI(false),
-                _found(false), _isRedir(false), _hasPermission(false),
-                srv(NULL), matchedLocationIndex(-1)
+                _found(false), _isRedir(false), _isFolderRedir(false),
+                _hasPermission(false), srv(NULL), 
+                matchedLocationIndex(-1)
 {}
 
 Path::~Path() {}
@@ -76,7 +77,6 @@ void Path::_setRootAndCGI(Config::Server &srv)
 
         if (!loc.cgiPassExt.empty()) {
             _isCGI = true;
-            _cgiScriptPath = loc.cgiPassPath;
             DDEBUG("Path") << "_setRootAndCGI: CGI detected, ext='" << loc.cgiPassExt << "', script='" << _cgiScriptPath << "'";
         }
     }
@@ -101,13 +101,15 @@ void Path::_handleDirectoryIndex(Config::Server &srv)
 {
     vector<string> indices = srv.index;
 
-    if (matchedLocationIndex != -1 ) {
-		if (_decodedPath != srv.Locations[matchedLocationIndex].path)
-			return;
-        indices = srv.Locations[matchedLocationIndex].index;
+    if (matchedLocationIndex != -1) {
+        const Config::Server::Location &loc = srv.Locations[matchedLocationIndex];
+        if (!loc.index.empty() && loc.path == _decodedPath) {
+            indices = loc.index;
+            DDEBUG("Path") << "_handleDirectoryIndex: using location-specific index files";
+        }
+        else if (_decodedPath != "/")
+            return;
     }
-	else if (_decodedPath != "/")
-		return;
 
     DDEBUG("Path") << "_handleDirectoryIndex: trying " << indices.size() << " index file(s) in '" << _fullPath << "'";
 
@@ -130,15 +132,34 @@ void Path::_handleDirectoryIndex(Config::Server &srv)
             DDEBUG("Path") << "  -> found index file: '" << _fullPath << "'";
             break;
         }
+        else if (i == indices.size() - 1) {
+            _fullPath = potentialIndex;
+            _found = false;
+            _isFile = false;
+            _isDir = false;
+        }
     }
 }
 
-void Path::CreatePath(Config::Server &srv, const string &reqUrl)
+void Path::_handleFolderRedirection()
+{
+    if (_found && _isDir && _decodedPath.length() && _decodedPath[_decodedPath.length() - 1] != '/') {
+        _isFolderRedir = true;
+        _redirCode = "301";
+        _redirPath = _decodedPath + "/";
+        DDEBUG("Path") << "Directory without trailing slash detected, setting redirection to: '" << _redirPath << "'";
+        return;
+    }
+}
+
+
+void Path::CreatePath(Config::Server &srv, const string &reqUrl, const string &method)
 {
 	_decodedPath = decodePath(reqUrl);
+    Utility::normalizePath(_decodedPath);
 	DEBUG("Path") << "Creating path for URL: '" << reqUrl << "', decoded: '" << _decodedPath << "'";
 
-    matchedLocationIndex = Config::GetLocationIndex(srv, _decodedPath);
+    matchedLocationIndex = Config::GetLocationIndex(srv, _decodedPath, _cgiScriptPath, _pathInfo, method);
 	DEBUG("Path") << "Best matching location index: " << matchedLocationIndex;
 	DDEBUG("Path") << "  -> Server root='" << srv.root << "', locations=" << srv.Locations.size();
 	this->srv = &srv;
@@ -151,14 +172,23 @@ void Path::CreatePath(Config::Server &srv, const string &reqUrl)
 
     _setRootAndCGI(srv);
 
-    _fullPath = joinPath(_root, _decodedPath);
+    if (_isCGI)
+        _fullPath = joinPath(_root, _cgiScriptPath);
+    else
+        _fullPath = joinPath(_root, _decodedPath);
     DDEBUG("Path") << "  -> Constructed full path: '" << _fullPath << "'";
 
     checkFileExistence(_fullPath);
+
+    _handleFolderRedirection();
+
     if (_found) {
         checkPermissions(_fullPath);
     }
-
+    OriginalPath.path = _fullPath;
+    OriginalPath.isDir = _isDir;
+    OriginalPath.isFile = _isFile;
+    OriginalPath.found = _found;
     if (_isDir && _hasPermission) {
         _handleDirectoryIndex(srv);
     }
@@ -166,8 +196,6 @@ void Path::CreatePath(Config::Server &srv, const string &reqUrl)
 				  << ", isDir=" << _isDir << ", isFile=" << _isFile
 				  << ", isCGI=" << _isCGI << ", hasPermission=" << _hasPermission << "]";
 }
-
-bool Path::emptyRoot() const{ return _root.empty(); }
 
 string Path::encodePath(const string& path)
 {
@@ -220,5 +248,6 @@ bool Path::isFile() const { return _isFile; }
 bool Path::isFound() const { return _found; }
 bool Path::hasPermission() const { return _hasPermission; }
 bool Path::isRedirection() const { return _isRedir; }
+bool Path::isRedirectionToDir() const { return _isFolderRedir; }
 string Path::getRedirCode() const { return _redirCode; }
 string Path::getRedirPath() const { return _redirPath; }

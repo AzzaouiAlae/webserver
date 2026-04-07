@@ -4,24 +4,16 @@
 
 class Post : public AMethod
 {
-	int uploadFd;
-	bool readyToUpload;
-	size_t contentBodySize;
-	size_t uploadedSize;
+	Path *_path;
+	originalPath *_originalPath;
 
-	void OpenUploadFile();
-	void WriteBodyFromMemory();
-	void WriteBodyFromSocket();
-	void uploadFileToDisk();
-
-	bool GetLocationReturn(string &retCode, string &retBody);
-	void SendPostRedirection(const string &retCode, const string &retBody);
-	void SendPostCustomBody(const string &retCode, const string &retBody);
-	void createPostResponse();
-	void PostMethod();
-
+	bool _getLocationReturn(string &retCode, string &retBody);
+	void _createPostRedirection(const string &retCode, const string &retBody);
+	void _createPostCustomBody(const string &retCode, const string &retBody);
+	void _createPostResponse();
+	void _initPost();
 public:
-	Post(SocketIO *sock, Routing *router);
+	Post(ClientSocket *sock, Routing *router);
 	~Post();
 	bool HandleResponse();
 };

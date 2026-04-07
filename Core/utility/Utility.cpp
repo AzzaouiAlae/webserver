@@ -4,15 +4,17 @@
 bool Utility::SigPipe;
 bool Utility::SigInt;
 vector<char *> Utility::buffPoll;
+long Utility::maxFds;
 
-bool Utility::isNotZero(char ch)
+void Utility::clearFds()
 {
-	return ch != '0';
-}
-
-bool Utility::isNotDot(char ch)
-{
-	return ch != '.';
+	set<AFd *> &fds = Singleton::GetFds();
+	while (!fds.empty())
+	{
+		AFd *obj = *fds.begin();
+		fds.erase(fds.begin());
+		delete obj;
+	}
 }
 
 bool Utility::isStrToTrime(char ch)
@@ -27,33 +29,25 @@ bool Utility::isStrToTrime(char ch)
 
 string Utility::toTrime;
 
-bool Utility::isNotSquareBracket(char ch)
+void Utility::ltrim(string &s,  string toTrime)
 {
-	return ch != ']' && ch != '[';
+	Utility::toTrime = toTrime;
+	s.erase(s.begin(), find_if(s.begin(), s.end(), isStrToTrime));
 }
 
-void Utility::ltrim(string &s, bool (*f)(char ch))
+void Utility::rtrim(string &s, string toTrime)
 {
-	s.erase(s.begin(), find_if(s.begin(), s.end(), f));
-}
+	Utility::toTrime = toTrime;
 
-void Utility::rtrim(string &s, bool (*f)(char ch))
-{
-	string::reverse_iterator reverse_it = find_if(s.rbegin(), s.rend(), f);
+	string::reverse_iterator reverse_it = find_if(s.rbegin(), s.rend(), isStrToTrime);
 	string::iterator *it = (string::iterator *)&reverse_it;
 	s.erase(*it, s.end());
 }
 
-void Utility::trim(string &s, bool (*f)(char ch))
-{
-	ltrim(s, f);
-	rtrim(s, f);
-}
-
 void Utility::trim(string &s, string toTrime)
 {
-	Utility::toTrime = toTrime;
-	trim(s, isStrToTrime);
+	rtrim(s, toTrime);
+	ltrim(s, toTrime);
 }
 
 long Utility::CurrentTime()
@@ -165,6 +159,7 @@ size_t Utility::parseByteSize(const string &raw)
 
 	return value;
 }
+
 char *Utility::GetBuffer()
 {
 	if (buffPoll.size() > 0)
@@ -173,12 +168,21 @@ char *Utility::GetBuffer()
 		buffPoll.pop_back();
 		return buffer;
 	}
-	return new char[BUF_SIZE + 1];
+	return new char[BUF_SIZE + 1];	
+}
+
+void Utility::LogBufferPullSize()
+{
+	Logging::Info() << "Current buffer pool size: " << buffPoll.size();
 }
 
 void Utility::ReleaseBuffer(char *buffer)
 {
-	buffPoll.push_back(buffer);
+	if (buffer && buffPoll.size() < 200) {
+		buffPoll.push_back(buffer);
+	} 
+	else
+		delete[] buffer;
 }
 
 void Utility::ClearBuffPoll()
@@ -191,4 +195,88 @@ void Utility::ClearBuffPoll()
 size_t Utility::GetBuffPollSize()
 {
 	return buffPoll.size();
+}
+
+void Utility::normalizePath(string &path)
+{
+	if (path.empty())
+		return;
+	bool isAbsolute = path[0] == '/';
+	bool hasTrailingSlash = path[path.length() - 1] == '/';
+	vector<string> segments;
+	parseBySep(segments, path, "/");
+	vector<string> normalizedSegments;
+
+	for (size_t i = 0; i < segments.size(); i++)
+	{
+		if (segments[i] == "" || segments[i] == ".")
+			continue;
+		else if (segments[i] == "..")
+		{
+			if (!normalizedSegments.empty())
+				normalizedSegments.pop_back();
+		}
+		else
+			normalizedSegments.push_back(segments[i]);
+	}
+
+	string normalizedPath = isAbsolute ? "/" : "";
+	for (size_t i = 0; i < normalizedSegments.size(); i++)
+	{
+		normalizedPath += normalizedSegments[i];
+		if (i != normalizedSegments.size() - 1)
+		{
+			normalizedPath += "/";
+		}
+	}
+	if (hasTrailingSlash && (int)normalizedPath.size() > 1)
+	{
+		normalizedPath += "/";
+	}
+	path = normalizedPath;
+}
+
+bool Utility::getAbsolute(string &path)
+{
+	if (path.empty())
+		return false;
+
+	if (path[0] != '/')
+	{
+		char cwd[PATH_MAX];
+
+		if (getcwd(cwd, sizeof(cwd)) != NULL)
+		{
+			string currentDir(cwd);
+			if (!currentDir.empty() && currentDir[currentDir.length() - 1] != '/')
+				currentDir += '/';
+			path = currentDir + path;
+			return true;
+		}
+		else
+			ERR() << "Error getting current working directory";
+	}
+	return false;
+}
+
+string Utility::getRandomStr(size_t length)
+{
+	stringstream ss;
+	ss << hex;
+	for (size_t i = 0; i < length; i++)
+		ss << (rand() % 16);
+	return ss.str();
+}
+
+string Utility::addRandomStr(string filename)
+{
+	if (filename.empty())
+		return Utility::getRandomStr();
+	
+	string randName = Utility::getRandomStr(6);
+	size_t lastDot = filename.find_last_of(".");
+	size_t lastSlash = filename.find_last_of("/");
+	if (lastDot == string::npos || (lastDot > lastSlash && lastSlash != string::npos))
+		return filename + "_" + randName;
+	return filename.substr(0, lastDot) + "_" + randName + filename.substr(lastDot);
 }

@@ -1,42 +1,45 @@
 #pragma once
 #include "Headers.hpp"
 #include "Socket.hpp"
-#include "SocketIO.hpp"
-#include "SocketPipe.hpp"
+#include "NetIO.hpp"
 #include "Response.hpp"
 
-#define BUF_SIZE 1024 * 64
-#define SAFE_MARGIN 1024 * 64
-#define HTTPLog(lvl) lvl("HTTPContext") << logPrefix() << "HTTPContext, "
+#define HTTPLog(lvl) lvl("HTTPContext") << _logPrefix() << "HTTPContext, "
 
 class HTTPContext : public IContext
 {
-	Repsense repsense;
-	Routing router;
-	SocketIO *sock;
-	char *buf;
-	AFd *out;
-	AFd *in;
-	bool err;
-	string errNo;
-	bool isMaxBodyInit;
+	ClientSocket *_sock;
+	int _status;
+	Routing _router;
+	Repsense _repsense;
+	char *_buf;
+	Multiplexer *_multiplexer;
+	string _errNo;
+	bool _isMaxBodyInit;
+	int _readLen;
+	vector<Config::Server> *_servers;
 
-    int  _readFromSocket();
-
-    bool _parseAndConfig(int len);
-
-    void _setupPipeline();
-	string logPrefix();
+	void _handleRequest();
+	void _readFromSocket();
+	void _parseAndConfig();
+	void _setMaxBodySize();
+	void _handleConnectionEnd();
+	string _prefix;
+	string _logPrefix();
 public:
-	void activeInPipe();
-	void activeOutPipe();
-	HTTPContext(vector<Config::Server > *servers, size_t maxBodySize, SocketIO *sock);
+	enum Status
+	{
+		eReadingRequest = 0,
+		eWritingResponse = 1,
+		eWriteError = 2,
+		eDone = 3,
+		eDelete = 4,
+	};
+	HTTPContext(vector<Config::Server> *servers, size_t maxBodySize, ClientSocket *sock);
 	~HTTPContext();
-	vector<Config::Server > *servers;
+	
+	vector<Config::Server> *GetServers() const;
+	void SetServers(vector<Config::Server> *servers);
 	void Handle(AFd *fd);
-	void HandleRequest();
-	void MarkedSocketToFree();
-	void setMaxBodySize();
-	Routing &GetRouter() { return router; }
-
+	int GetStatus() const;
 };

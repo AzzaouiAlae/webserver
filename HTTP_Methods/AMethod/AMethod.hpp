@@ -1,61 +1,79 @@
 #pragma once
 #include "Headers.hpp"
-#include "SocketIO.hpp"
+#include "NetIO.hpp"
 #include "Socket.hpp"
 #include "SessionManager.hpp"
 #include "Cgi.hpp"
 
 class AMethod
 {
-	static map<string, string> statusMap;
-	static void InitStatusMap();
+	static map<string, string> _statusMap;
+	static void _initStatusMap();
 
-	string ResolveServerName();
-	string ResolveMimeType();
+	string _resolveServerName();
+	string _resolveMimeType();
+	string _resolveErrorFilePath(const string &errorCode);
+
+	bool   _openErrorFile(const string &path);
+	void   _loadStaticErrorFile(const string &errorCode);
+	string _createDate();
+	void _addCookies(Session &session);
+	void _addAlowMethodsHeader();
+	void _addCookiesHeader();
 
 protected:
-	stringstream responseHeader;
-	string responseHeaderStr;
-	StaticFile *staticFile;
-	bool readyToSend;
-	string filename;
-	bool sendHeader;
-	int ShouldSend;
-	int bodySize;
-	string code;
-	int sended;
-	int fileFd;
-	bool del;
-	Routing *router;
-	SocketIO *sock;
-	bool pathResolved;
-	Config::Server::Location *loc;
+	enum Status {
+		eInit = 0,
+		eSendResponse = 1,
+		eCGIResponse = 2,
+		eUploadFile = 3,
+		eSendAutoIndex = 4,
+		eComplete = 5,
+	};
+	int _status;
+
+	Routing *_router;
+	ClientSocket *_sock;
 	Cgi	*_cgi;
-	string CreateDate();
-	void CreateResponseHeader();
-	void CreateRedirectionHeader(const string &redirCode, const string &redirLocation);
+	Multiplexer *_multiplexer;
 
-	string ResolveErrorFilePath(const string &errorCode);
-	bool   OpenErrorFile(const string &path);
-	void   LoadStaticErrorFile(const string &errorCode);
+	string _filename;
+	int _fileFd;
+	StaticFile *_staticFile;
 
-	void SendResponse();
-	void SendRedirection();
-	void SendDefaultRespense(const string &code);
+	string _statusCode;
+	string _responseHeaderStr;
+	stringstream _responseHeader;
 
-	bool IsMethodAllowed(const string &method);
-
-	void ResolvePath();
-
-	string escapeForJS(const string& input);
-	void addCookies(Session &session);
+	vector<pair<char *, size_t> > _buffers;
 	
-	void HandelCGI();
-public:
-	AMethod(SocketIO *sock, Routing *router);
-	virtual ~AMethod();
+	size_t _bodySize;
+	size_t _totalByteToSend;
 
+	void _createResponseHeader(const string &body);
+	void _createRedirectionHeader(const string &redirCode, const string &redirLocation);
+	void _createTimeoutResponse();
+	void _createRedirection();
+	void _createDefaultResponse(const string &code);
+
+	bool _isMethodAllowed(const string &method);
+	void _resolvePath();
+	string _escapeForJS(const string& input);
+	void _handleCGI();
+
+	void _addPair(StaticFile *f);
+	void _addPair(string &str);
+	void _insertPair(string &str, int idx = 0);
+	void _addPair(const string &str);
+	void _addPair(const char *data, size_t size);
+	void _addPair(char *data, size_t size);
+	void _addPair(pair<char *, size_t> &data);
+	void _handleStrategyStatus(AStrategy *strategy);
+	void _executeStrategy(AStrategy *strategy);
+public:
+	AMethod(ClientSocket *sock, Routing *router);
+	virtual ~AMethod();
 	virtual bool HandleResponse() = 0;
-	void   HandelErrorPages(const string &err);
+	void   HandleErrorPages(const string &err);
 	static map<string, string>& getStatusMap();
 };
