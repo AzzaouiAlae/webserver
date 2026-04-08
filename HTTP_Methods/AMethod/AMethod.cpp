@@ -223,13 +223,41 @@ void AMethod::_addPair(pair<char *, size_t> &data)
 	_buffers.push_back(data);
 }
 
+string AMethod::_createUpdatedFilesJSONBody(set<string> &filesUploaded)
+{
+	stringstream ss;
+	ss << "{"
+	"  \"status\": \"success\","
+	"  \"urls\": [";
+	size_t count = 0;
+	for (set<string>::iterator it = filesUploaded.begin(); it != filesUploaded.end(); ++it)
+	{
+		ss << "\n";
+		ss << "\"" << _router->getLocationPath(*it) << "\"";
+		if (count < filesUploaded.size() - 1)
+			ss << ", ";
+		count++;
+	}
+	ss << "\n";
+	ss << "] }";
+	return ss.str();
+}
+
+
+
 void AMethod::_createDefaultResponse(const string &code)
 {
 	DDEBUG("AMethod") << "Socket fd: " << _sock->GetFd() << ", CreateDefaultResponse: sending " << code;
 	this->_statusCode = code;
-	_bodySize = 0;
+	string body;
 	_filename = ".html";
-	_createResponseHeader("");
+	if (code == "201")
+	{
+		body = _createUpdatedFilesJSONBody(_router->getFilesUploaded());
+		_filename = ".json";
+	}
+	_bodySize = body.length();
+	_createResponseHeader(body);
 	_totalByteToSend = _responseHeaderStr.length();
 	_status = eSendResponse;
 	_multiplexer->ChangeToEpollOut(_sock);
