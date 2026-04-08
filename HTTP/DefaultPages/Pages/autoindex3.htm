@@ -191,6 +191,46 @@
         startDismiss();
     }
 
+    function getCookieValue(name) {
+        const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+        return match ? decodeURIComponent(match[1]) : null;
+    }
+
+    function setCookieValue(name, value, days) {
+        let expires = '';
+        if (days) {
+            const d = new Date();
+            d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+            expires = '; expires=' + d.toUTCString();
+        }
+        document.cookie = name + '=' + encodeURIComponent(value) + expires + '; path=/; SameSite=Lax';
+    }
+
+    function toArray(fileList) {
+        return Array.prototype.slice.call(fileList || []);
+    }
+
+    function isMultipartUploadEnabled() {
+        return !!(multipartToggle && multipartToggle.checked);
+    }
+
+    const fileInput = document.getElementById('fileInput');
+
+    function syncUploadSelectionMode() {
+        if (!fileInput) return;
+        fileInput.multiple = isMultipartUploadEnabled();
+    }
+
+    const multipartToggle = document.getElementById('multipartToggle');
+    if (multipartToggle) {
+        multipartToggle.checked = getCookieValue('upload_mode') === 'multipart';
+        multipartToggle.addEventListener('change', function () {
+            setCookieValue('upload_mode', this.checked ? 'multipart' : 'raw', 365);
+            syncUploadSelectionMode();
+        });
+    }
+    syncUploadSelectionMode();
+
     // ===== UPLOAD =====
     function uploadFiles(fileList) {
         const progEl = document.getElementById('uploadProgress');
@@ -198,26 +238,34 @@
         const progPercent = document.getElementById('progPercent');
         const progFill = document.getElementById('progFill');
         const progStatus = document.getElementById('progStatus');
+        const files = toArray(fileList);
+        const useMultipart = isMultipartUploadEnabled();
 
-        let idx = 0;
-        const total = fileList.length;
+        if (files.length === 0) return;
+
+        function finishWithSuccess(message) {
+            progEl.classList.remove('active');
+            showToast(message, 'success');
+            setTimeout(() => location.reload(), 800);
+        }
+
+        function finishWithError(message) {
+            progEl.classList.remove('active');
+            showToast(message, 'error');
+        }
 
         progEl.classList.add('active');
+        progFill.style.width = '0%';
+        progPercent.textContent = '0%';
 
-        function uploadNext() {
-            if (idx >= total) {
-                progEl.classList.remove('active');
-                showToast('All ' + total + ' file(s) uploaded successfully!', 'success');
-                setTimeout(() => location.reload(), 800);
-                return;
-            }
+        const baseUploadPath = CURRENT_PATH + (CURRENT_PATH.endsWith('/') ? '' : '/');
 
-            const file = fileList[idx];
-            progName.textContent = 'Uploading: ' + file.name;
-            progStatus.textContent = 'File ' + (idx + 1) + ' of ' + total;
+        if (useMultipart) {
+            progName.textContent = 'Uploading: ' + files.length + ' file(s)';
+            progStatus.textContent = 'Multipart batch';
 
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', CURRENT_PATH + (CURRENT_PATH.endsWith('/') ? '' : '/') + file.name, true);
+            xhr.open('POST', baseUploadPath, true);
 
             xhr.upload.onprogress = function (e) {
                 if (e.lengthComputable) {
@@ -228,25 +276,55 @@
             };
 
             xhr.onload = function () {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                    idx++;
-                    uploadNext();
-                } else {
-                    progEl.classList.remove('active');
-                    showToast('Failed to upload ' + file.name + ' (' + xhr.status + ')', 'error');
-                }
+                if (xhr.status >= 200 && xhr.status < 300)
+                    finishWithSuccess('All ' + files.length + ' file(s) uploaded successfully!');
+                else
+                    finishWithError('Failed multipart upload (' + xhr.status + ')');
             };
 
             xhr.onerror = function () {
-                progEl.classList.remove('active');
-                showToast('Network error uploading ' + file.name, 'error');
+                finishWithError('Network error during multipart upload');
             };
 
-            xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-            xhr.send(file);
+            const form = new FormData();
+            files.forEach(function (file) {
+                form.append('file', file, file.name);
+            });
+            xhr.send(form);
+            return;
         }
 
-        uploadNext();
+        if (files.length > 1)
+            showToast('Raw mode supports one file. Using the first selected file.', 'error');
+
+        const file = files[0];
+        progName.textContent = 'Uploading: ' + file.name;
+        progStatus.textContent = 'Single file (raw)';
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', baseUploadPath + file.name, true);
+
+        xhr.upload.onprogress = function (e) {
+            if (e.lengthComputable) {
+                const pct = Math.round((e.loaded / e.total) * 100);
+                progFill.style.width = pct + '%';
+                progPercent.textContent = pct + '%';
+            }
+        };
+
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300)
+                finishWithSuccess('File uploaded successfully: ' + file.name);
+            else
+                finishWithError('Failed to upload ' + file.name + ' (' + xhr.status + ')');
+        };
+
+        xhr.onerror = function () {
+            finishWithError('Network error uploading ' + file.name);
+        };
+
+        xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+        xhr.send(file);
     }
 
     // Upload button click
@@ -254,7 +332,7 @@
         document.getElementById('fileInput').click();
     });
 
-    document.getElementById('fileInput').addEventListener('change', function () {
+    fileInput.addEventListener('change', function () {
         if (this.files.length > 0) uploadFiles(this.files);
         this.value = '';
     });

@@ -262,6 +262,7 @@ bool Utility::getAbsolute(string &path)
 string Utility::getRandomStr(size_t length)
 {
 	stringstream ss;
+	srand(CurrentTime() + rand());
 	ss << hex;
 	for (size_t i = 0; i < length; i++)
 		ss << (rand() % 16);

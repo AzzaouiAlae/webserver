@@ -101,3 +101,39 @@ void Routing::SetReadStrategy(AStrategy *strategy)
 }
 AStrategy *Routing::GetSendStrategy() { return _sendStrategy; }
 AStrategy *Routing::GetReadStrategy() { return _readStrategy; }
+
+void Routing::SetStrPath(const string &path)
+{
+	_strPath = path;
+}
+
+string Routing::GetStrPath()
+{
+	return _strPath;
+}
+
+string Routing::getLocationPath(string fullPath)
+{
+	if (fullPath == "")
+	{
+		fullPath = _strPath;
+	}
+	string root = srv->root;
+	
+	if (fullPath.length() < root.length())
+		return "";
+	string s = fullPath.substr(root.length());
+	if (s[0] != '/')
+		s = "/" + s;
+	return s;
+}
+
+void Routing::addFileUploaded(const string &filename)
+{
+	_filesUploaded.insert(filename);
+}
+
+set<string> &Routing::getFilesUploaded()
+{
+	return _filesUploaded;
+}

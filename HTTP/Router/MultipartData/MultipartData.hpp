@@ -5,13 +5,14 @@ struct FormData {
     string name;
     string filename;
     string contentType;
-    
+    string bodyPart;
+
     size_t bodyStart;
     size_t bodyLen;
-    
-    bool   isNewPart;
-    bool   bodyComplete;
-    
+
+    bool isNewPart;
+    bool bodyComplete;
+
     void reset();
 };
 
@@ -22,31 +23,44 @@ public:
     MultipartData();
     ~MultipartData();
 
-    void Feed(char *buf, size_t len);
+    void            Initialize(const string &boundary);
+    void            Feed(char *buf, size_t len);
     queue<FormData> &GetParts();
-    Status GetStatus() const;
-    void Initialize(const string &boundary);
+    Status          GetStatus() const;
 
 private:
-    string           _boundary;
-    string           _delimiter;
-    string           _partialMatch;
-    Status           _status;
-    FormData         _current;
-    size_t           _parseIdx;
-    string           _partialHeader;
+    // ── state ────────────────────────────────────────────────────────────────
+    Status          _status;
+    bool            _isInitialized;
+    string          _boundary;
+    string          _delimiter;
+    FormData        _current;
     queue<FormData> _parts;
-    bool _isInitialized;
 
-    void _parseBoundary(char *buf, size_t len);
-    void _parseHeader(char *buf, size_t len);
-    void _processHeaderLine(const string &line);
-    void _parseContentDisposition(const string &line);
-    void _parseContentType(const string &line);
-    void _scanBody(char *buf, size_t len);
-    void _emitBodyPart(size_t start, size_t len, bool complete);
-    size_t _findPartialDelimiter(char *buf, size_t len);
+    // ── per-chunk working variables ──────────────────────────────────────────
+    size_t          _parseIdx;
+    string          _partialMatch;
+    string          _partialHeader; 
+
+    // ── opening boundary ─────────────────────────────────────────────────────
+    void   _parseBoundary(char *buf, size_t len);
+
+    // ── header block ─────────────────────────────────────────────────────────
+    void   _parseHeader(char *buf, size_t len);
+    void   _dispatchHeaderLines(const string &block);
+    void   _processHeaderLine(const string &line);
+    void   _parseContentDisposition(const string &line);
+    void   _parseContentType(const string &line);
     string _extractValue(const string &line, const string &key);
-    bool _processPartialMatch(char *buf, size_t len);
-    void _searchForBoundary(char *buf, size_t searchStart, size_t len);
+
+    // ── body scanning ────────────────────────────────────────────────────────
+    void   _scanBody(char *buf, size_t len);
+    bool   _resolvePartialMatch(char *buf, size_t len);
+    void   _scanForBoundary(char *buf, size_t searchStart, size_t len);
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+    bool   _isValidSuffix(const char *suffix, bool &isClosing) const;
+    void   _emitBodyChunk(size_t start, size_t len, bool complete);
+    void   _transitionAfterBoundary(bool isClosing);
+    size_t _findTailPartial(char *buf, size_t len) const;
 };

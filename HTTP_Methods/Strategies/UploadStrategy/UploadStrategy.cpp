@@ -43,6 +43,7 @@ void UploadStrategy::_createFile()
         _filename = _path.getFullPath();
         _filename = Utility::addRandomStr(_filename);
     }
+    _router->addFileUploaded(_filename);
     _fileFD = open(_filename.c_str(), O_WRONLY | O_CREAT, 0644);
     if (_fileFD < 0)
         _status = eOpenFileError;

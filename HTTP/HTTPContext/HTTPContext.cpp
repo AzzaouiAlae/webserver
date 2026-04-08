@@ -23,6 +23,7 @@ void HTTPContext::Handle(AFd *fd)
 void HTTPContext::_readFromSocket()
 {
 	Utility::SigPipe = false;
+	_sock->SetSendStart(false);
 	_readLen = read(_sock->GetFd(), _buf, BUF_SIZE);
 	_sock->UpdateTime();
 	HTTPLog(DDEBUG)

@@ -1,8 +1,7 @@
 #include "MultipartUploadStrategy.hpp"
-string str;
-int i = 0;
+
 MultipartUploadStrategy::MultipartUploadStrategy(ClientSocket *socketIO, Routing *routing)
-    : _socketIO(socketIO), _routing(routing), _request(routing->GetRequest()),
+    : _socketIO(socketIO), _router(routing), _request(routing->GetRequest()),
       _chunkedData(routing->GetChunkedData()), _multipartData(routing->GetMultipartData())
 {
     if (_request.isChunkedTransferEncoding() == false)
@@ -20,8 +19,14 @@ MultipartUploadStrategy::MultipartUploadStrategy(ClientSocket *socketIO, Routing
         return;
     }
     _uploadBuffers(_multipartData.GetParts());
-    _buffer = Utility::GetBuffer();
-    str.clear();
+    if (_multipartData.GetStatus() == MultipartData::eComplete 
+        && _status == eContinue && 
+        (_request.isChunkedTransferEncoding() == false || 
+        _chunkedData.GetStatus() == ChunkedData::eComplete))
+        _status = eComplete;
+    _buffer = NULL;
+    if (_status == eContinue)
+        _buffer = Utility::GetBuffer();
 }
 
 MultipartUploadStrategy::~MultipartUploadStrategy()
@@ -33,21 +38,29 @@ MultipartUploadStrategy::~MultipartUploadStrategy()
 
 void MultipartUploadStrategy::_uploadBuffer(FormData *formData)
 {
-    if (formData->bodyLen == 0)
-        return;
     string filename = formData->filename;
-    filename = Utility::addRandomStr(filename);
-    _routing->AddPath(filename);
+    _router->AddPath(filename);
     int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0644);
     if (fd < 0)
     {
         _status = eOpenFileError;
         return;
     }
-    _subBufferUploadStrategy->SetBuffer(_buffer, formData->bodyLen, fd);
-    int subStatus = _subBufferUploadStrategy->Execute();
-    if (subStatus != AStrategy::eComplete)
-        _status = eWriteError;
+    _router->addFileUploaded(filename);
+    if (!formData->bodyPart.empty())
+    {
+        _subBufferUploadStrategy->SetBuffer(&formData->bodyPart[0], formData->bodyPart.length(), fd);
+        int subStatus = _subBufferUploadStrategy->Execute();
+        if (subStatus != AStrategy::eComplete)
+            _status = eWriteError;
+    }
+    if (formData->bodyLen > 0)
+    {
+        _subBufferUploadStrategy->SetBuffer(_buffer + formData->bodyStart, formData->bodyLen, fd);
+        int subStatus = _subBufferUploadStrategy->Execute();
+        if (subStatus != AStrategy::eComplete)
+            _status = eWriteError;
+    }
     close(fd);
 }
 
@@ -64,12 +77,9 @@ void MultipartUploadStrategy::_uploadBuffers(queue<FormData> &formDataQueue)
 
 void MultipartUploadStrategy::_decodeData()
 {
-    DDEBUG("MultipartUploadStrategy") << "1-_decodeData(): _str:\n"
-                                     << string(_buffer, _len);
+    DDEBUG("MultipartUploadStrategy") << "1-_decodeData(): _len=" << _len;
     if (_request.isChunkedTransferEncoding())
     {
-        if (i == 143)
-            i = 143;
         _chunkResult = _chunkedData.Feed(_buffer, _len);
         if (_chunkedData.GetStatus() == ChunkedData::eError)
         {
@@ -80,7 +90,6 @@ void MultipartUploadStrategy::_decodeData()
         _totalSize += _chunkResult.decodedLen;
 
         _multipartData.Feed(_buffer, _chunkResult.decodedLen);
-        str.append(_buffer, _chunkResult.decodedLen);
     }
     else
     {
@@ -103,8 +112,6 @@ void MultipartUploadStrategy::_decodeData()
         _status = eMultipartError;
         DDEBUG("MultipartUploadStrategy") << "4-_decodeData(): Content-Length mismatch with multipart data";
     }
-    DDEBUG("MultipartUploadStrategy") << "i: " << i++ << ", str\n"
-                                     << str;
 }
 
 bool MultipartUploadStrategy::_needToRead()

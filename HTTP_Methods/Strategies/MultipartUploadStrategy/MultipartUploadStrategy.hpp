@@ -9,7 +9,7 @@ class MultipartUploadStrategy: public AStrategy
     char *_buffer;
     ClientSocket *_socketIO;
     SubBufferUploadStrategy *_subBufferUploadStrategy;
-    Routing *_routing;
+    Routing *_router;
     ClientRequest &_request;
     ChunkedData &_chunkedData;
     MultipartData &_multipartData;

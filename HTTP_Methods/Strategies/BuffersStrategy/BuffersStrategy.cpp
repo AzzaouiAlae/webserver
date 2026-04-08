@@ -27,10 +27,6 @@ int BuffersStrategy::Execute()
     }
     else
         _socketIO.SetSendStart(true);
-    DDEBUG("BuffersStrategy") 
-        << "Executing BuffersStrategy:"
-        << ", str sended\n"
-        << string(current.first + _currentBufferOffset, sent);
     _currentBufferOffset += sent;
     if (_currentBufferOffset >= current.second) 
     {

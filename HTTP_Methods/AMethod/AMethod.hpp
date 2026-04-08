@@ -20,6 +20,7 @@ class AMethod
 	void _addCookies(Session &session);
 	void _addAlowMethodsHeader();
 	void _addCookiesHeader();
+	string _createUpdatedFilesJSONBody(set<string> &filesUploaded);
 
 protected:
 	enum Status {

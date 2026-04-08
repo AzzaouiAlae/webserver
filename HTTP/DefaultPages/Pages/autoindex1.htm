@@ -472,6 +472,66 @@
 
         .delete-btn.visible { display: flex; }
 
+        .multipart-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .multipart-toggle-input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .multipart-toggle-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            color: var(--text-muted);
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+        }
+
+        .multipart-toggle-text {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            transition: color 0.3s;
+        }
+
+        .multipart-toggle:hover .multipart-toggle-btn {
+            background: rgba(99, 102, 241, 0.18);
+            border-color: var(--primary);
+            color: var(--text);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+        }
+
+        .multipart-toggle:hover .multipart-toggle-text {
+            color: var(--text);
+        }
+
+        .multipart-toggle-input:checked + .multipart-toggle-btn {
+            background: rgba(6, 182, 212, 0.14);
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 4px 16px rgba(6, 182, 212, 0.25);
+        }
+
+        .multipart-toggle-input:checked + .multipart-toggle-btn .toggle-icon {
+            transform: scale(1.06);
+        }
+
         /* Checkbox in table rows */
         .file-checkbox {
             width: 16px; height: 16px;
@@ -678,6 +738,7 @@
             .file-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 0.6rem; }
             .grid-item { padding: 0.8rem 0.5rem; }
             .grid-item .grid-icon { font-size: 2rem; }
+            .multipart-toggle-text { display: none; }
         }
 
         /* ===== LIGHT THEME ===== */
@@ -801,10 +862,29 @@
             border-color: rgba(99, 102, 241, 0.3);
         }
 
+        body.light-theme .multipart-toggle-btn {
+            background: rgba(99, 102, 241, 0.08);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
         body.light-theme .theme-toggle:hover {
             background: rgba(99, 102, 241, 0.16);
             box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
         }
+
+        body.light-theme .multipart-toggle:hover .multipart-toggle-btn {
+            background: rgba(99, 102, 241, 0.16);
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+        }
+
+        body.light-theme .multipart-toggle-input:checked + .multipart-toggle-btn {
+            background: rgba(14, 116, 144, 0.14);
+            border-color: #0e7490;
+            color: #0e7490;
+            box-shadow: 0 4px 16px rgba(14, 116, 144, 0.2);
+        }
+
+        body.light-theme .multipart-toggle-text { color: #4c5169; }
 
         /* ===== ADDITIONAL LIGHT TEXT FIXES ===== */
         body.light-theme .file-count strong { color: #4f46e5; }
@@ -895,6 +975,11 @@
             <div class="file-count" id="fileCount"></div>
             <div class="action-bar">
                 <button class="upload-btn" id="uploadBtn" title="Upload files">📤 Upload</button>
+                <label class="multipart-toggle" for="multipartToggle" title="Upload using multipart/form-data">
+                    <input type="checkbox" id="multipartToggle" class="multipart-toggle-input">
+                    <span class="multipart-toggle-btn"><span class="toggle-icon">MP</span></span>
+                    <span class="multipart-toggle-text">Multipart</span>
+                </label>
                 <input type="file" id="fileInput" multiple style="display:none">
                 <button class="delete-btn" id="deleteBtn" title="Delete selected">🗑️ Delete</button>
             </div>
