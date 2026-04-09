@@ -147,7 +147,7 @@ void HTTPContext::_handleConnectionEnd()
 		{
 			_sock->cleanBody = true;
 			_multiplexer->ChangeToEpollIn(_sock);
-			_sock->SetTimeout(30);
+			_sock->SetTimeout(1000);
 		}
 		Utility::SigPipe = false;
 		_status = HTTPContext::eDelete;

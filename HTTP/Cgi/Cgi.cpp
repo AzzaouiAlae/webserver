@@ -205,24 +205,28 @@ void Cgi::_handleStrategyStatus(AStrategy *strategy)
 		_status = Cgi::eError;
 		_errorCode = "413";
 		CGILog(DDEBUG) << "readFromClient(): max body exceeded, status -> eError(413)";
+		_activeSocketOut = true;
 	}
 	else if (strategy->GetStatus() == AStrategy::eChunkedError)
 	{
 		_status = Cgi::eError;
 		_errorCode = "400";
 		CGILog(DDEBUG) << "readFromClient(): chunked parse error, status -> eError(400)";
+		_activeSocketOut = true;
 	}
 	else if (strategy->GetStatus() == AStrategy::eReadError)
 	{
 		_status = Cgi::eError;
 		_errorCode = "502";
 		CGILog(DDEBUG) << "readFromClient(): read error, status -> eError(502)";
+		_activeSocketOut = true;
 	}
 	else if (strategy->GetStatus() == AStrategy::eWriteError)
 	{
 		_status = Cgi::eError;
 		_errorCode = "502";
 		CGILog(DDEBUG) << "sendBuffToPipe(): write error, status -> eError(502)";
+		_activeSocketOut = true;
 	}
 }
 
@@ -317,6 +321,8 @@ void Cgi::_errorHandler()
 
 void Cgi::_writeToClient()
 {
+	CGILog(DDEBUG) << "writeToClient(): totalSendToClient=" << _totalSendToClient
+				   << ", availableCgiBufferLen=" << _availableCgiBufferLen;
 	if (_writeStrategy == NULL)
 	{
 		if (_router->loc->chunkedSend)

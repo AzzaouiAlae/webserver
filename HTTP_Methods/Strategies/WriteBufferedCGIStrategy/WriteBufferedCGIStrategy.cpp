@@ -104,8 +104,13 @@ void WriteBufferedCGIStrategy::_streamDirect()
         size_t len = _cgireq.getBody().length() - _bodySended;
         int sent = NetIO::Send(data, _sok->GetFd(),  len);
         _sok->UpdateTime();
+
         if (sent <= 0) _status = eWriteError;
-        else _bodySended += sent;
+        else 
+        {
+            _bodySended += sent;
+            _sok->SetSendStart(true);
+        }
         return;
     }
 
@@ -113,10 +118,13 @@ void WriteBufferedCGIStrategy::_streamDirect()
     if (_len > 0)
     {
         int sent = NetIO::Send(_buffer, _sok->GetFd(), _len);
-        _sok->UpdateTime();
         if (sent <= 0) {
             _status = eWriteError;
-        } else {
+        } 
+        else 
+        {
+            _sok->SetSendStart(true);
+            _sok->UpdateTime();
             _len -= sent;
             if (_len > 0)
                 memmove(_buffer, _buffer + sent, _len);
@@ -184,9 +192,17 @@ int WriteBufferedCGIStrategy::Execute()
     if (_internalState == eSendingDirectHeader)
     {
         int sent = NetIO::Send(&_responseHeaderStr[_headerSent], _sok->GetFd(), _responseHeaderStr.length() - _headerSent);
-        if (sent <= 0) _status = eWriteError;
-        else _headerSent += sent;
-        
+        if (sent <= 0) 
+        {
+            _status = eWriteError;
+        }
+        else 
+        {
+            _headerSent += sent;
+            _sok->UpdateTime();
+            _sok->SetSendStart(true);
+        }
+
         if (_headerSent == _responseHeaderStr.length())
             _internalState = eStreamingDirect;
         return _status;
