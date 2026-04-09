@@ -5,7 +5,7 @@ APipe::APipe(int fd, string type): AFd(fd, type)
 
 bool APipe::GetPipe(int pipe[2])
 {
-	if (pipe2(pipe, O_NONBLOCK | O_CLOEXEC) == -1)
+	if (pipe2(pipe, O_CLOEXEC | O_NONBLOCK) == -1)
 	{
 		ERR() << "SocketIO created pipe failed!";
 		return false;

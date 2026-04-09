@@ -6,7 +6,7 @@ int Socket::errorNumber = 0;
 
 void Socket::Handle()
 {
-	acceptedSocket = accept4(fd, NULL, NULL, SOCK_NONBLOCK | SOCK_CLOEXEC);
+	acceptedSocket = accept4(fd, NULL, NULL, SOCK_CLOEXEC | SOCK_NONBLOCK);
 	if (acceptedSocket == -1)
 	{
 		ERR() << "Fail to accepte new conection from socket fd: " << fd;

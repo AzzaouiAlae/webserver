@@ -68,8 +68,7 @@ void WriteChunkedCGIStrategy::_sendHeader()
         _status = eWriteError;
         return;
     }
-    else
-        _sok->SetSendStart(true);
+    _sok->SetSendStart(true);
     _headerSended += sent;
     _sok->UpdateTime();
 }
@@ -115,6 +114,7 @@ void WriteChunkedCGIStrategy::_streamDirect()
     if (_pipeEof && _len == 0)
         _status = eComplete;
     _sok->UpdateTime();
+    _sok->SetSendStart(true);
 }
 
 // ─── Chunked encoding path ────────────────────────────────────────────────────
@@ -146,6 +146,7 @@ void WriteChunkedCGIStrategy::_sendChunked()
         _len = 0;           
     }
     _sok->UpdateTime();
+    _sok->SetSendStart(true);
 }
 
 void WriteChunkedCGIStrategy::_sendTerminator()
@@ -162,6 +163,7 @@ void WriteChunkedCGIStrategy::_sendTerminator()
     if (_terminatorSent == (size_t)total)
         _status = eComplete;
     _sok->UpdateTime();
+    _sok->SetSendStart(true);
 }
 
 // ─── Execute ──────────────────────────────────────────────────────────────────
