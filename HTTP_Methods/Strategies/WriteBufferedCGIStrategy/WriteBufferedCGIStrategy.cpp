@@ -163,7 +163,6 @@ void WriteBufferedCGIStrategy::_setupDelegate()
 
 int WriteBufferedCGIStrategy::Execute()
 {
-
     if (_status != eContinue)
         return _status;
     

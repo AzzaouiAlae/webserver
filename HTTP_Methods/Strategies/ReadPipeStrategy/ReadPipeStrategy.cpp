@@ -9,7 +9,9 @@ ReadPipeStrategy::ReadPipeStrategy(int pipeFd, char *buffer, size_t &len,
       _headerParsed(headerParsed),
       _chunkedMode(chunkedMode),
       _totalRead(0)
-{}
+{
+    
+}
 
 ReadPipeStrategy::~ReadPipeStrategy() {}
 
@@ -38,8 +40,6 @@ void ReadPipeStrategy::_readHeader()
 
 void ReadPipeStrategy::_readBody()
 {
-    _status = eContinue;
-
     if (_chunkedMode)
     {
         if (_len > 0)

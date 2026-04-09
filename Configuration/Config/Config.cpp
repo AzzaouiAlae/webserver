@@ -148,7 +148,7 @@ bool Config::isAllowedMethod(const vector<string> &allowMethods, const string &m
 	return false;
 }
 
-int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath, string &scriptPath, string &pathInfo)
+int Config::findBestCgiMatch(Path *path, vector<string> &reqPath)
 {
 	int bestIndex = -1;
 	size_t maxLength = 0;
@@ -165,9 +165,9 @@ int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath,
 		if (pathExt.empty())
 			continue;
 		pathExt = '.' + pathExt;
-		for (size_t j = 0; j < srv.Locations.size(); ++j)
+		for (size_t j = 0; j < path->getServer()->Locations.size(); ++j)
 		{
-			const Config::Server::Location &loc = srv.Locations[j];
+			const Config::Server::Location &loc = path->getServer()->Locations[j];
 			if (loc.cgiPassExt.empty())
 				continue;
 			if (!isPrefixMatch(loc.parsedPath, reqPath))
@@ -178,7 +178,7 @@ int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath,
 			{
 				maxLength = loc.parsedPath.size();
 				bestIndex = (int)j;
-				scriptPath = script;
+				path->getScriptPath() = script;
 				idx = i;
 			}
 		}
@@ -191,9 +191,9 @@ int Config::findBestCgiMatch(Config::Server &srv, const vector<string> &reqPath,
 		for (size_t k = idx + 1; k < reqPath.size(); k++)
 		{
 			if (k != idx + 1)
-				pathInfo += "/" + reqPath[k];
+				path->getPathInfo() += "/" + reqPath[k];
 			else
-				pathInfo = reqPath[k];
+				path->getPathInfo() = reqPath[k];
 		}
 	}
 	return bestIndex;
@@ -250,47 +250,47 @@ void makeCgiArgs(const Config::Server::Location &loc, string &scriptPath, string
 	}
 }
 
-int Config::findMethodRedirects(const Config::Server::Location &loc,
-								const string &method, Config::Server &srv, int bestLocIndex,
-								string &scriptPath, string &pathInfo, const vector<string> &reqPath)
+int Config::findMethodRedirects(Path *path, int bestLocIndex, vector<string> &reqPath)
 {
-	string path;
+	string redirectPath;
+	Config::Server::Location &loc = path->getServer()->Locations[bestLocIndex];
+	path->setOriginalLocation(&loc);
 	if (loc.methodRedirects.empty())
 		return bestLocIndex;
-	map<string, string>::const_iterator it = loc.methodRedirects.find(method);
+	map<string, string>::const_iterator it = loc.methodRedirects.find(path->getMethod());
 	if (it != loc.methodRedirects.end())
-		path = it->second;
+		redirectPath = it->second;
 	else
 		return bestLocIndex;
-	for (size_t i = 0; i < srv.Locations.size(); ++i)
+	for (size_t i = 0; i < path->getServer()->Locations.size(); ++i)
 	{
-		if (srv.Locations[i].path == path)
+		if (path->getServer()->Locations[i].path == redirectPath)
 		{
-			const Config::Server::Location &loc = srv.Locations[i];
-			makeCgiArgs(loc, scriptPath, pathInfo, reqPath);
+			const Config::Server::Location &loc = path->getServer()->Locations[i];
+			makeCgiArgs(loc, path->getScriptPath(), path->getPathInfo(), reqPath);
 			return (int)i;
 		}
 	}
 	return bestLocIndex;
 }
 
-int Config::GetLocationIndex(Config::Server &srv, const string &path, string &scriptPath, string &pathInfo, const string &method)
+int Config::GetLocationIndex(Path *path)
 {
 	vector<string> reqPath;
-	Utility::parseBySep(reqPath, path, "/");
+	Utility::parseBySep(reqPath, path->getDecodePath(), "/");
 
-	int bestCgiIndex = findBestCgiMatch(srv, reqPath, scriptPath, pathInfo);
+	int bestCgiIndex = findBestCgiMatch(path, reqPath);
 	if (bestCgiIndex != -1)
 	{
 		DDEBUG("Config") << "Location match for '" << path << "': CGI location index " << bestCgiIndex;
-		return findMethodRedirects(srv.Locations[bestCgiIndex], method, srv, bestCgiIndex, scriptPath, pathInfo, reqPath);
+		return findMethodRedirects(path, bestCgiIndex, reqPath);
 	}
 
-	int bestStaticIndex = findBestStaticMatch(srv, reqPath);
+	int bestStaticIndex = findBestStaticMatch(*path->getServer(), reqPath);
 	DDEBUG("Config") << "Location match for '" << path << "': static location index " << bestStaticIndex;
 	if (bestStaticIndex == -1)
 		return -1;
-	return findMethodRedirects(srv.Locations[bestStaticIndex], method, srv, bestStaticIndex, scriptPath, pathInfo, reqPath);
+	return findMethodRedirects(path, bestStaticIndex, reqPath);
 }
 
 void Config::writeIndexFile()
