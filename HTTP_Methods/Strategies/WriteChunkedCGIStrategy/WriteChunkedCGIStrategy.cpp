@@ -10,12 +10,15 @@ WriteChunkedCGIStrategy::WriteChunkedCGIStrategy(ClientSocket *sok, char *buffer
       _pipeEof(pipeEof),
       _headerBuilt(false),
       _headerSended(0),
+      _hexSizeAdded(false),
       _hasContentLength(false),
       _contentLength(0),
       _totalSent(0),
       _bodySended(0),
       _currentChunkSent(0),
-      _terminatorSent(0)
+      _terminatorSent(0),
+      _totalFrame(0),
+      _sendStart(NULL)
 {}
 
 WriteChunkedCGIStrategy::~WriteChunkedCGIStrategy() {}
@@ -75,24 +78,32 @@ void WriteChunkedCGIStrategy::_sendHeader()
 
 // ─── CGI body (parsed alongside headers) ─────────────────────────────────────
 
-void WriteChunkedCGIStrategy::_drainCgiBody()
+void WriteChunkedCGIStrategy::_sendCgiRequestBody()
 {
     string &body = _cgireq.getBody();
 
-    int maxStage = BUF_SIZE - CHUNK_HEADER_RESERVE - CHUNK_TRAILER_SIZE;
-    int toStage  = body.length() - _bodySended;
-    if (toStage > maxStage)
-        toStage = maxStage;
-
-    memcpy(_buffer + CHUNK_HEADER_RESERVE, &body[_bodySended], toStage);
-    _len       = toStage;
-    _bodySended += toStage;
-
+    if (!_hasContentLength && !_hexSizeAdded)
+    {
+        // First time we see body data for chunked response — prepare chunk header.
+        char   sizeLine[CHUNK_HEADER_RESERVE];
+        int    sizeLineLen = snprintf(sizeLine, sizeof(sizeLine), "%zx\r\n", body.length());
+        _hexSizeAdded = true;
+        body.insert(0, sizeLine, sizeLineLen);
+        body.append("\r\n");
+    }
+    int sent = NetIO::Send(&body[_bodySended], body.length() - _bodySended, _sok->GetFd());
+    if (sent < 0)    
+    {
+        _status = eWriteError;
+        return;
+    }
+    _bodySended += sent;
     if (_bodySended >= body.length())
     {
         body.clear();
         _bodySended = 0;
     }
+    _sok->UpdateTime();
 }
 
 // ─── Content-Length path ─────────────────────────────────────────────────────
@@ -114,39 +125,40 @@ void WriteChunkedCGIStrategy::_streamDirect()
     if (_pipeEof && _len == 0)
         _status = eComplete;
     _sok->UpdateTime();
-    _sok->SetSendStart(true);
 }
 
 // ─── Chunked encoding path ────────────────────────────────────────────────────
 
 void WriteChunkedCGIStrategy::_sendChunked()
 {
-    char   sizeLine[CHUNK_HEADER_RESERVE];
-    int    sizeLineLen = snprintf(sizeLine, sizeof(sizeLine), "%zx\r\n", (size_t)_len);
-    char  *sendStart   = _buffer + CHUNK_HEADER_RESERVE - sizeLineLen;
+    if (_currentChunkSent == 0)
+    {
+        char   sizeLine[CHUNK_HEADER_RESERVE];
+        int    sizeLineLen = snprintf(sizeLine, sizeof(sizeLine), "%zx\r\n", _len);
+        _sendStart   = _buffer + CHUNK_HEADER_RESERVE - sizeLineLen;
+        
+        // idempotent on repeated calls (same _len → same frame)
+        memcpy(_sendStart, sizeLine, sizeLineLen);
+        _buffer[CHUNK_HEADER_RESERVE + _len]     = '\r';
+        _buffer[CHUNK_HEADER_RESERVE + _len + 1] = '\n';
+        
+        _totalFrame = sizeLineLen + _len + CHUNK_TRAILER_SIZE;
+    }
+    int remaining  = _totalFrame - _currentChunkSent;
 
-    // idempotent on repeated calls (same _len → same frame)
-    memcpy(sendStart, sizeLine, sizeLineLen);
-    _buffer[CHUNK_HEADER_RESERVE + _len]     = '\r';
-    _buffer[CHUNK_HEADER_RESERVE + _len + 1] = '\n';
-
-    int totalFrame = sizeLineLen + _len + CHUNK_TRAILER_SIZE;
-    int remaining  = totalFrame - _currentChunkSent;
-
-    int sent = NetIO::Send(sendStart + _currentChunkSent, remaining, _sok->GetFd());
+    int sent = NetIO::Send(_sendStart + _currentChunkSent, remaining, _sok->GetFd());
     if (sent < 0)
     {
         _status = eWriteError;
         return;
     }
     _currentChunkSent += sent;
-    if (_currentChunkSent == (size_t)totalFrame)
+    if (_currentChunkSent == (size_t)_totalFrame)
     {
         _currentChunkSent = 0;
         _len = 0;           
     }
     _sok->UpdateTime();
-    _sok->SetSendStart(true);
 }
 
 void WriteChunkedCGIStrategy::_sendTerminator()
@@ -163,7 +175,6 @@ void WriteChunkedCGIStrategy::_sendTerminator()
     if (_terminatorSent == (size_t)total)
         _status = eComplete;
     _sok->UpdateTime();
-    _sok->SetSendStart(true);
 }
 
 // ─── Execute ──────────────────────────────────────────────────────────────────
@@ -193,7 +204,14 @@ int WriteChunkedCGIStrategy::Execute()
         return _status;
     }
 
-    // ── 4. Dispatch on available data ────────────────────────────────────────
+    // ── 4. Stage next batch from CGI body (parsed alongside headers) ─────────
+    if (_cgireq.getBody().length() > _bodySended)
+    {
+        _sendCgiRequestBody();
+        return _status;
+    }
+
+    // ── 5. Dispatch on available data ────────────────────────────────────────
     if (_len > 0)
     {
         // Buffer has staged data (from ReadPipeStrategy or _drainCgiBody).
@@ -204,12 +222,7 @@ int WriteChunkedCGIStrategy::Execute()
         return _status;
     }
 
-    // ── 5. Stage next batch from CGI body (parsed alongside headers) ─────────
-    if (_cgireq.getBody().length() > _bodySended)
-    {
-        _drainCgiBody();
-        return _status;
-    }
+
 
     // ── 6. All buffers empty — check EOF ─────────────────────────────────────
     if (_pipeEof)
