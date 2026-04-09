@@ -4,7 +4,7 @@
 Path::Path() : 	_isDir(false), _isFile(false), _isCGI(false),
                 _found(false), _isRedir(false), _isFolderRedir(false),
                 _hasPermission(false), srv(NULL), 
-                matchedLocationIndex(-1)
+                matchedLocationIndex(-1), _originalLoc(NULL)
 {}
 
 Path::~Path() {}
@@ -101,9 +101,9 @@ void Path::_handleDirectoryIndex(Config::Server &srv)
 {
     vector<string> indices = srv.index;
 
-    if (matchedLocationIndex != -1) {
-        const Config::Server::Location &loc = srv.Locations[matchedLocationIndex];
-        if (!loc.index.empty() && loc.path == _decodedPath) {
+    if (_originalLoc && matchedLocationIndex != -1) {
+        Config::Server::Location &loc = srv.Locations[matchedLocationIndex];
+        if (!loc.index.empty() && _originalLoc->path == _decodedPath) {
             indices = loc.index;
             DDEBUG("Path") << "_handleDirectoryIndex: using location-specific index files";
         }
@@ -156,14 +156,16 @@ void Path::_handleFolderRedirection()
 void Path::CreatePath(Config::Server &srv, const string &reqUrl, const string &method)
 {
 	_decodedPath = decodePath(reqUrl);
+    _method = method;
+    this->srv = &srv;
+    
     Utility::normalizePath(_decodedPath);
 	DEBUG("Path") << "Creating path for URL: '" << reqUrl << "', decoded: '" << _decodedPath << "'";
-
-    matchedLocationIndex = Config::GetLocationIndex(srv, _decodedPath, _cgiScriptPath, _pathInfo, method);
+    
+    matchedLocationIndex = Config::GetLocationIndex(this);
 	DEBUG("Path") << "Best matching location index: " << matchedLocationIndex;
 	DDEBUG("Path") << "  -> Server root='" << srv.root << "', locations=" << srv.Locations.size();
-	this->srv = &srv;
-
+	
     _handleRedirection(srv);
     if (_isRedir) {
 		DEBUG("Path") << "Redirection detected: " << _redirCode << " -> " << _redirPath;
@@ -251,3 +253,9 @@ bool Path::isRedirection() const { return _isRedir; }
 bool Path::isRedirectionToDir() const { return _isFolderRedir; }
 string Path::getRedirCode() const { return _redirCode; }
 string Path::getRedirPath() const { return _redirPath; }
+string Path::getDecodePath() { return _decodedPath; }
+Config::Server *Path::getServer() { return srv; }
+string &Path::getScriptPath() { return _cgiScriptPath; }
+string &Path::getPathInfo() { return _pathInfo; }
+Config::Server::Location *Path::getOriginalLocation() { return _originalLoc; }
+void Path::setOriginalLocation(Config::Server::Location *loc) { _originalLoc = loc; }
