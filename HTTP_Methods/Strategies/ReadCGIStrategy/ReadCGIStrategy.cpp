@@ -15,6 +15,8 @@ ReadCGIStrategy::ReadCGIStrategy(Routing *router, ClientSocket *sock, char *buff
             _request.getBody().erase(_len);
         _buffer = NULL;
     }
+    else if (!_request.isChunkedTransferEncoding() && _request.getcontentlen() == 0)
+        _status = AStrategy::eComplete;
     _len = 0;
     _currentReadSize = 0;
     _buffer = buffer;
