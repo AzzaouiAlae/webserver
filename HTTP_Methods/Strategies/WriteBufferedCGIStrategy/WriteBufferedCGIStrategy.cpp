@@ -141,12 +141,13 @@ void WriteBufferedCGIStrategy::_setupDelegate()
     _buildHeader(totalBodySize);
     
     _sendBuffers.push_back(make_pair((char*)_responseHeaderStr.c_str(), _responseHeaderStr.length()));
+
+    if (!_memBuffer.empty() && _req.getMethod() != "HEAD")
+        _sendBuffers.push_back(make_pair(&_memBuffer[0], _memBuffer.size()));
     
     // Create the correct Strategy
     if (_tempFd != -1 && _req.getMethod() != "HEAD") 
     {
-        if (!_memBuffer.empty())
-            _sendBuffers.push_back(make_pair(&_memBuffer[0], _memBuffer.size()));
         lseek(_tempFd, 0, SEEK_SET);
         _delegate = new FileStrategy(_sendBuffers, _tempFd, _fileSize, *_sok);
     } 
@@ -222,8 +223,13 @@ int WriteBufferedCGIStrategy::Execute()
             _accumulate(); 
             
         if (_pipeEof) {
+            _isBusy = true;
             _setupDelegate();
-            _status = _delegate->Execute();
+            int status = _delegate->Execute();
+            if (status == AStrategy::eComplete) {
+                _status = AStrategy::eComplete;
+                _isBusy = false;
+            }
         }
             
         return _status; 
@@ -232,7 +238,13 @@ int WriteBufferedCGIStrategy::Execute()
     // --- Delegate Path (Pushing buffered data to client) ---
     if (_internalState == eSendingDelegate) 
     {
-        _status = _delegate->Execute();
+        _isBusy = true;
+        int status = _delegate->Execute();
+        if (status == AStrategy::eComplete)
+        {
+            _status = AStrategy::eComplete;
+            _isBusy = false;
+        }
     }
     
     return _status;
