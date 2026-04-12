@@ -93,7 +93,6 @@ void Post::_createPostRedirection(const string &retCode, const string &retBody)
 		<< "Socket fd: " << _sock->GetFd()
 		<< " POST redirect " << retCode
 		<< " to " << retBody;
-	_totalByteToSend = _responseHeaderStr.length();
 	_status = Post::eSendResponse;
 	_multiplexer->ChangeToEpollOut(_sock);
 }
@@ -109,7 +108,6 @@ void Post::_createPostCustomBody(const string &retCode, const string &retBody)
 	_bodySize = retBody.length();
 	_filename = ".json";
 	_createResponseHeader(retBody);
-	_totalByteToSend = _responseHeaderStr.length();
 	_status = Post::eSendResponse;
 	_multiplexer->ChangeToEpollOut(_sock);
 }

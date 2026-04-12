@@ -8,7 +8,6 @@ AMethod::AMethod(ClientSocket *sock, Routing *router)
 {
 	_cgi = NULL;
 	_staticFile = NULL;
-	_totalByteToSend = 0;
 	_bodySize = 0;
 	_fileFd = -1;
 	_statusCode = "";
@@ -258,7 +257,6 @@ void AMethod::_createDefaultResponse(const string &code)
 	}
 	_bodySize = body.length();
 	_createResponseHeader(body);
-	_totalByteToSend = _responseHeaderStr.length();
 	_status = eSendResponse;
 	_multiplexer->ChangeToEpollOut(_sock);
 }
@@ -308,9 +306,9 @@ void AMethod::_loadStaticErrorFile(const string &errorCode)
 		_statusCode = "404";
 	}
 	_bodySize = _staticFile->GetSize();
-	_totalByteToSend = _bodySize;
 	_filename = ".html";
-	_addPair(_staticFile);
+	if (_router->GetRequest().getMethod() != "HEAD")
+		_addPair(_staticFile);
 	_router->SetSendStrategy(new BuffersStrategy(_buffers, *_sock));
 }
 
@@ -329,7 +327,6 @@ void AMethod::HandleErrorPages(const string &err)
 	if (isPath && _openErrorFile(_filename))
 	{
 		_bodySize = Utility::getFileSize(_filename);
-		_totalByteToSend = _bodySize;
 		if ("HEAD" == _router->GetRequest().getMethod())
 			_router->SetSendStrategy(new BuffersStrategy(_buffers, *_sock));
 		else
@@ -342,11 +339,6 @@ void AMethod::HandleErrorPages(const string &err)
 		_loadStaticErrorFile(err);
 	}
 	_createResponseHeader("");
-	if ("HEAD" == _router->GetRequest().getMethod())
-	{
-		_totalByteToSend = 0;
-	}
-	_totalByteToSend += _responseHeaderStr.length();
 	_multiplexer->ChangeToEpollOut(_sock);
 	_status = AMethod::eSendResponse;
 }
@@ -377,7 +369,6 @@ void AMethod::_createRedirection()
 	_createRedirectionHeader(redirCode, redirLoc);
 	DDEBUG("AMethod") << "\n"
 					  << _responseHeaderStr;
-	_totalByteToSend = _responseHeaderStr.length();
 
 	_status = AMethod::eSendResponse;
 	_multiplexer->ChangeToEpollOut(_sock);

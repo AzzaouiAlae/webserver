@@ -2,8 +2,8 @@
 #include "AMethod.hpp"
 
 WriteBufferedCGIStrategy::WriteBufferedCGIStrategy(ClientSocket *sok, char *buffer, size_t &len, 
-                                                   CgiRequest &cgireq, bool &pipeEof)
-    : _sok(sok), _buffer(buffer), _len(len), _cgireq(cgireq), _pipeEof(pipeEof),
+                                                   CgiRequest &cgireq, ClientRequest &req, bool &pipeEof)
+    : _sok(sok), _buffer(buffer), _len(len), _cgireq(cgireq), _req(req), _pipeEof(pipeEof),
       _internalState(eInit), _hasContentLength(false), 
       _tempFd(-1), _fileSize(0), _headerSent(0), _bodySended(0), _delegate(NULL)
 {
@@ -102,7 +102,7 @@ void WriteBufferedCGIStrategy::_streamDirect()
     {
         char *data = &_cgireq.getBody()[_bodySended];
         size_t len = _cgireq.getBody().length() - _bodySended;
-        int sent = NetIO::Send(data, _sok->GetFd(),  len);
+        int sent = NetIO::Send(data, len, _sok->GetFd());
         _sok->UpdateTime();
 
         if (sent <= 0) _status = eWriteError;
@@ -117,7 +117,7 @@ void WriteBufferedCGIStrategy::_streamDirect()
     // Stream from buffer
     if (_len > 0)
     {
-        int sent = NetIO::Send(_buffer, _sok->GetFd(), _len);
+        int sent = NetIO::Send(_buffer, _len, _sok->GetFd());
         if (sent <= 0) {
             _status = eWriteError;
         } 
@@ -140,16 +140,13 @@ void WriteBufferedCGIStrategy::_setupDelegate()
     size_t totalBodySize = _memBuffer.size() + _fileSize;
     _buildHeader(totalBodySize);
     
-    // Stage 1: Headers
     _sendBuffers.push_back(make_pair((char*)_responseHeaderStr.c_str(), _responseHeaderStr.length()));
     
-    // Stage 2: Memory Buffer
-    if (!_memBuffer.empty())
-        _sendBuffers.push_back(make_pair(&_memBuffer[0], _memBuffer.size()));
-        
     // Create the correct Strategy
-    if (_tempFd != -1) 
+    if (_tempFd != -1 && _req.getMethod() != "HEAD") 
     {
+        if (!_memBuffer.empty())
+            _sendBuffers.push_back(make_pair(&_memBuffer[0], _memBuffer.size()));
         lseek(_tempFd, 0, SEEK_SET);
         _delegate = new FileStrategy(_sendBuffers, _tempFd, _fileSize, *_sok);
     } 
@@ -190,7 +187,7 @@ int WriteBufferedCGIStrategy::Execute()
     // --- Direct Streaming Path (Has Content-Length) ---
     if (_internalState == eSendingDirectHeader)
     {
-        int sent = NetIO::Send(&_responseHeaderStr[_headerSent], _sok->GetFd(), _responseHeaderStr.length() - _headerSent);
+        int sent = NetIO::Send(&_responseHeaderStr[_headerSent], _responseHeaderStr.length() - _headerSent, _sok->GetFd());
         if (sent <= 0) 
         {
             _status = eWriteError;
@@ -203,7 +200,12 @@ int WriteBufferedCGIStrategy::Execute()
         }
 
         if (_headerSent == _responseHeaderStr.length())
-            _internalState = eStreamingDirect;
+        {
+            if (_req.getMethod() == "HEAD")
+                _status = eComplete;
+            else
+                _internalState = eStreamingDirect;
+        }
         return _status;
     }
 
@@ -219,8 +221,10 @@ int WriteBufferedCGIStrategy::Execute()
         if (_len > 0)
             _accumulate(); 
             
-        if (_pipeEof)
+        if (_pipeEof) {
             _setupDelegate();
+            _status = _delegate->Execute();
+        }
             
         return _status; 
     }

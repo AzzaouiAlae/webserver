@@ -90,10 +90,8 @@ void GET::_openFile(const string &path)
 void GET::_prepareFileResponse()
 {
 	_bodySize = Utility::getFileSize(_filename);
-	_totalByteToSend = _bodySize;
 	_statusCode = "200";
 	_createResponseHeader("");
-	_totalByteToSend += _responseHeaderStr.length();
 	_status = GET::eSendResponse;
 	_multiplexer->ChangeToEpollOut(_sock);
 }
@@ -182,12 +180,10 @@ void GET::_createListFilesResponse()
 	_listFiles(_router->GetPath().getFullPath());
 	_filesListStr = _filesList.str();
 
-	_totalByteToSend = _calculateAutoIndexSize();
-
 	_statusCode = "200";
 	_filename = ".html";
 
-	_bodySize = _totalByteToSend;
+	_bodySize = _calculateAutoIndexSize();
 	_createResponseHeader("");
 
 	_multiplexer->ChangeToEpollOut(_sock);

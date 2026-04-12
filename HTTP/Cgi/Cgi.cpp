@@ -295,7 +295,15 @@ void Cgi::_activeFds()
 
 void Cgi::_readFromCGI()
 {
-	_readPipeStrategy->Execute();
+	try {
+		_readPipeStrategy->Execute();
+	}
+	catch (const exception &e)
+	{
+		_status = eError;
+		_errorCode = e.what();
+		return;
+	}
 	CGILog(DDEBUG) << "readFromCGI(): len=" << _availableCgiBufferLen
 				   << ", strategy_status=" << _readPipeStrategy->GetStatus();
 	_handleStrategyStatus(_readPipeStrategy);
@@ -326,9 +334,9 @@ void Cgi::_writeToClient()
 	if (_writeStrategy == NULL)
 	{
 		if (_router->loc->chunkedSend)
-			_writeStrategy = new WriteChunkedCGIStrategy(_sok, _readBuffer, _availableCgiBufferLen, _cgireq, _pipeEof);
+			_writeStrategy = new WriteChunkedCGIStrategy(_sok, _readBuffer, _availableCgiBufferLen, _cgireq,  _req, _pipeEof);
 		else
-			_writeStrategy = new WriteBufferedCGIStrategy(_sok, _readBuffer, _availableCgiBufferLen, _cgireq, _pipeEof);
+			_writeStrategy = new WriteBufferedCGIStrategy(_sok, _readBuffer, _availableCgiBufferLen, _cgireq, _req, _pipeEof);
 	}
 	if (_readPipeStrategy->GetStatus() <= AStrategy::eComplete)
 		_pipeEof = true;

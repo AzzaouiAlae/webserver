@@ -158,10 +158,7 @@ int Config::findBestCgiMatch(Path *path, vector<string> &reqPath)
 	for (i = 0; i < reqPath.size(); i++)
 	{
 		string pathExt = Utility::GetFileExtension(reqPath[i]);
-		if (i != 0)
-			script += "/" + reqPath[i];
-		else
-			script = reqPath[i];
+		script += "/" + reqPath[i];
 		if (pathExt.empty())
 			continue;
 		pathExt = '.' + pathExt;
