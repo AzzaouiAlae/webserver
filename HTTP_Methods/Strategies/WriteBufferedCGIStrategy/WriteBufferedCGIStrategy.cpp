@@ -157,6 +157,7 @@ void WriteBufferedCGIStrategy::_setupDelegate()
     }
     
     _internalState = eSendingDelegate;
+    _isBusy = true;
 }
 
 int WriteBufferedCGIStrategy::Execute()
@@ -172,6 +173,7 @@ int WriteBufferedCGIStrategy::Execute()
             _hasContentLength = true;
             _buildHeader();
             _internalState = eSendingDirectHeader;
+            _isBusy = true;
         } 
         else 
         {
@@ -206,6 +208,7 @@ int WriteBufferedCGIStrategy::Execute()
                 _status = eComplete;
             else
                 _internalState = eStreamingDirect;
+            _isBusy = false;
         }
         return _status;
     }
@@ -223,28 +226,17 @@ int WriteBufferedCGIStrategy::Execute()
             _accumulate(); 
             
         if (_pipeEof) {
-            _isBusy = true;
-            _setupDelegate();
-            int status = _delegate->Execute();
-            if (status == AStrategy::eComplete) {
-                _status = AStrategy::eComplete;
-                _isBusy = false;
-            }
-        }
             
+            _setupDelegate();
+            _status = _delegate->Execute();
+        }
         return _status; 
     }
 
     // --- Delegate Path (Pushing buffered data to client) ---
     if (_internalState == eSendingDelegate) 
     {
-        _isBusy = true;
-        int status = _delegate->Execute();
-        if (status == AStrategy::eComplete)
-        {
-            _status = AStrategy::eComplete;
-            _isBusy = false;
-        }
+        _status = _delegate->Execute();
     }
     
     return _status;
