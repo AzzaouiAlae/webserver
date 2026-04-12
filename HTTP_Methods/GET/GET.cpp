@@ -93,8 +93,6 @@ void GET::_prepareFileResponse()
 	_totalByteToSend = _bodySize;
 	_statusCode = "200";
 	_createResponseHeader("");
-	if ("HEAD" == _router->GetRequest().getMethod())
-		_totalByteToSend = 0;
 	_totalByteToSend += _responseHeaderStr.length();
 	_status = GET::eSendResponse;
 	_multiplexer->ChangeToEpollOut(_sock);
@@ -105,7 +103,10 @@ void GET::_serveFile()
 	DDEBUG("GET") << "Socket fd: " << _sock->GetFd() << ", ServeFile: '" << _filename << "'";
 	_openFile(_filename);
 	_prepareFileResponse();
-	_router->SetSendStrategy(new FileStrategy(_buffers, _fileFd, _bodySize, *_sock));
+	if ("HEAD" == _router->GetRequest().getMethod())
+		_router->SetSendStrategy(new BuffersStrategy(_buffers, *_sock));
+	else
+		_router->SetSendStrategy(new FileStrategy(_buffers, _fileFd, _bodySize, *_sock));
 }
 
 
