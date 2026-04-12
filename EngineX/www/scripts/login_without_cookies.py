@@ -89,12 +89,12 @@ if method == "POST":
     if action == "login":
         if username in USERS and USERS[username] == password:
             sys.stdout.write("Status: 302 Found\r\n")
-            sys.stdout.write(f"Location: {script_name}?logged_in=1\r\n")
+            sys.stdout.write(f"Location: /{script_name}?logged_in=1\r\n")
             sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
             sys.stdout.write("Content-Length: 0\r\n\r\n")
         else:
             sys.stdout.write("Status: 302 Found\r\n")
-            sys.stdout.write(f"Location: {script_name}?error=1\r\n")
+            sys.stdout.write(f"Location: /{script_name}?error=1\r\n")
             sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
             sys.stdout.write("Content-Length: 0\r\n\r\n")
 
@@ -112,11 +112,11 @@ else:
   <div class="warn-box">
     <b>No secure session found.</b><br>
     The redirect worked, but the server only identifies you via the URL string:
-    <div class="url">http://{http_host}{script_name}?logged_in=1</div>
+    <div class="url">http://{http_host}/{script_name}?logged_in=1</div>
     • Anyone can type this URL to bypass authentication.<br>
     • Removing <code>?logged_in=1</code> invalidates the session.
   </div>
-  <a href="{script_name}">← Return to Secure Login</a>
+  <a href="/{script_name}">← Return to Secure Login</a>
 </div>
 </body></html>"""
         send_response(html_body)
@@ -133,7 +133,7 @@ else:
     Testing redirect-only logic. Cookies are disabled.
   </p>
   {error_html}
-  <form method="POST" action="{script_name}">
+  <form method="POST" action="/{script_name}">
     <input type="hidden" name="action" value="login">
     <label>Username</label>
     <input type="text" name="username" placeholder="admin" required autofocus>

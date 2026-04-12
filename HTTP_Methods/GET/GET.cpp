@@ -90,12 +90,8 @@ void GET::_openFile(const string &path)
 void GET::_prepareFileResponse()
 {
 	_bodySize = Utility::getFileSize(_filename);
-	_totalByteToSend = _bodySize;
 	_statusCode = "200";
 	_createResponseHeader("");
-	if ("HEAD" == _router->GetRequest().getMethod())
-		_totalByteToSend = 0;
-	_totalByteToSend += _responseHeaderStr.length();
 	_status = GET::eSendResponse;
 	_multiplexer->ChangeToEpollOut(_sock);
 }
@@ -105,7 +101,10 @@ void GET::_serveFile()
 	DDEBUG("GET") << "Socket fd: " << _sock->GetFd() << ", ServeFile: '" << _filename << "'";
 	_openFile(_filename);
 	_prepareFileResponse();
-	_router->SetSendStrategy(new FileStrategy(_buffers, _fileFd, _bodySize, *_sock));
+	if ("HEAD" == _router->GetRequest().getMethod())
+		_router->SetSendStrategy(new BuffersStrategy(_buffers, *_sock));
+	else
+		_router->SetSendStrategy(new FileStrategy(_buffers, _fileFd, _bodySize, *_sock));
 }
 
 
@@ -181,12 +180,10 @@ void GET::_createListFilesResponse()
 	_listFiles(_router->GetPath().getFullPath());
 	_filesListStr = _filesList.str();
 
-	_totalByteToSend = _calculateAutoIndexSize();
-
 	_statusCode = "200";
 	_filename = ".html";
 
-	_bodySize = _totalByteToSend;
+	_bodySize = _calculateAutoIndexSize();
 	_createResponseHeader("");
 
 	_multiplexer->ChangeToEpollOut(_sock);

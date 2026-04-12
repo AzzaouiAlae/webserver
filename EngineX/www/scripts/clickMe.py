@@ -56,8 +56,8 @@ def parse_cookies():
 def send_response(html_body):
     body_bytes = html_body.encode('utf-8')
     content_length = len(body_bytes)
-    sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n")
-    sys.stdout.write(f"Content-Length: {content_length}\r\n\r\n")
+    sys.stdout.write("Content-Type: text/html; charset=utf-8\r\n\r\n")
+    # sys.stdout.write(f"Content-Length: {content_length}\r\n\r\n")
     sys.stdout.write(html_body)
 
 cookies = parse_cookies()

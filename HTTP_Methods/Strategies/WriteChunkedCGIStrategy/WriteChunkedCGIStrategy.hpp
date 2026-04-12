@@ -11,6 +11,7 @@ class WriteChunkedCGIStrategy : public AStrategy
     char       *_buffer;
     size_t        &_len;
     CgiRequest &_cgireq;
+    ClientRequest &_req;
     bool       &_pipeEof;
 
     bool        _headerBuilt;
@@ -39,7 +40,7 @@ class WriteChunkedCGIStrategy : public AStrategy
 
 public:
     WriteChunkedCGIStrategy(ClientSocket *sok, char *buffer, size_t &len,
-                             CgiRequest &cgireq, bool &pipeEof);
+                             CgiRequest &cgireq, ClientRequest &req, bool &pipeEof);
     ~WriteChunkedCGIStrategy();
     int Execute();
 };

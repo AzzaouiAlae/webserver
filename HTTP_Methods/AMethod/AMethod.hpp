@@ -49,7 +49,6 @@ protected:
 	vector<pair<char *, size_t> > _buffers;
 	
 	size_t _bodySize;
-	size_t _totalByteToSend;
 
 	void _createResponseHeader(const string &body);
 	void _createRedirectionHeader(const string &redirCode, const string &redirLocation);

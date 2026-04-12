@@ -2,11 +2,12 @@
 #include "AMethod.hpp"
 
 WriteChunkedCGIStrategy::WriteChunkedCGIStrategy(ClientSocket *sok, char *buffer, size_t &len,
-                                                   CgiRequest &cgireq, bool &pipeEof)
+                                                   CgiRequest &cgireq, ClientRequest &req, bool &pipeEof)
     : _sok(sok),
       _buffer(buffer),
       _len(len),
       _cgireq(cgireq),
+      _req(req),
       _pipeEof(pipeEof),
       _headerBuilt(false),
       _headerSended(0),
@@ -71,9 +72,18 @@ void WriteChunkedCGIStrategy::_sendHeader()
         _status = eWriteError;
         return;
     }
+    
     _sok->SetSendStart(true);
     _headerSended += sent;
     _sok->UpdateTime();
+    if (_responseHeaderStr.length() == _headerSended)
+    {
+        if (_req.getMethod() == "HEAD")
+        {
+            _status = eComplete;
+            return;
+        }
+    }
 }
 
 // ─── CGI body (parsed alongside headers) ─────────────────────────────────────
