@@ -367,7 +367,7 @@ void Validation::validateTimeout(AST<string> &node, bool &seen, const string &na
 	seen = true;
 	checkArgCount(node, 1, 1, name);
 
-	long val = parseNumber(node.GetArguments()[0]);
+	long val = parseNumber(node.GetArguments()[0]);	
 	if (val <= 0)
 		Error::ThrowError("Config Error: '" + name + "' must be a positive number — got '" +
 						  node.GetArguments()[0] + "'");
