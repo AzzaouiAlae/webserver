@@ -1,5 +1,4 @@
 # webserver
-42_WebServer  
 *This project has been created as part of the 42 curriculum by **imeslaki** & **aazzaoui** & **oel-bann**.*
 
 ## Description
@@ -123,7 +122,7 @@ types {
 
 ---
 
-# Architecture (current version)
+# Architecture
 
 This section follows the schema in `HTTP/DefaultPages/server2.svg` and matches the runtime behavior.
 
