@@ -12,16 +12,19 @@ _sock(sock), _chunkedData(_router->GetChunkedData())
         _contentLen = _request.getcontentlen();
     else
         _contentLen = SIZE_MAX;
-    _buffer = (char *)(_request.getBody().c_str());
-    _len = _request.getBody().length();
-    _subBufferUploadStrategy = new SubBufferUploadStrategy();
-    _createFile();
-    _decode();
-    if (_status < eComplete) {
-        _buffer = NULL;
-        return;
+    if (_request.getBody().length())
+    {
+        _buffer = (char *)(_request.getBody().c_str());
+        _len = _request.getBody().length();
+        _subBufferUploadStrategy = new SubBufferUploadStrategy();
+        _createFile();
+        _decode();
+        if (_status < eComplete) {
+            _buffer = NULL;
+            return;
+        }
+        _uploadBuffer();
     }
-    _uploadBuffer();
     _buffer = Utility::GetBuffer();
 }
 
@@ -52,6 +55,9 @@ void UploadStrategy::_createFile()
 
 void UploadStrategy::_uploadBuffer()
 {
+    if ((size_t)_len > _contentLen - _totalSize)
+        _len = _contentLen - _totalSize;
+    _totalSize += _len;
     _subBufferUploadStrategy->SetBuffer(_buffer, _len, _fileFD);
     int subStatus = _subBufferUploadStrategy->Execute();
     if (subStatus != AStrategy::eComplete)
@@ -74,7 +80,6 @@ void UploadStrategy::_decode()
             _status = eComplete;
         _len = _chunkResult.decodedLen;
     }
-    _totalSize += _len;
     if (_totalSize > _maxBodySize)
         _status = eMaxBodySizeExceeded;
 }
