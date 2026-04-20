@@ -87,7 +87,7 @@ bool Multiplexer::ChangeToEpollInOut(AFd *fd)
 	return  _modifyEpoll(EPOLL_CTL_MOD, fd, EPOLLIN | EPOLLOUT);
 }
 
-bool Multiplexer::ChangeToEpollOneShot(AFd *fd)
+bool Multiplexer::StopEpollEvents(AFd *fd)
 {
 	return  _modifyEpoll(EPOLL_CTL_MOD, fd, EPOLLONESHOT);
 }

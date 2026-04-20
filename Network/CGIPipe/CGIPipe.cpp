@@ -5,7 +5,7 @@ void CGIPipe::Handle()
 	if (MarkedToDelete)
 		return;
 	Multiplexer *MulObj = Multiplexer::GetCurrentMultiplexer();
-	MulObj->ChangeToEpollOneShot(this);
+	MulObj->StopEpollEvents(this);
 	if (cgi)
 		cgi->SetStateByFd(fd);
 }

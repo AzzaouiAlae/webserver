@@ -285,7 +285,7 @@ void Cgi::_activeFds()
     else if (_activeSocketOut)
         _multiplexer->ChangeToEpollOut(_sok);
     else
-        _multiplexer->ChangeToEpollOneShot(_sok);
+        _multiplexer->StopEpollEvents(_sok);
     
     if (_in)
 		_multiplexer->ChangeToEpollIn(_in);

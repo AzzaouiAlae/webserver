@@ -3,6 +3,7 @@
 #include "NetIO.hpp"
 #include "FileStrategy.hpp"
 #include "BuffersStrategy.hpp"
+#include "SubBufferUploadStrategy.hpp"
 
 #define MAX_MEM_BUFFER (5 * 1024 * 1024)
 
@@ -16,6 +17,8 @@ private:
         eBuffering,
         eSendingDelegate
     };
+    SubBufferUploadStrategy _subBufferUploadStrategy;
+    void _uploadBuffer(size_t len, size_t offset = 0);
 
     ClientSocket   *_sok;
     char       *_buffer;
@@ -47,6 +50,8 @@ private:
     void _streamDirect();
     void _setupDelegate();
     void _buildHeader(size_t contentLength = 0);
+    void _initialize();
+    void _directHeaderSend();
 
 public:
     WriteBufferedCGIStrategy(ClientSocket *sok, char *buffer, size_t &len, 
