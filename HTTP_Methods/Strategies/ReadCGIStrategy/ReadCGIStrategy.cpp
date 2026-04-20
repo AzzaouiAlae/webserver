@@ -45,12 +45,6 @@ void ReadCGIStrategy::_readFromSocket()
 
 void ReadCGIStrategy::_decode()
 {
-    if (_currentReadSize == 0)
-    {
-        if (_contentLen == _totalSize)
-            _status = eComplete;
-        return;
-    }
     if (_request.isChunkedTransferEncoding())
     {
         _chunkResult = _chunkedData.Feed(_buffer, _currentReadSize);

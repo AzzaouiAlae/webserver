@@ -1,5 +1,6 @@
 #include "WriteBufferedCGIStrategy.hpp"
 #include "AMethod.hpp"
+#include "SubBufferUploadStrategy.hpp"
 
 WriteBufferedCGIStrategy::WriteBufferedCGIStrategy(ClientSocket *sok, char *buffer, size_t &len, 
                                                    CgiRequest &cgireq, ClientRequest &req, bool &pipeEof)
@@ -60,6 +61,17 @@ void WriteBufferedCGIStrategy::_buildHeader(size_t contentLength)
     DDEBUG("WriteBufferedCGIStrategy") << "Built header: " << _responseHeaderStr;
 }
 
+void WriteBufferedCGIStrategy::_uploadBuffer(size_t len, size_t offset)
+{
+    _subBufferUploadStrategy.SetBuffer(_buffer + offset, len, _tempFd);
+    if (_subBufferUploadStrategy.Execute() != AStrategy::eComplete)
+    {
+        _status = eWriteError;
+        return;
+    }
+    _fileSize += len;
+}
+
 void WriteBufferedCGIStrategy::_accumulate()
 {
     size_t availableMemSpace = MAX_MEM_BUFFER - _memBuffer.size();
@@ -76,8 +88,7 @@ void WriteBufferedCGIStrategy::_accumulate()
             if (_tempFd == -1) 
                 _createTempFile();
             if (_tempFd != -1) {
-                write(_tempFd, _buffer + toCopy, _len - toCopy);
-                _fileSize += (_len - toCopy);
+                _uploadBuffer(_len - toCopy, toCopy);
             }
         }
     }
@@ -87,8 +98,7 @@ void WriteBufferedCGIStrategy::_accumulate()
         if (_tempFd == -1) 
             _createTempFile();
         if (_tempFd != -1) {
-            write(_tempFd, _buffer, _len);
-            _fileSize += _len;
+            _uploadBuffer(_len);
         }
     }
 
@@ -160,56 +170,65 @@ void WriteBufferedCGIStrategy::_setupDelegate()
     _isBusy = true;
 }
 
-int WriteBufferedCGIStrategy::Execute()
+void WriteBufferedCGIStrategy::_initialize()
 {
+    map<string, string> &headers = _cgireq.getrequestenv();
+    if (headers.find("Content-Length") != headers.end()) 
+    {
+        _hasContentLength = true;
+        _buildHeader();
+        _internalState = eSendingDirectHeader;
+        _isBusy = true;
+    } 
+    else 
+    {
+        // Instantly inject any leftover body data from the CGI parsing phase
+        if (_cgireq.getBody().length() > 0)
+        {
+            const char *leftover = _cgireq.getBody().c_str();
+            _memBuffer.insert(_memBuffer.end(), leftover, leftover + _cgireq.getBody().length());
+        }
+        _internalState = eBuffering;
+    }
+}
+
+void WriteBufferedCGIStrategy::_directHeaderSend()
+{
+    int sent = NetIO::Send(&_responseHeaderStr[_headerSent], _responseHeaderStr.length() - _headerSent, _sok->GetFd());
+    if (sent <= 0) 
+    {
+        _status = eWriteError;
+    }
+    else 
+    {
+        _headerSent += sent;
+        _sok->UpdateTime();
+        _sok->SetSendStart(true);
+    }
+    if (_headerSent == _responseHeaderStr.length())
+    {
+        if (_req.getMethod() == "HEAD")
+            _status = eComplete;
+        else
+            _internalState = eStreamingDirect;
+    }
+}
+
+int WriteBufferedCGIStrategy::Execute()
+{ 
     if (_status != eContinue)
         return _status;
     
     if (_internalState == eInit) 
     {
-        map<string, string> &headers = _cgireq.getrequestenv();
-        if (headers.find("Content-Length") != headers.end()) 
-        {
-            _hasContentLength = true;
-            _buildHeader();
-            _internalState = eSendingDirectHeader;
-            _isBusy = true;
-        } 
-        else 
-        {
-            // Instantly inject any leftover body data from the CGI parsing phase
-            if (_cgireq.getBody().length() > 0)
-            {
-                const char *leftover = _cgireq.getBody().c_str();
-                _memBuffer.insert(_memBuffer.end(), leftover, leftover + _cgireq.getBody().length());
-            }
-            _internalState = eBuffering;
-        }
+        _isBusy = true;
+        _initialize();
     }
 
     // --- Direct Streaming Path (Has Content-Length) ---
     if (_internalState == eSendingDirectHeader)
     {
-        int sent = NetIO::Send(&_responseHeaderStr[_headerSent], _responseHeaderStr.length() - _headerSent, _sok->GetFd());
-        if (sent <= 0) 
-        {
-            _status = eWriteError;
-        }
-        else 
-        {
-            _headerSent += sent;
-            _sok->UpdateTime();
-            _sok->SetSendStart(true);
-        }
-
-        if (_headerSent == _responseHeaderStr.length())
-        {
-            if (_req.getMethod() == "HEAD")
-                _status = eComplete;
-            else
-                _internalState = eStreamingDirect;
-            _isBusy = false;
-        }
+        _directHeaderSend();
         return _status;
     }
 
@@ -223,10 +242,9 @@ int WriteBufferedCGIStrategy::Execute()
     if (_internalState == eBuffering) 
     {
         if (_len > 0)
-            _accumulate(); 
+            _accumulate();
             
         if (_pipeEof) {
-            
             _setupDelegate();
             _status = _delegate->Execute();
         }
@@ -237,7 +255,8 @@ int WriteBufferedCGIStrategy::Execute()
     if (_internalState == eSendingDelegate) 
     {
         _status = _delegate->Execute();
+        return _status;
     }
-    
+
     return _status;
 }

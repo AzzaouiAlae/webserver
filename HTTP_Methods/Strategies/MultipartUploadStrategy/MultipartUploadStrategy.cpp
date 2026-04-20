@@ -10,9 +10,9 @@ MultipartUploadStrategy::MultipartUploadStrategy(ClientSocket *socketIO, Routing
         _contentLen = -1;
     _maxSize = _request.getMaxBodySize();
     _totalSize = 0;
+    _subBufferUploadStrategy = new SubBufferUploadStrategy();
     _buffer = (char *)(_request.getBody().c_str());
     _len = _request.getBody().length();
-    _subBufferUploadStrategy = new SubBufferUploadStrategy();
     _decodeData();
     if (_status < eComplete) {
         _buffer = NULL;
@@ -20,10 +20,11 @@ MultipartUploadStrategy::MultipartUploadStrategy(ClientSocket *socketIO, Routing
     }
     _uploadBuffers(_multipartData.GetParts());
     if (_multipartData.GetStatus() == MultipartData::eComplete 
-        && _status == eContinue && 
-        (_request.isChunkedTransferEncoding() == false || 
+        && _status == eContinue && (_request.isChunkedTransferEncoding() == false || 
         _chunkedData.GetStatus() == ChunkedData::eComplete))
+    {
         _status = eComplete;
+    }
     _buffer = NULL;
     if (_status == eContinue)
         _buffer = Utility::GetBuffer();
@@ -88,11 +89,12 @@ void MultipartUploadStrategy::_decodeData()
             return;
         }
         _totalSize += _chunkResult.decodedLen;
-
         _multipartData.Feed(_buffer, _chunkResult.decodedLen);
     }
     else
     {
+        if (_contentLen != -1 && _totalSize + (size_t)_len > (size_t)_contentLen)
+            _len = _contentLen - _totalSize;
         _totalSize += _len;
         _multipartData.Feed(_buffer, _len);
     }
