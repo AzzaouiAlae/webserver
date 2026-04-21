@@ -31,7 +31,7 @@ void Post::_initPost()
 	}
 	else if (_originalPath->found && _originalPath->isFile)
 		HandleErrorPages("405");
-	else if (_router->loc == NULL)
+	else if (_router->loc == NULL || _router->loc->clientBodyInFileOnly == false)
 		HandleErrorPages("403");
 	else if (_router->GetRequest().isMultipartFormData())
 		_router->SetReadStrategy(new MultipartUploadStrategy(_sock, _router));
